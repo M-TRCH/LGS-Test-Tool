@@ -6,6 +6,7 @@ from nicegui import ui
 from .. import config_store
 from ..lgs_map import BAUD_WHITELIST, FACTORY_DEFAULT_ID, FORBIDDEN_ID, GRID_IDS
 from ..transports import RtuSettings, TcpSettings, list_com_ports
+from ..version import APP_VERSION
 from . import Ctx
 
 
@@ -22,6 +23,7 @@ def build(ctx: Ctx) -> None:
     with ui.header().classes("items-center gap-3 flex-wrap bg-grey-2 text-black q-py-xs") \
             .props("bordered"):
         ui.label("LGS Test Tool").classes("text-lg font-bold text-primary")
+        ui.badge(f"v{APP_VERSION}").props("color=primary outline").classes("text-xs")
 
         transport = ui.radio({"rtu": "RTU (COM)", "tcp": "TCP"}, value=cfg.transport) \
             .props("inline dense")

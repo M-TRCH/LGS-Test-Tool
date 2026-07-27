@@ -10,6 +10,7 @@ from . import config_store
 from .modbus_worker import ModbusWorker
 from .txn_log import TxnLog
 from .ui import Ctx, connection_bar, log_pane, tab_autotest, tab_control, tab_danger, tab_monitor
+from .version import APP_VERSION
 
 log = TxnLog()
 worker = ModbusWorker(log)
@@ -46,10 +47,12 @@ app.on_shutdown(lambda: (config_store.save(ctx.cfg), worker.shutdown()))
 
 def run() -> None:
     """Start the server (also the entry point for the packaged .exe)."""
+    print(f"LGS Test Tool v{APP_VERSION}")
     show = os.environ.get("LGS_TT_DOCKER") != "1" and os.environ.get("LGS_TT_NO_BROWSER") != "1"
     # reload=False is mandatory: the auto-reloader spawns a second process, which
     # would mean a second Modbus worker fighting over the COM port / TCP slot.
-    ui.run(host="0.0.0.0", port=8080, title="LGS Test Tool", reload=False, show=show)
+    ui.run(host="0.0.0.0", port=8080, title=f"LGS Test Tool v{APP_VERSION}",
+           reload=False, show=show)
 
 
 if __name__ in {"__main__", "__mp_main__"}:

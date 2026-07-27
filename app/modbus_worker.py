@@ -517,6 +517,54 @@ class ModbusWorker:
             note += f" — defaults restored: ID {lgs_map.FACTORY_DEFAULT_ID}, baud 9600"
         return DangerResult(ok, tuple(steps), note)
 
+    # ── set slave ID (write reg 4 → persist via coil 503 → probe new id) ───
+    async def set_slave_id(self, current_id: int, new_id: int) -> DangerResult:
+        guard = self._guard(current_id)
+        if guard is not None:
+            return DangerResult(False, (), guard.note)
+        if not lgs_map.valid_device_id(new_id):
+            return DangerResult(False, (),
+                                f"invalid new id {new_id} (1-245 or 247; 246 reserved for SET_ID mode)")
+        return await self._run_job(_PRIO_MANUAL, lambda: self._do_set_slave_id(current_id, new_id))
+
+    def _do_set_slave_id(self, current_id: int, new_id: int) -> DangerResult:
+        steps: list[TxnResult] = []
+
+        r4 = self._do_read_registers(4, 1, current_id, "danger")
+        steps.append(r4)
+        if not r4.ok:
+            return DangerResult(False, tuple(steps), f"device {current_id} is not answering")
+
+        w = self._do_write_register(4, new_id, current_id, "danger")
+        steps.append(w)
+        if not w.ok:
+            return DangerResult(False, tuple(steps), "writing reg 4 failed")
+
+        rb = self._do_read_registers(4, 1, current_id, "danger")
+        steps.append(rb)
+        if not rb.ok or rb.value != new_id:
+            return DangerResult(False, tuple(steps),
+                                f"reg 4 readback mismatch (got {rb.value}, expected {new_id})")
+
+        res = self._do_write_coil(503, True, current_id, "danger", allow_danger=True)
+        if not res.ok:
+            res = TxnResult(True, None, res.latency_ms, "no reply — device rebooting (expected)")
+        steps.append(res)
+        time.sleep(4.0)
+
+        probe = self._do_read_registers(4, 1, new_id, "danger")
+        steps.append(probe)
+        ok = probe.ok and probe.value == new_id
+        if ok:
+            note = f"slave ID changed {current_id} → {new_id} and persisted"
+        else:
+            # R5.0 validates at persist time; a rejected value reverts to the old ID
+            back = self._do_read_registers(4, 1, current_id, "danger")
+            steps.append(back)
+            note = (f"device still answers at old id {current_id} — new ID rejected at persist"
+                    if back.ok else f"device did not answer at new id {new_id} after reboot")
+        return DangerResult(ok, tuple(steps), note)
+
 
 class _WorkerOps:
     """testsuite.ModbusOps bound to the worker internals (runs on worker thread)."""

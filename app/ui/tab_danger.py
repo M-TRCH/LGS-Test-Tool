@@ -105,3 +105,38 @@ def build(ctx: Ctx) -> None:
             ui.label("Zeroes regs 200-281 (persisted)").classes("text-xs text-grey")
             ui.button("Clear…", on_click=simple_confirm("Clear all statistics counters",
                                                         DangerAction.CLEAR_STATS)).props("outline dense")
+
+        with ui.card().classes("p-3 min-w-[280px]"):
+            ui.label("Set Slave ID (reg 4 → persist 503)").classes("font-bold")
+            ui.label("Grid convention: row×10+col (11-64) · factory 247 · 246 forbidden") \
+                .classes("text-xs text-grey")
+            with ui.row().classes("items-center gap-2"):
+                new_id_input = ui.number("new ID", value=11, min=1, max=247, format="%d") \
+                    .props("dense outlined").classes("w-24")
+
+                async def set_id_flow() -> None:
+                    cur = ctx.device_id()
+                    target = int(new_id_input.value or 0)
+                    d = ui.dialog()
+                    with d, ui.card():
+                        ui.label("Change slave ID?").classes("font-bold")
+                        ui.label(f"Device {cur} → new ID {target}. Writes reg 4, persists to "
+                                 f"EEPROM (coil 503) and reboots ~3 s, then verifies at the new ID.")
+                        if target == cur:
+                            ui.label("new ID equals the current ID").classes("text-orange")
+                        with ui.row():
+                            ui.button("Cancel", on_click=lambda: d.submit(False)).props("flat")
+                            ui.button("CHANGE ID", color="red", on_click=lambda: d.submit(True))
+                    if not await d:
+                        return
+                    result_log.push(f"--- set slave id {cur} -> {target} ---")
+                    res = await worker.set_slave_id(cur, target)
+                    for i, step in enumerate(res.steps, 1):
+                        mark = "OK " if step.ok else "ERR"
+                        result_log.push(f"  step {i}: {mark} {step.note or step.value}")
+                    result_log.push(f"  => {'SUCCESS' if res.ok else 'FAILED'}: {res.note}")
+                    ui.notify(res.note, type="positive" if res.ok else "negative", timeout=6000)
+                    if res.ok and ctx.device_id_setter:
+                        ctx.device_id_setter(target)
+
+                ui.button("Set ID…", color="red", on_click=set_id_flow).props("outline dense")
