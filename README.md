@@ -58,10 +58,11 @@ no Docker, and COM ports work natively (which Docker on Windows cannot do):
 powershell -ExecutionPolicy Bypass -File build_exe.ps1
 ```
 
-This produces `dist\LGS-Test-Tool.exe` (PyInstaller one-file via `nicegui-pack`).
-Copy that file anywhere, double-click: a console window opens, the browser opens at
-http://localhost:8080, and a `data\` folder (config + CSV exports) is created next to
-the exe. Close the console window to stop the server.
+This produces `dist\LGS-Test-Tool-v<version>.exe` (PyInstaller one-file via
+`nicegui-pack`; the version comes from `app/version.py`, e.g.
+`LGS-Test-Tool-v1.1.0.exe`). Copy that file anywhere, double-click: a console window
+opens, the browser opens at http://localhost:8080, and a `data\` folder (config + CSV
+exports) is created next to the exe. Close the console window to stop the server.
 
 Notes:
 - First launch is slower (~5-30 s) — the one-file exe unpacks itself to temp and
@@ -120,7 +121,8 @@ gateway ที่ `192.168.0.178:502` ซึ่งรับทีละ 1 client
 `.venv\Scripts\python -m app.main` เปิด http://localhost:8080 — หรือรันใน Docker
 (ใช้ได้เฉพาะ TCP เพราะ Windows ส่ง COM port เข้า container ไม่ได้)
 
-**ติดตั้งเครื่องอื่นแบบคลิกเดียว:** รัน `build_exe.ps1` จะได้ `dist\LGS-Test-Tool.exe`
-ไฟล์เดียว — ก๊อปปี้ไปเครื่องไหนก็ได้ ดับเบิลคลิกใช้งานเลย (ไม่ต้องมี Python และใช้
+**ติดตั้งเครื่องอื่นแบบคลิกเดียว:** รัน `build_exe.ps1` จะได้
+`dist\LGS-Test-Tool-v<เวอร์ชัน>.exe` ไฟล์เดียว (เลขเวอร์ชันอยู่ในชื่อไฟล์ เช่น
+`LGS-Test-Tool-v1.1.0.exe`) — ก๊อปปี้ไปเครื่องไหนก็ได้ ดับเบิลคลิกใช้งานเลย (ไม่ต้องมี Python และใช้
 COM port ได้ปกติ) ปิดหน้าต่าง console เพื่อหยุดโปรแกรม — ครั้งแรก Windows SmartScreen
 อาจเตือน ให้กด "More info" → "Run anyway"

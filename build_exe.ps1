@@ -34,20 +34,26 @@ foreach ($dir in @("build", "dist")) {
     }
 }
 
+# exe name carries the app version (from app/version.py) so deployed copies
+# are distinguishable at a glance, e.g. LGS-Test-Tool-v1.1.0.exe
+$version = & ".venv\Scripts\python.exe" -c "from app.version import APP_VERSION; print(APP_VERSION)"
+if ($LASTEXITCODE -ne 0 -or -not $version) { Write-Host "ERROR: cannot read app/version.py"; exit 1 }
+$name = "LGS-Test-Tool-v$version"
+
 # nicegui-pack = NiceGUI's PyInstaller wrapper (adds its static assets etc.)
 # It shells out to the bare `pyinstaller` command, so the venv Scripts dir
 # must be on PATH for the child process to find it.
 $env:PATH = "$PSScriptRoot\.venv\Scripts;$env:PATH"
-& ".venv\Scripts\nicegui-pack.exe" --onefile --name "LGS-Test-Tool" run.py
+& ".venv\Scripts\nicegui-pack.exe" --onefile --name $name run.py
 if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: nicegui-pack failed"; exit 1 }
 
-if (Test-Path "dist\LGS-Test-Tool.exe") {
-    $size = [math]::Round((Get-Item "dist\LGS-Test-Tool.exe").Length / 1MB, 1)
+if (Test-Path "dist\$name.exe") {
+    $size = [math]::Round((Get-Item "dist\$name.exe").Length / 1MB, 1)
     Write-Host ""
-    Write-Host "OK: dist\LGS-Test-Tool.exe ($size MB)"
+    Write-Host "OK: dist\$name.exe ($size MB)"
     Write-Host "Deploy: copy the exe anywhere and double-click. Data (config +"
     Write-Host "CSV exports) is written to a 'data' folder next to the exe."
 } else {
-    Write-Host "ERROR: build finished but dist\LGS-Test-Tool.exe not found"
+    Write-Host "ERROR: build finished but dist\$name.exe not found"
     exit 1
 }
