@@ -49,6 +49,29 @@ land in `data/exports/`.
 > OneDrive note: `.venv/` is gitignored but OneDrive still syncs it — consider excluding
 > the folder from sync ("Choose folders") if it causes churn.
 
+## Portable Windows build (one-click install)
+
+The easiest way to put the tool on another Windows PC — a single `.exe`, no Python,
+no Docker, and COM ports work natively (which Docker on Windows cannot do):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File build_exe.ps1
+```
+
+This produces `dist\LGS-Test-Tool.exe` (PyInstaller one-file via `nicegui-pack`).
+Copy that file anywhere, double-click: a console window opens, the browser opens at
+http://localhost:8080, and a `data\` folder (config + CSV exports) is created next to
+the exe. Close the console window to stop the server.
+
+Notes:
+- First launch is slower (~5-30 s) — the one-file exe unpacks itself to temp and
+  Windows Defender scans it once.
+- Unsigned exe: Windows SmartScreen may warn on first run — choose
+  "More info" → "Run anyway".
+- Windows Firewall prompt: localhost use works either way; click "Allow" only if
+  other PCs on the LAN should reach the page.
+- Rebuild after any code change; the exe is a frozen snapshot.
+
 ## Run (Docker — TCP only)
 
 ```bash
@@ -96,3 +119,8 @@ gateway ที่ `192.168.0.178:502` ซึ่งรับทีละ 1 client
 วิธีรัน: สร้าง venv + `pip install -r requirements.txt` แล้ว
 `.venv\Scripts\python -m app.main` เปิด http://localhost:8080 — หรือรันใน Docker
 (ใช้ได้เฉพาะ TCP เพราะ Windows ส่ง COM port เข้า container ไม่ได้)
+
+**ติดตั้งเครื่องอื่นแบบคลิกเดียว:** รัน `build_exe.ps1` จะได้ `dist\LGS-Test-Tool.exe`
+ไฟล์เดียว — ก๊อปปี้ไปเครื่องไหนก็ได้ ดับเบิลคลิกใช้งานเลย (ไม่ต้องมี Python และใช้
+COM port ได้ปกติ) ปิดหน้าต่าง console เพื่อหยุดโปรแกรม — ครั้งแรก Windows SmartScreen
+อาจเตือน ให้กด "More info" → "Run anyway"

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from dataclasses import asdict, dataclass, fields
 from pathlib import Path
 
@@ -26,6 +27,10 @@ def data_dir() -> Path:
     env = os.environ.get("LGS_TT_DATA_DIR")
     if env:
         d = Path(env)
+    elif getattr(sys, "frozen", False):
+        # packaged .exe: __file__ points into PyInstaller's temp extraction dir,
+        # so keep data next to the executable instead
+        d = Path(sys.executable).resolve().parent / "data"
     else:
         d = Path(__file__).resolve().parent.parent / "data"
     d.mkdir(parents=True, exist_ok=True)
