@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+data/
+.nicegui/
+
+# Windows / OneDrive
+Thumbs.db
+desktop.ini
