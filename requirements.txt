@@ -1,3 +1,4 @@
-nicegui>=2.11,<3
-pymodbus>=3.9,<4
-pyserial>=3.5
+# pymodbus floor 3.9: the device_id= kwarg and trace hooks; tested versions below
+nicegui>=2.11,<3    # tested: 2.24.2
+pymodbus>=3.9,<4    # tested: 3.14.0
+pyserial>=3.5       # tested: 3.5
