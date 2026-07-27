@@ -18,8 +18,10 @@ def build(ctx: Ctx) -> None:
     cfg = ctx.cfg
     worker = ctx.worker
 
-    with ui.header().classes("items-center gap-3 flex-wrap bg-blue-10 q-py-xs"):
-        ui.label("LGS Test Tool").classes("text-lg font-bold")
+    # light background so the default dark text of Quasar fields stays readable
+    with ui.header().classes("items-center gap-3 flex-wrap bg-grey-2 text-black q-py-xs") \
+            .props("bordered"):
+        ui.label("LGS Test Tool").classes("text-lg font-bold text-primary")
 
         transport = ui.radio({"rtu": "RTU (COM)", "tcp": "TCP"}, value=cfg.transport) \
             .props("inline dense")
