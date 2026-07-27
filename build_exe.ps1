@@ -19,6 +19,21 @@ Write-Host "ensuring pyinstaller (build-time only)..."
 .venv\Scripts\python.exe -m pip install --quiet pyinstaller
 if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: pip install pyinstaller failed"; exit 1 }
 
+# Pre-clean previous build output ourselves: OneDrive can hold locks inside
+# build/ that make nicegui-pack's own cleanup die with Access denied.
+foreach ($dir in @("build", "dist")) {
+    if (Test-Path $dir) {
+        foreach ($try in 1..5) {
+            try { Remove-Item $dir -Recurse -Force -ErrorAction Stop; break }
+            catch { Start-Sleep -Seconds 2 }
+        }
+        if (Test-Path $dir) {
+            Write-Host "ERROR: cannot remove $dir (OneDrive lock?) - pause sync and retry"
+            exit 1
+        }
+    }
+}
+
 # nicegui-pack = NiceGUI's PyInstaller wrapper (adds its static assets etc.)
 # It shells out to the bare `pyinstaller` command, so the venv Scripts dir
 # must be on PATH for the child process to find it.
