@@ -9,7 +9,7 @@ from nicegui import ui
 from ..config_store import data_dir
 from ..fieldcheck import (CheckConfig, CheckDone, DeviceDone, DeviceStart,
                           check_csv_bytes)
-from ..lgs_map import GRID_COLS, GRID_ROWS
+from ..lgs_map import CABINET_LAYOUTS, GRID_COLS, GRID_ROWS
 from . import Ctx
 
 COLOR_UNSELECTED = "grey-5"
@@ -73,9 +73,20 @@ def build(ctx: Ctx) -> None:
             ui.button("From last scan", on_click=from_scan).props("flat dense no-caps")
             count_label = ui.label("").classes("text-sm text-grey")
 
-        ui.label("Click a cell to include it; the row button toggles a whole row. "
-                 "Cells turn green when the module passes, red when it does not answer.") \
-            .classes("text-xs text-grey")
+        with ui.row().classes("items-center gap-2 flex-wrap"):
+            ui.label("Cabinet:").classes("text-sm text-grey")
+            for layout in CABINET_LAYOUTS:
+                def pick(layout=layout) -> None:
+                    set_selection(layout.ids)
+                    ui.notify(f"{layout.label} — {layout.count} modules selected",
+                              type="positive", timeout=1500)
+
+                ui.button(f"{layout.label} ({layout.count})", on_click=pick) \
+                    .props("outline dense no-caps").tooltip(layout.detail)
+
+        ui.label("Pick a cabinet type, or click cells to include them one by one "
+                 "(the row button toggles a whole row). Cells turn green when the "
+                 "module passes, red when it does not answer.").classes("text-xs text-grey")
 
         with ui.column().classes("gap-1 q-mt-sm"):
             for r in range(1, GRID_ROWS + 1):

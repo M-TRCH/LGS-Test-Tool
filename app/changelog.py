@@ -18,7 +18,8 @@ class Release:
 RELEASES: tuple = (
     Release("1.1.0", "2026-07-30", (
         "Installation Check: run light / display / unlock across many modules at "
-        "once and read the result as a map of the cabinet.",
+        "once and read the result as a map of the cabinet. One click picks a whole "
+        "cabinet type — LGS 80 / 40 / 56 or SMT.",
         "Module Test (previously 'Auto Test'): options rewritten in plain language; "
         "the latch options stay locked until the unlock test is enabled.",
         "Slave ID grid picker in the header — click 11-108, 246 (SET_ID) or 247 "

@@ -27,6 +27,38 @@ GRID_COLS = 8
 GRID_IDS = tuple(r * 10 + c for r in range(1, GRID_ROWS + 1)
                  for c in range(1, GRID_COLS + 1))          # 11-18, 21-28, ... 101-108
 
+
+@dataclass(frozen=True)
+class CabinetLayout:
+    """A product variant's module grid — the number in the LGS names is the
+    module count (rows x cols)."""
+    key: str
+    label: str
+    rows: int
+    cols: int
+
+    @property
+    def ids(self) -> tuple:
+        return tuple(r * 10 + c for r in range(1, self.rows + 1)
+                     for c in range(1, self.cols + 1))
+
+    @property
+    def count(self) -> int:
+        return self.rows * self.cols
+
+    @property
+    def detail(self) -> str:
+        return (f"{self.rows} rows x {self.cols} columns — {self.count} modules "
+                f"({self.ids[0]}-{self.ids[self.cols - 1]} … {self.ids[-self.cols]}-{self.ids[-1]})")
+
+
+CABINET_LAYOUTS = (
+    CabinetLayout("lgs80", "LGS type 80", 10, 8),
+    CabinetLayout("lgs40", "LGS type 40", 10, 4),
+    CabinetLayout("lgs56", "LGS type 56", 7, 8),
+    CabinetLayout("smt", "SMT", 3, 4),
+)
+
 HEALTH_BITS = ("AT24 EEPROM", "OLED", "Room sensor", "Board sensor")     # bit0..3, set = OK
 HEALTH_LATCH_BIT = 4                                                     # bit4 = latch locked (state, not health)
 RESET_CAUSES = ("IWDG", "Software", "Power-on", "NRST pin", "WWDG", "Low-power", "Option-byte")
@@ -228,6 +260,8 @@ assert coil_latch_display(1) == 1031 and coil_latch_display(8) == 1038
 assert stats_count(8) == 280 and stats_time(8) == 281
 assert GRID_IDS[0] == 11 and GRID_IDS[-1] == 108 and len(GRID_IDS) == 80
 assert all(valid_assignable_id(i) for i in GRID_IDS)
+for _layout in CABINET_LAYOUTS:                 # every variant fits inside the full grid
+    assert set(_layout.ids) <= set(GRID_IDS) and len(_layout.ids) == _layout.count
 assert valid_target_id(SETID_TEMP_ID) and not valid_assignable_id(SETID_TEMP_ID)
 assert not valid_target_id(0) and valid_target_id(247)
 assert classify_coil(505) is CoilClass.FORBIDDEN
