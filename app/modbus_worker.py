@@ -22,7 +22,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Callable, Optional, Sequence
 
-from . import fieldcheck, lgs_map, testsuite
+from . import fieldcheck, lgs_map, ota, testsuite
 from .lgs_map import CoilClass, INTER_TXN_S, LATCH_COOLDOWN_S
 from .transports import TransportSettings, make_client, make_scan_probe_client
 from .txn_log import TxnLog
@@ -48,11 +48,13 @@ class WorkerState:
     sweep_running: bool = False
     scan_running: bool = False
     check_running: bool = False
+    ota_running: bool = False
     last_error: str = ""
 
     @property
     def long_job_running(self) -> bool:
-        return self.sweep_running or self.scan_running or self.check_running
+        return (self.sweep_running or self.scan_running or self.check_running
+                or self.ota_running)
 
 
 @dataclass(frozen=True)
@@ -133,6 +135,10 @@ class ModbusWorker:
         self._check_cancel = threading.Event()
         self._check_events: list = []
         self._check_lock = threading.Lock()
+        self._ota_running = False
+        self._ota_cancel = threading.Event()
+        self._ota_events: list = []
+        self._ota_lock = threading.Lock()
         self._event_seq = 0
 
     # ── lifecycle ──────────────────────────────────────────────────────────
@@ -183,7 +189,8 @@ class ModbusWorker:
             desc = self._settings.describe() if self._settings else ""
             return WorkerState(self._connected, desc, self._busy,
                                self._sweep_running, self._scan_running,
-                               self._check_running, self._last_error)
+                               self._check_running, self._ota_running,
+                               self._last_error)
 
     def cooldown_remaining(self, device_id: int) -> float:
         """Seconds left before this module will accept another unlock."""
@@ -290,10 +297,10 @@ class ModbusWorker:
             lambda v: lgs_map.decode_register(addr, v))
 
     def _do_write_coil(self, addr: int, value: bool, device_id: int, source: str,
-                       allow_danger: bool = False) -> TxnResult:
+                       allow_danger: bool = False, allow_ota: bool = False) -> TxnResult:
         cls = lgs_map.classify_coil(addr)
-        if cls is CoilClass.FORBIDDEN:
-            res = TxnResult(False, note="OTA coils are excluded — use LGS-Standard-Module/tools/ota_sender.py")
+        if cls is CoilClass.FORBIDDEN and not allow_ota:
+            res = TxnResult(False, note="OTA coils are driven by the OTA tab only")
             self._log.append(source, 5, addr, device_id, "write", False, int(value), "",
                              0.0, res.note)
             return res
@@ -321,7 +328,7 @@ class ModbusWorker:
 
     # ── async facade (manual ops) ──────────────────────────────────────────
     def _guard(self, device_id: int) -> Optional[TxnResult]:
-        if self._sweep_running or self._check_running:
+        if self._sweep_running or self._check_running or self._ota_running:
             return TxnResult(False, note="a test is running — wait or cancel it")
         if not self._connected:
             return TxnResult(False, note="not connected")
@@ -474,6 +481,83 @@ class ModbusWorker:
         finally:
             self._sweep_running = False
 
+    # ── broadcast (device id 0, no reply expected) ─────────────────────────
+    def _do_broadcast(self, kind: str, addr: int, payload, source: str = "ota",
+                      log: bool = True) -> TxnResult:
+        if self._client is None:
+            return TxnResult(False, note="not connected")
+        gap = INTER_TXN_S - (time.monotonic() - self._last_txn_t)
+        if gap > 0:
+            time.sleep(gap)
+        self._trace["tx"] = self._trace["rx"] = ""
+        t0 = time.monotonic()
+        ok, note = True, ""
+        try:
+            if kind == "regs":
+                self._client.write_registers(addr, payload, device_id=0,
+                                             no_response_expected=True)
+            else:
+                self._client.write_coil(addr, True, device_id=0,
+                                        no_response_expected=True)
+        except Exception as exc:                           # noqa: BLE001
+            ok, note = False, f"EXC {type(exc).__name__}: {exc}"
+        latency = (time.monotonic() - t0) * 1000.0
+        self._last_txn_t = time.monotonic()
+        if log:
+            self._log.append(source, 16 if kind == "regs" else 5, addr, 0, "broadcast",
+                             ok, len(payload) if kind == "regs" else 1,
+                             "broadcast (no reply expected)", latency, note,
+                             self._trace["tx"], "")
+        return TxnResult(ok, None, latency, note)
+
+    # ── OTA (long job) ─────────────────────────────────────────────────────
+    def start_ota(self, cfg: "ota.OtaConfig") -> bool:
+        if self._ota_running or self._sweep_running or self._scan_running \
+                or self._check_running or not self._connected or not cfg.ids:
+            return False
+        self._ota_cancel.clear()
+        with self._ota_lock:
+            self._ota_events.clear()
+        self._ota_running = True
+        self._submit(_PRIO_LONG, lambda: self._do_ota(cfg))
+        return True
+
+    def cancel_ota(self) -> None:
+        self._ota_cancel.set()
+
+    def drain_ota_events(self, since: int) -> tuple[int, list]:
+        with self._ota_lock:
+            fresh = [e for e in self._ota_events if e.seq > since]
+            return (fresh[-1].seq if fresh else since), fresh
+
+    def _do_ota(self, cfg: "ota.OtaConfig") -> None:
+        def emit(ev) -> None:
+            with self._ota_lock:
+                self._event_seq += 1
+                ev.seq = self._event_seq
+                self._ota_events.append(ev)
+
+        try:
+            ota.run_ota(_OtaOps(self), cfg, emit, self._ota_cancel)
+        finally:
+            self._ota_running = False
+
+    async def ota_status(self, ids: Sequence[int]) -> list:
+        """[(device_id, description)] — quick read of reg 282/283 per device."""
+        if not self._connected:
+            return [(uid, "not connected") for uid in ids]
+        return await self._run_job(_PRIO_MANUAL, lambda: self._do_ota_status(list(ids)))
+
+    def _do_ota_status(self, ids: list) -> list:
+        ops = _OtaOps(self)
+        return [(uid, ota.describe_state(ota.read_state(ops, uid))) for uid in ids]
+
+    async def ota_abort(self) -> TxnResult:
+        if not self._connected:
+            return TxnResult(False, note="not connected")
+        return await self._run_job(
+            _PRIO_MANUAL, lambda: self._do_broadcast("coil", ota.COIL_ABORT))
+
     # ── installation check (long job, many devices) ────────────────────────
     def start_field_check(self, cfg: "fieldcheck.CheckConfig",
                           ids: Sequence[int]) -> bool:
@@ -610,6 +694,32 @@ class ModbusWorker:
             note = (f"device still answers at old id {current_id} — new ID rejected at persist"
                     if back.ok else f"device did not answer at new id {new_id} after reboot")
         return DangerResult(ok, tuple(steps), note)
+
+
+class _OtaOps:
+    """ota.OtaOps bound to the worker (runs on the worker thread)."""
+
+    def __init__(self, worker: ModbusWorker) -> None:
+        self._w = worker
+
+    def read_regs(self, device_id: int, addr: int, count: int) -> TxnResult:
+        return self._w._do_read_registers(addr, count, device_id, "ota")
+
+    def bcast_regs(self, addr: int, values: list, log: bool = True) -> TxnResult:
+        return self._w._do_broadcast("regs", addr, values, "ota", log)
+
+    def bcast_coil(self, addr: int) -> TxnResult:
+        return self._w._do_broadcast("coil", addr, [1], "ota")
+
+    def write_coil(self, device_id: int, addr: int, value: int) -> TxnResult:
+        return self._w._do_write_coil(addr, bool(value), device_id, "ota", allow_ota=True)
+
+    def sleep(self, seconds: float) -> None:
+        end = time.monotonic() + seconds
+        while time.monotonic() < end:
+            if self._w._ota_cancel.is_set():
+                raise ota.OtaCancelled()
+            time.sleep(min(0.05, max(0.0, end - time.monotonic())))
 
 
 class _FieldOps:

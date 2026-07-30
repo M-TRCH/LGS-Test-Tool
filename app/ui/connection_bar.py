@@ -231,6 +231,9 @@ def build(ctx: Ctx) -> None:
             elif st.check_running:
                 status.set_text(t("hdr.status.install_check"))
                 status.props("color=amber")
+            elif st.ota_running:
+                status.set_text(t("hdr.status.ota"))
+                status.props("color=amber")
             elif st.scan_running:
                 status.set_text(t("hdr.status.scanning"))
                 status.props("color=amber")

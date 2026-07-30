@@ -10,7 +10,7 @@ from . import config_store, i18n
 from .modbus_worker import ModbusWorker
 from .txn_log import TxnLog
 from .ui import (Ctx, connection_bar, log_pane, tab_autotest, tab_control,
-                 tab_danger, tab_install, tab_monitor, theme)
+                 tab_danger, tab_install, tab_monitor, tab_ota, theme)
 from .version import APP_VERSION
 
 # Shared across browsers: one Modbus worker, one log, one settings file — the
@@ -35,6 +35,7 @@ def index() -> None:
         t_monitor = ui.tab("monitor", i18n.t("tab.monitor"), icon="monitor_heart")
         t_install = ui.tab("install", i18n.t("tab.install"), icon="grid_view")
         t_module = ui.tab("module", i18n.t("tab.module"), icon="checklist")
+        t_ota = ui.tab("ota", i18n.t("tab.ota"), icon="system_update")
         t_danger = ui.tab("danger", i18n.t("tab.danger"), icon="warning")
 
     with ui.tab_panels(tabs, value=t_control).classes("w-full"):
@@ -46,6 +47,8 @@ def index() -> None:
             tab_install.build(ctx)
         with ui.tab_panel(t_module):
             tab_autotest.build(ctx)
+        with ui.tab_panel(t_ota):
+            tab_ota.build(ctx)
         with ui.tab_panel(t_danger):
             tab_danger.build(ctx)
 

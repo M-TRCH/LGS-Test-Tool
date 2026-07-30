@@ -62,6 +62,7 @@ TEXTS: dict[str, dict[str, str]] = {
     "hdr.status.module_test": {"en": "MODULE TEST RUNNING", "th": "กำลังทดสอบโมดูล"},
     "hdr.status.install_check": {"en": "INSTALLATION CHECK RUNNING",
                                  "th": "กำลังตรวจการติดตั้ง"},
+    "hdr.status.ota": {"en": "FIRMWARE UPDATE RUNNING", "th": "กำลังอัปเดตเฟิร์มแวร์"},
     "hdr.status.connected": {"en": "{desc} — id {id}", "th": "{desc} — id {id}"},
     "hdr.lang_tooltip": {"en": "language", "th": "ภาษา"},
     "hdr.about_tooltip": {"en": "about — v{ver} and release notes",
@@ -291,6 +292,40 @@ TEXTS: dict[str, dict[str, str]] = {
     "ins.res.pass": {"en": "✓ pass", "th": "✓ ผ่าน"},
     "ins.res.no_answer": {"en": "✗ no answer", "th": "✗ ไม่ตอบสนอง"},
     "ins.res.fail": {"en": "✗ fail", "th": "✗ ไม่ผ่าน"},
+
+    # ── OTA tab ────────────────────────────────────────────────────────────
+    "tab.ota": {"en": "Firmware (OTA)", "th": "อัปเดตเฟิร์มแวร์"},
+    "ota.banner": {"en": "⚠ Writes firmware over RS485. Keep power on until the "
+                         "update finishes — an interrupted apply can leave a module "
+                         "needing a cable flash.",
+                   "th": "⚠ เขียนเฟิร์มแวร์ผ่าน RS485 — ห้ามตัดไฟจนกว่าจะเสร็จ "
+                         "ถ้าหยุดกลางคันโมดูลอาจต้องต่อสายแฟลชใหม่"},
+    "ota.image": {"en": "Firmware image", "th": "ไฟล์เฟิร์มแวร์"},
+    "ota.upload_hint": {"en": "Pick the .bin built for the app slot (flash offset "
+                              "0x1000), at most {max} bytes.",
+                        "th": "เลือกไฟล์ .bin ที่ build สำหรับ app slot (flash offset "
+                              "0x1000) ขนาดไม่เกิน {max} ไบต์"},
+    "ota.image_info": {"en": "{name} — {size} B, CRC32 {crc}, {chunks} chunks",
+                       "th": "{name} — {size} ไบต์, CRC32 {crc}, {chunks} ชิ้น"},
+    "ota.no_image": {"en": "no firmware selected", "th": "ยังไม่ได้เลือกไฟล์เฟิร์มแวร์"},
+    "ota.targets": {"en": "Target modules", "th": "โมดูลปลายทาง"},
+    "ota.ids_label": {"en": "device IDs (comma separated)", "th": "รหัสอุปกรณ์ (คั่นด้วยจุลภาค)"},
+    "ota.use_current": {"en": "Use the header ID", "th": "ใช้ ID จากแถบบน"},
+    "ota.use_scan": {"en": "From last scan", "th": "จากผลสแกนล่าสุด"},
+    "ota.no_ids": {"en": "no valid device IDs", "th": "ยังไม่มีรหัสอุปกรณ์ที่ถูกต้อง"},
+    "ota.broadcast_apply": {"en": "Apply with one broadcast instead of per device",
+                            "th": "สั่งใช้งานแบบ broadcast ครั้งเดียวแทนทีละเครื่อง"},
+    "ota.send": {"en": "Send firmware", "th": "ส่งเฟิร์มแวร์"},
+    "ota.status": {"en": "Read status", "th": "อ่านสถานะ"},
+    "ota.abort": {"en": "Abort session", "th": "ยกเลิกเซสชัน"},
+    "ota.abort_sent": {"en": "abort broadcast sent", "th": "ส่งคำสั่งยกเลิกแบบ broadcast แล้ว"},
+    "ota.confirm_title": {"en": "Flash firmware?", "th": "เขียนเฟิร์มแวร์?"},
+    "ota.confirm_body": {"en": "{size} B to {n} device(s): {ids}. The bus is busy for "
+                               "a few minutes and each module reboots at the end.",
+                         "th": "{size} ไบต์ ไปยัง {n} เครื่อง: {ids} "
+                               "บัสจะไม่ว่างหลายนาทีและทุกโมดูลจะรีบูตตอนจบ"},
+    "ota.confirm_btn": {"en": "FLASH", "th": "เขียน"},
+    "ota.progress": {"en": "chunk {done}/{total}", "th": "ชิ้นที่ {done}/{total}"},
 
     # ── danger tab ─────────────────────────────────────────────────────────
     "dng.banner": {"en": "⚠ These commands reboot or wipe the module — double-check "
