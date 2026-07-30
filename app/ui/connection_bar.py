@@ -203,24 +203,25 @@ def build(ctx: Ctx) -> None:
             cfg.theme = key
             config_store.save(cfg)
 
-        # ── language / about / theme (far right) ───────────────────────────
-        ui.space()
-
+        # ── language / theme / about (far right) ───────────────────────────
         def choose_language(lang: str) -> None:
             cfg.language = lang
             config_store.save(cfg)
             ui.navigate.reload()      # the page is rebuilt in the new language
 
-        with ui.button(icon="translate").props("dense flat round") \
-                .tooltip(t("hdr.lang_tooltip")):
-            with ui.menu():
-                for code, name in i18n.LANGUAGES.items():
-                    marker = "●" if code == i18n.current() else "○"
-                    ui.menu_item(f"{marker}  {name}",
-                                 on_click=lambda c=code: choose_language(c))
+        # ml-auto keeps the group at the right edge of whichever line it lands
+        # on (ui.space() would strand it on the left after a wrap)
+        with ui.row().classes("items-center gap-0 flex-nowrap ml-auto"):
+            with ui.button(icon="translate").props("dense flat round") \
+                    .tooltip(t("hdr.lang_tooltip")):
+                with ui.menu():
+                    for code, name in i18n.LANGUAGES.items():
+                        marker = "●" if code == i18n.current() else "○"
+                        ui.menu_item(f"{marker}  {name}",
+                                     on_click=lambda c=code: choose_language(c))
 
-        theme_mod.build_picker(theme_chosen)
-        about.build_button()
+            theme_mod.build_picker(theme_chosen)
+            about.build_button()
 
         def refresh_status() -> None:
             st = worker.get_state()
