@@ -81,22 +81,22 @@ def build(ctx: Ctx) -> None:
         with ui.button(icon="grid_view").props("dense flat round") \
                 .tooltip("pick a slave ID from the grid (row x 10 + col)"):
             with ui.menu() as id_menu:
-                with ui.column().classes("gap-0 p-2"):
+                with ui.column().classes("gap-1 p-3"):
                     ui.label("Grid IDs — row×10+col").classes("text-xs text-grey q-mb-xs")
                     for r in range(1, GRID_ROWS + 1):
-                        with ui.row().classes("gap-0 flex-nowrap"):
+                        with ui.row().classes("gap-1 flex-nowrap"):
                             for c in range(1, GRID_COLS + 1):
                                 gid = r * 10 + c
                                 ui.button(str(gid),
                                           on_click=lambda gid=gid: (id_input.set_value(gid),
                                                                     id_menu.close())) \
-                                    .props("dense flat size=sm no-caps") \
-                                    .classes("w-11 min-w-0 font-mono")
+                                    .props("flat no-caps") \
+                                    .classes("w-14 min-w-0 font-mono text-base")
                     ui.separator().classes("q-my-xs")
                     ui.button(f"{FACTORY_DEFAULT_ID} (factory default)",
                               on_click=lambda: (id_input.set_value(FACTORY_DEFAULT_ID),
                                                 id_menu.close())) \
-                        .props("dense flat size=sm no-caps").classes("w-full")
+                        .props("flat no-caps").classes("w-full")
 
         # ── scan ───────────────────────────────────────────────────────────
         def current_settings():
