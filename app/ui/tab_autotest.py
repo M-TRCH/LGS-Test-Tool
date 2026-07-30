@@ -11,22 +11,59 @@ from . import Ctx
 
 MAX_TABLE_ROWS = 200
 
+# plain-language names for the sweep phases (raw names stay in the CSV)
+PHASE_LABELS = {
+    "READ": "Read all",
+    "WRITE": "Write/restore",
+    "VALIDATE": "Value limits",
+    "PRESET": "Colour presets",
+    "DISPLAY": "Display",
+    "LED": "Light ring",
+    "LATCH": "Unlock",
+}
+
 
 def build(ctx: Ctx) -> None:
     worker = ctx.worker
     state = {"seq": 0, "report": None, "rows": 0}
 
-    with ui.row().classes("items-center gap-3 flex-wrap"):
-        loops = ui.number("loops", value=1, min=1, max=10, format="%d") \
-            .props("dense outlined").classes("w-20")
-        cb_led = ui.checkbox("LED phases (PRESET/DISPLAY/LED)", value=True)
-        cb_latch = ui.checkbox("Latch phase (fires the solenoid!)", value=False)
-        fires = ui.number("fires", value=1, min=1, max=5, format="%d") \
-            .props("dense outlined").classes("w-20")
-        cb_force = ui.checkbox("force 1019", value=True)
-        cb_combos = ui.checkbox("combos 1022/1031", value=False)
-        cb_1021 = ui.checkbox("1021", value=False)
-    fire_caption = ui.label("").classes("text-red text-sm")
+    # Options are written in plain language; the raw coil/register numbers stay
+    # in parentheses (same convention as the Control tab) for anyone checking
+    # against the control table.
+    with ui.row().classes("gap-3 flex-wrap items-stretch w-full"):
+        with ui.card().classes("p-3 grow"):
+            ui.label("What to test").classes("font-bold")
+            ui.label("Always included — read every register and coil, write / verify / "
+                     "restore the safe settings, and check the firmware's value limits.") \
+                .classes("text-xs text-grey")
+            with ui.row().classes("items-center gap-4 flex-wrap q-mt-sm"):
+                cb_led = ui.checkbox("Lights & display", value=True) \
+                    .tooltip("Colour presets 1-8 (coils 1001-1008), OLED number "
+                             "(reg 60 + coil 1010), ring on/off")
+                loops = ui.number("Repeat", value=1, min=1, max=10, format="%d") \
+                    .props("dense outlined").classes("w-24") \
+                    .tooltip("How many times to run the whole test")
+
+        with ui.card().classes("p-3 grow border border-orange-400"):
+            with ui.row().classes("items-center gap-2"):
+                ui.icon("lock_open").classes("text-orange")
+                ui.label("Unlock test — moves the physical latch").classes("font-bold")
+            cb_latch = ui.checkbox("Include the unlock test", value=False)
+            with ui.column().classes("gap-1 q-pl-md"):
+                fires = ui.number("Unlocks per round", value=1, min=1, max=5, format="%d") \
+                    .props("dense outlined").classes("w-40") \
+                    .bind_enabled_from(cb_latch, "value")
+                ui.label("Always fires: normal unlock (1020) — opens only when the latch "
+                         "reads locked").classes("text-xs text-grey")
+                cb_force = ui.checkbox("Also force unlock (1019) — opens even if the lock "
+                                       "sensor disagrees", value=True) \
+                    .bind_enabled_from(cb_latch, "value")
+                cb_combos = ui.checkbox("Also light + unlock (1022) and light + number + "
+                                        "unlock (1031)", value=False) \
+                    .bind_enabled_from(cb_latch, "value")
+                cb_1021 = ui.checkbox("Also light 1 + unlock (1021)", value=False) \
+                    .bind_enabled_from(cb_latch, "value")
+            fire_caption = ui.label("").classes("text-red text-sm q-mt-sm")
 
     def make_cfg() -> SweepConfig:
         return SweepConfig(loops=int(loops.value), include_led=bool(cb_led.value),
@@ -37,7 +74,7 @@ def build(ctx: Ctx) -> None:
 
     def update_caption() -> None:
         total = make_cfg().latch_total_fires()
-        fire_caption.set_text(f"⚠ the latch phase will FIRE THE SOLENOID {total} time(s)"
+        fire_caption.set_text(f"⚠ this run will unlock the door {total} time(s)"
                               if total else "")
 
     for el in (loops, cb_latch, fires, cb_force, cb_combos, cb_1021):
@@ -112,7 +149,8 @@ def build(ctx: Ctx) -> None:
         totals = None
         for ev in events:
             if isinstance(ev, PhaseStart):
-                phase_label.set_text(f"{ev.name} ({ev.index}/{ev.total})")
+                phase_label.set_text(f"{PHASE_LABELS.get(ev.name, ev.name)} "
+                                     f"({ev.index}/{ev.total})")
                 progress.set_value((ev.index - 1) / max(1, ev.total))
             elif isinstance(ev, Step):
                 s = ev.step
@@ -120,7 +158,8 @@ def build(ctx: Ctx) -> None:
                 table.rows.append({
                     "i": state["rows"],
                     "t": s.ts.strftime("%H:%M:%S"),
-                    "phase": s.phase, "fc": s.fc, "addr": s.addr, "name": s.name,
+                    "phase": PHASE_LABELS.get(s.phase, s.phase),
+                    "fc": s.fc, "addr": s.addr, "name": s.name,
                     "op": s.op,
                     "value": (s.decoded or str(s.raw)) + (f" | {s.note}" if s.note else ""),
                     "result": {"OK": "✓ OK", "FAIL": "✗ FAIL"}.get(s.result, "⚠ ERR"),
