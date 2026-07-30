@@ -81,7 +81,7 @@ def build(ctx: Ctx) -> None:
                     ui.notify(f"{layout.label} — {layout.count} modules selected",
                               type="positive", timeout=1500)
 
-                ui.button(f"{layout.label} ({layout.count})", on_click=pick) \
+                ui.button(layout.label, on_click=pick) \
                     .props("outline dense no-caps").tooltip(layout.detail)
 
         ui.label("Pick a cabinet type, or click cells to include them one by one "
