@@ -108,7 +108,7 @@ def build(ctx: Ctx) -> None:
 
         with ui.card().classes("p-3 min-w-[280px]"):
             ui.label("Set Slave ID (reg 4 → persist 503)").classes("font-bold")
-            ui.label("Grid convention: row×10+col (11-108) · factory 247 · 246 forbidden") \
+            ui.label("Grid: row×10+col (11-108) · factory 247 · 246 = SET_ID temp (not assignable)") \
                 .classes("text-xs text-grey")
             with ui.row().classes("items-center gap-2"):
                 new_id_input = ui.number("new ID", value=11, min=1, max=247, format="%d") \

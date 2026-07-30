@@ -4,8 +4,8 @@ from __future__ import annotations
 from nicegui import ui
 
 from .. import config_store
-from ..lgs_map import (BAUD_WHITELIST, FACTORY_DEFAULT_ID, FORBIDDEN_ID,
-                       GRID_COLS, GRID_IDS, GRID_ROWS)
+from ..lgs_map import (BAUD_WHITELIST, FACTORY_DEFAULT_ID, GRID_COLS, GRID_IDS,
+                       GRID_ROWS, SETID_TEMP_ID)
 from ..transports import RtuSettings, TcpSettings, list_com_ports
 from ..version import APP_VERSION
 from . import Ctx
@@ -70,8 +70,9 @@ def build(ctx: Ctx) -> None:
             .props("dense outlined").classes("w-28")
 
         def id_changed() -> None:
-            if int(id_input.value or 0) == FORBIDDEN_ID:
-                ui.notify("ID 246 is reserved (SET_ID mode) — not usable", type="warning")
+            if int(id_input.value or 0) == SETID_TEMP_ID:
+                ui.notify("ID 246 targets a module currently in SET_ID mode (temporary ID)",
+                          type="info")
 
         id_input.on_value_change(id_changed)
         ctx.device_id_getter = lambda: int(id_input.value or FACTORY_DEFAULT_ID)
@@ -93,10 +94,15 @@ def build(ctx: Ctx) -> None:
                                     .props("flat no-caps") \
                                     .classes("w-14 min-w-0 font-mono text-base")
                     ui.separator().classes("q-my-xs")
-                    ui.button(f"{FACTORY_DEFAULT_ID} (factory default)",
-                              on_click=lambda: (id_input.set_value(FACTORY_DEFAULT_ID),
-                                                id_menu.close())) \
-                        .props("flat no-caps").classes("w-full")
+                    with ui.row().classes("gap-1 flex-nowrap w-full"):
+                        ui.button(f"{SETID_TEMP_ID} (SET_ID mode)",
+                                  on_click=lambda: (id_input.set_value(SETID_TEMP_ID),
+                                                    id_menu.close())) \
+                            .props("flat no-caps").classes("grow min-w-0")
+                        ui.button(f"{FACTORY_DEFAULT_ID} (factory)",
+                                  on_click=lambda: (id_input.set_value(FACTORY_DEFAULT_ID),
+                                                    id_menu.close())) \
+                            .props("flat no-caps").classes("grow min-w-0")
 
         # ── scan ───────────────────────────────────────────────────────────
         def current_settings():
@@ -147,8 +153,8 @@ def build(ctx: Ctx) -> None:
             s = current_settings()
             if s is None:
                 return
-            ids = ([FACTORY_DEFAULT_ID] + [i for i in range(1, 246)]) if full \
-                else [FACTORY_DEFAULT_ID, *GRID_IDS]
+            ids = ([FACTORY_DEFAULT_ID, SETID_TEMP_ID] + [i for i in range(1, 246)]) if full \
+                else [FACTORY_DEFAULT_ID, SETID_TEMP_ID, *GRID_IDS]
             scan_state.update(seq=scan_state["seq"], count=0, total=len(ids), found=[])
             if not worker.start_scan(s, ids):
                 ui.notify("worker busy — cannot scan now", type="negative")

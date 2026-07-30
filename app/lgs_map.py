@@ -17,7 +17,8 @@ DEVICE_TYPES = {10: "STANDARD", 20: "NARCOTIC", 30: "LITE", 40: "DELIVERY"}
 FUNCTION_MODES = {0: "RUN", 1: "DEMO", 2: "SET_ID", 3: "FACTORY_RESET"}
 BAUD_WHITELIST = (9600, 19200, 38400, 57600)
 FACTORY_DEFAULT_ID = 247
-FORBIDDEN_ID = 246          # reserved for SET_ID discovery mode — never write/use
+SETID_TEMP_ID = 246         # temporary ID a module adopts while its switch is in
+                            # SET_ID mode — addressable as a target, NEVER assignable
 SENSOR_FAULT = 0x8000       # regs 20/21 report this after >=3 failed sensor reads
 LATCH_COOLDOWN_S = 2.2      # firmware enforces >=2000 ms between unlock pulses
 INTER_TXN_S = 0.025         # RS485 breather between transactions
@@ -208,7 +209,13 @@ def decode_register(addr: int, raw: int) -> str:
     return r.decoder(raw, r.unit) if r else str(raw)
 
 
-def valid_device_id(device_id: int) -> bool:
+def valid_target_id(device_id: int) -> bool:
+    """IDs addressable on the bus (246 = a module currently in SET_ID mode)."""
+    return 1 <= device_id <= 247
+
+
+def valid_assignable_id(device_id: int) -> bool:
+    """IDs that may be persisted into reg 4 (246 is the SET_ID temp ID — never assign)."""
     return (1 <= device_id <= 245) or device_id == FACTORY_DEFAULT_ID
 
 
@@ -220,13 +227,14 @@ assert coil_latch(1) == 1021 and coil_latch(8) == 1028
 assert coil_latch_display(1) == 1031 and coil_latch_display(8) == 1038
 assert stats_count(8) == 280 and stats_time(8) == 281
 assert GRID_IDS[0] == 11 and GRID_IDS[-1] == 108 and len(GRID_IDS) == 80
-assert all(valid_device_id(i) for i in GRID_IDS)
+assert all(valid_assignable_id(i) for i in GRID_IDS)
+assert valid_target_id(SETID_TEMP_ID) and not valid_assignable_id(SETID_TEMP_ID)
+assert not valid_target_id(0) and valid_target_id(247)
 assert classify_coil(505) is CoilClass.FORBIDDEN
 assert classify_coil(503) is CoilClass.DANGER
 assert classify_coil(1021) is CoilClass.LATCH
 assert classify_coil(1001) is CoilClass.STATE
 assert classify_coil(509) is CoilClass.NORMAL
-assert not valid_device_id(FORBIDDEN_ID) and not valid_device_id(0) and valid_device_id(247)
 assert len(REGISTERS) == len(REG_BY_ADDR) and len(COILS) == len(COIL_BY_ADDR)  # no dup addrs
 
 

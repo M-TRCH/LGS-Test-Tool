@@ -31,9 +31,11 @@ one Modbus client, one COM port / one TCP socket (the gateway accepts a single c
    blocks without link): TCP `192.168.0.178:502`, **one client at a time**.
 
 Module addressing: grid slave ID = `row*10 + col` (rows 1-10, cols 1-8 → 11-18, 21-28,
-… 101-108), factory default **247**, ID 246 reserved (SET_ID), 0 = broadcast (not used
-by this tool). The header has a grid picker next to the Slave ID field — click a number
-instead of typing.
+… 101-108), factory default **247**, **246** = the temporary ID of a module whose switch
+is in SET_ID mode (selectable as a target — e.g. to assign its real ID — but never
+assignable itself), 0 = broadcast (not used by this tool). The header has a grid picker
+next to the Slave ID field — click a number instead of typing; scans probe 246 and 247
+in addition to the grid.
 Command reference: `LGS-Standard-Module/doc/LGS-Control-Table.md`.
 
 ## Run (native, Windows)

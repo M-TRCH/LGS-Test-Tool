@@ -312,8 +312,8 @@ class ModbusWorker:
             return TxnResult(False, note="sweep running — wait or cancel it")
         if not self._connected:
             return TxnResult(False, note="not connected")
-        if not lgs_map.valid_device_id(device_id):
-            return TxnResult(False, note=f"invalid device id {device_id} (1-245 or 247; 246 reserved)")
+        if not lgs_map.valid_target_id(device_id):
+            return TxnResult(False, note=f"invalid device id {device_id} (1-247; broadcast 0 not supported)")
         return None
 
     async def read_registers(self, addr: int, count: int, device_id: int, *,
@@ -522,9 +522,9 @@ class ModbusWorker:
         guard = self._guard(current_id)
         if guard is not None:
             return DangerResult(False, (), guard.note)
-        if not lgs_map.valid_device_id(new_id):
+        if not lgs_map.valid_assignable_id(new_id):
             return DangerResult(False, (),
-                                f"invalid new id {new_id} (1-245 or 247; 246 reserved for SET_ID mode)")
+                                f"invalid new id {new_id} (1-245 or 247; 246 is the SET_ID temp ID)")
         return await self._run_job(_PRIO_MANUAL, lambda: self._do_set_slave_id(current_id, new_id))
 
     def _do_set_slave_id(self, current_id: int, new_id: int) -> DangerResult:
