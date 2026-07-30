@@ -4,7 +4,8 @@ from __future__ import annotations
 from nicegui import ui
 
 from .. import config_store
-from ..lgs_map import BAUD_WHITELIST, FACTORY_DEFAULT_ID, FORBIDDEN_ID, GRID_IDS
+from ..lgs_map import (BAUD_WHITELIST, FACTORY_DEFAULT_ID, FORBIDDEN_ID,
+                       GRID_COLS, GRID_IDS, GRID_ROWS)
 from ..transports import RtuSettings, TcpSettings, list_com_ports
 from ..version import APP_VERSION
 from . import Ctx
@@ -76,6 +77,27 @@ def build(ctx: Ctx) -> None:
         ctx.device_id_getter = lambda: int(id_input.value or FACTORY_DEFAULT_ID)
         ctx.device_id_setter = lambda v: id_input.set_value(int(v))
 
+        # clickable grid picker (typing in the field still works as before)
+        with ui.button(icon="grid_view").props("dense flat round") \
+                .tooltip("pick a slave ID from the grid (row x 10 + col)"):
+            with ui.menu() as id_menu:
+                with ui.column().classes("gap-0 p-2"):
+                    ui.label("Grid IDs — row×10+col").classes("text-xs text-grey q-mb-xs")
+                    for r in range(1, GRID_ROWS + 1):
+                        with ui.row().classes("gap-0 flex-nowrap"):
+                            for c in range(1, GRID_COLS + 1):
+                                gid = r * 10 + c
+                                ui.button(str(gid),
+                                          on_click=lambda gid=gid: (id_input.set_value(gid),
+                                                                    id_menu.close())) \
+                                    .props("dense flat size=sm no-caps") \
+                                    .classes("w-11 min-w-0 font-mono")
+                    ui.separator().classes("q-my-xs")
+                    ui.button(f"{FACTORY_DEFAULT_ID} (factory default)",
+                              on_click=lambda: (id_input.set_value(FACTORY_DEFAULT_ID),
+                                                id_menu.close())) \
+                        .props("dense flat size=sm no-caps").classes("w-full")
+
         # ── scan ───────────────────────────────────────────────────────────
         def current_settings():
             if transport.value == "rtu":
@@ -136,7 +158,7 @@ def build(ctx: Ctx) -> None:
             scan_dialog.open()
 
         with ui.dropdown_button("Scan", auto_close=True).props("dense"):
-            ui.item("Quick (grid 11-64 + 247)", on_click=lambda: start_scan(False))
+            ui.item("Quick (grid 11-108 + 247)", on_click=lambda: start_scan(False))
             ui.item("Full (1-245 + 247)", on_click=lambda: start_scan(True))
 
         # ── connect / status ───────────────────────────────────────────────

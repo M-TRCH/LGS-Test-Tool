@@ -21,7 +21,10 @@ FORBIDDEN_ID = 246          # reserved for SET_ID discovery mode — never write
 SENSOR_FAULT = 0x8000       # regs 20/21 report this after >=3 failed sensor reads
 LATCH_COOLDOWN_S = 2.2      # firmware enforces >=2000 ms between unlock pulses
 INTER_TXN_S = 0.025         # RS485 breather between transactions
-GRID_IDS = tuple(r * 10 + c for r in range(1, 7) for c in range(1, 5))  # 11..64
+GRID_ROWS = 10
+GRID_COLS = 8
+GRID_IDS = tuple(r * 10 + c for r in range(1, GRID_ROWS + 1)
+                 for c in range(1, GRID_COLS + 1))          # 11-18, 21-28, ... 101-108
 
 HEALTH_BITS = ("AT24 EEPROM", "OLED", "Room sensor", "Board sensor")     # bit0..3, set = OK
 HEALTH_LATCH_BIT = 4                                                     # bit4 = latch locked (state, not health)
@@ -216,7 +219,8 @@ assert coil_display(1) == 1011 and coil_display(8) == 1018
 assert coil_latch(1) == 1021 and coil_latch(8) == 1028
 assert coil_latch_display(1) == 1031 and coil_latch_display(8) == 1038
 assert stats_count(8) == 280 and stats_time(8) == 281
-assert GRID_IDS[0] == 11 and GRID_IDS[-1] == 64 and len(GRID_IDS) == 24
+assert GRID_IDS[0] == 11 and GRID_IDS[-1] == 108 and len(GRID_IDS) == 80
+assert all(valid_device_id(i) for i in GRID_IDS)
 assert classify_coil(505) is CoilClass.FORBIDDEN
 assert classify_coil(503) is CoilClass.DANGER
 assert classify_coil(1021) is CoilClass.LATCH
