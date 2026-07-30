@@ -74,6 +74,7 @@ class ScanEvent:
     device_type: int = -1
     done: bool = False
     found_ids: tuple = ()
+    error: str = ""               # set when the scan had to give up (e.g. port)
 
 
 class DangerAction(Enum):
@@ -418,6 +419,7 @@ class ModbusWorker:
         try:
             self._do_disconnect()                          # free the COM port / TCP slot
             found: list[int] = []
+            fatal = ""
             for uid in ids:
                 if self._scan_cancel.is_set():
                     break
@@ -429,21 +431,32 @@ class ModbusWorker:
                         rsp = probe.read_holding_registers(0, count=1, device_id=uid)
                         if rsp is not None and not rsp.isError():
                             ok, dtype = True, rsp.registers[0]
-                except Exception:                          # noqa: BLE001
-                    pass
+                    else:
+                        # cannot even open the port / reach the host: probing the
+                        # remaining ids would just repeat the same failure and
+                        # report "no devices", hiding the real reason.
+                        fatal = (f"cannot open {settings.describe()} — unplugged, "
+                                 f"in use by another program, or wrong host")
+                except Exception as exc:                   # noqa: BLE001
+                    fatal = f"{settings.describe()}: {type(exc).__name__}: {exc}"
                 finally:
                     if probe is not None:
                         try:
                             probe.close()
                         except Exception:
                             pass
+                if fatal:
+                    self._log.append("scan", 3, 0, uid, "probe", False, None, "",
+                                     0.0, fatal)
+                    break
                 if ok:
                     found.append(uid)
                     self._log.append("scan", 3, 0, uid, "probe", True, dtype,
                                      lgs_map.dec_device_type(dtype), 0.0)
                 self._emit_scan(probed=uid, found=ok, device_type=dtype)
                 time.sleep(0.02)                           # let the OS release the port
-            self._emit_scan(probed=-1, found=False, done=True, found_ids=tuple(found))
+            self._emit_scan(probed=-1, found=False, done=True,
+                            found_ids=tuple(found), error=fatal)
         finally:
             if was_connected and prev_settings is not None:
                 self._do_connect(prev_settings)

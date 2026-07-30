@@ -95,10 +95,16 @@ def _construct(s: TransportSettings, kwargs: dict):
     return ModbusTcpClient(host=s.host, port=s.port, **kwargs)
 
 
+# A probe must outlast the gateway/bridge's own wait for the slave
+# (TIMEOUT_FIRST_BYTE_MS = 300 ms in LGS-Gateway-Arduino-Opta). If the PC gives
+# up first, the bridge is still holding the line when the next probe starts and
+# replies land after their client is gone — devices then read as "not there".
+PROBE_TIMEOUT_S = 0.45
+
+
 def make_scan_probe_client(s: TransportSettings):
     """Short-timeout, no-retry client for ID scanning. RTU probes use a FRESH
     client per ID (a persistent serial client wedges after a no-response)."""
     if isinstance(s, RtuSettings):
-        return make_client(RtuSettings(s.port, s.baud, timeout_s=0.25), retries=0)
-    # via the Opta gateway a missing slave costs its 300 ms first-byte timeout
-    return make_client(TcpSettings(s.host, s.port, timeout_s=0.6), retries=0)
+        return make_client(RtuSettings(s.port, s.baud, timeout_s=PROBE_TIMEOUT_S), retries=0)
+    return make_client(TcpSettings(s.host, s.port, timeout_s=PROBE_TIMEOUT_S), retries=0)

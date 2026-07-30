@@ -121,6 +121,7 @@ def build(ctx: Ctx) -> None:
             ui.label(t("scan.title")).classes("font-bold")
             scan_progress = ui.label("...")
             scan_found = ui.label(t("scan.found", ids="—"))
+            scan_error = ui.label("").classes("text-red text-sm")
             with ui.row():
                 ui.button(t("btn.cancel"), on_click=lambda: worker.cancel_scan()).props("flat")
                 ui.button(t("btn.close"), on_click=scan_dialog.close).props("flat")
@@ -136,7 +137,10 @@ def build(ctx: Ctx) -> None:
                     scan_progress.set_text(t("scan.done", n=scan_state["count"],
                                              total=scan_state["total"]))
                     scan_found.set_text(t("scan.found", ids=ids))
-                    if ev.found_ids:
+                    scan_error.set_text(ev.error)
+                    if ev.error:
+                        ui.notify(ev.error, type="negative", timeout=8000)
+                    elif ev.found_ids:
                         id_input.set_value(ev.found_ids[0])
                         cfg.device_id = ev.found_ids[0]
                         config_store.save(cfg)
@@ -166,6 +170,7 @@ def build(ctx: Ctx) -> None:
                 return
             scan_progress.set_text(t("scan.probing", n=0, total=len(ids), id="—"))
             scan_found.set_text(t("scan.found", ids="—"))
+            scan_error.set_text("")
             scan_dialog.open()
 
         with ui.dropdown_button(t("hdr.scan"), auto_close=True).props("dense"):
