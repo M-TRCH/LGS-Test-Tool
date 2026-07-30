@@ -199,6 +199,7 @@ def build(ctx: Ctx) -> None:
             cfg.theme = key
             config_store.save(cfg)
 
+        ui.space()          # pushes the theme picker to the far right edge
         theme_mod.build_picker(theme_chosen)
 
         def refresh_status() -> None:
