@@ -219,8 +219,8 @@ def build(ctx: Ctx) -> None:
                     ui.menu_item(f"{marker}  {name}",
                                  on_click=lambda c=code: choose_language(c))
 
-        about.build_button()
         theme_mod.build_picker(theme_chosen)
+        about.build_button()
 
         def refresh_status() -> None:
             st = worker.get_state()
