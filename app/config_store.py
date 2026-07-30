@@ -21,6 +21,7 @@ class AppConfig:
     tcp_port: int = 502
     device_id: int = 11
     monitor_interval_s: float = 1.0
+    theme: str = "light"
 
 
 def data_dir() -> Path:

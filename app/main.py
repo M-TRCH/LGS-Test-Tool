@@ -9,7 +9,8 @@ from nicegui import app, ui
 from . import config_store
 from .modbus_worker import ModbusWorker
 from .txn_log import TxnLog
-from .ui import Ctx, connection_bar, log_pane, tab_autotest, tab_control, tab_danger, tab_monitor
+from .ui import (Ctx, connection_bar, log_pane, tab_autotest, tab_control,
+                 tab_danger, tab_monitor, theme)
 from .version import APP_VERSION
 
 log = TxnLog()
@@ -20,6 +21,7 @@ ctx = Ctx(worker=worker, log=log, cfg=cfg)
 
 
 def build_ui() -> None:
+    theme.init(ctx.cfg.theme)
     connection_bar.build(ctx)
 
     with ui.tabs().classes("w-full") as tabs:

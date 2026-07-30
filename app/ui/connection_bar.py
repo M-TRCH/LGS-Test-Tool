@@ -8,7 +8,7 @@ from ..lgs_map import (BAUD_WHITELIST, FACTORY_DEFAULT_ID, GRID_COLS, GRID_IDS,
                        GRID_ROWS, SETID_TEMP_ID)
 from ..transports import RtuSettings, TcpSettings, list_com_ports
 from ..version import APP_VERSION
-from . import Ctx
+from . import Ctx, theme as theme_mod
 
 
 def _port_options() -> dict:
@@ -20,9 +20,10 @@ def build(ctx: Ctx) -> None:
     cfg = ctx.cfg
     worker = ctx.worker
 
-    # light background so the default dark text of Quasar fields stays readable
-    with ui.header().classes("items-center gap-3 flex-wrap bg-grey-2 text-black q-py-xs") \
-            .props("bordered"):
+    # background/text classes come from the active theme (see ui/theme.py)
+    with ui.header().classes("items-center gap-3 flex-wrap q-py-xs") \
+            .props("bordered") as header:
+        theme_mod.register_header(header)
         ui.label("LGS Test Tool").classes("text-lg font-bold text-primary")
         ui.badge(f"v{APP_VERSION}").props("color=primary outline").classes("text-xs")
 
@@ -193,6 +194,12 @@ def build(ctx: Ctx) -> None:
                 ui.notify(st.last_error or "connect failed", type="negative")
 
         connect_btn.on_click(toggle_connect)
+
+        def theme_chosen(key: str) -> None:
+            cfg.theme = key
+            config_store.save(cfg)
+
+        theme_mod.build_picker(theme_chosen)
 
         def refresh_status() -> None:
             st = worker.get_state()
