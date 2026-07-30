@@ -1,4 +1,4 @@
-"""Installation Check tab: run a few real commands across many modules and
+﻿"""Installation Check tab: run a few real commands across many modules and
 show the result as a map of the cabinet."""
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ from datetime import datetime
 from nicegui import ui
 
 from ..config_store import data_dir
+from ..i18n import t
 from ..fieldcheck import (CheckConfig, CheckDone, DeviceDone, DeviceStart,
                           check_csv_bytes)
 from ..lgs_map import CABINET_LAYOUTS, GRID_COLS, GRID_ROWS
@@ -55,38 +56,36 @@ def build(ctx: Ctx) -> None:
     # ── target picker ──────────────────────────────────────────────────────
     with ui.card().classes("p-3 w-full"):
         with ui.row().classes("items-center gap-2 flex-wrap"):
-            ui.label("Modules to check").classes("font-bold")
-            ui.button("Select all", on_click=lambda: set_selection(cells.keys())) \
+            ui.label(t("ins.modules")).classes("font-bold")
+            ui.button(t("ins.select_all"), on_click=lambda: set_selection(cells.keys())) \
                 .props("flat dense no-caps")
-            ui.button("Clear", on_click=lambda: set_selection(())) \
+            ui.button(t("btn.clear"), on_click=lambda: set_selection(())) \
                 .props("flat dense no-caps")
 
             def from_scan() -> None:
                 if not ctx.last_scan_ids:
-                    ui.notify("no scan result yet — run Scan in the header first",
+                    ui.notify(t("ins.no_scan"),
                               type="warning")
                     return
                 set_selection(g for g in ctx.last_scan_ids if g in cells)
-                ui.notify(f"selected {len(selected)} module(s) found by the last scan",
-                          type="positive")
+                ui.notify(t("ins.from_scan_ok", n=len(selected)), type="positive")
 
-            ui.button("From last scan", on_click=from_scan).props("flat dense no-caps")
+            ui.button(t("ins.from_scan"), on_click=from_scan).props("flat dense no-caps")
             count_label = ui.label("").classes("text-sm text-grey")
 
         with ui.row().classes("items-center gap-2 flex-wrap"):
-            ui.label("Cabinet:").classes("text-sm text-grey")
+            ui.label(t("ins.cabinet")).classes("text-sm text-grey")
             for layout in CABINET_LAYOUTS:
                 def pick(layout=layout) -> None:
                     set_selection(layout.ids)
-                    ui.notify(f"{layout.label} — {layout.count} modules selected",
+                    ui.notify(t("ins.cabinet_ok", label=layout.label, n=layout.count),
                               type="positive", timeout=1500)
 
-                ui.button(layout.label, on_click=pick) \
-                    .props("outline dense no-caps").tooltip(layout.detail)
+                ui.button(layout.label, on_click=pick).props("outline dense no-caps") \
+                    .tooltip(t("ins.cabinet_detail", rows=layout.rows, cols=layout.cols,
+                               n=layout.count, first=layout.ids[0], last=layout.ids[-1]))
 
-        ui.label("Pick a cabinet type, or click cells to include them one by one "
-                 "(the row button toggles a whole row). Cells turn green when the "
-                 "module passes, red when it does not answer.").classes("text-xs text-grey")
+        ui.label(t("ins.hint")).classes("text-xs text-grey")
 
         with ui.column().classes("gap-1 q-mt-sm"):
             for r in range(1, GRID_ROWS + 1):
@@ -113,34 +112,30 @@ def build(ctx: Ctx) -> None:
                             .classes("w-14 min-w-0 font-mono")
 
     def update_count() -> None:
-        count_label.set_text(f"{len(selected)} selected")
+        count_label.set_text(t("ins.selected", n=len(selected)))
 
     update_count()
 
     # ── what to run ────────────────────────────────────────────────────────
     with ui.row().classes("gap-3 flex-wrap items-stretch w-full"):
         with ui.card().classes("p-3 grow"):
-            ui.label("What to do on each module").classes("font-bold")
-            ui.label("Always included — check that the module answers on the bus "
-                     "(reads its device type).").classes("text-xs text-grey")
+            ui.label(t("ins.what")).classes("font-bold")
+            ui.label(t("ins.always")).classes("text-xs text-grey")
             with ui.column().classes("gap-1 q-mt-sm"):
-                cb_light = ui.checkbox("Turn the light on, then off (1001)", value=True)
-                cb_display = ui.checkbox("Show its number on the display "
-                                         "(reg 60 + 1010)", value=False) \
-                    .tooltip("Shows the slave ID; IDs above 99 show the column number "
-                             "because the display holds two digits")
-                cb_identify = ui.checkbox("Identify — blink white ~5 s (509)", value=False)
-            hold = ui.number("Hold each step (s)", value=1.0, min=0.2, max=5, step=0.1) \
+                cb_light = ui.checkbox(t("ins.do_light"), value=True)
+                cb_display = ui.checkbox(t("ins.do_display"), value=False) \
+                    .tooltip(t("ins.do_display_tip"))
+                cb_identify = ui.checkbox(t("ins.do_identify"), value=False)
+            hold = ui.number(t("ins.hold"), value=1.0, min=0.2, max=5, step=0.1) \
                 .props("dense outlined").classes("w-44 q-mt-sm")
 
         with ui.card().classes("p-3 grow border border-orange-400"):
             with ui.row().classes("items-center gap-2"):
                 ui.icon("lock_open").classes("text-orange")
-                ui.label("Unlock — moves the physical latch").classes("font-bold")
-            cb_unlock = ui.checkbox("Light + unlock each module (1021)", value=False)
+                ui.label(t("ins.unlock_card")).classes("font-bold")
+            cb_unlock = ui.checkbox(t("ins.do_unlock"), value=False)
             unlock_caption = ui.label("").classes("text-red text-sm")
-            ui.label("Each module keeps its own 2 s cooldown, so a sweep across "
-                     "different modules is not slowed down.").classes("text-xs text-grey")
+            ui.label(t("ins.cooldown_note")).classes("text-xs text-grey")
 
     def make_cfg() -> CheckConfig:
         return CheckConfig(light=bool(cb_light.value), unlock=bool(cb_unlock.value),
@@ -149,49 +144,49 @@ def build(ctx: Ctx) -> None:
 
     def update_caption() -> None:
         n = make_cfg().unlock_count(len(selected))
-        unlock_caption.set_text(f"⚠ this run will unlock {n} module(s)" if n else "")
+        unlock_caption.set_text(t("ins.warn_unlock", n=n) if n else "")
 
     cb_unlock.on_value_change(update_caption)
 
     # ── run + results ──────────────────────────────────────────────────────
     with ui.row().classes("items-center gap-3 flex-wrap"):
-        run_btn = ui.button("Run check", color="primary")
-        ui.button("Cancel", on_click=lambda: worker.cancel_field_check()).props("outline")
+        run_btn = ui.button(t("ins.run"), color="primary")
+        ui.button(t("btn.cancel"), on_click=lambda: worker.cancel_field_check()).props("outline")
         progress = ui.linear_progress(value=0.0, show_value=False).classes("w-64")
-        progress_label = ui.label("idle").classes("font-mono text-sm")
+        progress_label = ui.label(t("mt.idle")).classes("font-mono text-sm")
         banner = ui.badge("—").props("color=grey")
 
     summary = ui.label("").classes("text-sm")
 
     table = ui.table(
         columns=[
-            {"name": "id", "label": "ID", "field": "id", "align": "left"},
-            {"name": "type", "label": "type", "field": "type", "align": "left"},
-            {"name": "result", "label": "result", "field": "result", "align": "left"},
-            {"name": "detail", "label": "detail", "field": "detail", "align": "left"},
+            {"name": "id", "label": t("col.id"), "field": "id", "align": "left"},
+            {"name": "type", "label": t("col.type"), "field": "type", "align": "left"},
+            {"name": "result", "label": t("col.result"), "field": "result", "align": "left"},
+            {"name": "detail", "label": t("col.detail"), "field": "detail", "align": "left"},
         ],
         rows=[], row_key="id").props("dense flat").classes("w-full text-xs")
 
     def export() -> None:
         report = state["report"]
         if report is None:
-            ui.notify("no completed check yet", type="warning")
+            ui.notify(t("msg.no_result"), type="warning")
             return
         path = data_dir() / "exports"
         path.mkdir(exist_ok=True)
         fn = path / f"install_check_{datetime.now().strftime('%Y-%m-%d_%H%M%S')}.csv"
         fn.write_bytes(check_csv_bytes(report))
         ui.download(str(fn))
-        ui.notify(f"saved {fn.name}", type="positive")
+        ui.notify(t("msg.saved", name=fn.name), type="positive")
 
-    ui.button("Export CSV", on_click=export).props("flat dense")
+    ui.button(t("btn.export_csv"), on_click=export).props("flat dense")
 
     def start() -> None:
         if not worker.get_state().connected:
-            ui.notify("not connected", type="negative")
+            ui.notify(t("msg.not_connected"), type="negative")
             return
         if not selected:
-            ui.notify("select at least one module", type="warning")
+            ui.notify(t("ins.select_one"), type="warning")
             return
         results.clear()
         repaint_all()
@@ -199,12 +194,12 @@ def build(ctx: Ctx) -> None:
         table.update()
         state["report"] = None
         summary.set_text("")
-        banner.set_text("RUNNING")
+        banner.set_text(t("res.running"))
         banner.props("color=blue")
         progress.set_value(0.0)
         ids = sorted(selected)
         if not worker.start_field_check(make_cfg(), ids):
-            ui.notify("worker busy — cannot start now", type="negative")
+            ui.notify(t("msg.worker_busy"), type="negative")
             banner.set_text("—")
             banner.props("color=grey")
 
@@ -219,7 +214,7 @@ def build(ctx: Ctx) -> None:
                     paint(prev)
                 paint(ev.device_id)
                 progress.set_value((ev.index - 1) / max(1, ev.total))
-                progress_label.set_text(f"module {ev.device_id} ({ev.index}/{ev.total})")
+                progress_label.set_text(t("ins.module_progress", id=ev.device_id, i=ev.index, total=ev.total))
             elif isinstance(ev, DeviceDone):
                 r = ev.result
                 state["testing"] = None
@@ -231,8 +226,8 @@ def build(ctx: Ctx) -> None:
                 table.rows.append({
                     "id": r.device_id,
                     "type": r.type_name or "—",
-                    "result": "✓ pass" if r.ok else ("✗ no answer" if not r.responded
-                                                     else "✗ fail"),
+                    "result": t("ins.res.pass") if r.ok else (t("ins.res.no_answer") if not r.responded
+                                                     else t("ins.res.fail")),
                     "detail": detail,
                 })
             elif isinstance(ev, CheckDone):
@@ -242,21 +237,21 @@ def build(ctx: Ctx) -> None:
                 rep = ev.report
                 missing = rep.missing
                 failed = rep.failed
-                progress_label.set_text(f"done — {len(rep.results)} module(s)")
+                progress_label.set_text(t("ins.done", n=len(rep.results)))
                 if rep.cancelled:
-                    banner.set_text("CANCELLED")
+                    banner.set_text(t("res.cancelled"))
                     banner.props("color=grey")
                 elif rep.passed:
-                    banner.set_text("ALL PASS")
+                    banner.set_text(t("ins.all_pass"))
                     banner.props("color=green")
                 else:
-                    banner.set_text("ISSUES FOUND")
+                    banner.set_text(t("ins.issues"))
                     banner.props("color=red")
-                parts = [f"answered {len(rep.responded)}/{len(rep.results)}"]
+                parts = [t("ins.answered", n=len(rep.responded), total=len(rep.results))]
                 if missing:
-                    parts.append("no answer: " + ", ".join(str(i) for i in missing))
+                    parts.append(t("ins.no_answer", ids=", ".join(str(i) for i in missing)))
                 if failed:
-                    parts.append("failed a step: " + ", ".join(str(i) for i in failed))
+                    parts.append(t("ins.step_failed", ids=", ".join(str(i) for i in failed)))
                 summary.set_text(" · ".join(parts))
                 try:
                     path = data_dir() / "exports"

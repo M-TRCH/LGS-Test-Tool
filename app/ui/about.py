@@ -5,6 +5,7 @@ from nicegui import ui
 
 from ..changelog import RELEASES
 from ..config_store import data_dir
+from ..i18n import t
 from ..version import APP_VERSION
 
 
@@ -15,12 +16,11 @@ def build_button() -> None:
             ui.icon("science").classes("text-primary text-2xl")
             ui.label("LGS Test Tool").classes("text-xl font-bold")
             ui.badge(f"v{APP_VERSION}").props("color=primary")
-        ui.label("Test tool for LGS R5.0 modules over Modbus RTU (COM port) or "
-                 "Modbus TCP (LGS gateway).").classes("text-sm")
-        ui.label(f"Data and CSV exports: {data_dir()}").classes("text-xs text-grey")
+        ui.label(t("about.desc")).classes("text-sm")
+        ui.label(t("about.data", path=data_dir())).classes("text-xs text-grey")
 
         ui.separator()
-        ui.label("Release notes").classes("font-bold")
+        ui.label(t("about.notes")).classes("font-bold")
         with ui.scroll_area().classes("w-full h-72"):
             for index, rel in enumerate(RELEASES):
                 with ui.expansion(f"v{rel.version} — {rel.date}",
@@ -32,7 +32,7 @@ def build_button() -> None:
                                 ui.label(note).classes("text-sm")
 
         with ui.row().classes("w-full justify-end"):
-            ui.button("Close", on_click=dialog.close).props("flat")
+            ui.button(t("btn.close"), on_click=dialog.close).props("flat")
 
     ui.button(icon="info", on_click=dialog.open).props("dense flat round") \
-        .tooltip(f"about — v{APP_VERSION} and release notes")
+        .tooltip(t("hdr.about_tooltip", ver=APP_VERSION))

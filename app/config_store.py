@@ -22,6 +22,7 @@ class AppConfig:
     device_id: int = 11
     monitor_interval_s: float = 1.0
     theme: str = "light"
+    language: str = "en"                 # "en" | "th"
 
 
 def data_dir() -> Path:

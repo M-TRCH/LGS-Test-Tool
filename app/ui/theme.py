@@ -12,11 +12,12 @@ from typing import Callable, Optional
 
 from nicegui import ui
 
+from ..i18n import t
+
 
 @dataclass(frozen=True)
 class Theme:
     key: str
-    label: str
     dark: bool
     primary: str
     secondary: str
@@ -25,17 +26,17 @@ class Theme:
 
 
 THEMES: dict[str, Theme] = {
-    "light": Theme("light", "Light", False,
+    "light": Theme("light", False,
                    "#1976d2", "#26a69a", "#9c27b0", "bg-grey-2 text-black"),
-    "dark": Theme("dark", "Dark", True,
+    "dark": Theme("dark", True,
                   "#42a5f5", "#26a69a", "#ab47bc", "bg-grey-10 text-white"),
-    "midnight": Theme("midnight", "Midnight", True,
+    "midnight": Theme("midnight", True,
                       "#64b5f6", "#4db6ac", "#7986cb", "bg-blue-grey-10 text-white"),
-    "workshop": Theme("workshop", "Workshop (high contrast)", True,
+    "workshop": Theme("workshop", True,
                       "#ffd54f", "#4dd0e1", "#ff8a65", "bg-black text-white"),
-    "solar": Theme("solar", "Solar (warm)", False,
+    "solar": Theme("solar", False,
                    "#b26500", "#00796b", "#8d6e63", "bg-orange-1 text-brown-10"),
-    "lab": Theme("lab", "Lab (green)", False,
+    "lab": Theme("lab", False,
                  "#2e7d32", "#00838f", "#6d4c41", "bg-green-1 text-green-10"),
 }
 
@@ -101,14 +102,14 @@ def build_picker(on_select: Callable[[str], None]) -> None:
     def items() -> None:
         for theme in THEMES.values():
             marker = "●" if theme.key == _state["current"] else "○"
-            ui.menu_item(f"{marker}  {theme.label}",
-                         on_click=lambda t=theme: _choose(t.key))
+            ui.menu_item(f"{marker}  {t('theme.' + theme.key)}",
+                         on_click=lambda th=theme: _choose(th.key))
 
     def _choose(key: str) -> None:
         apply(key)
         on_select(key)
         items.refresh()
 
-    with ui.button(icon="palette").props("dense flat round").tooltip("theme"):
+    with ui.button(icon="palette").props("dense flat round").tooltip(t("hdr.theme_tooltip")):
         with ui.menu():
             items()

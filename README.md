@@ -17,6 +17,11 @@ Four tabs:
 
 A transaction log pane (all sources, raw TX/RX hex, CSV export) sits under every tab.
 
+The header has a **language button** (English / ไทย), a theme picker and an About dialog
+with the release notes. Language and theme are remembered in `data/config.json`. Protocol
+identifiers — coil and register numbers, function codes, the transaction log — stay in
+English in both languages so they always match `LGS-Control-Table.md`.
+
 Safety is enforced in the worker, not just the UI: OTA coils 505-508 are always refused
 (use `ota_sender.py`), danger coils only fire through the Danger tab, latch coils are
 cooldown-gated (≥2.2 s), and the whole app funnels every transaction through one queue —

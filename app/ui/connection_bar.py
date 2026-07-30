@@ -3,7 +3,8 @@ from __future__ import annotations
 
 from nicegui import ui
 
-from .. import config_store
+from .. import config_store, i18n
+from ..i18n import t
 from ..lgs_map import (BAUD_WHITELIST, FACTORY_DEFAULT_ID, GRID_COLS, GRID_IDS,
                        GRID_ROWS, SETID_TEMP_ID)
 from ..transports import RtuSettings, TcpSettings, list_com_ports
@@ -27,8 +28,8 @@ def build(ctx: Ctx) -> None:
         ui.label("LGS Test Tool").classes("text-lg font-bold text-primary")
         ui.badge(f"v{APP_VERSION}").props("color=primary outline").classes("text-xs")
 
-        transport = ui.radio({"rtu": "RTU (COM)", "tcp": "TCP"}, value=cfg.transport) \
-            .props("inline dense")
+        transport = ui.radio({"rtu": t("hdr.transport.rtu"), "tcp": t("hdr.transport.tcp")},
+                             value=cfg.transport).props("inline dense")
 
         with ui.row().classes("items-center gap-2") as rtu_row:
             opts = _port_options()
@@ -38,7 +39,8 @@ def build(ctx: Ctx) -> None:
                     initial = cfg.com_port if cfg.com_port in opts else dev
                     break
             com_select = ui.select(opts or {"": "(no ports)"}, value=initial,
-                                   label="COM port").classes("min-w-[260px]").props("dense outlined")
+                                   label=t("hdr.com_port")) \
+                .classes("min-w-[260px]").props("dense outlined")
 
             def refresh_ports() -> None:
                 new = _port_options()
@@ -47,18 +49,19 @@ def build(ctx: Ctx) -> None:
                     if "Opta" in label:
                         com_select.set_value(dev)
                         break
-                ui.notify(f"{len(new)} port(s) found", type="info")
+                ui.notify(t("msg.ports_found", n=len(new)), type="info")
 
             ui.button(icon="refresh", on_click=refresh_ports).props("flat dense round")
-            baud_select = ui.select(list(BAUD_WHITELIST), value=cfg.baud, label="baud") \
-                .props("dense outlined").classes("w-24")
+            baud_select = ui.select(list(BAUD_WHITELIST), value=cfg.baud,
+                                    label=t("hdr.baud")).props("dense outlined").classes("w-24")
             ui.label("8N1").classes("text-xs text-grey")
 
         with ui.row().classes("items-center gap-2") as tcp_row:
-            host_input = ui.input("Host", value=cfg.tcp_host).props("dense outlined").classes("w-40")
-            port_input = ui.number("Port", value=cfg.tcp_port, min=1, max=65535, format="%d") \
-                .props("dense outlined").classes("w-24")
-            ui.label("gateway: single client").classes("text-xs text-grey")
+            host_input = ui.input(t("hdr.host"), value=cfg.tcp_host) \
+                .props("dense outlined").classes("w-40")
+            port_input = ui.number(t("hdr.port"), value=cfg.tcp_port, min=1, max=65535,
+                                   format="%d").props("dense outlined").classes("w-24")
+            ui.label(t("hdr.single_client")).classes("text-xs text-grey")
 
         def sync_rows() -> None:
             rtu_row.set_visibility(transport.value == "rtu")
@@ -67,13 +70,12 @@ def build(ctx: Ctx) -> None:
         transport.on_value_change(sync_rows)
         sync_rows()
 
-        id_input = ui.number("Slave ID", value=cfg.device_id, min=1, max=247, format="%d") \
-            .props("dense outlined").classes("w-28")
+        id_input = ui.number(t("hdr.slave_id"), value=cfg.device_id, min=1, max=247,
+                             format="%d").props("dense outlined").classes("w-28")
 
         def id_changed() -> None:
             if int(id_input.value or 0) == SETID_TEMP_ID:
-                ui.notify("ID 246 targets a module currently in SET_ID mode (temporary ID)",
-                          type="info")
+                ui.notify(t("msg.id_reserved", id=SETID_TEMP_ID), type="info")
 
         id_input.on_value_change(id_changed)
         ctx.device_id_getter = lambda: int(id_input.value or FACTORY_DEFAULT_ID)
@@ -81,10 +83,10 @@ def build(ctx: Ctx) -> None:
 
         # clickable grid picker (typing in the field still works as before)
         with ui.button(icon="grid_view").props("dense flat round") \
-                .tooltip("pick a slave ID from the grid (row x 10 + col)"):
+                .tooltip(t("hdr.grid_tooltip")):
             with ui.menu() as id_menu:
                 with ui.column().classes("gap-1 p-3"):
-                    ui.label("Grid IDs — row×10+col").classes("text-xs text-grey q-mb-xs")
+                    ui.label(t("hdr.grid_title")).classes("text-xs text-grey q-mb-xs")
                     for r in range(1, GRID_ROWS + 1):
                         with ui.row().classes("gap-1 flex-nowrap"):
                             for c in range(1, GRID_COLS + 1):
@@ -96,11 +98,11 @@ def build(ctx: Ctx) -> None:
                                     .classes("w-14 min-w-0 font-mono text-base")
                     ui.separator().classes("q-my-xs")
                     with ui.row().classes("gap-1 flex-nowrap w-full"):
-                        ui.button(f"{SETID_TEMP_ID} (SET_ID mode)",
+                        ui.button(t("hdr.id_setid", id=SETID_TEMP_ID),
                                   on_click=lambda: (id_input.set_value(SETID_TEMP_ID),
                                                     id_menu.close())) \
                             .props("flat no-caps").classes("grow min-w-0")
-                        ui.button(f"{FACTORY_DEFAULT_ID} (factory)",
+                        ui.button(t("hdr.id_factory", id=FACTORY_DEFAULT_ID),
                                   on_click=lambda: (id_input.set_value(FACTORY_DEFAULT_ID),
                                                     id_menu.close())) \
                             .props("flat no-caps").classes("grow min-w-0")
@@ -109,19 +111,19 @@ def build(ctx: Ctx) -> None:
         def current_settings():
             if transport.value == "rtu":
                 if not com_select.value:
-                    ui.notify("no COM port selected", type="negative")
+                    ui.notify(t("msg.no_com"), type="negative")
                     return None
                 return RtuSettings(str(com_select.value), int(baud_select.value))
             return TcpSettings(str(host_input.value), int(port_input.value))
 
         scan_dialog = ui.dialog()
         with scan_dialog, ui.card().classes("min-w-[360px]"):
-            ui.label("Scanning for slave IDs").classes("font-bold")
+            ui.label(t("scan.title")).classes("font-bold")
             scan_progress = ui.label("...")
-            scan_found = ui.label("found: —")
+            scan_found = ui.label(t("scan.found", ids="—"))
             with ui.row():
-                ui.button("Cancel", on_click=lambda: worker.cancel_scan()).props("flat")
-                ui.button("Close", on_click=scan_dialog.close).props("flat")
+                ui.button(t("btn.cancel"), on_click=lambda: worker.cancel_scan()).props("flat")
+                ui.button(t("btn.close"), on_click=scan_dialog.close).props("flat")
 
         scan_state = {"seq": 0, "count": 0, "total": 0, "found": []}
 
@@ -130,24 +132,25 @@ def build(ctx: Ctx) -> None:
             for ev in events:
                 if ev.done:
                     ctx.last_scan_ids = ev.found_ids
-                    ids = ", ".join(str(i) for i in ev.found_ids) or "none"
-                    scan_progress.set_text(f"done — probed {scan_state['count']}/{scan_state['total']}")
-                    scan_found.set_text(f"found: {ids}")
+                    ids = ", ".join(str(i) for i in ev.found_ids) or t("scan.none")
+                    scan_progress.set_text(t("scan.done", n=scan_state["count"],
+                                             total=scan_state["total"]))
+                    scan_found.set_text(t("scan.found", ids=ids))
                     if ev.found_ids:
                         id_input.set_value(ev.found_ids[0])
                         cfg.device_id = ev.found_ids[0]
                         config_store.save(cfg)
-                        ui.notify(f"scan complete — using ID {ev.found_ids[0]}", type="positive")
+                        ui.notify(t("msg.scan_found", id=ev.found_ids[0]), type="positive")
                     else:
-                        ui.notify("scan complete — no device answered", type="warning")
+                        ui.notify(t("msg.scan_none"), type="warning")
                 else:
                     scan_state["count"] += 1
                     if ev.found:
                         scan_state["found"].append(ev.probed)
-                    scan_progress.set_text(f"probing {scan_state['count']}/{scan_state['total']}"
-                                           f" (id {ev.probed})")
-                    scan_found.set_text("found: " +
-                                        (", ".join(str(i) for i in scan_state["found"]) or "—"))
+                    scan_progress.set_text(t("scan.probing", n=scan_state["count"],
+                                             total=scan_state["total"], id=ev.probed))
+                    scan_found.set_text(t("scan.found", ids=", ".join(
+                        str(i) for i in scan_state["found"]) or "—"))
 
         ui.timer(0.2, drain_scan)
 
@@ -159,19 +162,19 @@ def build(ctx: Ctx) -> None:
                 else [FACTORY_DEFAULT_ID, SETID_TEMP_ID, *GRID_IDS]
             scan_state.update(seq=scan_state["seq"], count=0, total=len(ids), found=[])
             if not worker.start_scan(s, ids):
-                ui.notify("worker busy — cannot scan now", type="negative")
+                ui.notify(t("msg.worker_busy"), type="negative")
                 return
-            scan_progress.set_text(f"probing 0/{len(ids)}")
-            scan_found.set_text("found: —")
+            scan_progress.set_text(t("scan.probing", n=0, total=len(ids), id="—"))
+            scan_found.set_text(t("scan.found", ids="—"))
             scan_dialog.open()
 
-        with ui.dropdown_button("Scan", auto_close=True).props("dense"):
-            ui.item("Quick (grid 11-108 + 247)", on_click=lambda: start_scan(False))
-            ui.item("Full (1-245 + 247)", on_click=lambda: start_scan(True))
+        with ui.dropdown_button(t("hdr.scan"), auto_close=True).props("dense"):
+            ui.item(t("hdr.scan.quick"), on_click=lambda: start_scan(False))
+            ui.item(t("hdr.scan.full"), on_click=lambda: start_scan(True))
 
         # ── connect / status ───────────────────────────────────────────────
-        connect_btn = ui.button("Connect").props("unelevated dense")
-        status = ui.badge("idle").props("color=grey")
+        connect_btn = ui.button(t("hdr.connect")).props("unelevated dense")
+        status = ui.badge(t("hdr.status.idle")).props("color=grey")
 
         async def toggle_connect() -> None:
             st = worker.get_state()
@@ -190,9 +193,9 @@ def build(ctx: Ctx) -> None:
                 cfg.tcp_port = int(port_input.value)
                 cfg.device_id = ctx.device_id()
                 config_store.save(cfg)
-                ui.notify(f"connected: {st.transport_desc}", type="positive")
+                ui.notify(t("msg.connected", desc=st.transport_desc), type="positive")
             else:
-                ui.notify(st.last_error or "connect failed", type="negative")
+                ui.notify(st.last_error or t("msg.connect_failed"), type="negative")
 
         connect_btn.on_click(toggle_connect)
 
@@ -200,30 +203,46 @@ def build(ctx: Ctx) -> None:
             cfg.theme = key
             config_store.save(cfg)
 
-        ui.space()          # pushes about + theme to the far right edge
+        # ── language / about / theme (far right) ───────────────────────────
+        ui.space()
+
+        def choose_language(lang: str) -> None:
+            cfg.language = lang
+            config_store.save(cfg)
+            ui.navigate.reload()      # the page is rebuilt in the new language
+
+        with ui.button(icon="translate").props("dense flat round") \
+                .tooltip(t("hdr.lang_tooltip")):
+            with ui.menu():
+                for code, name in i18n.LANGUAGES.items():
+                    marker = "●" if code == i18n.current() else "○"
+                    ui.menu_item(f"{marker}  {name}",
+                                 on_click=lambda c=code: choose_language(c))
+
         about.build_button()
         theme_mod.build_picker(theme_chosen)
 
         def refresh_status() -> None:
             st = worker.get_state()
             if st.sweep_running:
-                status.set_text("MODULE TEST RUNNING")
+                status.set_text(t("hdr.status.module_test"))
                 status.props("color=amber")
             elif st.check_running:
-                status.set_text("INSTALLATION CHECK RUNNING")
+                status.set_text(t("hdr.status.install_check"))
                 status.props("color=amber")
             elif st.scan_running:
-                status.set_text("scanning...")
+                status.set_text(t("hdr.status.scanning"))
                 status.props("color=amber")
             elif st.connected:
-                status.set_text(f"{st.transport_desc} — id {ctx.device_id()}")
+                status.set_text(t("hdr.status.connected", desc=st.transport_desc,
+                                  id=ctx.device_id()))
                 status.props("color=green")
             elif st.last_error:
                 status.set_text(st.last_error[:60])
                 status.props("color=red")
             else:
-                status.set_text("idle")
+                status.set_text(t("hdr.status.idle"))
                 status.props("color=grey")
-            connect_btn.set_text("Disconnect" if st.connected else "Connect")
+            connect_btn.set_text(t("hdr.disconnect") if st.connected else t("hdr.connect"))
 
         ui.timer(0.5, refresh_status)

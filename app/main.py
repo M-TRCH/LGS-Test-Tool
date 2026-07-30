@@ -6,30 +6,36 @@ import os
 
 from nicegui import app, ui
 
-from . import config_store
+from . import config_store, i18n
 from .modbus_worker import ModbusWorker
 from .txn_log import TxnLog
 from .ui import (Ctx, connection_bar, log_pane, tab_autotest, tab_control,
                  tab_danger, tab_install, tab_monitor, theme)
 from .version import APP_VERSION
 
+# Shared across browsers: one Modbus worker, one log, one settings file — the
+# bus and the gateway's single TCP slot cannot be shared anyway.
 log = TxnLog()
 worker = ModbusWorker(log)
 worker.start()
 cfg = config_store.load()
-ctx = Ctx(worker=worker, log=log, cfg=cfg)
 
 
-def build_ui() -> None:
-    theme.init(ctx.cfg.theme)
+@ui.page("/")
+def index() -> None:
+    """Built per browser session, so switching language just reloads the page."""
+    i18n.set_language(cfg.language)
+    ctx = Ctx(worker=worker, log=log, cfg=cfg)
+
+    theme.init(cfg.theme)
     connection_bar.build(ctx)
 
     with ui.tabs().classes("w-full") as tabs:
-        t_control = ui.tab("Control", icon="tune")
-        t_monitor = ui.tab("Monitor", icon="monitor_heart")
-        t_install = ui.tab("Installation Check", icon="grid_view")
-        t_module = ui.tab("Module Test", icon="checklist")
-        t_danger = ui.tab("Danger", icon="warning")
+        t_control = ui.tab("control", i18n.t("tab.control"), icon="tune")
+        t_monitor = ui.tab("monitor", i18n.t("tab.monitor"), icon="monitor_heart")
+        t_install = ui.tab("install", i18n.t("tab.install"), icon="grid_view")
+        t_module = ui.tab("module", i18n.t("tab.module"), icon="checklist")
+        t_danger = ui.tab("danger", i18n.t("tab.danger"), icon="warning")
 
     with ui.tab_panels(tabs, value=t_control).classes("w-full"):
         with ui.tab_panel(t_control):
@@ -46,8 +52,7 @@ def build_ui() -> None:
     log_pane.build(ctx)
 
 
-build_ui()
-app.on_shutdown(lambda: (config_store.save(ctx.cfg), worker.shutdown()))
+app.on_shutdown(lambda: (config_store.save(cfg), worker.shutdown()))
 
 
 def run() -> None:

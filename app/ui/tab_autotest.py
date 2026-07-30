@@ -1,4 +1,4 @@
-"""Auto Test tab: run the ported sweep with live progress, results, CSV export."""
+﻿"""Auto Test tab: run the ported sweep with live progress, results, CSV export."""
 from __future__ import annotations
 
 from datetime import datetime
@@ -6,21 +6,14 @@ from datetime import datetime
 from nicegui import ui
 
 from ..config_store import data_dir
+from ..i18n import t
 from ..testsuite import Done, PhaseEnd, PhaseStart, Step, SweepConfig, sweep_csv_bytes
 from . import Ctx
 
 MAX_TABLE_ROWS = 200
 
-# plain-language names for the sweep phases (raw names stay in the CSV)
-PHASE_LABELS = {
-    "READ": "Read all",
-    "WRITE": "Write/restore",
-    "VALIDATE": "Value limits",
-    "PRESET": "Colour presets",
-    "DISPLAY": "Display",
-    "LED": "Light ring",
-    "LATCH": "Unlock",
-}
+# Phase names are shown through i18n keys "phase.<RAW>"; the raw names
+# (READ / WRITE / …) stay in the CSV so exports remain comparable.
 
 
 def build(ctx: Ctx) -> None:
@@ -32,36 +25,28 @@ def build(ctx: Ctx) -> None:
     # against the control table.
     with ui.row().classes("gap-3 flex-wrap items-stretch w-full"):
         with ui.card().classes("p-3 grow"):
-            ui.label("What to test").classes("font-bold")
-            ui.label("Always included — read every register and coil, write / verify / "
-                     "restore the safe settings, and check the firmware's value limits.") \
-                .classes("text-xs text-grey")
+            ui.label(t("mt.what")).classes("font-bold")
+            ui.label(t("mt.always")).classes("text-xs text-grey")
             with ui.row().classes("items-center gap-4 flex-wrap q-mt-sm"):
-                cb_led = ui.checkbox("Lights & display", value=True) \
-                    .tooltip("Colour presets 1-8 (coils 1001-1008), OLED number "
-                             "(reg 60 + coil 1010), ring on/off")
-                loops = ui.number("Repeat", value=1, min=1, max=10, format="%d") \
-                    .props("dense outlined").classes("w-24") \
-                    .tooltip("How many times to run the whole test")
+                cb_led = ui.checkbox(t("mt.lights"), value=True).tooltip(t("mt.lights_tip"))
+                loops = ui.number(t("mt.repeat"), value=1, min=1, max=10, format="%d") \
+                    .props("dense outlined").classes("w-24")
 
         with ui.card().classes("p-3 grow border border-orange-400"):
             with ui.row().classes("items-center gap-2"):
                 ui.icon("lock_open").classes("text-orange")
-                ui.label("Unlock test — moves the physical latch").classes("font-bold")
-            cb_latch = ui.checkbox("Include the unlock test", value=False)
+                ui.label(t("mt.unlock_card")).classes("font-bold")
+            cb_latch = ui.checkbox(t("mt.include_unlock"), value=False)
             with ui.column().classes("gap-1 q-pl-md"):
-                fires = ui.number("Unlocks per round", value=1, min=1, max=5, format="%d") \
+                fires = ui.number(t("mt.unlocks_per_round"), value=1, min=1, max=5, format="%d") \
                     .props("dense outlined").classes("w-40") \
                     .bind_enabled_from(cb_latch, "value")
-                ui.label("Always fires: normal unlock (1020) — opens only when the latch "
-                         "reads locked").classes("text-xs text-grey")
-                cb_force = ui.checkbox("Also force unlock (1019) — opens even if the lock "
-                                       "sensor disagrees", value=True) \
+                ui.label(t("mt.always_safety")).classes("text-xs text-grey")
+                cb_force = ui.checkbox(t("mt.also_force"), value=True) \
                     .bind_enabled_from(cb_latch, "value")
-                cb_combos = ui.checkbox("Also light + unlock (1022) and light + number + "
-                                        "unlock (1031)", value=False) \
+                cb_combos = ui.checkbox(t("mt.also_combo"), value=False) \
                     .bind_enabled_from(cb_latch, "value")
-                cb_1021 = ui.checkbox("Also light 1 + unlock (1021)", value=False) \
+                cb_1021 = ui.checkbox(t("mt.also_1021"), value=False) \
                     .bind_enabled_from(cb_latch, "value")
             fire_caption = ui.label("").classes("text-red text-sm q-mt-sm")
 
@@ -74,16 +59,15 @@ def build(ctx: Ctx) -> None:
 
     def update_caption() -> None:
         total = make_cfg().latch_total_fires()
-        fire_caption.set_text(f"⚠ this run will unlock the door {total} time(s)"
-                              if total else "")
+        fire_caption.set_text(t("mt.warn_unlock", n=total) if total else "")
 
     for el in (loops, cb_latch, fires, cb_force, cb_combos, cb_1021):
         el.on_value_change(update_caption)
 
     with ui.row().classes("items-center gap-3"):
-        run_btn = ui.button("Run Sweep", color="primary")
-        cancel_btn = ui.button("Cancel", on_click=lambda: worker.cancel_sweep()).props("outline")
-        phase_label = ui.label("idle").classes("font-mono")
+        run_btn = ui.button(t("mt.run"), color="primary")
+        cancel_btn = ui.button(t("btn.cancel"), on_click=lambda: worker.cancel_sweep()).props("outline")
+        phase_label = ui.label(t("mt.idle")).classes("font-mono")
         progress = ui.linear_progress(value=0.0, show_value=False).classes("w-64")
         b_ok = ui.badge("OK 0").props("color=green")
         b_fail = ui.badge("FAIL 0").props("color=red")
@@ -92,39 +76,39 @@ def build(ctx: Ctx) -> None:
 
     table = ui.table(
         columns=[
-            {"name": "t", "label": "time", "field": "t", "align": "left"},
-            {"name": "phase", "label": "phase", "field": "phase", "align": "left"},
+            {"name": "t", "label": t("col.time"), "field": "t", "align": "left"},
+            {"name": "phase", "label": t("col.phase"), "field": "phase", "align": "left"},
             {"name": "fc", "label": "fc", "field": "fc"},
-            {"name": "addr", "label": "addr", "field": "addr"},
-            {"name": "name", "label": "name", "field": "name", "align": "left"},
-            {"name": "op", "label": "op", "field": "op", "align": "left"},
-            {"name": "value", "label": "value/check", "field": "value", "align": "left"},
-            {"name": "result", "label": "result", "field": "result", "align": "left"},
+            {"name": "addr", "label": t("col.addr"), "field": "addr"},
+            {"name": "name", "label": t("col.name"), "field": "name", "align": "left"},
+            {"name": "op", "label": t("col.op"), "field": "op", "align": "left"},
+            {"name": "value", "label": t("col.value"), "field": "value", "align": "left"},
+            {"name": "result", "label": t("col.result"), "field": "result", "align": "left"},
             {"name": "ms", "label": "ms", "field": "ms"},
         ],
         rows=[], row_key="i").props("dense flat").classes("w-full text-xs")
-    ui.label(f"(table shows the last {MAX_TABLE_ROWS} steps — the CSV export has everything)") \
+    ui.label(t("mt.table_note", n=MAX_TABLE_ROWS)) \
         .classes("text-xs text-grey")
 
     def export() -> None:
         report = state["report"]
         if report is None:
-            ui.notify("no completed sweep yet", type="warning")
+            ui.notify(t("msg.no_result"), type="warning")
             return
         path = data_dir() / "exports"
         path.mkdir(exist_ok=True)
         fn = path / f"sweep_{datetime.now().strftime('%Y-%m-%d_%H%M%S')}.csv"
         fn.write_bytes(sweep_csv_bytes(report))
         ui.download(str(fn))
-        ui.notify(f"saved {fn.name}", type="positive")
+        ui.notify(t("msg.saved", name=fn.name), type="positive")
 
-    ui.button("Export CSV", on_click=export).props("flat dense")
+    ui.button(t("btn.export_csv"), on_click=export).props("flat dense")
 
     def start() -> None:
         cfg = make_cfg()
         st = worker.get_state()
         if not st.connected:
-            ui.notify("not connected", type="negative")
+            ui.notify(t("msg.not_connected"), type="negative")
             return
         table.rows = []
         table.update()
@@ -132,11 +116,11 @@ def build(ctx: Ctx) -> None:
         state["rows"] = 0
         for b, txt in ((b_ok, "OK 0"), (b_fail, "FAIL 0"), (b_err, "ERR 0")):
             b.set_text(txt)
-        banner.set_text("RUNNING")
+        banner.set_text(t("res.running"))
         banner.props("color=blue")
         progress.set_value(0.0)
         if not worker.start_sweep(cfg, ctx.device_id()):
-            ui.notify("worker busy — cannot start sweep", type="negative")
+            ui.notify(t("msg.worker_busy"), type="negative")
             banner.set_text("—")
             banner.props("color=grey")
 
@@ -149,8 +133,8 @@ def build(ctx: Ctx) -> None:
         totals = None
         for ev in events:
             if isinstance(ev, PhaseStart):
-                phase_label.set_text(f"{PHASE_LABELS.get(ev.name, ev.name)} "
-                                     f"({ev.index}/{ev.total})")
+                phase_label.set_text(t("mt.phase", name=t("phase." + ev.name),
+                                       i=ev.index, total=ev.total))
                 progress.set_value((ev.index - 1) / max(1, ev.total))
             elif isinstance(ev, Step):
                 s = ev.step
@@ -158,7 +142,7 @@ def build(ctx: Ctx) -> None:
                 table.rows.append({
                     "i": state["rows"],
                     "t": s.ts.strftime("%H:%M:%S"),
-                    "phase": PHASE_LABELS.get(s.phase, s.phase),
+                    "phase": t("phase." + s.phase),
                     "fc": s.fc, "addr": s.addr, "name": s.name,
                     "op": s.op,
                     "value": (s.decoded or str(s.raw)) + (f" | {s.note}" if s.note else ""),
@@ -172,17 +156,17 @@ def build(ctx: Ctx) -> None:
             elif isinstance(ev, Done):
                 state["report"] = ev.report
                 progress.set_value(1.0)
-                t = ev.report.totals
+                tot = ev.report.totals
                 if ev.report.cancelled:
-                    banner.set_text("CANCELLED")
+                    banner.set_text(t("res.cancelled"))
                     banner.props("color=grey")
                 elif ev.report.passed:
-                    banner.set_text("PASS")
+                    banner.set_text(t("res.pass"))
                     banner.props("color=green")
                 else:
-                    banner.set_text("FAIL")
+                    banner.set_text(t("res.fail"))
                     banner.props("color=red")
-                phase_label.set_text(f"done — {t.ok + t.fail + t.err} steps")
+                phase_label.set_text(t("mt.done_steps", n=tot.ok + tot.fail + tot.err))
                 # autosave
                 try:
                     path = data_dir() / "exports"
@@ -200,8 +184,8 @@ def build(ctx: Ctx) -> None:
                 fail = sum(1 for r in table.rows if "FAIL" in r["result"])
                 err = sum(1 for r in table.rows if "ERR" in r["result"])
             else:
-                t = src.totals
-                ok, fail, err = t.ok, t.fail, t.err
+                tot = src.totals
+                ok, fail, err = tot.ok, tot.fail, tot.err
             b_ok.set_text(f"OK {ok}")
             b_fail.set_text(f"FAIL {fail}")
             b_err.set_text(f"ERR {err}")

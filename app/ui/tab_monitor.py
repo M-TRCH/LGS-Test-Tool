@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from nicegui import ui
 
+from ..i18n import t
 from ..lgs_map import (SENSOR_FAULT, dec_baud, dec_device_type, dec_fw, dec_hw,
                        dec_mode, dec_preset, dec_temp, dec_uptime,
                        decode_health, decode_reset_cause, stats_count, stats_time)
@@ -14,55 +15,48 @@ def build(ctx: Ctx) -> None:
     state = {"cycle": 0, "sticky_cause": "", "sticky_ts": ""}
 
     with ui.row().classes("items-center gap-3"):
-        polling = ui.switch("Polling", value=False)
+        polling = ui.switch(t("mon.polling"), value=False)
         interval = ui.select([0.5, 1.0, 2.0], value=ctx.cfg.monitor_interval_s,
-                             label="interval (s)").props("dense outlined").classes("w-28")
-        ui.label("statistics read every 5th poll").classes("text-xs text-grey")
-        last_poll = ui.label("last poll: —").classes("text-xs text-grey")
+                             label=t("mon.interval")).props("dense outlined").classes("w-32")
+        ui.label(t("mon.stats_note")).classes("text-xs text-grey")
+        last_poll = ui.label(t("mon.last_poll", time="—")).classes("text-xs text-grey")
         errors_label = ui.label("").classes("text-xs text-orange")
 
-    def L(container_label: str) -> ui.label:
+    def L() -> ui.label:
         return ui.label("—").classes("text-sm")
 
     with ui.row().classes("gap-3 flex-wrap items-stretch"):
         with ui.card().classes("p-3 min-w-[220px]"):
-            ui.label("Device").classes("font-bold")
-            dev_type = L("type")
-            dev_fw = L("fw")
-            dev_hw = L("hw")
-            dev_baud = L("baud")
+            ui.label(t("mon.card.device")).classes("font-bold")
+            dev_type, dev_fw, dev_hw, dev_baud = L(), L(), L(), L()
         with ui.card().classes("p-3 min-w-[220px]"):
-            ui.label("Runtime").classes("font-bold")
-            rt_uptime = L("uptime")
-            rt_boots = L("boots")
-            rt_mode = L("mode")
-            rt_preset = L("preset")
+            ui.label(t("mon.card.runtime")).classes("font-bold")
+            rt_uptime, rt_boots, rt_mode, rt_preset = L(), L(), L(), L()
         with ui.card().classes("p-3 min-w-[240px]"):
-            ui.label("Health (reg 9)").classes("font-bold")
+            ui.label(t("mon.card.health")).classes("font-bold")
             health_row = ui.row().classes("gap-1 flex-wrap")
-            latch_chip = ui.badge("latch: —").props("color=grey")
+            latch_chip = ui.badge("—").props("color=grey")
         with ui.card().classes("p-3 min-w-[220px]"):
-            ui.label("Reset cause (reg 8)").classes("font-bold")
-            rc_label = L("cause")
-            ui.label("clear-on-read — this tool's polling consumes it; last nonzero is kept") \
-                .classes("text-xs text-grey")
+            ui.label(t("mon.card.reset")).classes("font-bold")
+            rc_label = L()
+            ui.label(t("mon.reset_note")).classes("text-xs text-grey")
         with ui.card().classes("p-3 min-w-[240px]"):
-            ui.label("Temperatures").classes("font-bold")
-            t_room = L("room")
-            t_board = L("board")
+            ui.label(t("mon.card.temp")).classes("font-bold")
+            t_room, t_board = L(), L()
         with ui.card().classes("p-3 min-w-[240px]"):
-            ui.label("Latch / Display").classes("font-bold")
-            ld_latch = L("latch")
-            ld_unlock = L("unlock t")
-            ld_display = L("display")
+            ui.label(t("mon.card.latch")).classes("font-bold")
+            ld_latch, ld_unlock, ld_display = L(), L(), L()
         with ui.card().classes("p-3 min-w-[280px]"):
-            ui.label("Statistics").classes("font-bold")
-            st_total = L("total")
+            ui.label(t("mon.card.stats")).classes("font-bold")
+            st_total = L()
             stats_table = ui.table(
-                columns=[{"name": "p", "label": "preset", "field": "p", "align": "left"},
-                         {"name": "c", "label": "on count", "field": "c"},
-                         {"name": "t", "label": "runtime s", "field": "t"}],
+                columns=[{"name": "p", "label": t("mon.col.preset"), "field": "p", "align": "left"},
+                         {"name": "c", "label": t("mon.col.count"), "field": "c"},
+                         {"name": "t", "label": t("mon.col.runtime"), "field": "t"}],
                 rows=[], row_key="p").props("dense flat hide-bottom").classes("text-xs")
+
+    def latch_text(raw) -> str:
+        return t("mon.locked") if raw == 1 else (t("mon.unlocked") if raw == 0 else "—")
 
     async def poll() -> None:
         if not polling.value:
@@ -73,20 +67,20 @@ def build(ctx: Ctx) -> None:
         if snap is None:
             return
         ctx.latest_snapshot = snap
-        last_poll.set_text(f"last poll: {snap.ts.strftime('%H:%M:%S')}")
+        last_poll.set_text(t("mon.last_poll", time=snap.ts.strftime("%H:%M:%S")))
         errors_label.set_text("; ".join(snap.errors))
         r = snap.regs
         if not r:
             return
         if 0 in r:
-            dev_type.set_text(f"Type: {dec_device_type(r[0])}")
-            dev_fw.set_text(f"FW: {dec_fw(r[1])}")
-            dev_hw.set_text(f"HW: {dec_hw(r[2])}")
-            dev_baud.set_text(f"Baud: {dec_baud(r[3])} · ID: {r[4]}")
-            rt_uptime.set_text(f"Uptime: {dec_uptime(r[5], r[6])}")
-            rt_boots.set_text(f"Boots: {r[7]}")
-            rt_mode.set_text(f"Mode: {dec_mode(r[10])}")
-            rt_preset.set_text(f"Active preset: {dec_preset(r[11])}")
+            dev_type.set_text(t("mon.type", v=dec_device_type(r[0])))
+            dev_fw.set_text(t("mon.fw", v=dec_fw(r[1])))
+            dev_hw.set_text(t("mon.hw", v=dec_hw(r[2])))
+            dev_baud.set_text(t("mon.baud_id", baud=dec_baud(r[3]), id=r[4]))
+            rt_uptime.set_text(t("mon.uptime", v=dec_uptime(r[5], r[6])))
+            rt_boots.set_text(t("mon.boots", v=r[7]))
+            rt_mode.set_text(t("mon.mode", v=dec_mode(r[10])))
+            rt_preset.set_text(t("mon.active_preset", v=dec_preset(r[11])))
 
             health_row.clear()
             with health_row:
@@ -97,24 +91,24 @@ def build(ctx: Ctx) -> None:
                 state["sticky_cause"] = names
                 state["sticky_ts"] = snap.ts.strftime("%H:%M:%S")
             rc_label.set_text(f"{state['sticky_cause'] or '—'}"
-                              + (f"  (seen {state['sticky_ts']})" if state["sticky_ts"] else ""))
+                              + (f"  {t('mon.seen_at', time=state['sticky_ts'])}"
+                                 if state["sticky_ts"] else ""))
         if 20 in r:
-            t_room.set_text(f"Room: {dec_temp(r[20])}")
-            t_board.set_text(f"Board: {dec_temp(r[21])}")
+            t_room.set_text(t("mon.room", v=dec_temp(r[20])))
+            t_board.set_text(t("mon.board", v=dec_temp(r[21])))
             fault = r[20] == SENSOR_FAULT or r[21] == SENSOR_FAULT
             for lbl in (t_room, t_board):
                 lbl.classes(add="text-red" if fault else "", remove="" if fault else "text-red")
         if 40 in r:
-            locked = r.get(41)
-            ld_latch.set_text(f"Latch: {'LOCKED' if locked == 1 else 'UNLOCKED' if locked == 0 else '—'}")
-            ld_unlock.set_text(f"Unlocked {r[40]} s ago" if r[40] else "No unlock since boot")
+            ld_latch.set_text(t("mon.latch_state", v=latch_text(r.get(41))))
+            ld_unlock.set_text(t("mon.unlocked_ago", s=r[40]) if r[40] else t("mon.no_unlock"))
         if 60 in r:
-            ld_display.set_text(f"Display number (reg 60): {r[60]}")
-        latch_chip.set_text(f"latch: {'LOCKED' if r.get(41) == 1 else 'UNLOCKED' if r.get(41) == 0 else '—'}")
+            ld_display.set_text(t("mon.display_num", v=r[60]))
+        latch_chip.set_text(t("mon.latch_state", v=latch_text(r.get(41))))
 
         if snap.stats:
             s = snap.stats
-            st_total.set_text(f"Total: {s.get(200, 0)} fires · {s.get(201, 0)} s")
+            st_total.set_text(t("mon.total", c=s.get(200, 0), s=s.get(201, 0)))
             stats_table.rows = [{"p": n, "c": s.get(stats_count(n), 0),
                                  "t": s.get(stats_time(n), 0)} for n in range(1, 9)]
             stats_table.update()

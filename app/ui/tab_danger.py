@@ -1,14 +1,16 @@
-"""Danger tab: factory reset, EEPROM persist, software reset, clear statistics.
+"""Danger tab: factory reset, EEPROM persist, software reset, clear statistics,
+set slave ID.
 
-Only this tab calls worker.danger_action() (the only path that sets the
-allow_danger flag). Factory reset requires typing the slave ID plus a second
-red confirmation.
+Only this tab calls worker.danger_action() / set_slave_id() (the only paths that
+set the allow_danger flag). Factory reset requires typing the slave ID plus a
+second red confirmation.
 """
 from __future__ import annotations
 
 from nicegui import ui
 
-from ..lgs_map import FACTORY_DEFAULT_ID
+from ..i18n import t
+from ..lgs_map import FACTORY_DEFAULT_ID, SETID_TEMP_ID
 from ..modbus_worker import DangerAction
 from . import Ctx
 
@@ -16,8 +18,7 @@ from . import Ctx
 def build(ctx: Ctx) -> None:
     worker = ctx.worker
 
-    ui.badge("⚠ These commands reboot or wipe the module — double-check the target ID") \
-        .props("color=red").classes("text-sm p-2")
+    ui.badge(t("dng.banner")).props("color=red").classes("text-sm p-2")
 
     result_log = ui.log(max_lines=60).classes("w-full h-40 font-mono text-xs")
 
@@ -28,12 +29,11 @@ def build(ctx: Ctx) -> None:
         for i, step in enumerate(res.steps, 1):
             mark = "OK " if step.ok else "ERR"
             result_log.push(f"  step {i}: {mark} {step.note or step.value}")
-        result_log.push(f"  => {'SUCCESS' if res.ok else 'FAILED'}: {res.note}")
+        result_log.push(f"  => {t('dng.success') if res.ok else t('dng.failed')}: {res.note}")
         ui.notify(res.note, type="positive" if res.ok else "negative", timeout=6000)
         if res.ok and action is DangerAction.FACTORY_RESET_ALL and ctx.device_id_setter:
             ctx.device_id_setter(FACTORY_DEFAULT_ID)
-            ui.notify(f"slave ID reset to factory default {FACTORY_DEFAULT_ID} "
-                      f"(baud back to 9600 — reconnect if you were on another baud)",
+            ui.notify(t("dng.factory_restored", id=FACTORY_DEFAULT_ID),
                       type="warning", timeout=8000)
 
     def simple_confirm(title: str, action: DangerAction):
@@ -41,19 +41,19 @@ def build(ctx: Ctx) -> None:
             d = ui.dialog()
             with d, ui.card():
                 ui.label(title).classes("font-bold")
-                ui.label(f"Target: slave {ctx.device_id()} — continue?")
+                ui.label(t("dng.target", id=ctx.device_id()))
                 with ui.row():
-                    ui.button("Cancel", on_click=lambda: d.submit(False)).props("flat")
-                    ui.button("CONFIRM", color="red", on_click=lambda: d.submit(True))
+                    ui.button(t("btn.cancel"), on_click=lambda: d.submit(False)).props("flat")
+                    ui.button(t("dng.confirm"), color="red", on_click=lambda: d.submit(True))
             if await d:
                 await run(action)
         return flow
 
     with ui.row().classes("gap-3 flex-wrap items-stretch"):
         with ui.card().classes("p-3 min-w-[340px] border border-red-400"):
-            ui.label("Factory reset").classes("font-bold text-red")
-            mode = ui.radio({"keep": "Keep slave ID (500→501)",
-                             "all": "Wipe everything (500→502)"}, value="keep").props("dense")
+            ui.label(t("dng.factory")).classes("font-bold text-red")
+            mode = ui.radio({"keep": t("dng.keep_id"), "all": t("dng.wipe_all")},
+                            value="keep").props("dense")
 
             async def arm() -> None:
                 device_id = ctx.device_id()
@@ -61,57 +61,56 @@ def build(ctx: Ctx) -> None:
                           else DangerAction.FACTORY_RESET_ALL)
                 d1 = ui.dialog()
                 with d1, ui.card():
-                    ui.label("Arm factory reset").classes("font-bold")
-                    ui.label(f"Sequence: coil 500 (arm) → coil {'501' if mode.value == 'keep' else '502'}"
-                             f" (apply) → device reboots ~3 s.")
+                    ui.label(t("dng.arm_title")).classes("font-bold")
+                    ui.label(t("dng.arm_seq", apply="501" if mode.value == "keep" else "502"))
                     if mode.value == "all":
-                        ui.label(f"Wipe-all restores ID {FACTORY_DEFAULT_ID} and baud 9600!") \
-                            .classes("text-red")
-                    typed = ui.input(f"Type the slave ID ({device_id}) to arm").props("dense outlined")
+                        ui.label(t("dng.wipe_warn", id=FACTORY_DEFAULT_ID)).classes("text-red")
+                    typed = ui.input(t("dng.type_id", id=device_id)).props("dense outlined")
                     with ui.row():
-                        ui.button("Cancel", on_click=lambda: d1.submit(False)).props("flat")
-                        ui.button("Arm", on_click=lambda: d1.submit(typed.value == str(device_id)))
-                armed = await d1
-                if not armed:
-                    if armed is False:
-                        pass
+                        ui.button(t("btn.cancel"), on_click=lambda: d1.submit(False)).props("flat")
+                        ui.button(t("dng.arm_btn"),
+                                  on_click=lambda: d1.submit(typed.value == str(device_id)))
+                if not await d1:
                     return
                 d2 = ui.dialog()
                 with d2, ui.card().classes("border border-red-500"):
-                    ui.label("REALLY apply factory reset?").classes("font-bold text-red")
+                    ui.label(t("dng.really")).classes("font-bold text-red")
                     ui.label(f"{action.value} @ slave {device_id}")
                     with ui.row():
-                        ui.button("Cancel", on_click=lambda: d2.submit(False)).props("flat")
-                        ui.button("APPLY", color="red", on_click=lambda: d2.submit(True))
+                        ui.button(t("btn.cancel"), on_click=lambda: d2.submit(False)).props("flat")
+                        ui.button(t("dng.apply"), color="red", on_click=lambda: d2.submit(True))
                 if await d2:
                     await run(action)
 
-            ui.button("Arm factory reset…", color="red", on_click=arm).props("outline")
+            ui.button(t("dng.arm"), color="red", on_click=arm).props("outline")
 
         with ui.card().classes("p-3 min-w-[220px]"):
-            ui.label("Save to EEPROM (503)").classes("font-bold")
-            ui.label("Persists R/W(F) registers; reboots ~3 s").classes("text-xs text-grey")
-            ui.button("Save…", on_click=simple_confirm("Persist config to EEPROM + reboot",
-                                                       DangerAction.SAVE_EEPROM)).props("outline dense")
+            ui.label(t("dng.save")).classes("font-bold")
+            ui.label(t("dng.save_note")).classes("text-xs text-grey")
+            ui.button(t("dng.save_btn"),
+                      on_click=simple_confirm(t("dng.save_title"), DangerAction.SAVE_EEPROM)) \
+                .props("outline dense")
 
         with ui.card().classes("p-3 min-w-[220px]"):
-            ui.label("Software reset (504)").classes("font-bold")
-            ui.label("Reboots the module ~3 s").classes("text-xs text-grey")
-            ui.button("Reset…", on_click=simple_confirm("Software reset the module",
-                                                        DangerAction.SOFT_RESET)).props("outline dense")
+            ui.label(t("dng.soft")).classes("font-bold")
+            ui.label(t("dng.soft_note")).classes("text-xs text-grey")
+            ui.button(t("dng.soft_btn"),
+                      on_click=simple_confirm(t("dng.soft_title"), DangerAction.SOFT_RESET)) \
+                .props("outline dense")
 
         with ui.card().classes("p-3 min-w-[220px]"):
-            ui.label("Clear statistics (510)").classes("font-bold")
-            ui.label("Zeroes regs 200-281 (persisted)").classes("text-xs text-grey")
-            ui.button("Clear…", on_click=simple_confirm("Clear all statistics counters",
-                                                        DangerAction.CLEAR_STATS)).props("outline dense")
+            ui.label(t("dng.stats")).classes("font-bold")
+            ui.label(t("dng.stats_note")).classes("text-xs text-grey")
+            ui.button(t("dng.stats_btn"),
+                      on_click=simple_confirm(t("dng.stats_title"), DangerAction.CLEAR_STATS)) \
+                .props("outline dense")
 
         with ui.card().classes("p-3 min-w-[280px]"):
-            ui.label("Set Slave ID (reg 4 → persist 503)").classes("font-bold")
-            ui.label("Grid: row×10+col (11-108) · factory 247 · 246 = SET_ID temp (not assignable)") \
-                .classes("text-xs text-grey")
+            ui.label(t("dng.setid")).classes("font-bold")
+            ui.label(t("dng.setid_note", factory=FACTORY_DEFAULT_ID,
+                       forbidden=SETID_TEMP_ID)).classes("text-xs text-grey")
             with ui.row().classes("items-center gap-2"):
-                new_id_input = ui.number("new ID", value=11, min=1, max=247, format="%d") \
+                new_id_input = ui.number(t("dng.new_id"), value=11, min=1, max=247, format="%d") \
                     .props("dense outlined").classes("w-24")
 
                 async def set_id_flow() -> None:
@@ -119,14 +118,14 @@ def build(ctx: Ctx) -> None:
                     target = int(new_id_input.value or 0)
                     d = ui.dialog()
                     with d, ui.card():
-                        ui.label("Change slave ID?").classes("font-bold")
-                        ui.label(f"Device {cur} → new ID {target}. Writes reg 4, persists to "
-                                 f"EEPROM (coil 503) and reboots ~3 s, then verifies at the new ID.")
+                        ui.label(t("dng.setid_title")).classes("font-bold")
+                        ui.label(t("dng.setid_body", cur=cur, new=target))
                         if target == cur:
-                            ui.label("new ID equals the current ID").classes("text-orange")
+                            ui.label(t("dng.setid_same")).classes("text-orange")
                         with ui.row():
-                            ui.button("Cancel", on_click=lambda: d.submit(False)).props("flat")
-                            ui.button("CHANGE ID", color="red", on_click=lambda: d.submit(True))
+                            ui.button(t("btn.cancel"), on_click=lambda: d.submit(False)).props("flat")
+                            ui.button(t("dng.setid_change"), color="red",
+                                      on_click=lambda: d.submit(True))
                     if not await d:
                         return
                     result_log.push(f"--- set slave id {cur} -> {target} ---")
@@ -134,9 +133,11 @@ def build(ctx: Ctx) -> None:
                     for i, step in enumerate(res.steps, 1):
                         mark = "OK " if step.ok else "ERR"
                         result_log.push(f"  step {i}: {mark} {step.note or step.value}")
-                    result_log.push(f"  => {'SUCCESS' if res.ok else 'FAILED'}: {res.note}")
+                    result_log.push(f"  => {t('dng.success') if res.ok else t('dng.failed')}: "
+                                    f"{res.note}")
                     ui.notify(res.note, type="positive" if res.ok else "negative", timeout=6000)
                     if res.ok and ctx.device_id_setter:
                         ctx.device_id_setter(target)
 
-                ui.button("Set ID…", color="red", on_click=set_id_flow).props("outline dense")
+                ui.button(t("dng.setid_btn"), color="red", on_click=set_id_flow) \
+                    .props("outline dense")
