@@ -22,7 +22,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Callable, Optional, Sequence
 
-from . import lgs_map, testsuite
+from . import fieldcheck, lgs_map, testsuite
 from .lgs_map import CoilClass, INTER_TXN_S, LATCH_COOLDOWN_S
 from .transports import TransportSettings, make_client, make_scan_probe_client
 from .txn_log import TxnLog
@@ -47,8 +47,12 @@ class WorkerState:
     busy: bool = False
     sweep_running: bool = False
     scan_running: bool = False
-    cooldown_remaining_s: float = 0.0
+    check_running: bool = False
     last_error: str = ""
+
+    @property
+    def long_job_running(self) -> bool:
+        return self.sweep_running or self.scan_running or self.check_running
 
 
 @dataclass(frozen=True)
@@ -108,7 +112,9 @@ class ModbusWorker:
         self._connected = False
         self._busy = False
         self._last_error = ""
-        self._cooldown_until = 0.0
+        # latch cooldown is per module: the firmware's 2 s minimum applies to a
+        # device, not to the bus, so a multi-device check must not serialise on it
+        self._cooldown_until: dict = {}
         self._last_txn_t = 0.0
 
         # raw-frame capture (worker serializes txns, so one holder is safe)
@@ -123,6 +129,10 @@ class ModbusWorker:
         self._scan_cancel = threading.Event()
         self._scan_events: list[ScanEvent] = []
         self._scan_lock = threading.Lock()
+        self._check_running = False
+        self._check_cancel = threading.Event()
+        self._check_events: list = []
+        self._check_lock = threading.Lock()
         self._event_seq = 0
 
     # ── lifecycle ──────────────────────────────────────────────────────────
@@ -170,11 +180,14 @@ class ModbusWorker:
     # ── state ──────────────────────────────────────────────────────────────
     def get_state(self) -> WorkerState:
         with self._state_lock:
-            remaining = max(0.0, self._cooldown_until - time.monotonic())
             desc = self._settings.describe() if self._settings else ""
             return WorkerState(self._connected, desc, self._busy,
                                self._sweep_running, self._scan_running,
-                               remaining, self._last_error)
+                               self._check_running, self._last_error)
+
+    def cooldown_remaining(self, device_id: int) -> float:
+        """Seconds left before this module will accept another unlock."""
+        return max(0.0, self._cooldown_until.get(device_id, 0.0) - time.monotonic())
 
     @property
     def sweep_running(self) -> bool:
@@ -290,7 +303,7 @@ class ModbusWorker:
                              0.0, res.note)
             return res
         if cls is CoilClass.LATCH and value:
-            remaining = self._cooldown_until - time.monotonic()
+            remaining = self._cooldown_until.get(device_id, 0.0) - time.monotonic()
             if remaining > 0:
                 res = TxnResult(False, note=f"latch cooldown — {remaining:.1f}s remaining")
                 self._log.append(source, 5, addr, device_id, "write", False, int(value), "",
@@ -303,13 +316,13 @@ class ModbusWorker:
             lambda v: f"coil={'ON' if v else 'OFF'}")
         if result.ok and cls is CoilClass.LATCH and value:
             with self._state_lock:
-                self._cooldown_until = time.monotonic() + LATCH_COOLDOWN_S
+                self._cooldown_until[device_id] = time.monotonic() + LATCH_COOLDOWN_S
         return result
 
     # ── async facade (manual ops) ──────────────────────────────────────────
     def _guard(self, device_id: int) -> Optional[TxnResult]:
-        if self._sweep_running:
-            return TxnResult(False, note="sweep running — wait or cancel it")
+        if self._sweep_running or self._check_running:
+            return TxnResult(False, note="a test is running — wait or cancel it")
         if not self._connected:
             return TxnResult(False, note="not connected")
         if not lgs_map.valid_target_id(device_id):
@@ -342,7 +355,7 @@ class ModbusWorker:
 
     async def poll_monitor(self, device_id: int, *, with_stats: bool) -> Optional[MonitorSnapshot]:
         st = self.get_state()
-        if not st.connected or st.busy or st.sweep_running or st.scan_running:
+        if not st.connected or st.busy or st.long_job_running:
             return None                                    # skip-if-busy: no backlog
         return await self._run_job(
             _PRIO_MONITOR, lambda: self._do_poll_monitor(device_id, with_stats))
@@ -461,6 +474,39 @@ class ModbusWorker:
         finally:
             self._sweep_running = False
 
+    # ── installation check (long job, many devices) ────────────────────────
+    def start_field_check(self, cfg: "fieldcheck.CheckConfig",
+                          ids: Sequence[int]) -> bool:
+        if self._check_running or self._sweep_running or self._scan_running \
+                or not self._connected or not ids:
+            return False
+        self._check_cancel.clear()
+        with self._check_lock:
+            self._check_events.clear()
+        self._check_running = True
+        self._submit(_PRIO_LONG, lambda: self._do_field_check(cfg, list(ids)))
+        return True
+
+    def cancel_field_check(self) -> None:
+        self._check_cancel.set()
+
+    def drain_field_check_events(self, since: int) -> tuple[int, list]:
+        with self._check_lock:
+            fresh = [e for e in self._check_events if e.seq > since]
+            return (fresh[-1].seq if fresh else since), fresh
+
+    def _do_field_check(self, cfg: "fieldcheck.CheckConfig", ids: list) -> None:
+        def emit(ev) -> None:
+            with self._check_lock:
+                self._event_seq += 1
+                ev.seq = self._event_seq
+                self._check_events.append(ev)
+
+        try:
+            fieldcheck.run_check(_FieldOps(self), cfg, ids, emit, self._check_cancel)
+        finally:
+            self._check_running = False
+
     # ── danger actions ─────────────────────────────────────────────────────
     async def danger_action(self, action: DangerAction, device_id: int) -> DangerResult:
         guard = self._guard(device_id)
@@ -564,6 +610,29 @@ class ModbusWorker:
             note = (f"device still answers at old id {current_id} — new ID rejected at persist"
                     if back.ok else f"device did not answer at new id {new_id} after reboot")
         return DangerResult(ok, tuple(steps), note)
+
+
+class _FieldOps:
+    """fieldcheck.FieldOps — device id per call (runs on the worker thread)."""
+
+    def __init__(self, worker: ModbusWorker) -> None:
+        self._w = worker
+
+    def read_reg(self, device_id: int, addr: int) -> TxnResult:
+        return self._w._do_read_registers(addr, 1, device_id, "check")
+
+    def write_reg(self, device_id: int, addr: int, value: int) -> TxnResult:
+        return self._w._do_write_register(addr, value, device_id, "check")
+
+    def write_coil(self, device_id: int, addr: int, value: int) -> TxnResult:
+        return self._w._do_write_coil(addr, bool(value), device_id, "check")
+
+    def sleep(self, seconds: float) -> None:
+        end = time.monotonic() + seconds
+        while time.monotonic() < end:
+            if self._w._check_cancel.is_set():
+                raise fieldcheck.CheckCancelled()
+            time.sleep(min(0.05, max(0.0, end - time.monotonic())))
 
 
 class _WorkerOps:

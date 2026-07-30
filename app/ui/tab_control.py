@@ -98,7 +98,7 @@ def build(ctx: Ctx) -> None:
                 cooldown = ui.badge("latch ready").props("color=green")
 
     def refresh_cooldown() -> None:
-        rem = worker.get_state().cooldown_remaining_s
+        rem = worker.cooldown_remaining(ctx.device_id())
         if rem > 0:
             cooldown.set_text(f"cooldown {rem:.1f}s")
             cooldown.props("color=orange")

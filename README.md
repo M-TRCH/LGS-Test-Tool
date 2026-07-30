@@ -11,8 +11,9 @@ Four tabs:
 |---|---|
 | **Control** | Preset 1-8 buttons (light / light+display / unlock / unlock+display), OLED number + display power, Identify / All Off / latch triggers with a live 2.2 s cooldown chip, generic register & coil read/write |
 | **Monitor** | 0.5-2 s poll of device info, uptime, boot counter, health bits, reset cause (sticky — the register is clear-on-read), temperatures (0x8000 → SENSOR FAULT), latch state, statistics |
-| **Auto Test** | The full R5.0 sweep (READ → WRITE → VALIDATE → PRESET → DISPLAY → LED → optional LATCH) with live PASS/FAIL table and CSV export — a GUI port of `LGS-Standard-Module/tools/test_modbus_rtu.py` |
-| **Danger** | Factory reset (type-the-ID + double confirm), save-to-EEPROM, software reset, clear statistics — with post-reboot probes |
+| **Installation Check** | **Many modules, few commands.** Pick cells on a 10×8 map of the cabinet (or take the last scan result), then run light / display number / unlock on each one; every cell turns green or red so a missing or mis-addressed module is obvious. CSV export |
+| **Module Test** | **One module, everything.** The full R5.0 sweep (read → write → value limits → presets → display → light ring → optional unlock) with a live PASS/FAIL table and CSV export — a GUI port of `LGS-Standard-Module/tools/test_modbus_rtu.py` |
+| **Danger** | Factory reset (type-the-ID + double confirm), save-to-EEPROM, software reset, clear statistics, set slave ID — with post-reboot probes |
 
 A transaction log pane (all sources, raw TX/RX hex, CSV export) sits under every tab.
 

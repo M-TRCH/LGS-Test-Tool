@@ -8,7 +8,7 @@ from ..lgs_map import (BAUD_WHITELIST, FACTORY_DEFAULT_ID, GRID_COLS, GRID_IDS,
                        GRID_ROWS, SETID_TEMP_ID)
 from ..transports import RtuSettings, TcpSettings, list_com_ports
 from ..version import APP_VERSION
-from . import Ctx, theme as theme_mod
+from . import Ctx, about, theme as theme_mod
 
 
 def _port_options() -> dict:
@@ -129,6 +129,7 @@ def build(ctx: Ctx) -> None:
             scan_state["seq"], events = worker.drain_scan_events(scan_state["seq"])
             for ev in events:
                 if ev.done:
+                    ctx.last_scan_ids = ev.found_ids
                     ids = ", ".join(str(i) for i in ev.found_ids) or "none"
                     scan_progress.set_text(f"done — probed {scan_state['count']}/{scan_state['total']}")
                     scan_found.set_text(f"found: {ids}")
@@ -199,13 +200,17 @@ def build(ctx: Ctx) -> None:
             cfg.theme = key
             config_store.save(cfg)
 
-        ui.space()          # pushes the theme picker to the far right edge
+        ui.space()          # pushes about + theme to the far right edge
+        about.build_button()
         theme_mod.build_picker(theme_chosen)
 
         def refresh_status() -> None:
             st = worker.get_state()
             if st.sweep_running:
-                status.set_text("SWEEP RUNNING")
+                status.set_text("MODULE TEST RUNNING")
+                status.props("color=amber")
+            elif st.check_running:
+                status.set_text("INSTALLATION CHECK RUNNING")
                 status.props("color=amber")
             elif st.scan_running:
                 status.set_text("scanning...")

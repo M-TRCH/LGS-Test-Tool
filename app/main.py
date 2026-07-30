@@ -10,7 +10,7 @@ from . import config_store
 from .modbus_worker import ModbusWorker
 from .txn_log import TxnLog
 from .ui import (Ctx, connection_bar, log_pane, tab_autotest, tab_control,
-                 tab_danger, tab_monitor, theme)
+                 tab_danger, tab_install, tab_monitor, theme)
 from .version import APP_VERSION
 
 log = TxnLog()
@@ -27,7 +27,8 @@ def build_ui() -> None:
     with ui.tabs().classes("w-full") as tabs:
         t_control = ui.tab("Control", icon="tune")
         t_monitor = ui.tab("Monitor", icon="monitor_heart")
-        t_autotest = ui.tab("Auto Test", icon="checklist")
+        t_install = ui.tab("Installation Check", icon="grid_view")
+        t_module = ui.tab("Module Test", icon="checklist")
         t_danger = ui.tab("Danger", icon="warning")
 
     with ui.tab_panels(tabs, value=t_control).classes("w-full"):
@@ -35,7 +36,9 @@ def build_ui() -> None:
             tab_control.build(ctx)
         with ui.tab_panel(t_monitor):
             tab_monitor.build(ctx)
-        with ui.tab_panel(t_autotest):
+        with ui.tab_panel(t_install):
+            tab_install.build(ctx)
+        with ui.tab_panel(t_module):
             tab_autotest.build(ctx)
         with ui.tab_panel(t_danger):
             tab_danger.build(ctx)
