@@ -294,7 +294,7 @@ TEXTS: dict[str, dict[str, str]] = {
     "ins.res.fail": {"en": "✗ fail", "th": "✗ ไม่ผ่าน"},
 
     # ── OTA tab ────────────────────────────────────────────────────────────
-    "tab.ota": {"en": "Firmware (OTA)", "th": "อัปเดตเฟิร์มแวร์"},
+    "tab.ota": {"en": "Firmware", "th": "อัปเดตเฟิร์มแวร์"},
     "ota.banner": {"en": "⚠ Writes firmware over RS485. Keep power on until the "
                          "update finishes — an interrupted apply can leave a module "
                          "needing a cable flash.",
@@ -313,8 +313,19 @@ TEXTS: dict[str, dict[str, str]] = {
     "ota.use_current": {"en": "Use the header ID", "th": "ใช้ ID จากแถบบน"},
     "ota.use_scan": {"en": "From last scan", "th": "จากผลสแกนล่าสุด"},
     "ota.no_ids": {"en": "no valid device IDs", "th": "ยังไม่มีรหัสอุปกรณ์ที่ถูกต้อง"},
+    "ota.targets_note": {"en": "The image itself is broadcast to every module on the "
+                               "bus. This list is what gets probed first, repaired "
+                               "chunk by chunk, and verified afterwards — so list "
+                               "every module you are updating.",
+                         "th": "ตัวไฟล์เฟิร์มแวร์ถูกส่งถึงทุกโมดูลบนบัสอยู่แล้ว "
+                               "รายการนี้คือตัวที่จะถูกตรวจก่อนเริ่ม ซ่อมข้อมูลที่ขาด "
+                               "และยืนยันผลเป็นรายตัว — จึงควรใส่ให้ครบทุกตัวที่กำลังอัปเดต"},
     "ota.broadcast_apply": {"en": "Apply with one broadcast instead of per device",
                             "th": "สั่งใช้งานแบบ broadcast ครั้งเดียวแทนทีละเครื่อง"},
+    "ota.broadcast_warn": {"en": "⚠ every module on the bus that verified the image "
+                                 "will switch to it, including ones not listed above",
+                           "th": "⚠ ทุกโมดูลบนบัสที่ verify ผ่านจะเปลี่ยนไปใช้เฟิร์มแวร์นี้ "
+                                 "รวมถึงตัวที่ไม่ได้อยู่ในรายการด้านบน"},
     "ota.send": {"en": "Send firmware", "th": "ส่งเฟิร์มแวร์"},
     "ota.status": {"en": "Read status", "th": "อ่านสถานะ"},
     "ota.abort": {"en": "Abort session", "th": "ยกเลิกเซสชัน"},

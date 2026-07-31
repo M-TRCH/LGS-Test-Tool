@@ -61,7 +61,11 @@ def build(ctx: Ctx) -> None:
                     ids_input.set_value(", ".join(str(i) for i in ctx.last_scan_ids))
 
                 ui.button(t("ota.use_scan"), on_click=from_scan).props("flat dense no-caps")
+            ui.label(t("ota.targets_note")).classes("text-xs text-grey")
             cb_broadcast = ui.checkbox(t("ota.broadcast_apply"), value=False)
+            broadcast_warn = ui.label("").classes("text-orange text-xs")
+            cb_broadcast.on_value_change(
+                lambda e: broadcast_warn.set_text(t("ota.broadcast_warn") if e.value else ""))
 
     def parse_ids() -> list:
         out = []
