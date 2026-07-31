@@ -426,25 +426,28 @@ class ModbusWorker:
                 probe = None
                 ok, dtype = False, -1
                 try:
+                    # Opening the port is the only fatal step: if it fails, probing
+                    # the remaining ids repeats the same failure and reports "no
+                    # devices", hiding the real reason.
                     probe = make_scan_probe_client(settings)
-                    if probe.connect():
-                        rsp = probe.read_holding_registers(0, count=1, device_id=uid)
-                        if rsp is not None and not rsp.isError():
-                            ok, dtype = True, rsp.registers[0]
-                    else:
-                        # cannot even open the port / reach the host: probing the
-                        # remaining ids would just repeat the same failure and
-                        # report "no devices", hiding the real reason.
+                    opened = probe.connect()
+                    if not opened:
                         fatal = (f"cannot open {settings.describe()} — unplugged, "
                                  f"in use by another program, or wrong host")
                 except Exception as exc:                   # noqa: BLE001
                     fatal = f"{settings.describe()}: {type(exc).__name__}: {exc}"
-                finally:
-                    if probe is not None:
-                        try:
-                            probe.close()
-                        except Exception:
-                            pass
+                if not fatal:
+                    try:
+                        rsp = probe.read_holding_registers(0, count=1, device_id=uid)
+                        if rsp is not None and not rsp.isError():
+                            ok, dtype = True, rsp.registers[0]
+                    except Exception:                      # noqa: BLE001
+                        pass    # timeout / IO error: this id simply has no device
+                if probe is not None:
+                    try:
+                        probe.close()
+                    except Exception:                      # noqa: BLE001
+                        pass
                 if fatal:
                     self._log.append("scan", 3, 0, uid, "probe", False, None, "",
                                      0.0, fatal)
