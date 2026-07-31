@@ -24,12 +24,16 @@ from typing import Callable, Optional, Sequence
 
 from . import fieldcheck, lgs_map, ota, testsuite
 from .lgs_map import CoilClass, INTER_TXN_S, LATCH_COOLDOWN_S
-from .transports import TransportSettings, make_client, make_scan_probe_client
+from .transports import (RtuSettings, TransportSettings, make_client,
+                         make_scan_probe_client)
 from .txn_log import TxnLog
 
 _PRIO_MANUAL = 0
 _PRIO_LONG = 5
 _PRIO_MONITOR = 10
+
+# Speed of the RS485 bus behind a TCP gateway (the tool only knows the TCP leg).
+RS485_BUS_BAUD = 9600
 
 
 @dataclass(frozen=True)
@@ -498,6 +502,20 @@ class ModbusWorker:
             self._sweep_running = False
 
     # ── broadcast (device id 0, no reply expected) ─────────────────────────
+    def _broadcast_wire_time(self, kind: str, payload) -> float:
+        """How long the frame occupies the RS485 line, in seconds.
+
+        A broadcast gets no reply, so nothing paces the sender: over USB the
+        write returns immediately while the bus (or the Opta bridge's queue)
+        is still busy. Without this wait the next frame is appended to the
+        previous one in the bridge's buffer, the 10 ms gap that delimits a
+        frame never appears, and the merged bytes fail CRC and are dropped —
+        which is exactly how an OTA session starves and times out.
+        """
+        nbytes = (9 + len(payload) * 2) if kind == "regs" else 8
+        baud = self._settings.baud if isinstance(self._settings, RtuSettings) else RS485_BUS_BAUD
+        return nbytes * 10.0 / max(1, baud)
+
     def _do_broadcast(self, kind: str, addr: int, payload, source: str = "ota",
                       log: bool = True) -> TxnResult:
         if self._client is None:
@@ -517,6 +535,8 @@ class ModbusWorker:
                                         no_response_expected=True)
         except Exception as exc:                           # noqa: BLE001
             ok, note = False, f"EXC {type(exc).__name__}: {exc}"
+        if ok:
+            time.sleep(self._broadcast_wire_time(kind, payload))
         latency = (time.monotonic() - t0) * 1000.0
         self._last_txn_t = time.monotonic()
         if log:
