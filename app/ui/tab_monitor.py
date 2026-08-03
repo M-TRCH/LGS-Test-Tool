@@ -7,7 +7,7 @@ from ..i18n import t
 from ..lgs_map import (SENSOR_FAULT, dec_baud, dec_device_type, dec_fw, dec_hw,
                        dec_mode, dec_preset, dec_temp, dec_uptime,
                        decode_health, decode_reset_cause, stats_count, stats_time)
-from . import Ctx
+from . import Ctx, helps
 
 
 def build(ctx: Ctx) -> None:
@@ -16,9 +16,9 @@ def build(ctx: Ctx) -> None:
 
     with ui.row().classes("items-center gap-3"):
         polling = ui.switch(t("mon.polling"), value=False)
-        interval = ui.select([0.5, 1.0, 2.0], value=ctx.cfg.monitor_interval_s,
-                             label=t("mon.interval")).props("dense outlined").classes("w-32")
-        ui.label(t("mon.stats_note")).classes("text-xs text-grey")
+        interval = helps(ui.select([0.5, 1.0, 2.0], value=ctx.cfg.monitor_interval_s,
+                                   label=t("mon.interval"))
+                         .props("dense outlined").classes("w-32"), t("mon.stats_note"))
         last_poll = ui.label(t("mon.last_poll", time="—")).classes("text-xs text-grey")
         errors_label = ui.label("").classes("text-xs text-orange")
 
@@ -37,9 +37,8 @@ def build(ctx: Ctx) -> None:
             health_row = ui.row().classes("gap-1 flex-wrap")
             latch_chip = ui.badge("—").props("color=grey")
         with ui.card().classes("p-3 min-w-[220px]"):
-            ui.label(t("mon.card.reset")).classes("font-bold")
+            helps(ui.label(t("mon.card.reset")).classes("font-bold"), t("mon.reset_note"))
             rc_label = L()
-            ui.label(t("mon.reset_note")).classes("text-xs text-grey")
         with ui.card().classes("p-3 min-w-[240px]"):
             ui.label(t("mon.card.temp")).classes("font-bold")
             t_room, t_board = L(), L()

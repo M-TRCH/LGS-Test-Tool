@@ -1,4 +1,4 @@
-﻿"""Installation Check tab: run a few real commands across many modules and
+"""Installation Check tab: run a few real commands across many modules and
 show the result as a map of the cabinet."""
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from ..i18n import t
 from ..fieldcheck import (CheckConfig, CheckDone, DeviceDone, DeviceStart,
                           check_csv_bytes)
 from ..lgs_map import CABINET_LAYOUTS, GRID_COLS, GRID_ROWS
-from . import Ctx
+from . import Ctx, helps, inline_warning
 
 COLOR_UNSELECTED = "grey-5"
 COLOR_SELECTED = "primary"
@@ -74,7 +74,7 @@ def build(ctx: Ctx) -> None:
             count_label = ui.label("").classes("text-sm text-grey")
 
         with ui.row().classes("items-center gap-2 flex-wrap"):
-            ui.label(t("ins.cabinet")).classes("text-sm text-grey")
+            helps(ui.label(t("ins.cabinet")).classes("text-sm text-grey"), t("ins.hint"))
             for layout in CABINET_LAYOUTS:
                 def pick(layout=layout) -> None:
                     set_selection(layout.ids)
@@ -84,8 +84,6 @@ def build(ctx: Ctx) -> None:
                 ui.button(layout.label, on_click=pick).props("outline dense no-caps") \
                     .tooltip(t("ins.cabinet_detail", rows=layout.rows, cols=layout.cols,
                                n=layout.count, first=layout.ids[0], last=layout.ids[-1]))
-
-        ui.label(t("ins.hint")).classes("text-xs text-grey")
 
         with ui.column().classes("gap-1 q-mt-sm"):
             for r in range(1, GRID_ROWS + 1):
@@ -119,8 +117,7 @@ def build(ctx: Ctx) -> None:
     # ── what to run ────────────────────────────────────────────────────────
     with ui.row().classes("gap-3 flex-wrap items-stretch w-full"):
         with ui.card().classes("p-3 grow"):
-            ui.label(t("ins.what")).classes("font-bold")
-            ui.label(t("ins.always")).classes("text-xs text-grey")
+            helps(ui.label(t("ins.what")).classes("font-bold"), t("ins.always"))
             with ui.column().classes("gap-1 q-mt-sm"):
                 cb_light = ui.checkbox(t("ins.do_light"), value=True)
                 cb_display = ui.checkbox(t("ins.do_display"), value=False) \
@@ -131,11 +128,11 @@ def build(ctx: Ctx) -> None:
 
         with ui.card().classes("p-3 grow border border-orange-400"):
             with ui.row().classes("items-center gap-2"):
-                ui.icon("lock_open").classes("text-orange")
-                ui.label(t("ins.unlock_card")).classes("font-bold")
-            cb_unlock = ui.checkbox(t("ins.do_unlock"), value=False)
-            unlock_caption = ui.label("").classes("text-red text-sm")
-            ui.label(t("ins.cooldown_note")).classes("text-xs text-grey")
+                ui.label(t("ins.unlock_card")).classes("font-bold text-orange")
+            cb_unlock = helps(ui.checkbox(t("ins.do_unlock"), value=False),
+                              t("ins.cooldown_note"))
+            # Stays on screen: it is a live warning about what will happen.
+            unlock_caption = inline_warning("text-red text-sm")
 
     def make_cfg() -> CheckConfig:
         return CheckConfig(light=bool(cb_light.value), unlock=bool(cb_unlock.value),

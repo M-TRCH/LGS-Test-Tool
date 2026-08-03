@@ -15,7 +15,7 @@ from . import Ctx
 
 
 def build(ctx: Ctx) -> None:
-    with ui.expansion(t("log.title"), icon="receipt_long", value=True).classes("w-full"):
+    with ui.expansion(t("log.title"), value=True).classes("w-full"):
         with ui.row().classes("items-center gap-2"):
             paused = ui.switch(t("log.pause"), value=False).props("dense")
             source_filter = ui.select({"all": t("log.all"), "manual": "manual",

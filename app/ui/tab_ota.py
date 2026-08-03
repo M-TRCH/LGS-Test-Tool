@@ -9,7 +9,7 @@ from nicegui import ui
 
 from ..i18n import t
 from ..ota import Done, Line, MAX_IMAGE_SIZE, OtaConfig, Progress
-from . import Ctx
+from . import Ctx, helps, inline_warning, warning_banner
 
 LEVEL_CLASS = {"info": "", "ok": "text-green", "warn": "text-orange", "err": "text-red"}
 
@@ -18,13 +18,13 @@ def build(ctx: Ctx) -> None:
     worker = ctx.worker
     state = {"seq": 0, "image": b"", "name": ""}
 
-    ui.badge(t("ota.banner")).props("color=red").classes("text-sm p-2")
+    warning_banner(t("ota.banner"))
 
     with ui.row().classes("gap-3 flex-wrap items-stretch w-full"):
         # ── image ──────────────────────────────────────────────────────────
         with ui.card().classes("p-3 grow"):
-            ui.label(t("ota.image")).classes("font-bold")
-            ui.label(t("ota.upload_hint", max=f"{MAX_IMAGE_SIZE:,}")).classes("text-xs text-grey")
+            helps(ui.label(t("ota.image")).classes("font-bold"),
+                  t("ota.upload_hint", max=f"{MAX_IMAGE_SIZE:,}"))
 
             def on_upload(e) -> None:
                 data = e.content.read()
@@ -46,7 +46,7 @@ def build(ctx: Ctx) -> None:
 
         # ── targets ────────────────────────────────────────────────────────
         with ui.card().classes("p-3 grow"):
-            ui.label(t("ota.targets")).classes("font-bold")
+            helps(ui.label(t("ota.targets")).classes("font-bold"), t("ota.targets_note"))
             ids_input = ui.input(t("ota.ids_label"), value=str(ctx.device_id())) \
                 .props("dense outlined").classes("w-full")
             with ui.row().classes("gap-2 flex-wrap"):
@@ -61,9 +61,8 @@ def build(ctx: Ctx) -> None:
                     ids_input.set_value(", ".join(str(i) for i in ctx.last_scan_ids))
 
                 ui.button(t("ota.use_scan"), on_click=from_scan).props("flat dense no-caps")
-            ui.label(t("ota.targets_note")).classes("text-xs text-grey")
             cb_broadcast = ui.checkbox(t("ota.broadcast_apply"), value=False)
-            broadcast_warn = ui.label("").classes("text-orange text-xs")
+            broadcast_warn = inline_warning("text-orange text-xs")
             cb_broadcast.on_value_change(
                 lambda e: broadcast_warn.set_text(t("ota.broadcast_warn") if e.value else ""))
 

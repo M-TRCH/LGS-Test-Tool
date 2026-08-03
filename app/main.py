@@ -31,13 +31,13 @@ def index() -> None:
     connection_bar.build(ctx)
 
     with ui.tabs().classes("w-full") as tabs:
-        t_control = ui.tab("control", i18n.t("tab.control"), icon="tune")
-        t_monitor = ui.tab("monitor", i18n.t("tab.monitor"), icon="monitor_heart")
-        t_install = ui.tab("install", i18n.t("tab.install"), icon="grid_view")
-        t_module = ui.tab("module", i18n.t("tab.module"), icon="checklist")
-        t_ota = ui.tab("ota", i18n.t("tab.ota"), icon="system_update")
-        t_gateway = ui.tab("gateway", i18n.t("tab.gateway"), icon="settings_ethernet")
-        t_danger = ui.tab("danger", i18n.t("tab.danger"), icon="warning")
+        t_control = ui.tab("control", i18n.t("tab.control"))
+        t_monitor = ui.tab("monitor", i18n.t("tab.monitor"))
+        t_install = ui.tab("install", i18n.t("tab.install"))
+        t_module = ui.tab("module", i18n.t("tab.module"))
+        t_ota = ui.tab("ota", i18n.t("tab.ota"))
+        t_gateway = ui.tab("gateway", i18n.t("tab.gateway"))
+        t_danger = ui.tab("danger", i18n.t("tab.danger"))
 
     with ui.tab_panels(tabs, value=t_control).classes("w-full"):
         with ui.tab_panel(t_control):

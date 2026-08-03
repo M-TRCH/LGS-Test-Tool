@@ -42,6 +42,36 @@ THEMES: dict[str, Theme] = {
 
 DEFAULT_THEME = "light"
 
+# The interface is text-first: no decorative icons anywhere, so what is left is
+# only the glyphs Quasar draws to make its own controls work — dropdown arrows,
+# checkbox ticks, the sort caret in tables. Those stay, in the thin square-
+# cornered face, because a select with no arrow or a checkbox with no tick is
+# not minimal, it is broken.
+#
+# NiceGUI bundles the static 400-weight instance, not the variable font, so
+# font-variation-settings would be ignored — the face itself is the change.
+_ICON_FACE_CSS = """
+.q-icon.material-icons, i.material-icons, .material-icons {
+    font-family: 'Material Symbols Sharp' !important;
+    font-weight: normal;
+}
+/* Quasar decorates its empty-table row with a warning glyph — the message
+   beside it already says the same thing. The upload button's glyph stays: it
+   is the only thing on that button. */
+.q-table__bottom--nodata .q-icon { display: none; }
+"""
+
+# Roboto is Quasar's default and reads as an Android app. The platform's own UI
+# face looks native instead and pulls in the matching Thai face automatically
+# (Leelawadee UI on Windows), so mixed EN/TH lines keep one weight and rhythm.
+# System fonts need no download, so the portable exe is unaffected.
+_FONT_CSS = """
+body, .q-menu, .q-dialog, .q-tooltip, input, textarea, select, button {
+    font-family: system-ui, -apple-system, "Segoe UI", "Leelawadee UI", Roboto,
+                 "Noto Sans Thai", "Helvetica Neue", Arial, sans-serif;
+}
+"""
+
 _state: dict = {"current": DEFAULT_THEME, "dark_el": None, "header": None,
                 "header_classes": ""}
 
@@ -58,6 +88,8 @@ def init(key: str) -> None:
     """
     theme = THEMES.get(key, THEMES[DEFAULT_THEME])
     _state["current"] = theme.key
+    ui.add_css(_FONT_CSS)
+    ui.add_css(_ICON_FACE_CSS)
     _state["dark_el"] = ui.dark_mode(theme.dark)
     ui.colors(primary=theme.primary, secondary=theme.secondary, accent=theme.accent)
     _apply_header(theme)
@@ -95,21 +127,26 @@ def apply(key: str) -> None:
     _apply_header(theme)
 
 
-def build_picker(on_select: Callable[[str], None]) -> None:
-    """Palette button + theme menu, for the header."""
+def build_menu_items(on_select: Callable[[str], None]) -> None:
+    """Theme choices as plain menu items.
+
+    The caller owns the button and the menu — the header collects language,
+    theme and about into one overflow menu, so this contributes items rather
+    than a control of its own.
+    """
 
     @ui.refreshable
     def items() -> None:
         for theme in THEMES.values():
-            marker = "●" if theme.key == _state["current"] else "○"
-            ui.menu_item(f"{marker}  {t('theme.' + theme.key)}",
-                         on_click=lambda th=theme: _choose(th.key))
+            selected = theme.key == _state["current"]
+            # Weight and colour mark the current theme; no glyph needed.
+            ui.menu_item(t("theme." + theme.key),
+                         on_click=lambda th=theme: _choose(th.key)) \
+                .classes("text-primary font-bold" if selected else "")
 
     def _choose(key: str) -> None:
         apply(key)
         on_select(key)
         items.refresh()
 
-    with ui.button(icon="palette").props("dense flat round").tooltip(t("hdr.theme_tooltip")):
-        with ui.menu():
-            items()
+    items()

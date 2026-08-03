@@ -12,13 +12,13 @@ from nicegui import ui
 from ..i18n import t
 from ..lgs_map import FACTORY_DEFAULT_ID, SETID_TEMP_ID
 from ..modbus_worker import DangerAction
-from . import Ctx
+from . import Ctx, warning_banner
 
 
 def build(ctx: Ctx) -> None:
     worker = ctx.worker
 
-    ui.badge(t("dng.banner")).props("color=red").classes("text-sm p-2")
+    warning_banner(t("dng.banner"))
 
     result_log = ui.log(max_lines=60).classes("w-full h-40 font-mono text-xs")
 

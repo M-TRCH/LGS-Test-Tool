@@ -45,6 +45,21 @@ TEXTS: dict[str, dict[str, str]] = {
     "hdr.single_client": {"en": "gateway: single client",
                           "th": "gateway: ต่อได้ทีละเครื่อง"},
     "hdr.slave_id": {"en": "Slave ID", "th": "Slave ID"},
+    # Short labels for the header controls, which carry no icons.
+    "hdr.rescan": {"en": "Rescan", "th": "ค้นพอร์ต"},
+    "hdr.grid": {"en": "Grid", "th": "ผัง"},
+    "hdr.theme": {"en": "Theme", "th": "ธีม"},
+    "hdr.about": {"en": "About", "th": "เกี่ยวกับ"},
+    "hdr.language": {"en": "Language", "th": "ภาษา"},
+    "hdr.reference": {"en": "Control table", "th": "ตารางคำสั่ง"},
+    "ref.title": {"en": "LGS control table", "th": "ตารางคำสั่ง LGS"},
+    "ref.search": {"en": "Find a register, coil or name",
+                   "th": "ค้นหา register, coil หรือชื่อ"},
+    "ref.hits": {"en": "{n} row(s)", "th": "{n} รายการ"},
+    "ref.source": {"en": "Shipped with the tool — works offline. Source: {url}",
+                   "th": "แนบมากับโปรแกรม ใช้ออฟไลน์ได้ · ต้นฉบับ: {url}"},
+    "hdr.more_tooltip": {"en": "language, theme and about",
+                         "th": "ภาษา ธีม และเกี่ยวกับโปรแกรม"},
     "hdr.grid_tooltip": {"en": "pick a slave ID from the grid (row x 10 + col)",
                          "th": "เลือก Slave ID จากผัง (แถว x 10 + ช่อง)"},
     "hdr.grid_title": {"en": "Grid IDs — row x 10 + col",
@@ -64,10 +79,6 @@ TEXTS: dict[str, dict[str, str]] = {
                                  "th": "กำลังตรวจการติดตั้ง"},
     "hdr.status.ota": {"en": "FIRMWARE UPDATE RUNNING", "th": "กำลังอัปเดตเฟิร์มแวร์"},
     "hdr.status.connected": {"en": "{desc} — id {id}", "th": "{desc} — id {id}"},
-    "hdr.lang_tooltip": {"en": "language", "th": "ภาษา"},
-    "hdr.about_tooltip": {"en": "about — v{ver} and release notes",
-                          "th": "เกี่ยวกับ — v{ver} และบันทึกรุ่น"},
-    "hdr.theme_tooltip": {"en": "theme", "th": "ธีม"},
 
     # notifications
     "msg.no_com": {"en": "no COM port selected", "th": "ยังไม่ได้เลือกพอร์ต COM"},
@@ -203,8 +214,8 @@ TEXTS: dict[str, dict[str, str]] = {
     "mt.also_combo": {"en": "Also light + unlock (1022) and light + number + unlock (1031)",
                       "th": "เพิ่ม: ไฟ + ปลดล็อก (1022) และ ไฟ + เลข + ปลดล็อก (1031)"},
     "mt.also_1021": {"en": "Also light 1 + unlock (1021)", "th": "เพิ่ม: ไฟ 1 + ปลดล็อก (1021)"},
-    "mt.warn_unlock": {"en": "⚠ this run will unlock the door {n} time(s)",
-                       "th": "⚠ รอบนี้จะปลดล็อก {n} ครั้ง"},
+    "mt.warn_unlock": {"en": "this run will unlock the door {n} time(s)",
+                       "th": "รอบนี้จะปลดล็อก {n} ครั้ง"},
     "mt.run": {"en": "Run Sweep", "th": "เริ่มทดสอบ"},
     "mt.idle": {"en": "idle", "th": "ว่าง"},
     "mt.done_steps": {"en": "done — {n} steps", "th": "เสร็จ — {n} ขั้น"},
@@ -274,8 +285,8 @@ TEXTS: dict[str, dict[str, str]] = {
                         "th": "ปลดล็อก — กลอนจะทำงานจริง"},
     "ins.do_unlock": {"en": "Light + unlock each module (1021)",
                       "th": "เปิดไฟ + ปลดล็อกทุกโมดูล (1021)"},
-    "ins.warn_unlock": {"en": "⚠ this run will unlock {n} module(s)",
-                        "th": "⚠ รอบนี้จะปลดล็อก {n} โมดูล"},
+    "ins.warn_unlock": {"en": "this run will unlock {n} module(s)",
+                        "th": "รอบนี้จะปลดล็อก {n} โมดูล"},
     "ins.cooldown_note": {"en": "Each module keeps its own 2 s cooldown, so a sweep "
                                 "across different modules is not slowed down.",
                           "th": "แต่ละโมดูลมีเวลาพัก 2 วินาทีของตัวเอง "
@@ -316,11 +327,99 @@ TEXTS: dict[str, dict[str, str]] = {
     "gw.card.health": {"en": "Health", "th": "สถานะระบบ"},
     "gw.card.rs485": {"en": "RS485 bus", "th": "บัส RS485"},
     "gw.card.usb": {"en": "USB bridge", "th": "USB bridge"},
+    "gw.card.identity": {"en": "Identity", "th": "ชื่อเรียก"},
     "gw.card.net": {"en": "Network", "th": "เครือข่าย"},
     "gw.card.counters": {"en": "Counters", "th": "ตัวนับ"},
-    "gw.net_phase1": {"en": "Stored and validated, but Ethernet is not driven yet in "
-                            "this firmware.",
-                      "th": "เก็บและตรวจค่าได้แล้ว แต่เฟิร์มแวร์รุ่นนี้ยังไม่ขับ Ethernet"},
+    "gw.net_hint": {"en": "Address changes take effect after a reboot; the port moves "
+                          "immediately.",
+                    "th": "การแก้ที่อยู่ต้องรีบูตก่อนจึงมีผล ส่วนพอร์ตเปลี่ยนทันที"},
+    "gw.card.link": {"en": "Link", "th": "การเชื่อมต่อ"},
+    "gw.link.up": {"en": "up", "th": "เชื่อมต่อแล้ว"},
+    "gw.link.nolink": {"en": "no cable", "th": "ยังไม่ขึ้น"},
+    "gw.link.disabled": {"en": "off", "th": "ปิดอยู่"},
+    "gw.link.safe": {"en": "skipped (safe mode)", "th": "ข้ามไว้ (safe mode)"},
+    "gw.link.client": {"en": "a TCP client is connected", "th": "มี TCP client ต่ออยู่"},
+    "gw.link.noclient": {"en": "no TCP client", "th": "ยังไม่มี TCP client"},
+    "gw.link.serving": {"en": "Point this tool at {ip}:{port} over TCP to reach the "
+                              "same modules without USB.",
+                        "th": "ตั้ง Test Tool เป็น TCP ที่ {ip}:{port} เพื่อคุยกับโมดูลชุดเดียวกันโดยไม่ต้องใช้ USB"},
+    "gw.link.off_hint": {"en": "Switch net.enabled on below, set the address, then Save "
+                               "and reboot.",
+                         "th": "เปิด net.enabled ด้านล่าง ตั้งที่อยู่ แล้วกดบันทึกและรีบูต"},
+    "gw.link.nolink_hint": {"en": "Configured, but the interface is not up yet. Plug the "
+                                  "cable in — it is picked up within a few seconds, no "
+                                  "reboot needed.",
+                            "th": "ตั้งค่าไว้แล้วแต่ยังไม่ขึ้น เสียบสาย LAN ได้เลย "
+                                  "ระบบจะจับได้ในไม่กี่วินาทีโดยไม่ต้องรีบูต"},
+    "gw.mac_placeholder": {"en": "placeholder MAC — this board's OTP holds no address",
+                           "th": "MAC เป็นค่าสำรอง — OTP ของบอร์ดนี้ไม่มีที่อยู่"},
+    # Plain-language names for the settings. The console key (rs485.t1_ms and
+    # friends) is kept only as a tooltip — an installer should never need it.
+    "gwf.sys.name": {"en": "Gateway name", "th": "ชื่อ gateway"},
+    "gwf.sys.name.hint": {"en": "A label for you, so several gateways are easy to tell "
+                                "apart.",
+                          "th": "ป้ายชื่อไว้ให้คุณเอง เวลามีหลายตัวจะได้แยกออก"},
+    "gwf.rs485.baud": {"en": "Bus speed (baud)", "th": "ความเร็วบัส (baud)"},
+    "gwf.rs485.baud.hint": {"en": "Must match the modules. LGS R5.0 modules use 9600.",
+                            "th": "ต้องตรงกับโมดูล — LGS R5.0 ใช้ 9600"},
+    "gwf.rs485.predelay_us": {"en": "Pause before sending (µs)", "th": "หน่วงก่อนส่ง (µs)"},
+    "gwf.rs485.predelay_us.hint": {"en": "Lets the bus settle before the gateway starts "
+                                         "transmitting.",
+                                   "th": "ให้บัสนิ่งก่อน gateway เริ่มส่ง"},
+    "gwf.rs485.postdelay_us": {"en": "Pause after sending (µs)", "th": "หน่วงหลังส่ง (µs)"},
+    "gwf.rs485.postdelay_us.hint": {"en": "Holds the line briefly after the last byte "
+                                          "goes out.",
+                                    "th": "ค้างสายไว้ครู่หนึ่งหลังส่งไบต์สุดท้าย"},
+    "gwf.rs485.t1_ms": {"en": "Wait for a module to answer (ms)", "th": "รอโมดูลตอบ (ms)"},
+    "gwf.rs485.t1_ms.hint": {"en": "Raise this if modules on a long bus keep timing out.",
+                             "th": "ถ้าบัสยาวแล้วโมดูล timeout บ่อย ให้เพิ่มค่านี้"},
+    "gwf.rs485.t2_ms": {"en": "Silence that ends an answer (ms)",
+                        "th": "ความเงียบที่ถือว่าจบคำตอบ (ms)"},
+    "gwf.rs485.t2_ms.hint": {"en": "Must stay below the waiting time above.",
+                             "th": "ต้องน้อยกว่าเวลารอด้านบน"},
+    "gwf.usb.gap_ms": {"en": "Silence that ends a command (ms)",
+                       "th": "ความเงียบที่ถือว่าจบคำสั่ง (ms)"},
+    "gwf.usb.gap_ms.hint": {"en": "Raise this if the PC sends commands in pieces and "
+                                  "they get dropped.",
+                            "th": "ถ้าคอมส่งคำสั่งขาดเป็นท่อนแล้วถูกทิ้ง ให้เพิ่มค่านี้"},
+    "gwf.usb.max_ms": {"en": "Longest single command (ms)", "th": "คำสั่งเดียวยาวสุด (ms)"},
+    "gwf.usb.max_ms.hint": {"en": "A safety cap. Must stay above the value above.",
+                            "th": "ตัวกันค้าง ต้องมากกว่าค่าด้านบน"},
+    "gwf.net.enabled": {"en": "Use the LAN port", "th": "ใช้พอร์ต LAN"},
+    "gwf.net.enabled.hint": {"en": "On for LGS cabinets, where a server sends commands "
+                                   "over the network. Off for SMT carts, which use USB.",
+                             "th": "เปิดสำหรับตู้ LGS ที่เซิร์ฟเวอร์ส่งคำสั่งมาทางเครือข่าย "
+                                   "ปิดสำหรับรถ SMT ที่ใช้ USB"},
+    "gwf.net.dhcp": {"en": "Get the address automatically (DHCP)",
+                     "th": "รับที่อยู่อัตโนมัติ (DHCP)"},
+    "gwf.net.dhcp.hint": {"en": "Best left off — the server needs a fixed address it can "
+                                "count on.",
+                          "th": "ควรปิดไว้ — เซิร์ฟเวอร์ต้องการที่อยู่คงที่ที่เรียกได้แน่นอน"},
+    "gwf.net.ip": {"en": "Address of this gateway", "th": "ที่อยู่ของ gateway ตัวนี้"},
+    "gwf.net.ip.hint": {"en": "The address the server connects to.",
+                        "th": "ที่อยู่ที่เซิร์ฟเวอร์จะเชื่อมเข้ามา"},
+    "gwf.net.mask": {"en": "Subnet mask", "th": "Subnet mask"},
+    "gwf.net.mask.hint": {"en": "Almost always 255.255.255.0.",
+                          "th": "ปกติใช้ 255.255.255.0"},
+    "gwf.net.gw": {"en": "Router address", "th": "ที่อยู่เราเตอร์"},
+    "gwf.net.gw.hint": {"en": "Must be on the same network as the address above.",
+                        "th": "ต้องอยู่วงเดียวกับที่อยู่ด้านบน"},
+    "gwf.net.dns": {"en": "DNS server", "th": "เซิร์ฟเวอร์ DNS"},
+    "gwf.net.dns.hint": {"en": "Modbus does not use it; the router's address is fine.",
+                         "th": "Modbus ไม่ได้ใช้ ใส่ที่อยู่เราเตอร์ก็พอ"},
+    "gwf.net.port": {"en": "Port", "th": "พอร์ต"},
+    "gwf.net.port.hint": {"en": "502 is the Modbus standard. This one changes "
+                                "immediately, without a reboot.",
+                          "th": "502 คือค่ามาตรฐานของ Modbus ค่านี้เปลี่ยนแล้วมีผลทันทีไม่ต้องรีบูต"},
+    "gwf.net.link_timeout_ms": {"en": "Wait for the cable at startup (ms)",
+                                "th": "รอสาย LAN ตอนเปิดเครื่อง (ms)"},
+    "gwf.net.link_timeout_ms.hint": {"en": "Only makes startup slower. A cable plugged "
+                                           "in later is picked up on its own.",
+                                     "th": "แค่ทำให้เปิดเครื่องช้าลง ถ้าเสียบทีหลังระบบก็จับได้เอง"},
+    "gwf.net.mac": {"en": "Hardware address (MAC)", "th": "ที่อยู่ฮาร์ดแวร์ (MAC)"},
+    "gw.on": {"en": "on", "th": "เปิด"},
+    "gw.off": {"en": "off", "th": "ปิด"},
+
     "gw.source": {"en": "settings source", "th": "ที่มาของค่า"},
     "gw.src.stored": {"en": "stored", "th": "จากหน่วยความจำ"},
     "gw.src.defaults": {"en": "defaults (nothing saved yet)", "th": "ค่าเริ่มต้น (ยังไม่เคยบันทึก)"},
@@ -329,19 +428,22 @@ TEXTS: dict[str, dict[str, str]] = {
     "gw.src.unavailable": {"en": "no storage on this unit — settings will not survive a reboot",
                            "th": "เครื่องนี้ไม่มีที่เก็บ — ค่าจะหายเมื่อรีบูต"},
     "gw.dirty": {"en": "{n} unsaved change(s)", "th": "แก้ไว้ยังไม่บันทึก {n} รายการ"},
-    "gw.no_changes": {"en": "no changes", "th": "ไม่มีการแก้ไข"},
     "gw.save": {"en": "Save to gateway", "th": "บันทึกลง gateway"},
     "gw.save_title": {"en": "Write these settings to the gateway?", "th": "เขียนค่าเหล่านี้ลง gateway?"},
     "gw.save_ok": {"en": "saved", "th": "บันทึกแล้ว"},
     "gw.needs_reboot": {"en": "takes effect after a reboot: {keys}",
                         "th": "จะมีผลหลังรีบูต: {keys}"},
-    "gw.reboot_now": {"en": "Reboot now", "th": "รีบูตเลย"},
     "gw.discard": {"en": "Discard", "th": "ยกเลิกการแก้"},
     "gw.defaults": {"en": "Factory defaults", "th": "ค่าโรงงาน"},
     "gw.defaults_title": {"en": "Load factory defaults?", "th": "โหลดค่าโรงงาน?"},
-    "gw.defaults_body": {"en": "This stages the factory values; nothing is written "
-                               "until you Save.",
-                         "th": "จะใส่ค่าโรงงานไว้ก่อน ยังไม่เขียนจนกว่าจะกดบันทึก"},
+    "gw.defaults_body": {"en": "The factory values are filled into the fields so you "
+                               "can check them first. Nothing is written until you Save.",
+                         "th": "ค่าโรงงานจะถูกเติมลงในช่องกรอกให้ตรวจดูก่อน "
+                               "ยังไม่เขียนจนกว่าจะกดบันทึก"},
+    "gw.defaults_loaded": {"en": "{n} factory value(s) filled in — review them, then Save.",
+                           "th": "เติมค่าโรงงาน {n} รายการแล้ว — ตรวจดูก่อนแล้วกดบันทึก"},
+    "gw.pending_on_gateway": {"en": "staged on the gateway: {v}",
+                              "th": "มีค่ารออยู่ที่ gateway: {v}"},
     "gw.reboot": {"en": "Reboot", "th": "รีบูต"},
     "gw.reboot_title": {"en": "Reboot the gateway?", "th": "รีบูต gateway?"},
     "gw.reboot_body": {"en": "The COM port disappears for a few seconds and any host "
@@ -353,10 +455,10 @@ TEXTS: dict[str, dict[str, str]] = {
 
     # ── OTA tab ────────────────────────────────────────────────────────────
     "tab.ota": {"en": "Firmware", "th": "อัปเดตเฟิร์มแวร์"},
-    "ota.banner": {"en": "⚠ Writes firmware over RS485. Keep power on until the "
+    "ota.banner": {"en": "Writes firmware over RS485. Keep power on until the "
                          "update finishes — an interrupted apply can leave a module "
                          "needing a cable flash.",
-                   "th": "⚠ เขียนเฟิร์มแวร์ผ่าน RS485 — ห้ามตัดไฟจนกว่าจะเสร็จ "
+                   "th": "เขียนเฟิร์มแวร์ผ่าน RS485 — ห้ามตัดไฟจนกว่าจะเสร็จ "
                          "ถ้าหยุดกลางคันโมดูลอาจต้องต่อสายแฟลชใหม่"},
     "ota.image": {"en": "Firmware image", "th": "ไฟล์เฟิร์มแวร์"},
     "ota.upload_hint": {"en": "Pick the .bin built for the app slot (flash offset "
@@ -380,9 +482,9 @@ TEXTS: dict[str, dict[str, str]] = {
                                "และยืนยันผลเป็นรายตัว — จึงควรใส่ให้ครบทุกตัวที่กำลังอัปเดต"},
     "ota.broadcast_apply": {"en": "Apply with one broadcast instead of per device",
                             "th": "สั่งใช้งานแบบ broadcast ครั้งเดียวแทนทีละเครื่อง"},
-    "ota.broadcast_warn": {"en": "⚠ every module on the bus that verified the image "
+    "ota.broadcast_warn": {"en": "every module on the bus that verified the image "
                                  "will switch to it, including ones not listed above",
-                           "th": "⚠ ทุกโมดูลบนบัสที่ verify ผ่านจะเปลี่ยนไปใช้เฟิร์มแวร์นี้ "
+                           "th": "ทุกโมดูลบนบัสที่ verify ผ่านจะเปลี่ยนไปใช้เฟิร์มแวร์นี้ "
                                  "รวมถึงตัวที่ไม่ได้อยู่ในรายการด้านบน"},
     "ota.send": {"en": "Send firmware", "th": "ส่งเฟิร์มแวร์"},
     "ota.status": {"en": "Read status", "th": "อ่านสถานะ"},
@@ -397,9 +499,9 @@ TEXTS: dict[str, dict[str, str]] = {
     "ota.progress": {"en": "chunk {done}/{total}", "th": "ชิ้นที่ {done}/{total}"},
 
     # ── danger tab ─────────────────────────────────────────────────────────
-    "dng.banner": {"en": "⚠ These commands reboot or wipe the module — double-check "
+    "dng.banner": {"en": "These commands reboot or wipe the module — double-check "
                          "the target ID",
-                   "th": "⚠ คำสั่งเหล่านี้จะรีบูตหรือล้างค่าโมดูล — ตรวจ ID เป้าหมายให้แน่ใจ"},
+                   "th": "คำสั่งเหล่านี้จะรีบูตหรือล้างค่าโมดูล — ตรวจ ID เป้าหมายให้แน่ใจ"},
     "dng.factory": {"en": "Factory reset", "th": "รีเซ็ตค่าโรงงาน"},
     "dng.keep_id": {"en": "Keep slave ID (500→501)", "th": "คง Slave ID เดิม (500→501)"},
     "dng.wipe_all": {"en": "Wipe everything (500→502)", "th": "ล้างทั้งหมด (500→502)"},

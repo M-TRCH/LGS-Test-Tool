@@ -1,4 +1,4 @@
-﻿"""Auto Test tab: run the ported sweep with live progress, results, CSV export."""
+"""Auto Test tab: run the ported sweep with live progress, results, CSV export."""
 from __future__ import annotations
 
 from datetime import datetime
@@ -8,7 +8,7 @@ from nicegui import ui
 from ..config_store import data_dir
 from ..i18n import t
 from ..testsuite import Done, PhaseEnd, PhaseStart, Step, SweepConfig, sweep_csv_bytes
-from . import Ctx
+from . import Ctx, helps, inline_warning
 
 MAX_TABLE_ROWS = 200
 
@@ -25,8 +25,7 @@ def build(ctx: Ctx) -> None:
     # against the control table.
     with ui.row().classes("gap-3 flex-wrap items-stretch w-full"):
         with ui.card().classes("p-3 grow"):
-            ui.label(t("mt.what")).classes("font-bold")
-            ui.label(t("mt.always")).classes("text-xs text-grey")
+            helps(ui.label(t("mt.what")).classes("font-bold"), t("mt.always"))
             with ui.row().classes("items-center gap-4 flex-wrap q-mt-sm"):
                 cb_led = ui.checkbox(t("mt.lights"), value=True).tooltip(t("mt.lights_tip"))
                 loops = ui.number(t("mt.repeat"), value=1, min=1, max=10, format="%d") \
@@ -34,21 +33,21 @@ def build(ctx: Ctx) -> None:
 
         with ui.card().classes("p-3 grow border border-orange-400"):
             with ui.row().classes("items-center gap-2"):
-                ui.icon("lock_open").classes("text-orange")
-                ui.label(t("mt.unlock_card")).classes("font-bold")
+                ui.label(t("mt.unlock_card")).classes("font-bold text-orange")
             cb_latch = ui.checkbox(t("mt.include_unlock"), value=False)
             with ui.column().classes("gap-1 q-pl-md"):
-                fires = ui.number(t("mt.unlocks_per_round"), value=1, min=1, max=5, format="%d") \
-                    .props("dense outlined").classes("w-40") \
-                    .bind_enabled_from(cb_latch, "value")
-                ui.label(t("mt.always_safety")).classes("text-xs text-grey")
+                fires = helps(ui.number(t("mt.unlocks_per_round"), value=1, min=1, max=5,
+                                        format="%d")
+                              .props("dense outlined").classes("w-40")
+                              .bind_enabled_from(cb_latch, "value"),
+                              t("mt.always_safety"))
                 cb_force = ui.checkbox(t("mt.also_force"), value=True) \
                     .bind_enabled_from(cb_latch, "value")
                 cb_combos = ui.checkbox(t("mt.also_combo"), value=False) \
                     .bind_enabled_from(cb_latch, "value")
                 cb_1021 = ui.checkbox(t("mt.also_1021"), value=False) \
                     .bind_enabled_from(cb_latch, "value")
-            fire_caption = ui.label("").classes("text-red text-sm q-mt-sm")
+            fire_caption = inline_warning("text-red text-sm")
 
     def make_cfg() -> SweepConfig:
         return SweepConfig(loops=int(loops.value), include_led=bool(cb_led.value),
@@ -87,8 +86,9 @@ def build(ctx: Ctx) -> None:
             {"name": "ms", "label": "ms", "field": "ms"},
         ],
         rows=[], row_key="i").props("dense flat").classes("w-full text-xs")
-    ui.label(t("mt.table_note", n=MAX_TABLE_ROWS)) \
-        .classes("text-xs text-grey")
+    # Stays on screen: this describes what you are looking at (the table is
+    # truncated), not how a control works.
+    ui.label(t("mt.table_note", n=MAX_TABLE_ROWS)).classes("text-xs text-grey")
 
     def export() -> None:
         report = state["report"]

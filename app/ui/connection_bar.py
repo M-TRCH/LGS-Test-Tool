@@ -9,7 +9,8 @@ from ..lgs_map import (BAUD_WHITELIST, FACTORY_DEFAULT_ID, GRID_COLS, GRID_IDS,
                        GRID_ROWS, SETID_TEMP_ID)
 from ..transports import RtuSettings, TcpSettings, list_com_ports
 from ..version import APP_VERSION
-from . import Ctx, about, theme as theme_mod
+from . import (Ctx, about, helps, reference_dialog as reference_mod,
+               theme as theme_mod)
 
 
 def _port_options() -> dict:
@@ -51,7 +52,8 @@ def build(ctx: Ctx) -> None:
                         break
                 ui.notify(t("msg.ports_found", n=len(new)), type="info")
 
-            ui.button(icon="refresh", on_click=refresh_ports).props("flat dense round")
+            ui.button(t("hdr.rescan"), on_click=refresh_ports) \
+                .props("flat dense no-caps")
             baud_select = ui.select(list(BAUD_WHITELIST), value=cfg.baud,
                                     label=t("hdr.baud")).props("dense outlined").classes("w-24")
             ui.label("8N1").classes("text-xs text-grey")
@@ -59,9 +61,10 @@ def build(ctx: Ctx) -> None:
         with ui.row().classes("items-center gap-2") as tcp_row:
             host_input = ui.input(t("hdr.host"), value=cfg.tcp_host) \
                 .props("dense outlined").classes("w-40")
-            port_input = ui.number(t("hdr.port"), value=cfg.tcp_port, min=1, max=65535,
-                                   format="%d").props("dense outlined").classes("w-24")
-            ui.label(t("hdr.single_client")).classes("text-xs text-grey")
+            port_input = helps(ui.number(t("hdr.port"), value=cfg.tcp_port, min=1,
+                                         max=65535, format="%d")
+                               .props("dense outlined").classes("w-24"),
+                               t("hdr.single_client"))
 
         def sync_rows() -> None:
             rtu_row.set_visibility(transport.value == "rtu")
@@ -84,7 +87,7 @@ def build(ctx: Ctx) -> None:
         ctx.transport_getter = lambda: str(transport.value)
 
         # clickable grid picker (typing in the field still works as before)
-        with ui.button(icon="grid_view").props("dense flat round") \
+        with ui.button(t("hdr.grid")).props("dense flat no-caps") \
                 .tooltip(t("hdr.grid_tooltip")):
             with ui.menu() as id_menu:
                 with ui.column().classes("gap-1 p-3"):
@@ -216,19 +219,63 @@ def build(ctx: Ctx) -> None:
             config_store.save(cfg)
             ui.navigate.reload()      # the page is rebuilt in the new language
 
-        # ml-auto keeps the group at the right edge of whichever line it lands
-        # on (ui.space() would strand it on the left after a wrap)
-        with ui.row().classes("items-center gap-0 flex-nowrap ml-auto"):
-            with ui.button(icon="translate").props("dense flat round") \
-                    .tooltip(t("hdr.lang_tooltip")):
-                with ui.menu():
-                    for code, name in i18n.LANGUAGES.items():
-                        marker = "●" if code == i18n.current() else "○"
-                        ui.menu_item(f"{marker}  {name}",
-                                     on_click=lambda c=code: choose_language(c))
+        # Built outside the menu below: a dialog defined inside it would be
+        # torn down the moment the item that opens it is clicked.
+        about_dialog = about.build_dialog()
+        reference_dialog = reference_mod.build_dialog()
 
-            theme_mod.build_picker(theme_chosen)
-            about.build_button()
+        # Language, theme and about are all settings you touch once and forget,
+        # so they collapse into a single overflow button instead of spending
+        # three slots in the header. ml-auto keeps it at the right edge of
+        # whichever line it lands on (ui.space() would strand it on the left
+        # after a wrap).
+        def submenu(label: str):
+            """A menu row that opens its own list, so a group can grow without
+            making the top level longer.
+
+            It opens leftward: the button sits at the right edge of the window,
+            and a submenu flying out to the right would land off-screen.
+            """
+            item = ui.menu_item(auto_close=False)
+            with item:
+                with ui.row().classes("items-center justify-between w-full no-wrap"):
+                    ui.label(label)
+                    ui.label("›").classes("text-grey")
+            return item
+
+        with ui.row().classes("items-center flex-nowrap ml-auto"):
+            with ui.button("...").props("flat dense no-caps") \
+                    .classes("px-3 tracking-widest") \
+                    .tooltip(t("hdr.more_tooltip")):
+                with ui.menu().classes("min-w-[180px]") as more_menu:
+                    with submenu(t("hdr.language")):
+                        with ui.menu().props('anchor="top start" self="top end"') \
+                                .classes("min-w-[160px]"):
+                            for code, name in i18n.LANGUAGES.items():
+                                ui.menu_item(
+                                    name,
+                                    on_click=lambda c=code: choose_language(c)) \
+                                    .classes("text-primary font-bold"
+                                             if code == i18n.current() else "")
+
+                    with submenu(t("hdr.theme")):
+                        with ui.menu().props('anchor="top start" self="top end"') \
+                                .classes("min-w-[200px]") as theme_menu:
+
+                            def pick_theme(key: str) -> None:
+                                # Both levels are closed by hand: picking a theme
+                                # rebuilds these items to move the current-theme
+                                # marker, and leaving the popups open would make
+                                # the next click on "..." read as dismiss.
+                                theme_chosen(key)
+                                theme_menu.close()
+                                more_menu.close()
+
+                            theme_mod.build_menu_items(pick_theme)
+
+                    ui.separator()
+                    ui.menu_item(t("hdr.reference"), on_click=reference_dialog.open)
+                    ui.menu_item(t("hdr.about"), on_click=about_dialog.open)
 
         def refresh_status() -> None:
             st = worker.get_state()

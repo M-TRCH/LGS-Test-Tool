@@ -10,9 +10,10 @@ from nicegui import ui
 
 from ..i18n import t
 from ..lgs_map import BAUD_WHITELIST
-from . import Ctx
+from . import Ctx, helps
 
 # Which settings each card shows, in display order.
+CARD_IDENTITY = ("sys.name",)
 CARD_RS485 = ("rs485.baud", "rs485.predelay_us", "rs485.postdelay_us",
               "rs485.t1_ms", "rs485.t2_ms")
 CARD_USB = ("usb.gap_ms", "usb.max_ms")
@@ -20,8 +21,32 @@ CARD_NET = ("net.enabled", "net.dhcp", "net.ip", "net.mask", "net.gw", "net.dns"
             "net.port", "net.link_timeout_ms")
 
 BOOL_KEYS = {"net.enabled", "net.dhcp"}
+
+
+def label_of(key: str) -> str:
+    """Plain-language name for a setting, falling back to the console key."""
+    friendly = t(f"gwf.{key}")
+    return key if friendly == f"gwf.{key}" else friendly
+
+
+def hint_of(key: str) -> str:
+    text = t(f"gwf.{key}.hint")
+    return "" if text == f"gwf.{key}.hint" else text
+
+
+def shown(key: str, value: str) -> str:
+    """A value as a person reads it — "on"/"off" rather than 1/0."""
+    if key in BOOL_KEYS:
+        return t("gw.on") if value == "1" else t("gw.off")
+    return value or "—"
+
+
 SOURCE_KEY = {"stored": "gw.src.stored", "defaults": "gw.src.defaults",
               "corrupt": "gw.src.corrupt", "unavailable": "gw.src.unavailable"}
+LINK_KEY = {"up": "gw.link.up", "nolink": "gw.link.nolink",
+            "disabled": "gw.link.disabled", "safe": "gw.link.safe"}
+LINK_COLOUR = {"up": "text-green", "nolink": "text-orange",
+               "disabled": "text-grey", "safe": "text-orange"}
 
 
 def build(ctx: Ctx) -> None:
@@ -30,11 +55,9 @@ def build(ctx: Ctx) -> None:
     state: dict = {"snapshot": None, "edits": {}}
     fields: dict = {}
 
-    ui.label(t("gw.intro")).classes("text-sm text-grey")
-
     with ui.row().classes("items-center gap-3 flex-wrap"):
-        detect_btn = ui.button(t("gw.detect"), icon="search")
-        reload_btn = ui.button(t("gw.reload"), icon="refresh").props("outline")
+        detect_btn = helps(ui.button(t("gw.detect")), t("gw.intro"))
+        reload_btn = ui.button(t("gw.reload")).props("outline")
         status = ui.badge("—").props("color=grey")
         dirty = ui.label("").classes("text-sm text-orange")
     transport_note = ui.label("").classes("text-sm text-red")
@@ -42,12 +65,12 @@ def build(ctx: Ctx) -> None:
     cards = ui.column().classes("w-full gap-3")
 
     with ui.row().classes("items-center gap-3 flex-wrap"):
-        save_btn = ui.button(t("gw.save"), color="primary", icon="save")
-        ui.button(t("gw.discard"), icon="undo",
+        save_btn = ui.button(t("gw.save"), color="primary")
+        ui.button(t("gw.discard"),
                   on_click=lambda: run_action("discard")).props("outline")
-        ui.button(t("gw.defaults"), icon="restart_alt",
+        ui.button(t("gw.defaults"),
                   on_click=lambda: confirm_defaults()).props("outline")
-        ui.button(t("gw.reboot"), icon="power_settings_new", color="red",
+        ui.button(t("gw.reboot"), color="red",
                   on_click=lambda: confirm_reboot()).props("outline")
 
     log_box = ui.log(max_lines=40).classes("w-full h-32 font-mono text-xs")
@@ -78,18 +101,44 @@ def build(ctx: Ctx) -> None:
 
     def field_row(key: str, snap) -> None:
         value = snap.settings.get(key, "—")
-        if key in BOOL_KEYS:
-            el = ui.switch(key, value=(value == "1"),
-                           on_change=lambda e, k=key: stage(k, e.value))
-        elif key == "rs485.baud":
-            el = ui.select(list(BAUD_WHITELIST), value=int(value) if value.isdigit() else 9600,
-                           label=key, on_change=lambda e, k=key: stage(k, e.value)) \
-                .props("dense outlined").classes("w-56")
-        else:
-            el = ui.input(key, value=value,
-                          on_change=lambda e, k=key: stage(k, e.value)) \
-                .props("dense outlined").classes("w-56")
+        name = label_of(key)
+        with ui.column().classes("gap-0 w-72 mb-2"):
+            if key in BOOL_KEYS:
+                el = ui.switch(name, value=(value == "1"),
+                               on_change=lambda e, k=key: stage(k, e.value))
+            elif key == "rs485.baud":
+                el = ui.select(list(BAUD_WHITELIST),
+                               value=int(value) if value.isdigit() else 9600,
+                               label=name, on_change=lambda e, k=key: stage(k, e.value)) \
+                    .props("dense outlined").classes("w-full")
+            else:
+                el = ui.input(name, value=value,
+                              on_change=lambda e, k=key: stage(k, e.value)) \
+                    .props("dense outlined").classes("w-full")
+            # What the setting is for, plus the console key for support —
+            # both on hover, so the card stays a list of settings.
+            hint = hint_of(key)
+            helps(el, f"{hint} ({key})" if hint else key)
+            # Someone may have staged a change from a terminal; say so rather
+            # than showing the running value as if nothing were pending.
+            pending = snap.staged.get(key)
+            if pending is not None:
+                ui.label(t("gw.pending_on_gateway", v=shown(key, pending))) \
+                    .classes("text-xs text-orange leading-tight mt-1")
         fields[key] = el
+
+    def apply_pending(values: dict) -> None:
+        """Drop values into the fields as ordinary unsaved edits."""
+        for key, text in values.items():
+            el = fields.get(key)
+            if el is None:
+                continue
+            if key in BOOL_KEYS:
+                el.set_value(text == "1")
+            elif key == "rs485.baud":
+                el.set_value(int(text) if text.isdigit() else text)
+            else:
+                el.set_value(text)
 
     def render(snap) -> None:
         cards.clear()
@@ -107,6 +156,8 @@ def build(ctx: Ctx) -> None:
                         .classes("text-sm")
                     ui.label(f"id {info.get('id', '?')} · mac {info.get('mac', '?')}") \
                         .classes("text-sm font-mono")
+                    if info.get("macsrc") == "placeholder":
+                        ui.label(t("gw.mac_placeholder")).classes("text-xs text-orange")
                     ui.label(f"uptime {info.get('sys.up', '?')} s · "
                              f"reset {info.get('sys.reset', '?')}").classes("text-sm")
 
@@ -115,21 +166,45 @@ def build(ctx: Ctx) -> None:
                     src = info.get("cfg.source", "?")
                     ui.label(f"{t('gw.source')}: {t(SOURCE_KEY.get(src, 'gw.src.defaults'))}") \
                         .classes("text-sm" + ("" if src == "stored" else " text-orange"))
-                    ui.label(f"safe mode {info.get('sys.safe', '?')} · "
-                             f"boot attempts {info.get('sys.boots', '?')}").classes("text-sm")
-                    ui.label(t("gw.btn_hint", v=info.get("sys.btn", "?"))) \
-                        .classes("text-xs text-grey")
+                    helps(ui.label(f"safe mode {info.get('sys.safe', '?')} · "
+                                   f"boot attempts {info.get('sys.boots', '?')}")
+                          .classes("text-sm"),
+                          t("gw.btn_hint", v=info.get("sys.btn", "?")))
 
                 with ui.card().classes("p-3 grow"):
                     ui.label(t("gw.card.counters")).classes("font-bold")
                     ui.label(f"usb ok {info.get('cnt.usb_ok', 0)} · "
                              f"dropped {info.get('cnt.usb_drop', 0)}").classes("text-sm")
+                    ui.label(f"tcp ok {info.get('cnt.tcp_ok', 0)}").classes("text-sm")
                     ui.label(f"rs485 ok {info.get('cnt.rs485_ok', 0)} · "
                              f"timeout {info.get('cnt.rs485_timeout', 0)}").classes("text-sm")
                     ui.label(f"rtt last {info.get('rtt.last_ms', 0)} ms · "
                              f"max {info.get('rtt.max_ms', 0)} ms").classes("text-sm")
 
+                # The one card that answers "is the LAN side actually working?"
+                with ui.card().classes("p-3 grow"):
+                    ui.label(t("gw.card.link")).classes("font-bold")
+                    link = info.get("net.state", "disabled")
+                    ip = info.get("net.ip", "0.0.0.0")
+                    port = info.get("net.port", "502")
+                    # State and address stay on screen — that is the answer to
+                    # "is it working?". The advice behind each state hovers.
+                    advice = {"up": t("gw.link.serving", ip=ip, port=port),
+                              "nolink": t("gw.link.nolink_hint"),
+                              "disabled": t("gw.link.off_hint")}.get(link, "")
+                    helps(ui.label(t(LINK_KEY.get(link, "gw.link.disabled")))
+                          .classes("text-sm font-bold "
+                                   + LINK_COLOUR.get(link, "text-grey")), advice)
+                    if link == "up":
+                        ui.label(f"{ip}:{port}").classes("text-sm font-mono")
+                        ui.label(t("gw.link.client") if info.get("net.client") == "1"
+                                 else t("gw.link.noclient")).classes("text-xs text-grey")
+
             with ui.row().classes("gap-3 flex-wrap items-stretch w-full"):
+                with ui.card().classes("p-3 grow"):
+                    ui.label(t("gw.card.identity")).classes("font-bold")
+                    for key in CARD_IDENTITY:
+                        field_row(key, snap)
                 with ui.card().classes("p-3 grow"):
                     ui.label(t("gw.card.rs485")).classes("font-bold")
                     for key in CARD_RS485:
@@ -139,8 +214,8 @@ def build(ctx: Ctx) -> None:
                     for key in CARD_USB:
                         field_row(key, snap)
                 with ui.card().classes("p-3 grow"):
-                    ui.label(t("gw.card.net")).classes("font-bold")
-                    ui.label(t("gw.net_phase1")).classes("text-xs text-grey")
+                    helps(ui.label(t("gw.card.net")).classes("font-bold"),
+                          t("gw.net_hint"))
                     for key in CARD_NET:
                         field_row(key, snap)
 
@@ -188,6 +263,10 @@ def build(ctx: Ctx) -> None:
             say(step)
         ui.notify(res.note or action, type="positive" if res.ok else "negative")
         await do_reload()
+        if res.ok and res.values:
+            apply_pending(res.values)
+            ui.notify(t("gw.defaults_loaded", n=len(res.values)), type="warning",
+                      timeout=7000)
 
     async def do_save() -> None:
         ok, message = usable()
@@ -197,11 +276,17 @@ def build(ctx: Ctx) -> None:
         changes = dict(state["edits"])
         if not changes:
             return
+        snap = state["snapshot"]
         d = ui.dialog()
         with d, ui.card():
             ui.label(t("gw.save_title")).classes("font-bold")
             for key, value in changes.items():
-                ui.label(f"{key} = {value}").classes("font-mono text-sm")
+                was = snap.settings.get(key, "") if snap else ""
+                with ui.row().classes("items-baseline gap-2"):
+                    ui.label(f"{label_of(key)}:").classes("text-sm")
+                    ui.label(shown(key, was)).classes("text-sm text-grey line-through")
+                    ui.label("→").classes("text-sm text-grey")
+                    ui.label(shown(key, value)).classes("text-sm font-bold")
             with ui.row():
                 ui.button(t("btn.cancel"), on_click=lambda: d.submit(False)).props("flat")
                 ui.button(t("gw.save"), color="primary", on_click=lambda: d.submit(True))
@@ -214,7 +299,10 @@ def build(ctx: Ctx) -> None:
         if res.ok:
             ui.notify(t("gw.save_ok"), type="positive")
             if res.note:
-                ui.notify(t("gw.needs_reboot", keys=res.note), type="warning", timeout=8000)
+                friendly = ", ".join(label_of(k.strip()) for k in res.note.split(",")
+                                     if k.strip())
+                ui.notify(t("gw.needs_reboot", keys=friendly), type="warning",
+                          timeout=8000)
         else:
             ui.notify(res.note, type="negative", timeout=8000)
         await do_reload()

@@ -6,7 +6,7 @@ from nicegui import ui
 from ..i18n import t
 from ..lgs_map import (coil_display, coil_enable, coil_latch, coil_latch_display,
                        decode_register)
-from . import Ctx
+from . import Ctx, helps
 
 # default preset palette (config regs 111-113 per preset) — dots on the cards
 PRESET_COLORS = {1: "#ff3232", 2: "#32ff32", 3: "#3264ff", 4: "#ffd700",
@@ -68,9 +68,9 @@ def build(ctx: Ctx) -> None:
         with ui.card().classes("p-3"):
             ui.label(t("ctl.display")).classes("font-bold")
             with ui.row().classes("items-center gap-2"):
-                num = ui.number(t("ctl.number"), value=45, min=0, max=9999, format="%d") \
-                    .props("dense outlined").classes("w-28")
-                ui.label(t("ctl.number_hint")).classes("text-xs text-grey")
+                num = helps(ui.number(t("ctl.number"), value=45, min=0, max=9999,
+                                      format="%d").props("dense outlined").classes("w-28"),
+                            t("ctl.number_hint"))
 
                 async def write_num() -> None:
                     res = await worker.write_register(60, int(num.value or 0), ctx.device_id())

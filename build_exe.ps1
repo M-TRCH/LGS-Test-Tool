@@ -44,7 +44,16 @@ $name = "LGS-Test-Tool-v$version"
 # It shells out to the bare `pyinstaller` command, so the venv Scripts dir
 # must be on PATH for the child process to find it.
 $env:PATH = "$PSScriptRoot\.venv\Scripts;$env:PATH"
-& ".venv\Scripts\nicegui-pack.exe" --onefile --name $name run.py
+
+# The control table travels inside the exe: commissioning happens on site with
+# no network, so a link to GitHub would be useless exactly when it is needed.
+# --add-data appends to nicegui-pack's own defaults rather than replacing them.
+if (-not (Test-Path "app\docs\LGS-Control-Table.md")) {
+    Write-Host "ERROR: app\docs\LGS-Control-Table.md missing - run tools\sync_reference.py"
+    exit 1
+}
+& ".venv\Scripts\nicegui-pack.exe" --onefile --name $name `
+    --add-data "app\docs;app/docs" run.py
 if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: nicegui-pack failed"; exit 1 }
 
 if (Test-Path "dist\$name.exe") {

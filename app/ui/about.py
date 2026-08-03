@@ -9,11 +9,15 @@ from ..i18n import t
 from ..version import APP_VERSION
 
 
-def build_button() -> None:
+def build_dialog():
+    """Create the About dialog and hand it back; the caller opens it.
+
+    Built outside the header menu on purpose — a dialog defined inside a menu
+    would be torn down with it the moment the item is clicked.
+    """
     dialog = ui.dialog()
     with dialog, ui.card().classes("w-[640px] max-w-full"):
         with ui.row().classes("items-center gap-2"):
-            ui.icon("science").classes("text-primary text-2xl")
             ui.label("LGS Test Tool").classes("text-xl font-bold")
             ui.badge(f"v{APP_VERSION}").props("color=primary")
         ui.label(t("about.desc")).classes("text-sm")
@@ -34,5 +38,4 @@ def build_button() -> None:
         with ui.row().classes("w-full justify-end"):
             ui.button(t("btn.close"), on_click=dialog.close).props("flat")
 
-    ui.button(icon="info", on_click=dialog.open).props("dense flat round") \
-        .tooltip(t("hdr.about_tooltip", ver=APP_VERSION))
+    return dialog
