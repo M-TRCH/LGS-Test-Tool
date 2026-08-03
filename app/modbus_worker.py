@@ -22,7 +22,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Callable, Optional, Sequence
 
-from . import fieldcheck, lgs_map, ota, testsuite
+from . import fieldcheck, gateway_config, lgs_map, ota, testsuite
 from .lgs_map import CoilClass, INTER_TXN_S, LATCH_COOLDOWN_S
 from .transports import (RtuSettings, TransportSettings, make_client,
                          make_scan_probe_client)
@@ -53,12 +53,13 @@ class WorkerState:
     scan_running: bool = False
     check_running: bool = False
     ota_running: bool = False
+    gw_running: bool = False
     last_error: str = ""
 
     @property
     def long_job_running(self) -> bool:
         return (self.sweep_running or self.scan_running or self.check_running
-                or self.ota_running)
+                or self.ota_running or self.gw_running)
 
 
 @dataclass(frozen=True)
@@ -144,6 +145,7 @@ class ModbusWorker:
         self._ota_cancel = threading.Event()
         self._ota_events: list = []
         self._ota_lock = threading.Lock()
+        self._gw_running = False
         self._event_seq = 0
 
     # ── lifecycle ──────────────────────────────────────────────────────────
@@ -195,7 +197,7 @@ class ModbusWorker:
             return WorkerState(self._connected, desc, self._busy,
                                self._sweep_running, self._scan_running,
                                self._check_running, self._ota_running,
-                               self._last_error)
+                               self._gw_running, self._last_error)
 
     def cooldown_remaining(self, device_id: int) -> float:
         """Seconds left before this module will accept another unlock."""
@@ -333,7 +335,8 @@ class ModbusWorker:
 
     # ── async facade (manual ops) ──────────────────────────────────────────
     def _guard(self, device_id: int) -> Optional[TxnResult]:
-        if self._sweep_running or self._check_running or self._ota_running:
+        if self._sweep_running or self._check_running or self._ota_running \
+                or self._gw_running:
             return TxnResult(False, note="a test is running — wait or cancel it")
         if not self._connected:
             return TxnResult(False, note="not connected")
@@ -545,6 +548,128 @@ class ModbusWorker:
                              "broadcast (no reply expected)", latency, note,
                              self._trace["tx"], "")
         return TxnResult(ok, None, latency, note)
+
+    # ── Gateway console (borrows the COM port, like the ID scan) ───────────
+    def _do_gw_session(self, port: str, body, *, reconnect_delay_s: float = 0.0):
+        """Run `body(link)` with the Modbus client stood down.
+
+        The gateway console needs the raw port, and a COM port serves one
+        program at a time — so this follows _do_scan exactly: drop the Modbus
+        client, do the work, restore the previous connection in `finally`.
+        """
+        was_connected = self._connected
+        prev_settings = self._settings
+        self._gw_running = True
+        try:
+            self._do_disconnect()
+            try:
+                with gateway_config.GatewayLink(port) as link:
+                    return body(link)
+            except (OSError, gateway_config.GatewayError) as exc:
+                self._log.append("gateway", 0, 0, 0, "session", False, None, "",
+                                 0.0, f"{type(exc).__name__}: {exc}")
+                return exc
+        finally:
+            if reconnect_delay_s:
+                time.sleep(reconnect_delay_s)
+            if was_connected and prev_settings is not None:
+                self._do_connect(prev_settings)
+            self._gw_running = False
+
+    def _log_gw(self, verb: str, res) -> None:
+        self._log.append("gateway", 0, 0, 0, verb, res.ok, None,
+                         " ".join(res.lines[-1:]) if res.lines else "",
+                         0.0, "" if res.ok else res.error_text)
+
+    async def gw_probe(self, port: str) -> Optional[dict]:
+        return await self._run_job(
+            _PRIO_MANUAL,
+            lambda: self._do_gw_session(port, lambda link: (
+                dict(link.ping().data) if link.ping().ok else None)))
+
+    async def gw_read(self, port: str):
+        def body(link):
+            snap = link.snapshot()
+            self._log.append("gateway", 0, 0, 0, "read", snap.ok, None,
+                             f"{len(snap.settings)} keys", 0.0, snap.note)
+            return snap
+
+        res = await self._run_job(_PRIO_MANUAL, lambda: self._do_gw_session(port, body))
+        if isinstance(res, Exception):
+            return gateway_config.GwSnapshot(False, note=str(res))
+        return res
+
+    async def gw_write(self, port: str, changes: dict, *, save: bool):
+        def body(link):
+            steps: list[str] = []
+            hello = link.hello()
+            self._log_gw("HELLO", hello)
+            if not hello.ok:
+                return gateway_config.GwActionResult(False, tuple(steps),
+                                                     hello.error_text or "HELLO failed")
+            steps.append("session armed")
+
+            if changes:
+                res = link.set_many(changes)
+                self._log_gw("SET", res)
+                steps.append(f"SET {len(changes)} key(s): "
+                             + ("ok" if res.ok else res.error_text))
+                if not res.ok:
+                    link.bye()
+                    return gateway_config.GwActionResult(False, tuple(steps), res.error_text)
+
+            if save:
+                res = link.save()
+                self._log_gw("SAVE", res)
+                if not res.ok:
+                    link.bye()
+                    return gateway_config.GwActionResult(False, tuple(steps), res.error_text)
+                applied = res.data.get("applied", "-")
+                pending = res.data.get("pending_reboot", "")
+                steps.append(f"SAVE applied={applied}"
+                             + (f", needs reboot: {pending}" if pending else ""))
+                link.bye()
+                return gateway_config.GwActionResult(True, tuple(steps), pending)
+
+            link.bye()
+            return gateway_config.GwActionResult(True, tuple(steps), "")
+
+        res = await self._run_job(_PRIO_MANUAL, lambda: self._do_gw_session(port, body))
+        if isinstance(res, Exception):
+            return gateway_config.GwActionResult(False, (), str(res))
+        return res
+
+    async def gw_action(self, port: str, action: str):
+        """action: discard | defaults | reboot"""
+        def body(link):
+            steps: list[str] = []
+            hello = link.hello()
+            self._log_gw("HELLO", hello)
+            if not hello.ok:
+                return gateway_config.GwActionResult(False, (), hello.error_text)
+            if action == "discard":
+                res = link.discard()
+            elif action == "defaults":
+                res = link.defaults()
+            elif action == "reboot":
+                res = link.reboot()
+            else:
+                return gateway_config.GwActionResult(False, (), f"unknown action {action}")
+            self._log_gw(action.upper(), res)
+            steps.append(f"{action}: " + ("ok" if res.ok else res.error_text))
+            if action != "reboot":
+                link.bye()
+            return gateway_config.GwActionResult(res.ok, tuple(steps),
+                                                 "" if res.ok else res.error_text)
+
+        # A reboot re-enumerates the CDC; give Windows time before reconnecting.
+        delay = 4.0 if action == "reboot" else 0.0
+        res = await self._run_job(
+            _PRIO_MANUAL,
+            lambda: self._do_gw_session(port, body, reconnect_delay_s=delay))
+        if isinstance(res, Exception):
+            return gateway_config.GwActionResult(False, (), str(res))
+        return res
 
     # ── OTA (long job) ─────────────────────────────────────────────────────
     def start_ota(self, cfg: "ota.OtaConfig") -> bool:

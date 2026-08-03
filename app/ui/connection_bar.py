@@ -80,6 +80,8 @@ def build(ctx: Ctx) -> None:
         id_input.on_value_change(id_changed)
         ctx.device_id_getter = lambda: int(id_input.value or FACTORY_DEFAULT_ID)
         ctx.device_id_setter = lambda v: id_input.set_value(int(v))
+        ctx.port_getter = lambda: str(com_select.value or "")
+        ctx.transport_getter = lambda: str(transport.value)
 
         # clickable grid picker (typing in the field still works as before)
         with ui.button(icon="grid_view").props("dense flat round") \

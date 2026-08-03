@@ -293,6 +293,64 @@ TEXTS: dict[str, dict[str, str]] = {
     "ins.res.no_answer": {"en": "✗ no answer", "th": "✗ ไม่ตอบสนอง"},
     "ins.res.fail": {"en": "✗ fail", "th": "✗ ไม่ผ่าน"},
 
+    # ── Gateway tab ────────────────────────────────────────────────────────
+    "tab.gateway": {"en": "Gateway", "th": "เกตเวย์"},
+    "gw.intro": {"en": "Settings live in the Opta itself and travel as text commands "
+                       "over the same USB port — the gateway is not a device on the "
+                       "Modbus bus.",
+                 "th": "ค่าตั้งอยู่ในตัว Opta เอง และคุยผ่านคำสั่งข้อความบนสาย USB เส้นเดียวกัน "
+                       "— gateway ไม่ได้เป็นอุปกรณ์บนบัส Modbus"},
+    "gw.usb_only": {"en": "Gateway settings are reachable over USB only. Switch the "
+                          "header to RTU (COM) and pick the Opta's port.",
+                    "th": "ตั้งค่า gateway ได้เฉพาะทาง USB — สลับแถบบนเป็น RTU (COM) "
+                          "แล้วเลือกพอร์ตของ Opta"},
+    "gw.detect": {"en": "Detect", "th": "ค้นหา"},
+    "gw.reload": {"en": "Reload", "th": "อ่านใหม่"},
+    "gw.detected": {"en": "gateway fw {fw} · up {up} s", "th": "พบ gateway fw {fw} · เปิดมา {up} วิ"},
+    "gw.not_found": {"en": "no gateway on {port} — a plain USB-RS485 dongle, or "
+                           "firmware without the console",
+                     "th": "ไม่พบ gateway ที่ {port} — อาจเป็น dongle USB-RS485 ธรรมดา "
+                           "หรือเฟิร์มแวร์ที่ยังไม่มี console"},
+    "gw.no_port": {"en": "no COM port selected", "th": "ยังไม่ได้เลือกพอร์ต COM"},
+    "gw.card.device": {"en": "Device", "th": "อุปกรณ์"},
+    "gw.card.health": {"en": "Health", "th": "สถานะระบบ"},
+    "gw.card.rs485": {"en": "RS485 bus", "th": "บัส RS485"},
+    "gw.card.usb": {"en": "USB bridge", "th": "USB bridge"},
+    "gw.card.net": {"en": "Network", "th": "เครือข่าย"},
+    "gw.card.counters": {"en": "Counters", "th": "ตัวนับ"},
+    "gw.net_phase1": {"en": "Stored and validated, but Ethernet is not driven yet in "
+                            "this firmware.",
+                      "th": "เก็บและตรวจค่าได้แล้ว แต่เฟิร์มแวร์รุ่นนี้ยังไม่ขับ Ethernet"},
+    "gw.source": {"en": "settings source", "th": "ที่มาของค่า"},
+    "gw.src.stored": {"en": "stored", "th": "จากหน่วยความจำ"},
+    "gw.src.defaults": {"en": "defaults (nothing saved yet)", "th": "ค่าเริ่มต้น (ยังไม่เคยบันทึก)"},
+    "gw.src.corrupt": {"en": "stored copy is corrupt — running on defaults",
+                       "th": "ข้อมูลที่เก็บไว้เสีย — กำลังใช้ค่าเริ่มต้น"},
+    "gw.src.unavailable": {"en": "no storage on this unit — settings will not survive a reboot",
+                           "th": "เครื่องนี้ไม่มีที่เก็บ — ค่าจะหายเมื่อรีบูต"},
+    "gw.dirty": {"en": "{n} unsaved change(s)", "th": "แก้ไว้ยังไม่บันทึก {n} รายการ"},
+    "gw.no_changes": {"en": "no changes", "th": "ไม่มีการแก้ไข"},
+    "gw.save": {"en": "Save to gateway", "th": "บันทึกลง gateway"},
+    "gw.save_title": {"en": "Write these settings to the gateway?", "th": "เขียนค่าเหล่านี้ลง gateway?"},
+    "gw.save_ok": {"en": "saved", "th": "บันทึกแล้ว"},
+    "gw.needs_reboot": {"en": "takes effect after a reboot: {keys}",
+                        "th": "จะมีผลหลังรีบูต: {keys}"},
+    "gw.reboot_now": {"en": "Reboot now", "th": "รีบูตเลย"},
+    "gw.discard": {"en": "Discard", "th": "ยกเลิกการแก้"},
+    "gw.defaults": {"en": "Factory defaults", "th": "ค่าโรงงาน"},
+    "gw.defaults_title": {"en": "Load factory defaults?", "th": "โหลดค่าโรงงาน?"},
+    "gw.defaults_body": {"en": "This stages the factory values; nothing is written "
+                               "until you Save.",
+                         "th": "จะใส่ค่าโรงงานไว้ก่อน ยังไม่เขียนจนกว่าจะกดบันทึก"},
+    "gw.reboot": {"en": "Reboot", "th": "รีบูต"},
+    "gw.reboot_title": {"en": "Reboot the gateway?", "th": "รีบูต gateway?"},
+    "gw.reboot_body": {"en": "The COM port disappears for a few seconds and any host "
+                             "talking to the bus loses its connection.",
+                       "th": "พอร์ต COM จะหายไปไม่กี่วินาที และโปรแกรมที่คุยกับบัสอยู่จะหลุด"},
+    "gw.btn_hint": {"en": "on-board button now reads {v} — hold it through boot for "
+                          "3 s to start on defaults",
+                    "th": "ปุ่มบนบอร์ดอ่านค่าได้ {v} — กดค้างตอนบูต 3 วิ เพื่อเริ่มด้วยค่าเริ่มต้น"},
+
     # ── OTA tab ────────────────────────────────────────────────────────────
     "tab.ota": {"en": "Firmware", "th": "อัปเดตเฟิร์มแวร์"},
     "ota.banner": {"en": "⚠ Writes firmware over RS485. Keep power on until the "
