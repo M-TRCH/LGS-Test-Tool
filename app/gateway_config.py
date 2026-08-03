@@ -74,6 +74,8 @@ class GwActionResult:
     ok: bool
     steps: tuple = ()                               # human-readable trace
     note: str = ""
+    values: dict = field(default_factory=dict)      # key -> value the caller
+                                                    # should now offer to write
 
 
 class GatewayLink:
@@ -177,6 +179,25 @@ class GatewayLink:
         return self.command("REBOOT")
 
     # ── composites ─────────────────────────────────────────────────────────
+    @staticmethod
+    def _split_values(res: GwResponse) -> tuple:
+        """GET prints `key=<active>` plus `staged=<pending>` when they differ."""
+        settings: dict = {}
+        staged: dict = {}
+        for row in res.rows:
+            for key, value in row.items():
+                if key == "staged":
+                    if settings:
+                        staged[list(settings)[-1]] = value
+                else:
+                    settings[key] = value
+        return settings, staged
+
+    def staged_values(self) -> dict:
+        """Keys the gateway currently has staged, with their pending values."""
+        res = self.get_all()
+        return self._split_values(res)[1] if res.ok else {}
+
     def snapshot(self) -> GwSnapshot:
         """INFO + GET in one session — what the Gateway tab renders."""
         info = self.info()
@@ -189,15 +210,7 @@ class GatewayLink:
         values = self.get_all()
         if not values.ok:
             return GwSnapshot(False, info=merged, note=values.error_text)
-        settings: dict = {}
-        staged: dict = {}
-        for row in values.rows:
-            for key, value in row.items():
-                if key == "staged":
-                    if settings:
-                        staged[list(settings)[-1]] = value
-                else:
-                    settings[key] = value
+        settings, staged = self._split_values(values)
         return GwSnapshot(True, info=merged, settings=settings, staged=staged)
 
 

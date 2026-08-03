@@ -647,10 +647,18 @@ class ModbusWorker:
             self._log_gw("HELLO", hello)
             if not hello.ok:
                 return gateway_config.GwActionResult(False, (), hello.error_text)
+            values: dict = {}
             if action == "discard":
                 res = link.discard()
             elif action == "defaults":
                 res = link.defaults()
+                # DEFAULTS only *stages* the factory values, and BYE — like the
+                # 120 s session timeout — discards anything staged. So read them
+                # back while the session is still armed and hand them to the
+                # caller as ordinary pending edits.
+                if res.ok:
+                    values = link.staged_values()
+                    steps.append(f"read back {len(values)} factory value(s)")
             elif action == "reboot":
                 res = link.reboot()
             else:
@@ -660,7 +668,8 @@ class ModbusWorker:
             if action != "reboot":
                 link.bye()
             return gateway_config.GwActionResult(res.ok, tuple(steps),
-                                                 "" if res.ok else res.error_text)
+                                                 "" if res.ok else res.error_text,
+                                                 values)
 
         # A reboot re-enumerates the CDC; give Windows time before reconnecting.
         delay = 4.0 if action == "reboot" else 0.0
