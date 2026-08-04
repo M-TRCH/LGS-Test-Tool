@@ -9,8 +9,9 @@ from nicegui import app, ui
 from . import config_store, i18n
 from .modbus_worker import ModbusWorker
 from .txn_log import TxnLog
-from .ui import (Ctx, connection_bar, log_pane, tab_autotest, tab_control,
-                 tab_danger, tab_gateway, tab_install, tab_monitor, tab_ota, theme)
+from .ui import (Ctx, connection_bar, log_pane, tab_autotest, tab_commission,
+                 tab_control, tab_danger, tab_gateway, tab_install, tab_monitor,
+                 tab_ota, theme)
 from .version import APP_VERSION
 
 # Shared across browsers: one Modbus worker, one log, one settings file — the
@@ -19,6 +20,7 @@ log = TxnLog()
 worker = ModbusWorker(log)
 worker.start()
 cfg = config_store.load()
+worker.cubeprog_path = cfg.cubeprog_path
 
 
 @ui.page("/")
@@ -36,6 +38,7 @@ def index() -> None:
         t_install = ui.tab("install", i18n.t("tab.install"))
         t_module = ui.tab("module", i18n.t("tab.module"))
         t_ota = ui.tab("ota", i18n.t("tab.ota"))
+        t_commission = ui.tab("commission", i18n.t("tab.commission"))
         t_gateway = ui.tab("gateway", i18n.t("tab.gateway"))
         t_danger = ui.tab("danger", i18n.t("tab.danger"))
 
@@ -50,6 +53,8 @@ def index() -> None:
             tab_autotest.build(ctx)
         with ui.tab_panel(t_ota):
             tab_ota.build(ctx)
+        with ui.tab_panel(t_commission):
+            tab_commission.build(ctx)
         with ui.tab_panel(t_gateway):
             tab_gateway.build(ctx)
         with ui.tab_panel(t_danger):

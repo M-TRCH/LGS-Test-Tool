@@ -23,6 +23,7 @@ class AppConfig:
     monitor_interval_s: float = 1.0
     theme: str = "light"
     language: str = "en"                 # "en" | "th"
+    cubeprog_path: str = ""              # "" = look in the usual install dirs
 
 
 def data_dir() -> Path:

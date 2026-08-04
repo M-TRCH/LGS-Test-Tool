@@ -453,6 +453,56 @@ TEXTS: dict[str, dict[str, str]] = {
                           "3 s to start on defaults",
                     "th": "ปุ่มบนบอร์ดอ่านค่าได้ {v} — กดค้างตอนบูต 3 วิ เพื่อเริ่มด้วยค่าเริ่มต้น"},
 
+    # ── Commissioning tab ──────────────────────────────────────────────────
+    "tab.commission": {"en": "New module", "th": "ติดตั้งโมดูลใหม่"},
+    "cm.banner": {"en": "Erases and rewrites the module's flash over ST-Link. "
+                        "The module does not need to be on the RS485 bus.",
+                  "th": "ล้างและเขียนแฟลชของโมดูลใหม่ผ่าน ST-Link "
+                        "ไม่จำเป็นต้องต่อโมดูลเข้าบัส RS485"},
+    "cm.image": {"en": "Firmware image", "th": "ไฟล์เฟิร์มแวร์"},
+    "cm.image_hint": {"en": "The combined bootloader + application file "
+                            "(*_factory_*.bin), written at 0x08000000.",
+                      "th": "ไฟล์รวม bootloader + แอป (*_factory_*.bin) "
+                            "เขียนที่ 0x08000000"},
+    "cm.no_image": {"en": "no file chosen", "th": "ยังไม่ได้เลือกไฟล์"},
+    "cm.image_ok": {"en": "{name} — {size} B — {detail}",
+                    "th": "{name} — {size} ไบต์ — {detail}"},
+    "cm.identity": {"en": "Identity", "th": "ข้อมูลประจำตัว"},
+    "cm.identity_hint": {"en": "The ID goes into the image before it is flashed, so "
+                               "the module answers at it the first time it starts.",
+                         "th": "ID จะถูกใส่ลงในไฟล์ก่อนเขียน "
+                               "โมดูลจึงตอบที่หมายเลขนี้ตั้งแต่บูตครั้งแรก"},
+    "cm.slave_id": {"en": "Slave ID", "th": "Slave ID"},
+    "cm.grid": {"en": "Grid", "th": "ผัง"},
+    "cm.lot": {"en": "Lot", "th": "ล็อตการผลิต"},
+    "cm.lot_hint": {"en": "Optional. Recorded in commission_log.csv next to the "
+                          "chip's own serial number.",
+                    "th": "ใส่หรือไม่ใส่ก็ได้ บันทึกลง commission_log.csv "
+                          "คู่กับเลขประจำตัวของชิป"},
+    "cm.overwrite_card": {"en": "Modules that already have an ID",
+                          "th": "โมดูลที่มี ID อยู่แล้ว"},
+    "cm.overwrite": {"en": "Overwrite an ID already stored on the module",
+                     "th": "เขียนทับ ID ที่โมดูลเก็บไว้แล้ว"},
+    "cm.overwrite_note": {"en": "Off by default: without this the image can only "
+                                "fill in an ID on a module that has none, so it can "
+                                "never renumber a cabinet already in service.",
+                          "th": "ปิดไว้เป็นค่าเริ่มต้น — ถ้าไม่เปิด ไฟล์จะตั้ง ID ได้เฉพาะ"
+                                "โมดูลที่ยังไม่มี ID จึงเปลี่ยนเลขตู้ที่ใช้งานอยู่ไม่ได้เลย"},
+    "cm.run": {"en": "Flash and set ID", "th": "เขียนและตั้ง ID"},
+    "cm.step": {"en": "step {done}/{total}", "th": "ขั้นที่ {done}/{total}"},
+    "cm.need_image": {"en": "Choose a firmware image first",
+                      "th": "เลือกไฟล์เฟิร์มแวร์ก่อน"},
+    "cm.bad_id": {"en": "ID {id} cannot be assigned — use 1-245",
+                  "th": "ตั้ง ID {id} ไม่ได้ — ใช้ได้ 1-245"},
+    "cm.confirm_title": {"en": "Flash this module?", "th": "เขียนโมดูลนี้?"},
+    "cm.confirm_body": {"en": "{name} will be written to the module connected to the "
+                              "ST-Link, and it will answer at ID {id}.",
+                        "th": "จะเขียน {name} ลงโมดูลที่ต่อกับ ST-Link อยู่ "
+                              "แล้วโมดูลจะตอบที่ ID {id}"},
+    "cm.confirm_overwrite": {"en": "Overwrite is on: this replaces the ID the module "
+                                   "already has.",
+                             "th": "เปิดเขียนทับไว้ — จะแทนที่ ID เดิมของโมดูล"},
+
     # ── OTA tab ────────────────────────────────────────────────────────────
     "tab.ota": {"en": "Firmware", "th": "อัปเดตเฟิร์มแวร์"},
     "ota.banner": {"en": "Writes firmware over RS485. Keep power on until the "
@@ -507,9 +557,9 @@ TEXTS: dict[str, dict[str, str]] = {
     "dng.wipe_all": {"en": "Wipe everything (500→502)", "th": "ล้างทั้งหมด (500→502)"},
     "dng.arm": {"en": "Arm factory reset…", "th": "เตรียมรีเซ็ตค่าโรงงาน…"},
     "dng.arm_title": {"en": "Arm factory reset", "th": "เตรียมรีเซ็ตค่าโรงงาน"},
-    "dng.arm_seq": {"en": "Sequence: coil 500 (arm) → coil {apply} (apply) → device "
+    "dng.arm_seq": {"en": "Sequence: coil {apply} (mode) → coil 500 (go) → device "
                           "reboots ~3 s.",
-                    "th": "ลำดับ: coil 500 (เตรียม) → coil {apply} (สั่งทำ) → "
+                    "th": "ลำดับ: coil {apply} (เลือกโหมด) → coil 500 (สั่งทำ) → "
                           "อุปกรณ์รีบูต ~3 วิ"},
     "dng.wipe_warn": {"en": "Wipe-all restores ID {id} and baud 9600!",
                       "th": "การล้างทั้งหมดจะคืนค่า ID {id} และ baud 9600!"},

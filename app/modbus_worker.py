@@ -13,16 +13,20 @@ progress into drainable event buffers.
 from __future__ import annotations
 
 import asyncio
+import os
 import queue
+import tempfile
 import threading
 import time
 from concurrent.futures import Future
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
 from typing import Callable, Optional, Sequence
 
-from . import fieldcheck, gateway_config, lgs_map, ota, testsuite
+from . import (commission, fieldcheck, gateway_config, lgs_map, ota, stlink,
+               testsuite)
 from .lgs_map import CoilClass, INTER_TXN_S, LATCH_COOLDOWN_S
 from .transports import (RtuSettings, TransportSettings, make_client,
                          make_scan_probe_client)
@@ -54,12 +58,13 @@ class WorkerState:
     check_running: bool = False
     ota_running: bool = False
     gw_running: bool = False
+    commission_running: bool = False
     last_error: str = ""
 
     @property
     def long_job_running(self) -> bool:
         return (self.sweep_running or self.scan_running or self.check_running
-                or self.ota_running or self.gw_running)
+                or self.ota_running or self.gw_running or self.commission_running)
 
 
 @dataclass(frozen=True)
@@ -108,6 +113,9 @@ class _Job:
 class ModbusWorker:
     def __init__(self, log: TxnLog) -> None:
         self._log = log
+        # Where STM32CubeProgrammer lives, when it is not where we look by
+        # default. Set from AppConfig at startup; "" means auto-detect.
+        self.cubeprog_path = ""
         self._q: queue.PriorityQueue = queue.PriorityQueue()
         self._seq = 0
         self._seq_lock = threading.Lock()
@@ -145,6 +153,10 @@ class ModbusWorker:
         self._ota_cancel = threading.Event()
         self._ota_events: list = []
         self._ota_lock = threading.Lock()
+        self._commission_running = False
+        self._commission_cancel = threading.Event()
+        self._commission_events: list = []
+        self._commission_lock = threading.Lock()
         self._gw_running = False
         self._event_seq = 0
 
@@ -197,7 +209,8 @@ class ModbusWorker:
             return WorkerState(self._connected, desc, self._busy,
                                self._sweep_running, self._scan_running,
                                self._check_running, self._ota_running,
-                               self._gw_running, self._last_error)
+                               self._gw_running, self._commission_running,
+                               self._last_error)
 
     def cooldown_remaining(self, device_id: int) -> float:
         """Seconds left before this module will accept another unlock."""
@@ -336,7 +349,7 @@ class ModbusWorker:
     # ── async facade (manual ops) ──────────────────────────────────────────
     def _guard(self, device_id: int) -> Optional[TxnResult]:
         if self._sweep_running or self._check_running or self._ota_running \
-                or self._gw_running:
+                or self._gw_running or self._commission_running:
             return TxnResult(False, note="a test is running — wait or cancel it")
         if not self._connected:
             return TxnResult(False, note="not connected")
@@ -712,6 +725,41 @@ class ModbusWorker:
         finally:
             self._ota_running = False
 
+    # ── commissioning (ST-Link; no bus involved) ───────────────────────────
+    def start_commission(self, cfg: "commission.CommissionConfig") -> bool:
+        """Unlike the other long jobs this does not need a Modbus connection:
+        the module is flashed over SWD and may not be on the bus at all."""
+        if self._commission_running or self._sweep_running or self._scan_running \
+                or self._check_running or self._ota_running or not cfg.image:
+            return False
+        self._commission_cancel.clear()
+        with self._commission_lock:
+            self._commission_events.clear()
+        self._commission_running = True
+        self._submit(_PRIO_LONG, lambda: self._do_commission(cfg))
+        return True
+
+    def cancel_commission(self) -> None:
+        self._commission_cancel.set()
+
+    def drain_commission_events(self, since: int) -> tuple[int, list]:
+        with self._commission_lock:
+            fresh = [e for e in self._commission_events if e.seq > since]
+            return (fresh[-1].seq if fresh else since), fresh
+
+    def _do_commission(self, cfg: "commission.CommissionConfig") -> None:
+        def emit(ev) -> None:
+            with self._commission_lock:
+                self._event_seq += 1
+                ev.seq = self._event_seq
+                self._commission_events.append(ev)
+
+        try:
+            commission.run_commission(_CommissionOps(self), cfg, emit,
+                                      self._commission_cancel)
+        finally:
+            self._commission_running = False
+
     async def ota_status(self, ids: Sequence[int]) -> list:
         """[(device_id, description)] — quick read of reg 282/283 per device."""
         if not self._connected:
@@ -803,12 +851,22 @@ class ModbusWorker:
             return DangerResult(ok, tuple(steps),
                                 "device back online after reboot" if ok else "device did not come back — check power/bus")
 
-        # factory reset sequences: arm 500 then apply 501/502
-        if not coil(500):
-            return DangerResult(False, tuple(steps), "arm coil 500 failed")
+        # Factory reset: pick the mode on 501/502 FIRST, then fire 500.
+        #
+        # The firmware registers its handler on coil 500 and reads 501/502
+        # inside it (LGS-Standard-Module src/app/ops.cpp): 500 is the trigger,
+        # 501/502 are the modifier. Writing 500 first ran the handler with no
+        # modifier set, so it rejected the command and cleared 500 — and then
+        # the 501/502 write just latched a modifier that nothing consumed,
+        # leaving the device one stray write-to-500 away from an unasked-for
+        # wipe. Clear the modifier on any failure for the same reason.
+        mode_addr = 501 if action is DangerAction.FACTORY_RESET_KEEP_ID else 502
+        if not coil(mode_addr):
+            return DangerResult(False, tuple(steps), f"coil {mode_addr} write failed")
         time.sleep(0.2)
-        apply_addr = 501 if action is DangerAction.FACTORY_RESET_KEEP_ID else 502
-        coil(apply_addr, tolerate_timeout=True)
+        if not coil(500, tolerate_timeout=True):
+            self._do_write_coil(mode_addr, False, device_id, "danger", allow_danger=True)
+            return DangerResult(False, tuple(steps), "trigger coil 500 failed")
         time.sleep(4.0)
         probe_id = device_id if action is DangerAction.FACTORY_RESET_KEEP_ID else lgs_map.FACTORY_DEFAULT_ID
         ok = probe(probe_id)
@@ -912,6 +970,56 @@ class _FieldOps:
         while time.monotonic() < end:
             if self._w._check_cancel.is_set():
                 raise fieldcheck.CheckCancelled()
+            time.sleep(min(0.05, max(0.0, end - time.monotonic())))
+
+
+class _CommissionOps:
+    """commission.CommissionOps bound to the worker (runs on the worker thread).
+
+    None of this touches Modbus: commissioning happens entirely over SWD, and
+    the module being flashed may not be on the bus at all.
+    """
+
+    def __init__(self, worker: ModbusWorker) -> None:
+        self._w = worker
+
+    def find_programmer(self):
+        return stlink.find_cli(self._w.cubeprog_path)
+
+    def programmer_version(self, cli) -> str:
+        return stlink.version(cli)
+
+    def list_probes(self, cli) -> list:
+        return stlink.list_probes(cli)
+
+    def read_uid(self, cli) -> str:
+        try:
+            return stlink.read_uid(cli)
+        except stlink.ProgrammerError:
+            return ""           # a missing serial is worth noting, not failing
+
+    def flash(self, cli, image_path, on_line, cancel):
+        return stlink.flash(cli, image_path, on_line=on_line, cancel=cancel)
+
+    def write_temp(self, data: bytes, name: str) -> Path:
+        # The patched image is never left on disk under a name someone could
+        # re-flash later: one file per board, deleted when the job ends.
+        fd, path = tempfile.mkstemp(prefix="lgs_commission_", suffix=".bin")
+        with os.fdopen(fd, "wb") as fh:
+            fh.write(data)
+        return Path(path)
+
+    def remove_temp(self, path: Path) -> None:
+        try:
+            path.unlink()
+        except OSError:
+            pass
+
+    def sleep(self, seconds: float) -> None:
+        end = time.monotonic() + seconds
+        while time.monotonic() < end:
+            if self._w._commission_cancel.is_set():
+                raise commission.CommissionCancelled()
             time.sleep(min(0.05, max(0.0, end - time.monotonic())))
 
 
