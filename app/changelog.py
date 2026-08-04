@@ -16,6 +16,23 @@ class Release:
 
 
 RELEASES: tuple = (
+    Release("1.3.0", "2026-08-04", (
+        "New module tab: flash a blank module over ST-Link and give it its "
+        "Modbus ID in the same step. The ID goes into the firmware image "
+        "before it is written, so the module answers at it the first time it "
+        "starts — no second tool, and the module does not even need to be on "
+        "the RS485 bus yet. Needs module firmware v4086 or newer.",
+        "A module that already has an ID is left alone unless you tick "
+        "\"overwrite\", so a flash cannot renumber a cabinet in service. "
+        "Re-flashing the same file never reverts an ID you changed afterwards, "
+        "and a factory reset still returns the module to unset.",
+        "Every module flashed is appended to commission_log.csv with the "
+        "chip's own serial number, the ID assigned, the lot and the time.",
+        "Fixed: Factory reset in the Danger tab never actually reset anything. "
+        "It sent the commands in the wrong order, so the module rejected them "
+        "— and worse, left the wipe-all flag set, which meant a later reset "
+        "command could erase a module nobody meant to touch.",
+    )),
     Release("1.2.0", "2026-08-03", (
         "Gateway tab: read and change the Opta gateway's own settings over its "
         "USB port — bus speed and timings, USB framing, network address and "
