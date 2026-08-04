@@ -99,8 +99,17 @@ def dec_device_type(raw: int, unit: str = "") -> str:
     return f"{raw} = {DEVICE_TYPES.get(raw, '?')}"
 
 def dec_fw(raw: int, unit: str = "") -> str:
-    s = str(raw).zfill(5)                       # ddmmy date code
-    return f"{raw} (dd/mm/y {s[0:2]}/{s[2:4]}/*{s[4]})"
+    """major*10000 + minor*100 + patch, so 30100 reads as v3.1.0.
+
+    Firmware before v3.1.0 packed a ddmmy date here instead. Values whose
+    minor or patch field is out of range are shown as that older date code, so
+    a module still running one is not labelled with a nonsense version.
+    """
+    major, minor, patch = raw // 10000, (raw // 100) % 100, raw % 100
+    if raw >= 10000 and minor < 50 and patch < 50:
+        return f"{raw} (v{major}.{minor}.{patch})"
+    s = str(raw).zfill(5)                       # legacy ddmmy date code
+    return f"{raw} (legacy date {s[0:2]}/{s[2:4]}/*{s[4]})"
 
 def dec_hw(raw: int, unit: str = "") -> str:
     return f"{raw} (R{raw // 100}.{(raw // 10) % 10})"

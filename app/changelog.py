@@ -16,12 +16,20 @@ class Release:
 
 
 RELEASES: tuple = (
+    Release("1.3.1", "2026-08-04", (
+        "Module firmware versions now read as v3.1.0 rather than as a date "
+        "code. The firmware used to report the build date in that field, which "
+        "meant a newer build could show a smaller number — 4 August came out "
+        "below 17 July. Modules still running an older build are labelled as a "
+        "legacy date instead of being given a version number that would be "
+        "wrong.",
+    )),
     Release("1.3.0", "2026-08-04", (
         "New module tab: flash a blank module over ST-Link and give it its "
         "Modbus ID in the same step. The ID goes into the firmware image "
         "before it is written, so the module answers at it the first time it "
         "starts — no second tool, and the module does not even need to be on "
-        "the RS485 bus yet. Needs module firmware v4086 or newer.",
+        "the RS485 bus yet. Needs module firmware v3.1.0 or newer.",
         "A module that already has an ID is left alone unless you tick "
         "\"overwrite\", so a flash cannot renumber a cabinet in service. "
         "Re-flashing the same file never reverts an ID you changed afterwards, "
