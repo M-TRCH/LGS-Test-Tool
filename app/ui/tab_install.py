@@ -9,7 +9,7 @@ from nicegui import ui
 from ..config_store import data_dir
 from ..i18n import t
 from ..fieldcheck import (CheckConfig, CheckDone, DeviceDone, DeviceStart,
-                          check_csv_bytes)
+                          PickConfig, check_csv_bytes)
 from ..lgs_map import CABINET_LAYOUTS, GRID_COLS, GRID_ROWS
 from . import Ctx, helps, inline_warning
 
@@ -134,6 +134,21 @@ def build(ctx: Ctx) -> None:
             # Stays on screen: it is a live warning about what will happen.
             unlock_caption = inline_warning("text-red text-sm")
 
+        # ── pick walkthrough: the dispensing flow as a test ────────────────
+        with ui.card().classes("p-3 grow"):
+            helps(ui.label(t("ins.pick_card")).classes("font-bold"),
+                  t("ins.pick_hint"))
+            with ui.row().classes("gap-2 items-center q-mt-sm flex-wrap"):
+                pick_preset = ui.select({n: f"Preset {n}" for n in range(1, 9)},
+                                        value=1, label=t("ins.pick_preset")) \
+                    .props("dense outlined").classes("w-36")
+                pick_timeout = ui.number(t("ins.pick_timeout"), value=60,
+                                         min=0, max=600, format="%d") \
+                    .props("dense outlined").classes("w-36") \
+                    .tooltip(t("ins.pick_timeout_tip"))
+            pick_btn = ui.button(t("ins.pick_run"), color="primary") \
+                .props("outline").classes("q-mt-sm")
+
     def make_cfg() -> CheckConfig:
         return CheckConfig(light=bool(cb_light.value), unlock=bool(cb_unlock.value),
                            display=bool(cb_display.value),
@@ -178,13 +193,13 @@ def build(ctx: Ctx) -> None:
 
     ui.button(t("btn.export_csv"), on_click=export).props("flat dense")
 
-    def start() -> None:
+    def _reset_run_ui() -> bool:
         if not worker.get_state().connected:
             ui.notify(t("msg.not_connected"), type="negative")
-            return
+            return False
         if not selected:
             ui.notify(t("ins.select_one"), type="warning")
-            return
+            return False
         results.clear()
         repaint_all()
         table.rows = []
@@ -194,13 +209,31 @@ def build(ctx: Ctx) -> None:
         banner.set_text(t("res.running"))
         banner.props("color=blue")
         progress.set_value(0.0)
-        ids = sorted(selected)
-        if not worker.start_field_check(make_cfg(), ids):
+        return True
+
+    def start() -> None:
+        if not _reset_run_ui():
+            return
+        state["pick_mode"] = False
+        if not worker.start_field_check(make_cfg(), sorted(selected)):
             ui.notify(t("msg.worker_busy"), type="negative")
             banner.set_text("—")
             banner.props("color=grey")
 
     run_btn.on_click(start)
+
+    def start_pick() -> None:
+        if not _reset_run_ui():
+            return
+        state["pick_mode"] = True
+        cfg = PickConfig(preset=int(pick_preset.value or 1),
+                         timeout_s=float(pick_timeout.value or 0))
+        if not worker.start_pick_sequence(cfg, sorted(selected)):
+            ui.notify(t("msg.worker_busy"), type="negative")
+            banner.set_text("—")
+            banner.props("color=grey")
+
+    pick_btn.on_click(start_pick)
 
     def drain() -> None:
         state["seq"], events = worker.drain_field_check_events(state["seq"])
@@ -211,7 +244,10 @@ def build(ctx: Ctx) -> None:
                     paint(prev)
                 paint(ev.device_id)
                 progress.set_value((ev.index - 1) / max(1, ev.total))
-                progress_label.set_text(t("ins.module_progress", id=ev.device_id, i=ev.index, total=ev.total))
+                progress_label.set_text(
+                    t("ins.pick_waiting", id=ev.device_id, i=ev.index, total=ev.total)
+                    if state.get("pick_mode") else
+                    t("ins.module_progress", id=ev.device_id, i=ev.index, total=ev.total))
             elif isinstance(ev, DeviceDone):
                 r = ev.result
                 state["testing"] = None

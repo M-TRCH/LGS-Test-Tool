@@ -130,6 +130,20 @@ def dec_uptime(hi: int, lo: int) -> str:
     m, s = divmod(rem, 60)
     return f"{h}h {m:02d}m {s:02d}s"
 
+def dec_current(raw: int, unit: str = "") -> str:
+    """Input current from reg 22 (firmware >= v3.2.0; older modules read 0)."""
+    return f"{raw} mA" if raw < 1000 else f"{raw} mA ({raw / 1000:.2f} A)"
+
+def join_uid(words) -> str:
+    """Regs 12-17 -> the module's serial, one number everywhere.
+
+    Hex-concatenating the six registers (hi word first per 32-bit UID word)
+    reproduces exactly what stlink.read_uid() reads over SWD and what
+    commission_log.csv stores in device_uid — so a board on the bus can be
+    matched to its commissioning record even after someone changed its ID.
+    """
+    return "".join(f"{w:04X}" for w in words)
+
 def decode_health(raw: int) -> list[tuple[str, bool]]:
     """[(subsystem, ok)] for bits 0-3. Bit 4 (latch) is a state — use is_latch_locked()."""
     return [(name, bool(raw & (1 << i))) for i, name in enumerate(HEALTH_BITS)]
@@ -177,8 +191,17 @@ REGISTERS: list[RegDef] = [
     RegDef(9,   "Health Bits",        "",    dec_plain),
     RegDef(10,  "Function Mode",      "",    dec_mode),
     RegDef(11,  "Active Preset",      "",    dec_preset),
+    RegDef(12,  "UID 1/6",            "",    lambda raw, unit="": f"0x{raw:04X}"),
+    RegDef(13,  "UID 2/6",            "",    lambda raw, unit="": f"0x{raw:04X}"),
+    RegDef(14,  "UID 3/6",            "",    lambda raw, unit="": f"0x{raw:04X}"),
+    RegDef(15,  "UID 4/6",            "",    lambda raw, unit="": f"0x{raw:04X}"),
+    RegDef(16,  "UID 5/6",            "",    lambda raw, unit="": f"0x{raw:04X}"),
+    RegDef(17,  "UID 6/6",            "",    lambda raw, unit="": f"0x{raw:04X}"),
+    RegDef(18,  "Button Presses",     "",    dec_plain),
+    RegDef(19,  "Button Held",        "",    dec_plain),
     RegDef(20,  "Room Temp",          "°C",  dec_temp),
     RegDef(21,  "Board Temp",         "°C",  dec_temp),
+    RegDef(22,  "Input Current",      "mA",  dec_current),
     RegDef(40,  "Time After Unlock",  "s",   dec_plain),
     RegDef(41,  "Latch Locked",       "",    dec_plain),
     RegDef(60,  "Display Number",     "",    dec_plain, writable=True),
@@ -279,6 +302,10 @@ assert classify_coil(1021) is CoilClass.LATCH
 assert classify_coil(1001) is CoilClass.STATE
 assert classify_coil(509) is CoilClass.NORMAL
 assert len(REGISTERS) == len(REG_BY_ADDR) and len(COILS) == len(COIL_BY_ADDR)  # no dup addrs
+assert all(i in REG_BY_ADDR for i in range(12, 20)) and 22 in REG_BY_ADDR  # v3.2.0 regs
+# Byte-order contract with the bench: board C's real UID, read both ways.
+assert join_uid((0x0058, 0x0033, 0x3135, 0x5103, 0x3135, 0x3730)) \
+    == "005800333135510331353730"
 
 
 if __name__ == "__main__":

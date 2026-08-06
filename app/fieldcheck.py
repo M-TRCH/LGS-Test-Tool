@@ -178,6 +178,104 @@ def run_check(ops: FieldOps, cfg: CheckConfig, ids: Sequence[int],
     return report
 
 
+# ── Pick-sequence walkthrough ──────────────────────────────────────────────
+# The dress rehearsal of the real dispensing flow: light one slot, wait for
+# the person at the cabinet to press its front button (module firmware
+# v3.2.0+ counts presses at reg 18), turn the light off, move on. The tool
+# plays the master's role end-to-end, so it proves lights, buttons, wiring
+# and the confirm loop in one walk past the cabinet.
+
+MB_REG_FW = 1
+MB_REG_BUTTON_PRESSES = 18
+FW_MIN_CONFIRM = 30200          # v3.2.0 — first build that counts presses
+
+
+@dataclass
+class PickConfig:
+    preset: int = 1              # enable coil 1000+n lights the slot
+    timeout_s: float = 60.0      # per module; 0 = wait until cancelled
+    poll_s: float = 0.4          # reg-18 polling cadence while waiting
+
+
+def run_pick_sequence(ops: FieldOps, cfg: PickConfig, ids: Sequence[int],
+                      emit: Callable, cancel: threading.Event) -> CheckReport:
+    report = CheckReport(started=datetime.now())
+    total = len(ids)
+    coil = 1000 + max(1, min(8, cfg.preset))
+    try:
+        for index, device_id in enumerate(ids, 1):
+            emit(DeviceStart(device_id, index, total))
+            result = DeviceResult(device_id=device_id, responded=False)
+
+            probe = ops.read_reg(device_id, 0)
+            if not probe.ok:
+                result.steps.append(StepOutcome("answers on the bus", False,
+                                                probe.note or "no reply"))
+                report.results.append(result)
+                emit(DeviceDone(result))
+                continue
+            result.responded = True
+            result.device_type = probe.value
+            result.steps.append(StepOutcome("answers on the bus", True,
+                                            result.type_name))
+
+            fw = ops.read_reg(device_id, MB_REG_FW)
+            if not fw.ok or fw.value < FW_MIN_CONFIRM:
+                result.steps.append(StepOutcome(
+                    "firmware counts presses (reg 18)", False,
+                    f"needs v3.2.0+, module reports {fw.value if fw.ok else '?'}"))
+                report.results.append(result)
+                emit(DeviceDone(result))
+                continue
+            result.steps.append(StepOutcome("firmware counts presses (reg 18)",
+                                            True))
+
+            base = ops.read_reg(device_id, MB_REG_BUTTON_PRESSES)
+            if not base.ok:
+                result.steps.append(StepOutcome("read press counter", False,
+                                                base.note))
+                report.results.append(result)
+                emit(DeviceDone(result))
+                continue
+
+            lit = ops.write_coil(device_id, coil, 1)
+            if not lit.ok:
+                result.steps.append(StepOutcome(f"light on ({coil})", False,
+                                                lit.note))
+                report.results.append(result)
+                emit(DeviceDone(result))
+                continue
+
+            # The human is now part of the loop: wait for the counter to move.
+            waited = 0.0
+            confirmed = False
+            try:
+                while cfg.timeout_s <= 0 or waited < cfg.timeout_s:
+                    ops.sleep(cfg.poll_s)
+                    waited += cfg.poll_s
+                    now = ops.read_reg(device_id, MB_REG_BUTTON_PRESSES)
+                    if now.ok and now.value != base.value:
+                        confirmed = True
+                        break
+            finally:
+                # Whatever happened — confirmed, timed out, cancelled — the
+                # light never stays on for a slot nobody is working.
+                ops.write_coil(device_id, coil, 0)
+
+            result.steps.append(StepOutcome(
+                "confirmed by button press",
+                confirmed,
+                f"after {waited:.1f}s" if confirmed
+                else f"no press within {cfg.timeout_s:.0f}s"))
+            report.results.append(result)
+            emit(DeviceDone(result))
+    except CheckCancelled:
+        report.cancelled = True
+    report.finished = datetime.now()
+    emit(CheckDone(report))
+    return report
+
+
 def check_csv_bytes(report: CheckReport) -> bytes:
     import csv
     import io

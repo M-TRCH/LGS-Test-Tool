@@ -132,6 +132,36 @@ def read_uid(cli: Path) -> str:
     return "".join(h.upper() for h in hexes[:3])
 
 
+@dataclass(frozen=True)
+class BoardProbe:
+    """What one glance over SWD can tell about the connected board."""
+    uid: str
+    blank: bool          # first flash words all erased — no firmware yet
+
+
+def probe_board(cli: Path) -> BoardProbe | None:
+    """One quick look: is a board attached, is it blank, which chip is it.
+
+    This is what lets batch mode watch the bench: `None` while hands are
+    swapping boards, `blank=False` while the just-flashed board is still
+    clipped in, and a blank probe exactly when the next factory board arrives.
+    HOTPLUG on purpose — watching must not reset whatever is running.
+    """
+    try:
+        out = _run(cli, ["-c", "port=SWD", "mode=HOTPLUG",
+                         "-r32", hex(FLASH_ADDRESS), "8",
+                         "-r32", "0x1FFF7590", "12"], timeout=30).stdout
+    except ProgrammerError:
+        return None
+    first = re.search(r"0x08000000\s*:\s*([0-9A-Fa-f]{8})\s+([0-9A-Fa-f]{8})", out)
+    uidw = re.findall(r"0x1FFF75[0-9A-Fa-f]{2}\s*:\s*([0-9A-Fa-f ]+)", out)
+    hexes = " ".join(uidw).split()
+    if not first or len(hexes) < 3:
+        return None
+    blank = first.group(1).upper() == "FFFFFFFF" and first.group(2).upper() == "FFFFFFFF"
+    return BoardProbe(uid="".join(h.upper() for h in hexes[:3]), blank=blank)
+
+
 def flash(cli: Path, image: Path, *, address: int = FLASH_ADDRESS,
           on_line: Callable[[str], None] | None = None,
           cancel: Callable[[], bool] | None = None) -> FlashResult:
@@ -181,7 +211,49 @@ def flash(cli: Path, image: Path, *, address: int = FLASH_ADDRESS,
     if proc.returncode != 0 or not verified:
         why = _first_error(lines) or f"exit code {proc.returncode}"
         return FlashResult(False, f"Flashing failed: {why}", lines)
+    _release_empty_boot_latch(cli, on_line)
     return FlashResult(True, "programmed and verified", lines)
+
+
+# FLASH_ACR on the STM32G0; bit 16 (EMPTY) latches "flash was blank at
+# power-on" and forces every boot into ST's ROM bootloader until it is
+# cleared or the board is physically power-cycled.
+_FLASH_ACR = 0x40022000
+_ACR_EMPTY = 1 << 16
+
+
+def _release_empty_boot_latch(cli: Path,
+                              on_line: Callable[[str], None] | None) -> None:
+    """Let a factory-blank chip boot the firmware it just received.
+
+    A virgin STM32G0 samples its flash at power-on, finds it empty, and locks
+    itself onto the ROM bootloader. The lock survives every reset the flasher
+    can issue — only a real power cycle re-samples it. So the reset after
+    programming leaves a factory-fresh board sitting silently in ST's ROM,
+    looking dead until someone unplugs it. Found on the first board that was
+    commissioned without ever being power-cycled: PC read 0x1FFF25B4 (system
+    memory) while the flash held a fully verified image.
+
+    Best effort on purpose: a board that was flashed before has the bit clear
+    and skips the write, and any probe failure is left to the power cycle the
+    board will get on installation anyway.
+    """
+    try:
+        out = _run(cli, ["-c", "port=SWD", "mode=HOTPLUG",
+                         "-r32", hex(_FLASH_ACR), "4"], timeout=30).stdout
+        m = re.search(r"0x40022000\s*:?\s*([0-9A-Fa-f]{8})\b", out)
+        if not m or not (int(m.group(1), 16) & _ACR_EMPTY):
+            return
+        acr = int(m.group(1), 16)
+        _run(cli, ["-c", "port=SWD", "mode=HOTPLUG", "-w32", hex(_FLASH_ACR),
+                   f"0x{acr & ~_ACR_EMPTY:08X}"], timeout=30)
+        _run(cli, ["-c", "port=SWD", "mode=UR", "reset=HWrst", "-rst"],
+             timeout=30)
+        if on_line:
+            on_line("factory-blank chip: released the empty-flash boot latch "
+                    "so the module starts without a power cycle")
+    except ProgrammerError:
+        pass
 
 
 def _first_error(lines: Iterable[str]) -> str:

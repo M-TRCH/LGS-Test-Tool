@@ -51,6 +51,15 @@ TEXTS: dict[str, dict[str, str]] = {
     "hdr.theme": {"en": "Theme", "th": "ธีม"},
     "hdr.about": {"en": "About", "th": "เกี่ยวกับ"},
     "hdr.language": {"en": "Language", "th": "ภาษา"},
+    "hdr.advanced": {"en": "Advanced", "th": "ขั้นสูง"},
+    "hdr.advanced_tip": {
+        "en": "Show the installation and maintenance pages — Firmware, "
+              "New module, Gateway and Danger. Off, only the four everyday "
+              "pages are shown.",
+        "th": "แสดงหน้าสำหรับติดตั้งและซ่อมบำรุง — อัปเดตเฟิร์มแวร์ "
+              "ติดตั้งโมดูลใหม่ เกตเวย์ และคำสั่งอันตราย "
+              "ปิดไว้จะเหลือเฉพาะหน้าใช้งานประจำ 4 หน้า",
+    },
     "hdr.reference": {"en": "Control table", "th": "ตารางคำสั่ง"},
     "ref.title": {"en": "LGS control table", "th": "ตารางคำสั่ง LGS"},
     "ref.search": {"en": "Find a register, coil or name",
@@ -169,6 +178,10 @@ TEXTS: dict[str, dict[str, str]] = {
     "mon.fw": {"en": "FW: {v}", "th": "เฟิร์มแวร์: {v}"},
     "mon.hw": {"en": "HW: {v}", "th": "ฮาร์ดแวร์: {v}"},
     "mon.baud_id": {"en": "Baud: {baud} · ID: {id}", "th": "Baud: {baud} · ID: {id}"},
+    "mon.uid": {"en": "Serial: {v}", "th": "หมายเลขชิป: {v}"},
+    "mon.current": {"en": "Input current: {v}", "th": "กระแสขาเข้า: {v}"},
+    "mon.button": {"en": "Confirm presses: {n}", "th": "กดยืนยันแล้ว: {n} ครั้ง"},
+    "mon.button_held": {"en": " (held now)", "th": " (กำลังกดค้าง)"},
     "mon.uptime": {"en": "Uptime: {v}", "th": "เปิดมาแล้ว: {v}"},
     "mon.boots": {"en": "Boots: {v}", "th": "จำนวนครั้งที่บูต: {v}"},
     "mon.mode": {"en": "Mode: {v}", "th": "โหมด: {v}"},
@@ -281,6 +294,24 @@ TEXTS: dict[str, dict[str, str]] = {
     "ins.do_identify": {"en": "Identify — blink white ~5 s (509)",
                         "th": "ระบุตัวตน — กะพริบสีขาว ~5 วิ (509)"},
     "ins.hold": {"en": "Hold each step (s)", "th": "ค้างแต่ละขั้น (วินาที)"},
+    "ins.pick_card": {"en": "Pick walkthrough", "th": "ทดสอบลำดับหยิบยา"},
+    "ins.pick_hint": {
+        "en": "The dispensing flow as a rehearsal: each selected slot lights "
+              "up in turn, someone at the cabinet picks and presses the "
+              "slot's front button, the light goes out and the next slot "
+              "lights. Proves lights, buttons and the confirm loop in one "
+              "walk. Needs module firmware v3.2.0.",
+        "th": "ซ้อมขั้นตอนจ่ายยาจริง: ไฟติดทีละช่องตามที่เลือก คนที่หน้าตู้หยิบยา"
+              "แล้วกดปุ่มหน้าช่องนั้น ไฟดับแล้วช่องถัดไปติดต่อทันที — พิสูจน์ไฟ ปุ่ม "
+              "และวงจรยืนยันครบในเดินรอบเดียว ต้องใช้เฟิร์มแวร์โมดูล v3.2.0"},
+    "ins.pick_preset": {"en": "Preset", "th": "Preset สี"},
+    "ins.pick_timeout": {"en": "Timeout/slot (s)", "th": "รอสูงสุด/ช่อง (วิ)"},
+    "ins.pick_timeout_tip": {"en": "0 = wait until cancelled",
+                             "th": "0 = รอจนกว่าจะกดยกเลิก"},
+    "ins.pick_run": {"en": "Start walkthrough", "th": "เริ่มเดินทดสอบ"},
+    "ins.pick_waiting": {
+        "en": "press the button on slot {id}  ({i}/{total})",
+        "th": "กดปุ่มที่ช่อง {id}  ({i}/{total})"},
     "ins.unlock_card": {"en": "Unlock — moves the physical latch",
                         "th": "ปลดล็อก — กลอนจะทำงานจริง"},
     "ins.do_unlock": {"en": "Light + unlock each module (1021)",
@@ -479,6 +510,33 @@ TEXTS: dict[str, dict[str, str]] = {
                           "chip's own serial number.",
                     "th": "ใส่หรือไม่ใส่ก็ได้ บันทึกลง commission_log.csv "
                           "คู่กับเลขประจำตัวของชิป"},
+    "cm.mode.single": {"en": "One module", "th": "ทีละโมดูล"},
+    "cm.mode.batch": {"en": "Continuous", "th": "ต่อเนื่องทั้งล็อต"},
+    "cm.batch.pick": {"en": "IDs to assign, in order",
+                      "th": "ID ที่จะแจก เรียงตามลำดับ"},
+    "cm.batch.pick_hint": {
+        "en": "Pick the addresses this lot should get, exactly like the "
+              "Installation Check grid. The runner waits for a blank board, "
+              "gives it the lowest remaining ID, and moves on when you swap "
+              "boards — flash and swap until the queue is empty.",
+        "th": "เลือกที่อยู่ที่ล็อตนี้ควรได้ เหมือนผังหน้าตรวจการติดตั้ง "
+              "โปรแกรมจะรอบอร์ดเปล่า แจก ID ต่ำสุดที่เหลือ "
+              "แล้วไปตัวถัดไปเมื่อสลับบอร์ด — ทำจนหมดคิว"},
+    "cm.batch.selected": {"en": "{n} selected", "th": "เลือกแล้ว {n}"},
+    "cm.batch.no_overwrite": {
+        "en": "Continuous mode never overwrites: a board that already has an "
+              "ID keeps it. Renumbering a board stays a one-module act.",
+        "th": "โหมดต่อเนื่องไม่เขียนทับ ID เดิม — บอร์ดที่มี ID แล้วจะเก็บของเดิมไว้ "
+              "การเปลี่ยนเลขบอร์ดให้ทำแบบทีละโมดูล"},
+    "cm.batch.need_ids": {"en": "Pick at least one ID in the grid first",
+                          "th": "เลือก ID ในผังอย่างน้อย 1 ช่องก่อน"},
+    "cm.batch.confirm_body": {
+        "en": "Flash {name} to {n} blank boards, assigning IDs {first}-{last} "
+              "in order. Swap boards when told; the queue stops on any failure.",
+        "th": "จะ flash {name} ลงบอร์ดเปล่า {n} ตัว แจก ID {first}-{last} "
+              "ตามลำดับ สลับบอร์ดตามที่โปรแกรมบอก ถ้าตัวไหนพลาดคิวจะหยุดทันที"},
+    "cm.batch.progress": {"en": "module {done}/{total}",
+                          "th": "โมดูล {done}/{total}"},
     "cm.overwrite_card": {"en": "Modules that already have an ID",
                           "th": "โมดูลที่มี ID อยู่แล้ว"},
     "cm.overwrite": {"en": "Overwrite an ID already stored on the module",

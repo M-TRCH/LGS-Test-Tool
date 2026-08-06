@@ -16,6 +16,31 @@ class Release:
 
 
 RELEASES: tuple = (
+    Release("1.4.0", "2026-08-06", (
+        "Pick walkthrough on the Installation Check page: each selected slot "
+        "lights up in turn, the person at the cabinet picks and presses the "
+        "slot's front button, the light goes out and the next slot lights — "
+        "the real dispensing flow as a rehearsal, proving lights, buttons "
+        "and wiring in one walk. Needs module firmware v3.2.0, which counts "
+        "button presses so a press can never fall between polls.",
+        "New module tab gains a Continuous mode: pick the whole lot's IDs on "
+        "a grid like the Installation Check page, then just keep swapping "
+        "boards — each blank board is detected, flashed and given the next "
+        "ID in the queue. Proven on an 80-board lot at under half a minute a "
+        "board. Continuous mode never overwrites an ID a board already has.",
+        "Factory-fresh chips no longer need a power cycle after their first "
+        "flash. A blank STM32 locks itself onto ST's built-in loader until "
+        "power is pulled — boards looked dead on the bench until unplugged. "
+        "The flasher now releases that latch itself.",
+        "The Monitor tab shows the module's chip serial — the same number "
+        "commission_log.csv records — so a board on the bus can be matched "
+        "to its commissioning record without opening the cabinet, plus the "
+        "module's input current in mA and its confirm-press counter. All "
+        "need module firmware v3.2.0; older modules show a dash.",
+        "A Basic/Advanced switch in the header: everyday pages only by "
+        "default, with Firmware, New module, Gateway and Danger appearing "
+        "in advanced mode. The choice is remembered.",
+    )),
     Release("1.3.1", "2026-08-04", (
         "Module firmware versions now read as v3.1.0 rather than as a date "
         "code. The firmware used to report the build date in that field, which "

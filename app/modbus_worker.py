@@ -378,7 +378,9 @@ class ModbusWorker:
             _PRIO_MANUAL, lambda: self._do_write_coil(addr, value, device_id, source, allow_danger))
 
     # ── monitor poll ───────────────────────────────────────────────────────
-    MONITOR_GROUPS = ((0, 12), (20, 2), (40, 2), (60, 1))
+    # (0,20) spans identity+diagnostics+UID 12-17+button 18/19; (20,3) adds
+    # input current. Older firmware answers 0 for regs it never writes.
+    MONITOR_GROUPS = ((0, 20), (20, 3), (40, 2), (60, 1))
     STATS_GROUP = (200, 82)
 
     async def poll_monitor(self, device_id: int, *, with_stats: bool) -> Optional[MonitorSnapshot]:
@@ -760,6 +762,32 @@ class ModbusWorker:
         finally:
             self._commission_running = False
 
+    def start_batch_commission(self, cfg: "commission.BatchConfig") -> bool:
+        """Same slot as single commissioning — one ST-Link, one job at a time."""
+        if self._commission_running or self._sweep_running or self._scan_running \
+                or self._check_running or self._ota_running \
+                or not cfg.image or not cfg.ids:
+            return False
+        self._commission_cancel.clear()
+        with self._commission_lock:
+            self._commission_events.clear()
+        self._commission_running = True
+        self._submit(_PRIO_LONG, lambda: self._do_batch_commission(cfg))
+        return True
+
+    def _do_batch_commission(self, cfg: "commission.BatchConfig") -> None:
+        def emit(ev) -> None:
+            with self._commission_lock:
+                self._event_seq += 1
+                ev.seq = self._event_seq
+                self._commission_events.append(ev)
+
+        try:
+            commission.run_batch(_CommissionOps(self), cfg, emit,
+                                 self._commission_cancel)
+        finally:
+            self._commission_running = False
+
     async def ota_status(self, ids: Sequence[int]) -> list:
         """[(device_id, description)] — quick read of reg 282/283 per device."""
         if not self._connected:
@@ -806,6 +834,33 @@ class ModbusWorker:
 
         try:
             fieldcheck.run_check(_FieldOps(self), cfg, ids, emit, self._check_cancel)
+        finally:
+            self._check_running = False
+
+    def start_pick_sequence(self, cfg: "fieldcheck.PickConfig",
+                            ids: Sequence[int]) -> bool:
+        """Same slot, cancel and event stream as the installation check —
+        the pick walkthrough is that page's other run mode."""
+        if self._check_running or self._sweep_running or self._scan_running \
+                or not self._connected or not ids:
+            return False
+        self._check_cancel.clear()
+        with self._check_lock:
+            self._check_events.clear()
+        self._check_running = True
+        self._submit(_PRIO_LONG, lambda: self._do_pick_sequence(cfg, list(ids)))
+        return True
+
+    def _do_pick_sequence(self, cfg: "fieldcheck.PickConfig", ids: list) -> None:
+        def emit(ev) -> None:
+            with self._check_lock:
+                self._event_seq += 1
+                ev.seq = self._event_seq
+                self._check_events.append(ev)
+
+        try:
+            fieldcheck.run_pick_sequence(_FieldOps(self), cfg, ids, emit,
+                                         self._check_cancel)
         finally:
             self._check_running = False
 
@@ -997,6 +1052,9 @@ class _CommissionOps:
             return stlink.read_uid(cli)
         except stlink.ProgrammerError:
             return ""           # a missing serial is worth noting, not failing
+
+    def probe(self, cli):
+        return stlink.probe_board(cli)
 
     def flash(self, cli, image_path, on_line, cancel):
         return stlink.flash(cli, image_path, on_line=on_line, cancel=cancel)

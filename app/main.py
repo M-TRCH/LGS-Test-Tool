@@ -9,9 +9,9 @@ from nicegui import app, ui
 from . import config_store, i18n
 from .modbus_worker import ModbusWorker
 from .txn_log import TxnLog
-from .ui import (Ctx, connection_bar, log_pane, tab_autotest, tab_commission,
-                 tab_control, tab_danger, tab_gateway, tab_install, tab_monitor,
-                 tab_ota, theme)
+from .ui import (Ctx, connection_bar, helps, log_pane, tab_autotest,
+                 tab_commission, tab_control, tab_danger, tab_gateway,
+                 tab_install, tab_monitor, tab_ota, theme)
 from .version import APP_VERSION
 
 # Shared across browsers: one Modbus worker, one log, one settings file — the
@@ -32,15 +32,41 @@ def index() -> None:
     theme.init(cfg.theme)
     connection_bar.build(ctx)
 
-    with ui.tabs().classes("w-full") as tabs:
-        t_control = ui.tab("control", i18n.t("tab.control"))
-        t_monitor = ui.tab("monitor", i18n.t("tab.monitor"))
-        t_install = ui.tab("install", i18n.t("tab.install"))
-        t_module = ui.tab("module", i18n.t("tab.module"))
-        t_ota = ui.tab("ota", i18n.t("tab.ota"))
-        t_commission = ui.tab("commission", i18n.t("tab.commission"))
-        t_gateway = ui.tab("gateway", i18n.t("tab.gateway"))
-        t_danger = ui.tab("danger", i18n.t("tab.danger"))
+    with ui.row(align_items="center").classes("w-full no-wrap"):
+        with ui.tabs().classes("grow") as tabs:
+            t_control = ui.tab("control", i18n.t("tab.control"))
+            t_monitor = ui.tab("monitor", i18n.t("tab.monitor"))
+            t_install = ui.tab("install", i18n.t("tab.install"))
+            t_module = ui.tab("module", i18n.t("tab.module"))
+            t_ota = ui.tab("ota", i18n.t("tab.ota"))
+            t_commission = ui.tab("commission", i18n.t("tab.commission"))
+            t_gateway = ui.tab("gateway", i18n.t("tab.gateway"))
+            t_danger = ui.tab("danger", i18n.t("tab.danger"))
+
+        # Everyday pages stay; the installation / maintenance pages appear
+        # only in advanced mode. Hiding Danger from the default view is the
+        # point, not a side effect: the people this switch exists for are the
+        # ones a stray factory reset would hurt.
+        advanced_tabs = (t_ota, t_commission, t_gateway, t_danger)
+        adv = helps(ui.switch(i18n.t("hdr.advanced"), value=cfg.advanced_mode)
+                    .props("dense").classes("shrink-0 pr-2"),
+                    i18n.t("hdr.advanced_tip"))
+
+        def apply_mode() -> None:
+            show = bool(adv.value)
+            for tab in advanced_tabs:
+                tab.set_visibility(show)
+            # Leaving someone parked on a page that just vanished would look
+            # like a frozen app, so fall back to the first everyday page.
+            if not show and str(tabs.value) in {t.props["name"]
+                                                for t in advanced_tabs}:
+                tabs.set_value(t_control)
+            if cfg.advanced_mode != show:
+                cfg.advanced_mode = show
+                config_store.save(cfg)
+
+        adv.on_value_change(apply_mode)
+        apply_mode()
 
     with ui.tab_panels(tabs, value=t_control).classes("w-full"):
         with ui.tab_panel(t_control):

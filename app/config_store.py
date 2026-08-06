@@ -24,6 +24,7 @@ class AppConfig:
     theme: str = "light"
     language: str = "en"                 # "en" | "th"
     cubeprog_path: str = ""              # "" = look in the usual install dirs
+    advanced_mode: bool = False          # False = everyday pages only
 
 
 def data_dir() -> Path:

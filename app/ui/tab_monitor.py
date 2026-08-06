@@ -4,9 +4,10 @@ from __future__ import annotations
 from nicegui import ui
 
 from ..i18n import t
-from ..lgs_map import (SENSOR_FAULT, dec_baud, dec_device_type, dec_fw, dec_hw,
-                       dec_mode, dec_preset, dec_temp, dec_uptime,
-                       decode_health, decode_reset_cause, stats_count, stats_time)
+from ..lgs_map import (SENSOR_FAULT, dec_baud, dec_current, dec_device_type,
+                       dec_fw, dec_hw, dec_mode, dec_preset, dec_temp,
+                       dec_uptime, decode_health, decode_reset_cause, join_uid,
+                       stats_count, stats_time)
 from . import Ctx, helps
 
 
@@ -29,9 +30,11 @@ def build(ctx: Ctx) -> None:
         with ui.card().classes("p-3 min-w-[220px]"):
             ui.label(t("mon.card.device")).classes("font-bold")
             dev_type, dev_fw, dev_hw, dev_baud = L(), L(), L(), L()
+            dev_uid = ui.label("—").classes("text-sm font-mono")
         with ui.card().classes("p-3 min-w-[220px]"):
             ui.label(t("mon.card.runtime")).classes("font-bold")
             rt_uptime, rt_boots, rt_mode, rt_preset = L(), L(), L(), L()
+            rt_button = L()
         with ui.card().classes("p-3 min-w-[240px]"):
             ui.label(t("mon.card.health")).classes("font-bold")
             health_row = ui.row().classes("gap-1 flex-wrap")
@@ -41,7 +44,7 @@ def build(ctx: Ctx) -> None:
             rc_label = L()
         with ui.card().classes("p-3 min-w-[240px]"):
             ui.label(t("mon.card.temp")).classes("font-bold")
-            t_room, t_board = L(), L()
+            t_room, t_board, t_curr = L(), L(), L()
         with ui.card().classes("p-3 min-w-[240px]"):
             ui.label(t("mon.card.latch")).classes("font-bold")
             ld_latch, ld_unlock, ld_display = L(), L(), L()
@@ -76,10 +79,19 @@ def build(ctx: Ctx) -> None:
             dev_fw.set_text(t("mon.fw", v=dec_fw(r[1])))
             dev_hw.set_text(t("mon.hw", v=dec_hw(r[2])))
             dev_baud.set_text(t("mon.baud_id", baud=dec_baud(r[3]), id=r[4]))
+            if 17 in r:
+                # All-zero = firmware older than v3.2.0, which never writes
+                # these registers — showing 000000000000 would look like data.
+                uid = join_uid([r[i] for i in range(12, 18)])
+                dev_uid.set_text(t("mon.uid", v=uid) if uid.strip("0")
+                                 else t("mon.uid", v="—"))
             rt_uptime.set_text(t("mon.uptime", v=dec_uptime(r[5], r[6])))
             rt_boots.set_text(t("mon.boots", v=r[7]))
             rt_mode.set_text(t("mon.mode", v=dec_mode(r[10])))
             rt_preset.set_text(t("mon.active_preset", v=dec_preset(r[11])))
+            if 18 in r:
+                held = t("mon.button_held") if r.get(19) else ""
+                rt_button.set_text(t("mon.button", n=r[18]) + held)
 
             health_row.clear()
             with health_row:
@@ -95,6 +107,8 @@ def build(ctx: Ctx) -> None:
         if 20 in r:
             t_room.set_text(t("mon.room", v=dec_temp(r[20])))
             t_board.set_text(t("mon.board", v=dec_temp(r[21])))
+            if 22 in r:
+                t_curr.set_text(t("mon.current", v=dec_current(r[22])))
             fault = r[20] == SENSOR_FAULT or r[21] == SENSOR_FAULT
             for lbl in (t_room, t_board):
                 lbl.classes(add="text-red" if fault else "", remove="" if fault else "text-red")
