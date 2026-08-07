@@ -10,6 +10,8 @@ from nicegui import ui
 
 from ..i18n import t
 from ..lgs_map import BAUD_WHITELIST
+from ..opta_update import OptaConfig
+from ..ota import Done, Line, Progress
 from . import Ctx, helps
 
 # Which settings each card shows, in display order.
@@ -72,6 +74,33 @@ def build(ctx: Ctx) -> None:
                   on_click=lambda: confirm_defaults()).props("outline")
         ui.button(t("gw.reboot"), color="red",
                   on_click=lambda: confirm_reboot()).props("outline")
+
+    # ── firmware update ────────────────────────────────────────────────────
+    # Below the settings and behind its own confirm: this is the one action
+    # on this page that can leave the whole bus without a bridge.
+    fw_state: dict = {"seq": 0, "image": b"", "name": ""}
+    with ui.card().classes("p-3 w-full border border-orange-400 q-mt-sm"):
+        helps(ui.label(t("gw.fw_card")).classes("font-bold text-orange"),
+              t("gw.fw_hint"))
+
+        def on_fw_upload(e) -> None:
+            fw_state["image"], fw_state["name"] = e.content.read(), e.name
+            fw_label.set_text(t("gw.fw_chosen", name=e.name,
+                                size=f"{len(fw_state['image']):,}"))
+
+        ui.upload(on_upload=on_fw_upload, auto_upload=True, max_files=1) \
+            .props('accept=".bin" flat dense').classes("w-full")
+        fw_label = ui.label(t("gw.fw_none")).classes("text-sm")
+        with ui.row().classes("items-center gap-3 q-mt-sm"):
+            fw_btn = ui.button(t("gw.fw_run"), color="red").props("outline")
+            prov_btn = helps(
+                ui.button(t("gw.prov_run"), color="red").props("outline"),
+                t("gw.prov_hint"))
+            ui.button(t("btn.cancel"),
+                      on_click=lambda: worker.cancel_commission()).props("flat")
+            fw_progress = ui.linear_progress(value=0.0, show_value=False) \
+                .classes("w-48")
+            fw_badge = ui.badge("—").props("color=grey")
 
     log_box = ui.log(max_lines=40).classes("w-full h-32 font-mono text-xs")
 
@@ -333,3 +362,90 @@ def build(ctx: Ctx) -> None:
     reload_btn.on_click(do_reload)
     save_btn.on_click(do_save)
     save_btn.set_visibility(False)
+
+    # ── firmware update: confirm, run, drain ───────────────────────────────
+    async def do_fw_update() -> None:
+        ok, why = usable()
+        if not ok:
+            ui.notify(why, type="negative")
+            return
+        if not fw_state["image"]:
+            ui.notify(t("gw.fw_need_image"), type="warning")
+            return
+
+        d = ui.dialog()
+        with d, ui.card().classes("border border-red-500"):
+            ui.label(t("gw.fw_confirm_title")).classes("font-bold text-red")
+            ui.label(t("gw.fw_confirm_body", name=fw_state["name"],
+                       port=ctx.port()))
+            with ui.row():
+                ui.button(t("btn.cancel"),
+                          on_click=lambda: d.submit(False)).props("flat")
+                ui.button(t("gw.fw_run"), color="red",
+                          on_click=lambda: d.submit(True))
+        if not await d:
+            return
+
+        log_box.clear()
+        fw_progress.set_value(0.0)
+        fw_badge.set_text(t("res.running"))
+        fw_badge.props("color=blue")
+        cfg = OptaConfig(image=fw_state["image"], filename=fw_state["name"],
+                         port=ctx.port())
+        if not worker.start_opta_update(cfg):
+            ui.notify(t("msg.worker_busy"), type="negative")
+            fw_badge.set_text("—")
+            fw_badge.props("color=grey")
+
+    fw_btn.on_click(do_fw_update)
+
+    async def do_provision() -> None:
+        ok, why = usable()
+        if not ok:
+            ui.notify(why, type="negative")
+            return
+        if not fw_state["image"]:
+            ui.notify(t("gw.fw_need_image"), type="warning")
+            return
+
+        d = ui.dialog()
+        with d, ui.card().classes("border border-red-500"):
+            ui.label(t("gw.prov_confirm_title")).classes("font-bold text-red")
+            ui.label(t("gw.prov_confirm_body", port=ctx.port(),
+                       name=fw_state["name"]))
+            with ui.row():
+                ui.button(t("btn.cancel"),
+                          on_click=lambda: d.submit(False)).props("flat")
+                ui.button(t("gw.prov_run"), color="red",
+                          on_click=lambda: d.submit(True))
+        if not await d:
+            return
+
+        log_box.clear()
+        fw_progress.set_value(0.0)
+        fw_badge.set_text(t("res.running"))
+        fw_badge.props("color=blue")
+        cfg = OptaConfig(image=fw_state["image"], filename=fw_state["name"],
+                         port=ctx.port())
+        if not worker.start_opta_provision(cfg):
+            ui.notify(t("msg.worker_busy"), type="negative")
+            fw_badge.set_text("—")
+            fw_badge.props("color=grey")
+
+    prov_btn.on_click(do_provision)
+
+    def drain_fw() -> None:
+        fw_state["seq"], events = worker.drain_commission_events(fw_state["seq"])
+        for ev in events:
+            if isinstance(ev, Line):
+                log_box.push(ev.text)
+            elif isinstance(ev, Progress):
+                fw_progress.set_value(ev.done / max(1, ev.total))
+            elif isinstance(ev, Done):
+                fw_progress.set_value(1.0)
+                fw_badge.set_text(t("res.pass") if ev.ok else t("res.fail"))
+                fw_badge.props("color=green" if ev.ok else "color=red")
+                ui.notify(ev.summary,
+                          type="positive" if ev.ok else "negative", timeout=9000)
+
+    ui.timer(0.2, drain_fw)

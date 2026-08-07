@@ -52,8 +52,15 @@ if (-not (Test-Path "app\docs\LGS-Control-Table.md")) {
     Write-Host "ERROR: app\docs\LGS-Control-Table.md missing - run tools\sync_reference.py"
     exit 1
 }
+# Preparing a factory-fresh Opta needs Arduino's QSPIFormat image on site,
+# where there is no PlatformIO to build it from. See app\blobs\README.md.
+if (-not (Test-Path "app\blobs\qspiformat_opta.bin")) {
+    Write-Host "ERROR: app\blobs\qspiformat_opta.bin missing - see app\blobs\README.md"
+    exit 1
+}
 & ".venv\Scripts\nicegui-pack.exe" --onefile --name $name `
-    --add-data "app\docs;app/docs" run.py
+    --add-data "app\docs;app/docs" `
+    --add-data "app\blobs;app/blobs" run.py
 if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: nicegui-pack failed"; exit 1 }
 
 if (Test-Path "dist\$name.exe") {

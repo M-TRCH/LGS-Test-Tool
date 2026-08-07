@@ -21,6 +21,7 @@ worker = ModbusWorker(log)
 worker.start()
 cfg = config_store.load()
 worker.cubeprog_path = cfg.cubeprog_path
+worker.dfu_util_path = cfg.dfu_util_path
 
 
 @ui.page("/")

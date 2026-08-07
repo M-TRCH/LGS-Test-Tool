@@ -24,6 +24,7 @@ class AppConfig:
     theme: str = "light"
     language: str = "en"                 # "en" | "th"
     cubeprog_path: str = ""              # "" = look in the usual install dirs
+    dfu_util_path: str = ""              # "" = beside the exe, then PlatformIO
     advanced_mode: bool = False          # False = everyday pages only
 
 

@@ -22,16 +22,24 @@ import struct
 from dataclasses import dataclass
 
 MAGIC = b"LGS-COMMISSION"
-BLOCK_SIZE = 32
-BLOCK_VERSION = 1
-CRC_LEN = BLOCK_SIZE - 2
+# v2 added deviceType. v1 images (ID only) are still read and still patchable,
+# because some are already flashed on boards in the field.
+LAYOUTS = {1: 32, 2: 36}         # block version -> size in bytes
+BLOCK_SIZE = LAYOUTS[2]
+BLOCK_VERSION = 2
 
-# Field offsets within the block, after the 16-byte magic.
-_FIELDS = "<8H"          # version, size, tokenLo, tokenHi, applyMask, flags, identifier, crc
+# Fields after the 16-byte magic, up to (not including) the trailing crc.
+_HEAD = "<7H"            # version, size, tokenLo, tokenHi, applyMask, flags, identifier
 _FIELDS_AT = 16
 
 APPLY_ID = 0x0001
+APPLY_DEVICE_TYPE = 0x0002
 FLAG_FORCE = 0x0001
+
+# What reg 0 reports. The factory builds these variants differently — a
+# Standard cabinet takes the 8-LED index mask and has no ring, OLED or big
+# button — so the type is a commissioning-time fact about the hardware.
+DEVICE_TYPES = {10: "STANDARD", 20: "NARCOTIC", 30: "LITE", 40: "DELIVERY"}
 
 # 0 means "nobody patched this image"; all-ones is what erased flash reads as.
 TOKEN_NONE = 0x00000000
@@ -42,6 +50,7 @@ TOKEN_ERASED = 0xFFFFFFFF
 ID_MIN, ID_MAX = 1, 245
 
 FIRMWARE_MIN = "v3.1.0"          # first release carrying the block
+FIRMWARE_TYPE_MIN = "v3.3.0"     # first release whose block carries a device type
 
 
 class ImageError(Exception):
@@ -57,6 +66,7 @@ class Block:
     apply_mask: int
     flags: int
     identifier: int
+    device_type: int = 0     # 0 = the image does not carry one (v1 block)
 
     @property
     def patched(self) -> bool:
@@ -87,18 +97,25 @@ def _candidates(image: bytes) -> list[Block]:
         if i < 0:
             return found
         start = i + 1
-        raw = image[i:i + BLOCK_SIZE]
-        if len(raw) < BLOCK_SIZE:
+        head = image[i:i + 20]
+        if len(head) < 20:
             continue
-        version, size, token_lo, token_hi, mask, flags, ident, crc = \
-            struct.unpack_from(_FIELDS, raw, _FIELDS_AT)
-        if version != BLOCK_VERSION or size != BLOCK_SIZE:
+        version, size = struct.unpack_from("<2H", head, _FIELDS_AT)
+        if LAYOUTS.get(version) != size:
             continue
-        if crc16_ccitt(raw[:CRC_LEN]) != crc:
+        raw = image[i:i + size]
+        if len(raw) < size:
             continue
+        _v, _s, token_lo, token_hi, mask, flags, ident = \
+            struct.unpack_from(_HEAD, raw, _FIELDS_AT)
+        crc = struct.unpack_from("<H", raw, size - 2)[0]
+        if crc16_ccitt(raw[:size - 2]) != crc:
+            continue
+        dtype = struct.unpack_from("<H", raw, 30)[0] if version >= 2 else 0
         found.append(Block(offset=i, version=version, size=size,
                            token=(token_hi << 16) | token_lo,
-                           apply_mask=mask, flags=flags, identifier=ident))
+                           apply_mask=mask, flags=flags, identifier=ident,
+                           device_type=dtype))
 
 
 def find_block(image: bytes) -> Block:
@@ -127,33 +144,56 @@ def mint_token() -> int:
 
 
 def patch(image: bytes, *, identifier: int, force: bool = False,
-          token: int | None = None) -> tuple[bytes, Block]:
+          token: int | None = None,
+          device_type: int | None = None) -> tuple[bytes, Block]:
     """Return a copy of `image` carrying `identifier`, and the block written.
 
     A fresh token each time is what makes the module apply the ID exactly once
     per flash: it records which token it consumed, so re-flashing the same file
     later cannot silently revert an ID somebody changed in the meantime.
+
+    `device_type` is written only when asked for, and only into a v2 block —
+    an older image has nowhere to put it, and quietly dropping it would leave
+    a board reporting a type nobody chose.
     """
     if not (ID_MIN <= identifier <= ID_MAX):
         raise ImageError(
             f"Slave ID {identifier} is out of range. Use {ID_MIN}-{ID_MAX}; "
             "246 is reserved for a module in SET_ID mode and 247 means no ID "
             "is set.")
+    if device_type is not None and device_type not in DEVICE_TYPES:
+        raise ImageError(
+            f"Device type {device_type} is not one this firmware knows. Use "
+            + ", ".join(f"{k} ({v})" for k, v in DEVICE_TYPES.items()) + ".")
 
     block = find_block(image)
+    if device_type is not None and block.version < 2:
+        raise ImageError(
+            "This image cannot carry a device type — it was built before "
+            f"block v2 (this one is v{block.version}). Use module firmware "
+            f"{FIRMWARE_TYPE_MIN} or newer, or leave the device type unset.")
     if token is None:
         token = mint_token()
 
+    size = block.size
     flags = FLAG_FORCE if force else 0
-    body = bytearray(image[block.offset:block.offset + BLOCK_SIZE])
-    struct.pack_into(_FIELDS, body, _FIELDS_AT,
-                     BLOCK_VERSION, BLOCK_SIZE,
+    mask = APPLY_ID | (APPLY_DEVICE_TYPE if device_type is not None else 0)
+    body = bytearray(image[block.offset:block.offset + size])
+    struct.pack_into(_HEAD, body, _FIELDS_AT,
+                     block.version, size,
                      token & 0xFFFF, (token >> 16) & 0xFFFF,
-                     APPLY_ID, flags, identifier, 0)
-    struct.pack_into("<H", body, CRC_LEN, crc16_ccitt(bytes(body[:CRC_LEN])))
+                     mask, flags, identifier)
+    if block.version >= 2:
+        # deviceType then reserved. Keep whatever type the image already
+        # carried when the operator did not pick one, so re-flashing is never
+        # a silent downgrade to "unspecified".
+        struct.pack_into("<2H", body, 30,
+                         device_type if device_type is not None
+                         else block.device_type, 0)
+    struct.pack_into("<H", body, size - 2, crc16_ccitt(bytes(body[:size - 2])))
 
     out = bytearray(image)
-    out[block.offset:block.offset + BLOCK_SIZE] = body
+    out[block.offset:block.offset + size] = body
     patched = bytes(out)
 
     # Read our own output back rather than trusting the write: a wrong offset
@@ -166,6 +206,9 @@ def patch(image: bytes, *, identifier: int, force: bool = False,
             or bool(written.flags & FLAG_FORCE) != force):
         raise ImageError("Patched image did not read back as expected — "
                          "refusing to flash it.")
+    if device_type is not None and written.device_type != device_type:
+        raise ImageError("Patched image did not read back the device type — "
+                         "refusing to flash it.")
     if len(patched) != len(image):
         raise ImageError("Patching changed the image length — refusing to flash it.")
 
@@ -177,5 +220,9 @@ def describe(block: Block) -> str:
     if not block.patched:
         return f"unpatched image (built-in ID {block.identifier})"
     forced = ", overwrite" if block.flags & FLAG_FORCE else ""
-    return (f"ID {block.identifier}, token 0x{block.token:08X}{forced}, "
+    typed = ""
+    if block.apply_mask & APPLY_DEVICE_TYPE:
+        name = DEVICE_TYPES.get(block.device_type, "?")
+        typed = f", type {block.device_type} ({name})"
+    return (f"ID {block.identifier}{typed}, token 0x{block.token:08X}{forced}, "
             f"block at 0x{block.offset:05X}")

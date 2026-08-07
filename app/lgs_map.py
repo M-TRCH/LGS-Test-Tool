@@ -22,6 +22,35 @@ SETID_TEMP_ID = 246         # temporary ID a module adopts while its switch is i
 SENSOR_FAULT = 0x8000       # regs 20/21 report this after >=3 failed sensor reads
 LATCH_COOLDOWN_S = 2.2      # firmware enforces >=2000 ms between unlock pulses
 INTER_TXN_S = 0.025         # RS485 breather between transactions
+
+# ── RS485 switch hub ───────────────────────────────────────────────────────
+# The bus leaves the Opta through an 8-channel RS485 switch hub. Rows 1-8 sit
+# on channels 1-8; rows 9 and 10 double up on channels 1 and 2.
+#
+# The hub follows traffic rather than a clock: it switches to whichever
+# channel it just saw a frame on, and the frames it switches *during* are
+# swallowed. Waiting longer does not help — measured on a live cabinet,
+# 120 ms and 700 ms gaps gave the identical 2-of-10 result, while simply
+# repeating the request reached 10 of 10. What the first frames buy is the
+# switch itself, so the fix is to spend a few of them on purpose.
+#
+# Measured: the 3rd frame answered on every channel in one run and the 4th
+# in the next, so the ceiling is set well above both. Costs nothing when the
+# hub is already on the right channel: the first frame answers and the rest
+# are never sent.
+HUB_CHANNELS = 8
+INTER_CH_S = 0.03           # brief settle; the retries do the real work
+HUB_WAKE_TRIES = 6          # attempts allowed on the first txn after a switch
+HUB_WAKE_GAP_S = 0.04       # between those attempts
+
+
+def hub_channel(device_id: int) -> int:
+    """Which hub channel a module hangs off (1-8).
+
+    Row 9 shares channel 1 with row 1 and row 10 shares channel 2 with row 2,
+    so this is the row wrapped onto the hub's eight outputs.
+    """
+    return ((device_id // 10 - 1) % HUB_CHANNELS) + 1
 GRID_ROWS = 10
 GRID_COLS = 8
 GRID_IDS = tuple(r * 10 + c for r in range(1, GRID_ROWS + 1)
@@ -30,21 +59,28 @@ GRID_IDS = tuple(r * 10 + c for r in range(1, GRID_ROWS + 1)
 
 @dataclass(frozen=True)
 class CabinetLayout:
-    """A product variant's module grid — the number in the LGS names is the
-    module count (rows x cols)."""
+    """A product variant's module grid.
+
+    The number in an LGS name is the slot count. Most variants are a plain
+    rows x cols block, but LGS 64 is not — its middle rows are half width —
+    so a layout may instead carry the exact ID list.
+    """
     key: str
     label: str
     rows: int
     cols: int
+    ids_override: tuple = ()
 
     @property
     def ids(self) -> tuple:
+        if self.ids_override:
+            return self.ids_override
         return tuple(r * 10 + c for r in range(1, self.rows + 1)
                      for c in range(1, self.cols + 1))
 
     @property
     def count(self) -> int:
-        return self.rows * self.cols
+        return len(self.ids)
 
     @property
     def detail(self) -> str:
@@ -52,10 +88,22 @@ class CabinetLayout:
                 f"({self.ids[0]}-{self.ids[self.cols - 1]} … {self.ids[-self.cols]}-{self.ids[-1]})")
 
 
+# LGS 64: not a rectangle. Rows 1-3 and 8-10 are full width, rows 4-7 carry
+# only the first four columns. This was defined as a 7x8 block (11-78) under
+# the name "LGS 56", which selected sixteen slots that do not exist and
+# missed rows 8-10 entirely — so "select LGS 56" on the Installation Check
+# page checked the wrong cabinet. Spelled out per row: the shape cannot be
+# derived from a count.
+_LGS64_IDS = tuple(
+    [r * 10 + c for r in (1, 2, 3) for c in range(1, 9)]
+    + [r * 10 + c for r in (4, 5, 6, 7) for c in range(1, 5)]
+    + [r * 10 + c for r in (8, 9, 10) for c in range(1, 9)]
+)
+
 CABINET_LAYOUTS = (
     CabinetLayout("lgs80", "LGS type 80", 10, 8),
+    CabinetLayout("lgs64", "LGS type 64", 0, 0, ids_override=_LGS64_IDS),
     CabinetLayout("lgs40", "LGS type 40", 10, 4),
-    CabinetLayout("lgs56", "LGS type 56", 7, 8),
     CabinetLayout("smt", "SMT", 3, 4),
 )
 

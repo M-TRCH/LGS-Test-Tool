@@ -475,6 +475,56 @@ TEXTS: dict[str, dict[str, str]] = {
                            "th": "เติมค่าโรงงาน {n} รายการแล้ว — ตรวจดูก่อนแล้วกดบันทึก"},
     "gw.pending_on_gateway": {"en": "staged on the gateway: {v}",
                               "th": "มีค่ารออยู่ที่ gateway: {v}"},
+    "gw.fw_card": {"en": "Gateway firmware", "th": "เฟิร์มแวร์ของ Gateway"},
+    "gw.fw_hint": {
+        "en": "Updates the Opta's own firmware over its USB cable — no "
+              "PlatformIO and no developer laptop. The gateway reboots into "
+              "its bootloader, takes the new image and restarts, so the bus "
+              "has no bridge for about half a minute. Use the .bin from the "
+              "gateway release; a wrong-sized file is refused before "
+              "anything is written.",
+        "th": "อัปเดตเฟิร์มแวร์ของ Opta ผ่านสาย USB — ไม่ต้องใช้ PlatformIO "
+              "หรือเครื่องนักพัฒนา · gateway จะรีบูตเข้า bootloader รับ image "
+              "ใหม่แล้วเริ่มใหม่ ระหว่างนั้นบัสจะไม่มีสะพานราวครึ่งนาที · "
+              "ใช้ไฟล์ .bin จาก release ของ gateway — ไฟล์ขนาดผิดจะถูกปฏิเสธ"
+              "ก่อนเขียนอะไรลงไป"},
+    "gw.fw_none": {"en": "no file chosen", "th": "ยังไม่ได้เลือกไฟล์"},
+    "gw.fw_chosen": {"en": "{name} — {size} B", "th": "{name} — {size} ไบต์"},
+    "gw.fw_run": {"en": "Update firmware", "th": "อัปเดตเฟิร์มแวร์"},
+    "gw.fw_need_image": {"en": "Choose a gateway .bin first",
+                         "th": "เลือกไฟล์ .bin ของ gateway ก่อน"},
+    "gw.fw_confirm_title": {"en": "Update the gateway's firmware?",
+                            "th": "อัปเดตเฟิร์มแวร์ของ gateway?"},
+    "gw.fw_confirm_body": {
+        "en": "{name} will be written to the gateway on {port}. The bus has "
+              "no bridge until it restarts. Do not unplug it while this runs.",
+        "th": "จะเขียน {name} ลง gateway ที่ {port} · บัสจะไม่มีสะพานจนกว่ามัน"
+              "จะเริ่มใหม่ · ห้ามถอดสายระหว่างทำงาน"},
+    "gw.prov_run": {"en": "Prepare a new Opta", "th": "เตรียม Opta ใหม่"},
+    "gw.prov_hint": {
+        "en": "A factory-fresh Opta has no partitions on its QSPI flash, so "
+              "the gateway finds no settings store and cannot save anything "
+              "(cfg.store=unavailable). This creates them once — WiFi, OTA, "
+              "the 1 MB KVStore the gateway needs, and user data — then puts "
+              "the gateway firmware back. Erases the QSPI: on a new board "
+              "there is nothing to lose, on a working one it wipes every "
+              "saved setting.",
+        "th": "Opta ที่เพิ่งออกจากโรงงานยังไม่มี partition บน QSPI flash "
+              "gateway จึงหาที่เก็บค่าตั้งค่าไม่เจอและบันทึกอะไรไม่ได้เลย "
+              "(cfg.store=unavailable) · ปุ่มนี้สร้างให้ครั้งเดียว — WiFi, OTA, "
+              "KVStore 1 MB ที่ gateway ต้องใช้ และ user data — แล้วคืนเฟิร์มแวร์ "
+              "gateway กลับ · จะล้าง QSPI ทั้งหมด: บอร์ดใหม่ไม่มีอะไรให้เสีย "
+              "แต่บอร์ดที่ใช้งานอยู่จะเสียค่าที่บันทึกไว้ทุกตัว"},
+    "gw.prov_confirm_title": {"en": "Prepare this Opta from scratch?",
+                              "th": "เตรียม Opta ตัวนี้ใหม่ทั้งหมด?"},
+    "gw.prov_confirm_body": {
+        "en": "Everything on the QSPI flash of the board on {port} is erased "
+              "and repartitioned, then {name} is written back. Takes a couple "
+              "of minutes; do not unplug it. Only do this on a board that "
+              "reports cfg.store=unavailable.",
+        "th": "ข้อมูลบน QSPI flash ของบอร์ดที่ {port} จะถูกล้างและแบ่ง partition "
+              "ใหม่ทั้งหมด แล้วเขียน {name} กลับ · ใช้เวลาสองสามนาที ห้ามถอดสาย · "
+              "ทำเฉพาะบอร์ดที่รายงาน cfg.store=unavailable เท่านั้น"},
     "gw.reboot": {"en": "Reboot", "th": "รีบูต"},
     "gw.reboot_title": {"en": "Reboot the gateway?", "th": "รีบูต gateway?"},
     "gw.reboot_body": {"en": "The COM port disappears for a few seconds and any host "

@@ -25,9 +25,11 @@ from enum import Enum
 from pathlib import Path
 from typing import Callable, Optional, Sequence
 
-from . import (commission, fieldcheck, gateway_config, lgs_map, ota, stlink,
-               testsuite)
-from .lgs_map import CoilClass, INTER_TXN_S, LATCH_COOLDOWN_S
+from . import (commission, fieldcheck, gateway_config, lgs_map, opta_flash,
+               opta_update, ota, stlink, testsuite)
+from .lgs_map import (CoilClass, HUB_WAKE_GAP_S, HUB_WAKE_TRIES,
+                      INTER_CH_S, INTER_TXN_S, LATCH_COOLDOWN_S,
+                      hub_channel)
 from .transports import (RtuSettings, TransportSettings, make_client,
                          make_scan_probe_client)
 from .txn_log import TxnLog
@@ -116,6 +118,7 @@ class ModbusWorker:
         # Where STM32CubeProgrammer lives, when it is not where we look by
         # default. Set from AppConfig at startup; "" means auto-detect.
         self.cubeprog_path = ""
+        self.dfu_util_path = ""
         self._q: queue.PriorityQueue = queue.PriorityQueue()
         self._seq = 0
         self._seq_lock = threading.Lock()
@@ -132,6 +135,7 @@ class ModbusWorker:
         # device, not to the bus, so a multi-device check must not serialise on it
         self._cooldown_until: dict = {}
         self._last_txn_t = 0.0
+        self._last_channel = None    # hub channel of the last transaction
 
         # raw-frame capture (worker serializes txns, so one holder is safe)
         self._trace = {"tx": "", "rx": ""}
@@ -265,31 +269,78 @@ class ModbusWorker:
             except Exception:
                 pass
 
+    def _explain(self, exc: Exception) -> str:
+        """Turn a pymodbus failure into something that names the real cause.
+
+        The library's own wording sends people to the wrong place. A dropped
+        TCP socket and a silent module both surface as "no response", but the
+        Opta serves exactly one TCP client — so a second copy of this tool, or
+        the site's own master, quietly gets its socket closed and every read
+        after that looks like a dead cabinet. That has now cost two debugging
+        sessions; the tool knows it is on TCP, so it can say so.
+        """
+        name = type(exc).__name__
+        tcp = self._settings is not None and not isinstance(self._settings, RtuSettings)
+        text = str(exc)
+        if tcp and ("Connection" in name or "closed" in text or "reset" in text.lower()):
+            return ("GATEWAY LINK LOST — the Opta closed the connection. It "
+                    "serves one TCP client at a time, so another program (or "
+                    "another copy of this tool) may hold it, or the gateway "
+                    "rebooted. Press Connect again. " + text)
+        if "ModbusIOException" in name and tcp:
+            return ("No reply through the gateway. If every module looks dead, "
+                    "reconnect first — the link may have dropped rather than "
+                    "the bus. " + text)
+        return f"EXC {name}: {text}"
+
     # ── core transaction (worker thread only) ──────────────────────────────
     def _transact(self, source: str, fc: int, addr: int, device_id: int, op: str,
                   call: Callable, extract: Callable, decoded_fn: Callable) -> TxnResult:
         if self._client is None:
             return TxnResult(False, note="not connected")
-        # pacing
-        gap = INTER_TXN_S - (time.monotonic() - self._last_txn_t)
+        # Every transaction in the app funnels through here, so the RS485 hub
+        # is handled here too — one rule, and no page can forget it.
+        #
+        # Crossing to another hub channel costs frames, not time: the hub
+        # switches to whichever channel it last saw traffic on and eats what
+        # arrives mid-switch. So the first transaction after a cross gets
+        # several attempts; anywhere else a single failure is a real failure
+        # and must stay one, or every genuinely dead module would take six
+        # timeouts to report.
+        channel = hub_channel(device_id)
+        crossed = self._last_channel is not None and channel != self._last_channel
+        gap = (max(INTER_TXN_S, INTER_CH_S) if crossed else INTER_TXN_S) \
+            - (time.monotonic() - self._last_txn_t)
         if gap > 0:
             time.sleep(gap)
-        self._trace["tx"] = self._trace["rx"] = ""
-        t0 = time.monotonic()
-        note = ""
-        value = None
-        ok = False
-        try:
-            rsp = call(self._client)
-            latency = (time.monotonic() - t0) * 1000.0
-            if rsp is None or rsp.isError():
-                note = f"ERR {rsp}"
-            else:
-                ok, value = True, extract(rsp)
-        except Exception as exc:                           # noqa: BLE001
-            latency = (time.monotonic() - t0) * 1000.0
-            note = f"EXC {type(exc).__name__}: {exc}"
-        self._last_txn_t = time.monotonic()
+        self._last_channel = channel
+
+        attempts = HUB_WAKE_TRIES if crossed else 1
+        for attempt in range(1, attempts + 1):
+            self._trace["tx"] = self._trace["rx"] = ""
+            t0 = time.monotonic()
+            note = ""
+            value = None
+            ok = False
+            try:
+                rsp = call(self._client)
+                latency = (time.monotonic() - t0) * 1000.0
+                if rsp is None or rsp.isError():
+                    note = f"ERR {rsp}"
+                else:
+                    ok, value = True, extract(rsp)
+            except Exception as exc:                       # noqa: BLE001
+                latency = (time.monotonic() - t0) * 1000.0
+                note = self._explain(exc)
+            self._last_txn_t = time.monotonic()
+            if ok or attempt == attempts:
+                if crossed and attempt > 1:
+                    # Worth recording: if this creeps towards the ceiling the
+                    # hub is degrading, and the log is where that shows first.
+                    note = (note + " " if note else "") + f"[hub wake {attempt}]"
+                break
+            time.sleep(HUB_WAKE_GAP_S)
+
         decoded = decoded_fn(value) if ok else ""
         self._log.append(source, fc, addr, device_id, op, ok, value, decoded,
                          latency, note, self._trace["tx"], self._trace["rx"])
@@ -762,6 +813,55 @@ class ModbusWorker:
         finally:
             self._commission_running = False
 
+    def start_opta_update(self, cfg: "opta_update.OptaConfig",
+                          provision: bool = False) -> bool:
+        """Update the gateway's own firmware over USB.
+
+        Shares the commissioning slot and event stream: both are long jobs
+        that take a device away from the bus, and the UI already drains that
+        one stream. Unlike commissioning this *does* need the Modbus port —
+        it is the gateway's — so it drops the connection first, exactly like
+        the gateway console does.
+        """
+        if self._commission_running or self._sweep_running or self._scan_running \
+                or self._check_running or self._ota_running or self._gw_running \
+                or not cfg.image or not cfg.port:
+            return False
+        self._commission_cancel.clear()
+        with self._commission_lock:
+            self._commission_events.clear()
+        self._commission_running = True
+        self._submit(_PRIO_LONG, lambda: self._do_opta_update(cfg, provision))
+        return True
+
+    def start_opta_provision(self, cfg: "opta_update.OptaConfig") -> bool:
+        """Partition a factory-fresh Opta's QSPI, then put the firmware back."""
+        return self.start_opta_update(cfg, provision=True)
+
+    def _do_opta_update(self, cfg: "opta_update.OptaConfig",
+                        provision: bool = False) -> None:
+        def emit(ev) -> None:
+            with self._commission_lock:
+                self._event_seq += 1
+                ev.seq = self._event_seq
+                self._commission_events.append(ev)
+
+        was_connected = self._connected
+        prev_settings = self._settings
+        run = opta_update.run_provision if provision else opta_update.run_update
+        try:
+            self._do_disconnect()       # the gateway's USB is our Modbus port
+            run(_OptaOps(self), cfg, emit, self._commission_cancel)
+        finally:
+            # Reconnecting is left to the operator: the gateway has just
+            # rebooted onto new firmware, and silently restoring a session
+            # would hide whether it actually came back.
+            if was_connected and prev_settings is not None:
+                self._log.append("gateway", 0, 0, 0, "reconnect", True, None,
+                                 "left disconnected after a firmware update",
+                                 0.0, "")
+            self._commission_running = False
+
     def start_batch_commission(self, cfg: "commission.BatchConfig") -> bool:
         """Same slot as single commissioning — one ST-Link, one job at a time."""
         if self._commission_running or self._sweep_running or self._scan_running \
@@ -1026,6 +1126,55 @@ class _FieldOps:
             if self._w._check_cancel.is_set():
                 raise fieldcheck.CheckCancelled()
             time.sleep(min(0.05, max(0.0, end - time.monotonic())))
+
+
+class _OptaOps:
+    """opta_update.OptaOps bound to the worker (runs on the worker thread)."""
+
+    def __init__(self, worker: ModbusWorker) -> None:
+        self._w = worker
+
+    def find_tool(self):
+        return opta_flash.find_dfu_util(self._w.dfu_util_path)
+
+    def touch(self, port: str) -> None:
+        opta_flash.touch_1200(port)
+
+    def wait_for_dfu(self, tool, cancel):
+        return opta_flash.wait_for_dfu(tool, cancel=cancel)
+
+    def flash(self, tool, device, image_path, on_line, cancel):
+        return opta_flash.flash(tool, device, image_path, on_line=on_line,
+                                cancel=cancel)
+
+    def write_temp(self, data: bytes, name: str) -> Path:
+        fd, path = tempfile.mkstemp(prefix="lgs_gateway_", suffix=".bin")
+        with os.fdopen(fd, "wb") as fh:
+            fh.write(data)
+        return Path(path)
+
+    def remove_temp(self, path: Path) -> None:
+        try:
+            path.unlink()
+        except OSError:
+            pass
+
+    def sleep(self, seconds: float) -> None:
+        end = time.monotonic() + seconds
+        while time.monotonic() < end:
+            if self._w._commission_cancel.is_set():
+                return          # a finished flash is not worth cancelling over
+            time.sleep(min(0.05, max(0.0, end - time.monotonic())))
+
+    def blob(self, name: str) -> bytes:
+        return opta_flash.blob(name)
+
+    def find_port(self, timeout_s: float, cancel) -> str:
+        return opta_flash.find_serial_port(timeout_s, cancel)
+
+    def converse(self, port, on_line, answer, done_marker, timeout_s, cancel):
+        return opta_flash.converse(port, on_line, answer, done_marker,
+                                   timeout_s, cancel)
 
 
 class _CommissionOps:
