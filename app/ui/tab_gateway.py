@@ -21,6 +21,13 @@ CARD_RS485 = ("rs485.baud", "rs485.predelay_us", "rs485.postdelay_us",
 CARD_USB = ("usb.gap_ms", "usb.max_ms")
 CARD_NET = ("net.enabled", "net.dhcp", "net.ip", "net.mask", "net.gw", "net.dns",
             "net.port", "net.link_timeout_ms")
+# Only rendered when the firmware reports these keys (gateway >= 1.2.0).
+CARD_HUB = ("bus.hub_map", "bus.hub_settle_ms", "bus.hub_budget_ms",
+            "bus.hub_retry", "bus.hub_gap_ms")
+# One click instead of typing the LGS-64 wiring by hand: rows 1-8 channel-per-
+# row, rows 9 and 10 doubled onto channels 1 and 2.
+HUB_MAP_LGS64 = "1,2,3,4,5,6,7,8,1,2"
+HUB_MAP_NONE = "0,0,0,0,0,0,0,0,0,0"
 
 BOOL_KEYS = {"net.enabled", "net.dhcp"}
 
@@ -247,6 +254,23 @@ def build(ctx: Ctx) -> None:
                           t("gw.net_hint"))
                     for key in CARD_NET:
                         field_row(key, snap)
+                # Older gateway firmware has no hub keys; showing empty fields
+                # would only invite a SET the console must reject.
+                if "bus.hub_map" in snap.settings:
+                    with ui.card().classes("p-3 grow"):
+                        helps(ui.label(t("gw.card.hub")).classes("font-bold"),
+                              t("gw.hub_hint"))
+                        for key in CARD_HUB:
+                            field_row(key, snap)
+                        # set_value fires on_change, so a preset lands as an
+                        # ordinary unsaved edit — same path as typing it.
+                        with ui.row().classes("gap-2"):
+                            ui.button("LGS-64",
+                                      on_click=lambda: fields["bus.hub_map"]
+                                      .set_value(HUB_MAP_LGS64)).props("flat dense")
+                            ui.button(t("gw.hub.nohub"),
+                                      on_click=lambda: fields["bus.hub_map"]
+                                      .set_value(HUB_MAP_NONE)).props("flat dense")
 
     def say(text: str) -> None:
         log_box.push(text)

@@ -448,6 +448,51 @@ TEXTS: dict[str, dict[str, str]] = {
                                            "in later is picked up on its own.",
                                      "th": "แค่ทำให้เปิดเครื่องช้าลง ถ้าเสียบทีหลังระบบก็จับได้เอง"},
     "gwf.net.mac": {"en": "Hardware address (MAC)", "th": "ที่อยู่ฮาร์ดแวร์ (MAC)"},
+
+    "gw.card.hub": {"en": "RS485 switch hub", "th": "ฮับสลับ RS485"},
+    "gw.hub_hint": {"en": "For cabinets whose RS485 runs through a channel-switching "
+                          "hub (LGS-64). The hub swallows the first frame after every "
+                          "channel change and stays deaf for about two seconds; the "
+                          "gateway repairs this by holding the next request until the "
+                          "hub is ready. The server must retry once, or wait longer "
+                          "than the settle time.",
+                    "th": "สำหรับตู้ที่บัส RS485 วิ่งผ่านฮับสลับช่อง (LGS-64) ฮับจะกลืนเฟรมแรก"
+                          "หลังสลับช่องและเงียบไป ~2 วินาที เกตเวย์ซ่อมโดยหน่วงคำขอถัดไป"
+                          "จนฮับพร้อม ฝั่งเซิร์ฟเวอร์ต้อง retry อย่างน้อย 1 ครั้ง "
+                          "หรือรอนานกว่าเวลาฮับพร้อม"},
+    "gw.hub.nohub": {"en": "no hub", "th": "ไม่มีฮับ"},
+    "gwf.bus.hub_map": {"en": "Row → hub channel", "th": "ผังแถว → ช่องฮับ"},
+    "gwf.bus.hub_map.hint": {"en": "One entry per row 1-10, comma-separated. Value = "
+                                   "hub channel 1-8; 0 = wired straight, no hub. All "
+                                   "zeros turns hub handling off.",
+                             "th": "หนึ่งค่าต่อแถว 1-10 คั่นด้วยจุลภาค ค่า = ช่องฮับ 1-8, "
+                                   "0 = ต่อตรงไม่ผ่านฮับ ใส่ 0 ทั้งหมด = ปิดการซ่อม"},
+    "gwf.bus.hub_settle_ms": {"en": "Hub settle time (ms)", "th": "เวลาฮับพร้อม (ms)"},
+    "gwf.bus.hub_settle_ms.hint": {"en": "How long the hub stays deaf after the first "
+                                         "frame on a new channel. Measured ~2 s on the "
+                                         "LGS-64 hub.",
+                                   "th": "ช่วงที่ฮับไม่รับส่งหลังเฟรมแรกบนช่องใหม่ "
+                                         "วัดจริงบนตู้ LGS-64 ได้ราว 2 วินาที"},
+    "gwf.bus.hub_budget_ms": {"en": "Repair time cap (ms)", "th": "เพดานเวลาซ่อม (ms)"},
+    "gwf.bus.hub_budget_ms.hint": {"en": "Ceiling for one transaction including the "
+                                         "hold. Keep it under the server's timeout — or "
+                                         "raise it past the settle time if the server "
+                                         "waits long, and the repair finishes in one "
+                                         "transaction.",
+                                   "th": "เพดานเวลาต่อหนึ่งทรานแซกชันรวมการหน่วง "
+                                         "ต้องต่ำกว่า timeout ของเซิร์ฟเวอร์ — หรือถ้า"
+                                         "เซิร์ฟเวอร์รอนาน ตั้งเกินเวลาฮับพร้อมจะซ่อมจบ"
+                                         "ในทรานแซกชันเดียว"},
+    "gwf.bus.hub_retry": {"en": "Attempts after a channel change",
+                          "th": "จำนวนยิงตอนข้ามช่อง"},
+    "gwf.bus.hub_retry.hint": {"en": "2 = the trigger frame plus one delayed retry "
+                                     "when the time cap allows it.",
+                               "th": "2 = เฟรมกระตุ้น + ยิงซ้ำหลังหน่วง เมื่อเพดานเวลาพอ"},
+    "gwf.bus.hub_gap_ms": {"en": "Extra margin (ms)", "th": "เผื่อเพิ่ม (ms)"},
+    "gwf.bus.hub_gap_ms.hint": {"en": "Added past the settle deadline, for hubs whose "
+                                      "timing wanders.",
+                                "th": "บวกเพิ่มจากเวลาฮับพร้อม เผื่อฮับที่จังหวะเวลาไม่นิ่ง"},
+
     "gw.on": {"en": "on", "th": "เปิด"},
     "gw.off": {"en": "off", "th": "ปิด"},
 
