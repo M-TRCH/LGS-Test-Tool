@@ -31,10 +31,12 @@ class AppConfig:
     # across restarts; the Gateway tab refreshes it whenever it reads the
     # gateway, which is the authority on the wiring.
     hub_map: str = ""
-    # Which colour of lamp is fitted to gateway outputs 2, 3 and 4. The
-    # gateway drives outputs and knows nothing about colours; this is the
-    # tool's own note so the Gateway tab can draw the panel as it looks.
-    lamp_colours: str = "green,amber,red"
+    # Which colour of lamp is fitted to gateway outputs 1-4 ("none" for an
+    # output carrying something other than a lamp, such as the shelf's
+    # power). The gateway drives outputs and knows nothing about colours;
+    # this is the tool's own note so the Gateway tab draws the panel as it
+    # looks.
+    lamp_colours: str = "none,green,amber,red"
 
 
 def data_dir() -> Path:

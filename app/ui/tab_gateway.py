@@ -38,12 +38,13 @@ PANEL_SWATCH = {"red": "#e53935", "green": "#43a047", "blue": "#1e88e5",
                 "yellow": "#fdd835", "white": "#fafafa"}
 PANEL_ACTIONS = {0: "pnl.act.none", 1: "pnl.act.all_on", 2: "pnl.act.all_off",
                  3: "pnl.act.all_unlock", 4: "pnl.act.reset"}
-# Which Opta output each lamp colour hangs off. Output 1 is the shelf's power
-# relay and the gateway refuses it, so it is not offered.
-LAMP_OUT_KEYS = ("panel.out2", "panel.out3", "panel.out4")
+# What each of the gateway's four relay outputs does. Output 1 normally
+# carries the shelf's power — which is what a hardware reset drops — but even
+# that is a mapping now, so a re-wired panel is a setting, not a build.
+LAMP_OUT_KEYS = ("panel.out1", "panel.out2", "panel.out3", "panel.out4")
 LAMP_SOURCES = {0: "pnl.src.none", 1: "pnl.src.ready", 2: "pnl.src.busy",
                 3: "pnl.src.fault", 4: "pnl.src.link", 5: "pnl.src.client",
-                6: "pnl.src.sweep", 7: "pnl.src.reset"}
+                6: "pnl.src.sweep", 7: "pnl.src.reset", 8: "pnl.src.shelf"}
 # What colour of lamp is actually fitted to each output. The gateway does not
 # know and should not — it drives outputs, not colours — but the person
 # reading this page is looking at a panel of coloured lamps, so the tool keeps
@@ -51,7 +52,7 @@ LAMP_SOURCES = {0: "pnl.src.none", 1: "pnl.src.ready", 2: "pnl.src.busy",
 LAMP_COLOURS = ("green", "amber", "red", "blue", "white", "none")
 LAMP_COLOUR_HEX = {"green": "#43a047", "amber": "#fdd835", "red": "#e53935",
                    "blue": "#1e88e5", "white": "#fafafa", "none": "#9e9e9e"}
-LAMP_COLOUR_DEFAULT = ("green", "amber", "red")
+LAMP_COLOUR_DEFAULT = ("none", "green", "amber", "red")
 
 BOOL_KEYS = {"net.enabled", "net.dhcp", "panel.enabled", "panel.lamps",
              "sched.reset_enabled"}
@@ -317,7 +318,7 @@ def build(ctx: Ctx) -> None:
             # What each output follows. Which colour sits on which output is
             # wiring, and what a colour should mean is a site's call — so both
             # are answered here rather than assumed by the firmware.
-            if "panel.out2" in snap.settings:
+            if "panel.out1" in snap.settings:
                 src_options = {v: t(k) for v, k in LAMP_SOURCES.items()}
                 colour_options = {c: t(f"pnl.colour.{c}") for c in LAMP_COLOURS}
                 fitted = lamp_colours()
@@ -337,7 +338,7 @@ def build(ctx: Ctx) -> None:
                             f"opacity:{'1' if lit else '0.25'};"
                             f"box-shadow:{'0 0 6px ' + LAMP_COLOUR_HEX[colour] if lit else 'none'};"
                             f"border:1px solid rgba(128,128,128,.6)")
-                        ui.label(t("pnl.out_n", n=i + 2)).classes(
+                        ui.label(t("pnl.out_n", n=i + 1)).classes(
                             "text-sm w-16" + ("" if lit else " text-grey"))
                         # The lamp's colour is the tool's note about the panel
                         # in front of it — the gateway has no idea, and should
@@ -534,8 +535,13 @@ def build(ctx: Ctx) -> None:
     def lamp_colours() -> list:
         """Which colour is fitted to outputs 2, 3 and 4, per this tool's config."""
         parts = [p.strip() for p in str(ctx.cfg.lamp_colours or "").split(",")]
+        # A config written before output 1 joined the table holds three
+        # colours, for outputs 2-4. Read it as such rather than sliding every
+        # lamp one row up.
+        if len(parts) == 3:
+            parts = ["none"] + parts
         out = list(LAMP_COLOUR_DEFAULT)
-        for i in range(3):
+        for i in range(len(out)):
             if i < len(parts) and parts[i] in LAMP_COLOUR_HEX:
                 out[i] = parts[i]
         return out

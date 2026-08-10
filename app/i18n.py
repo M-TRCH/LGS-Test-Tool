@@ -632,7 +632,7 @@ TEXTS: dict[str, dict[str, str]] = {
     "pnl.act.reset": {"en": "Power-cycle the shelf (relays)",
                       "th": "สับรีเลย์ตัดไฟชั้นวาง (hardware reset)"},
 
-    "pnl.lamp_card": {"en": "Status lamps (outputs 2-4)", "th": "ไฟสถานะ (เอาต์พุต 2-4)"},
+    "pnl.lamp_card": {"en": "Relay outputs (1-4)", "th": "เอาต์พุตรีเลย์ (1-4)"},
     "pnl.lamp_hint": {"en": "One lamp at a time, worst news first. The meanings are "
                             "fixed — green ready, amber talking to the cabinet, red "
                             "not usable — and what you set here is when each one "
@@ -679,6 +679,8 @@ TEXTS: dict[str, dict[str, str]] = {
                        "th": "มีเซิร์ฟเวอร์เชื่อมต่ออยู่"},
     "pnl.src.sweep": {"en": "a panel sweep is running",
                       "th": "กำลังรันคำสั่งจากปุ่มหน้าตู้"},
+    "pnl.src.shelf": {"en": "shelf power (hardware reset drops it)",
+                      "th": "ไฟเลี้ยงชั้นวาง (รีเซตคือการตัดตัวนี้)"},
     "pnl.src.reset": {"en": "power is dropped (reset)",
                       "th": "กำลังตัดไฟ (รีเซต)"},
     "gwf.panel.lamps": {"en": "Drive the status lamps", "th": "เปิดใช้ไฟสถานะ"},
