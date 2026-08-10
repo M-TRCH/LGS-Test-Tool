@@ -15,7 +15,8 @@ from typing import Callable, Optional, Protocol, Sequence
 
 from .lgs_map import DEVICE_TYPES, INTER_TXN_S, coil_enable, hub_channel
 
-MB_REG_LATCH_LOCKED = 41    # 1 = the module's latch sense reads locked
+MB_REG_LATCH_LOCKED = 41        # 1 = the module's latch sense reads locked
+MB_REG_TIME_AFTER_UNLOCK = 40   # seconds since it was last seen locked
 
 
 class CheckCancelled(Exception):
@@ -182,18 +183,25 @@ def run_check(ops: FieldOps, cfg: CheckConfig, ids: Sequence[int],
                 value = _display_value(device_id)
 
                 # The safety-gated latch coils only pulse when the module's
-                # own sense reads locked; when it does not, the firmware
-                # finishes the request without energising anything and the
-                # write still succeeds. Reported as a pass, that would sign
-                # off a slot whose latch never moved — so ask first.
+                # own sense reads locked — an open drawer is not unlocked
+                # again. The firmware finishes such a request without
+                # energising anything, and the Modbus write still succeeds,
+                # so reporting it as a pass would sign off a slot whose latch
+                # never moved. Ask the module first, and say what to do.
                 latch_ready = True
                 if cfg.unlock:
                     sense = ops.read_reg(device_id, MB_REG_LATCH_LOCKED)
                     latch_ready = bool(sense.ok and sense.value)
-                    if not latch_ready:
+                    if not sense.ok:
+                        notes.append(f"cannot read the latch sense ({sense.note})")
+                    elif not latch_ready:
+                        since = ops.read_reg(device_id, MB_REG_TIME_AFTER_UNLOCK)
+                        ago = (f", open for {since.value}s"
+                               if since.ok and since.value else "")
                         notes.append(
-                            "latch sense does not read locked" if sense.ok
-                            else f"cannot read the latch sense ({sense.note})")
+                            f"latch already open{ago} — close the drawer and "
+                            f"run this again; the firmware will not pulse a "
+                            f"latch that is not locked")
                     ops.sleep(INTER_TXN_S)
                 if cfg.display:                     # the number to show first
                     w = ops.write_reg(device_id, 60, value)
