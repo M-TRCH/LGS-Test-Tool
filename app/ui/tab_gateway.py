@@ -37,7 +37,7 @@ PANEL_SWATCH = {"red": "#e53935", "green": "#43a047", "blue": "#1e88e5",
 PANEL_ACTIONS = {0: "pnl.act.none", 1: "pnl.act.all_on", 2: "pnl.act.all_off",
                  3: "pnl.act.all_unlock", 4: "pnl.act.reset"}
 
-BOOL_KEYS = {"net.enabled", "net.dhcp"}
+BOOL_KEYS = {"net.enabled", "net.dhcp", "panel.enabled", "panel.lamps"}
 
 
 def label_of(key: str) -> str:
@@ -288,6 +288,28 @@ def build(ctx: Ctx) -> None:
                     "panel.reset_ms"):
             if key in snap.settings:
                 field_row(key, snap)
+
+        # ── status lamps ──────────────────────────────────────────────────
+        if "panel.lamps" in snap.settings:
+            ui.separator().classes("q-my-sm")
+            helps(ui.label(t("pnl.lamp_card")).classes("font-bold"),
+                  t("pnl.lamp_hint"))
+            live = snap.info.get("panel.lamp", "")
+            with ui.row().classes("items-center gap-3 flex-wrap q-mb-xs"):
+                for colour, key in (("green", "pnl.lamp.green"),
+                                    ("yellow", "pnl.lamp.amber"),
+                                    ("red", "pnl.lamp.red")):
+                    on = live == ("amber" if colour == "yellow" else colour)
+                    with ui.row().classes("items-center gap-1 no-wrap"):
+                        ui.element("div").classes("rounded-full border")                             .style(f"width:12px;height:12px;"
+                                   f"background:{PANEL_SWATCH[colour]};"
+                                   f"opacity:{'1' if on else '0.3'}")
+                        ui.label(t(key)).classes(
+                            "text-xs" + (" text-bold" if on else " text-grey"))
+            for key in ("panel.lamps", "panel.lamp_hold_ms",
+                        "panel.lamp_dwell_ms", "panel.lamp_dead"):
+                if key in snap.settings:
+                    field_row(key, snap)
 
     def apply_pending(values: dict) -> None:
         """Drop values into the fields as ordinary unsaved edits."""

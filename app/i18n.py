@@ -585,6 +585,50 @@ TEXTS: dict[str, dict[str, str]] = {
     "pnl.act.reset": {"en": "Power-cycle the shelf (relays)",
                       "th": "สับรีเลย์ตัดไฟชั้นวาง (hardware reset)"},
 
+    "pnl.lamp_card": {"en": "Status lamps (outputs 2-4)", "th": "ไฟสถานะ (เอาต์พุต 2-4)"},
+    "pnl.lamp_hint": {"en": "One lamp at a time, worst news first. The meanings are "
+                            "fixed — green ready, amber talking to the cabinet, red "
+                            "not usable — and what you set here is when each one "
+                            "applies. The dot beside a colour is lit for whichever "
+                            "the gateway was showing when this page was read.",
+                      "th": "ไฟติดทีละดวง เรียงตามความร้ายแรง ความหมายตายตัว — "
+                            "เขียวคือพร้อม เหลืองคือกำลังสื่อสารกับตู้ แดงคือใช้งานไม่ได้ "
+                            "ส่วนที่ตั้งได้คือเงื่อนไขว่าเมื่อไหร่ถึงจะขึ้นสีนั้น "
+                            "จุดสีข้างชื่อจะสว่างตามสีที่เกตเวย์แสดงอยู่ตอนอ่านค่า"},
+    "pnl.lamp.green": {"en": "green — ready", "th": "เขียว — พร้อมใช้งาน"},
+    "pnl.lamp.amber": {"en": "amber — talking", "th": "เหลือง — กำลังสื่อสาร"},
+    "pnl.lamp.red": {"en": "red — not usable", "th": "แดง — ไม่พร้อมใช้งาน"},
+    "gwf.panel.lamps": {"en": "Drive the status lamps", "th": "เปิดใช้ไฟสถานะ"},
+    "gwf.panel.lamps.hint": {"en": "Off leaves outputs 2-4 exactly as they are — for "
+                                   "a cabinet with no lamps fitted, or while "
+                                   "something else is using those outputs.",
+                             "th": "ปิดแล้วเอาต์พุต 2-4 จะถูกปล่อยไว้เฉยๆ "
+                                   "สำหรับตู้ที่ไม่ได้ติดไฟสถานะ หรือตอนที่เอาต์พุตนั้น"
+                                   "ถูกใช้ทำอย่างอื่นอยู่"},
+    "gwf.panel.lamp_hold_ms": {"en": "Amber holds for (ms)", "th": "เหลืองค้างนาน (ms)"},
+    "gwf.panel.lamp_hold_ms.hint": {
+        "en": "How long one Modbus transaction keeps the amber lamp on. These are "
+              "mechanical relays, so traffic holds the lamp rather than flashing "
+              "it — under steady polling the amber simply stays on. Shorter makes "
+              "the lamp twitchier and works the relay harder.",
+        "th": "ทรานแซกชัน Modbus หนึ่งครั้งทำให้ไฟเหลืองค้างนานเท่าไร เอาต์พุตเป็นรีเลย์"
+              "กลไก จึงใช้วิธีค้างไฟแทนการกระพริบ — ถ้า poll ต่อเนื่องไฟเหลืองจะติดนิ่ง "
+              "ตั้งสั้นไปไฟจะกระตุกและรีเลย์ทำงานหนักขึ้น"},
+    "gwf.panel.lamp_dwell_ms": {"en": "Minimum time on a colour (ms)",
+                                "th": "อยู่สีเดิมอย่างน้อย (ms)"},
+    "gwf.panel.lamp_dwell_ms.hint": {
+        "en": "No lamp may change faster than this. It is what keeps the relays "
+              "from chattering when the gateway flips between busy and idle.",
+        "th": "ห้ามเปลี่ยนสีเร็วกว่านี้ เป็นตัวกันรีเลย์สับรัวเวลาเกตเวย์สลับไปมา"
+              "ระหว่างว่างกับไม่ว่าง"},
+    "gwf.panel.lamp_dead": {"en": "Timeouts before red", "th": "เงียบกี่ครั้งจึงขึ้นแดง"},
+    "gwf.panel.lamp_dead.hint": {
+        "en": "Consecutive RS485 timeouts before the bus counts as dead. A hub "
+              "channel change costs one timeout and then answers, so keep this "
+              "well above the noise of normal operation.",
+        "th": "จำนวนครั้งที่บัส RS485 เงียบติดกันก่อนจะถือว่าบัสตาย การสลับช่องฮับ"
+              "เสียหนึ่งครั้งแล้วตอบได้ ดังนั้นควรตั้งสูงกว่าค่าปกติของการใช้งานพอสมควร"},
+
     "gwf.panel.enabled": {"en": "Use the panel buttons", "th": "เปิดใช้ปุ่มหน้าตู้"},
     "gwf.panel.enabled.hint": {"en": "Off on a bench, where nothing is wired to the "
                                      "inputs and a stray voltage must not sweep a "
