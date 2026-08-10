@@ -55,6 +55,17 @@ class CheckConfig:
                               + (20 if self.unlock else 0)
 
     @property
+    def clear_coil(self) -> int:
+        """The state coil that puts it all out again.
+
+        The latch coils are commands: they self-clear and mirror the matching
+        state coil, so what has to be written back is 1001 or, when the
+        display was part of it, 1011 — which shuts the ring and the display
+        together.
+        """
+        return coil_enable(1) + (10 if self.display else 0)
+
+    @property
     def action_name(self) -> str:
         parts = ["light"]
         if self.display:
@@ -215,14 +226,19 @@ def run_check(ops: FieldOps, cfg: CheckConfig, ids: Sequence[int],
                 # A latch pulse needs time to throw before anything clears it.
                 ops.sleep(max(0.6, cfg.hold_s) if cfg.unlock else cfg.hold_s)
 
-                # The latch coils leave the ring lit and are not cleared by
-                # writing them back, so the base coil is what turns it off.
-                off = ops.write_coil(device_id, coil_enable(1) if cfg.unlock
-                                     else coil, 0)
+                # Clearing is the STATE coil of what was turned on: 1001 for
+                # a ring, 1011 when the display is part of it. The latch
+                # coils are commands that self-clear and mirror their state
+                # twin, so 1021 clears through 1001 and 1031 through 1011 —
+                # clearing 1031 through 1001 puts the ring out but leaves the
+                # display lit, which is how a slot ended up sitting there
+                # showing 00 after a run.
+                off = ops.write_coil(device_id, cfg.clear_coil, 0)
                 ok = ok and off.ok
                 notes.append(off.note)
-                if cfg.display:
-                    ops.write_reg(device_id, 60, 0)
+                # Reg 60 keeps the module's own number. Blanking it would
+                # only be visible if the display failed to turn off, and 00
+                # is a worse thing to leave on screen than the slot's ID.
 
                 label = f"{cfg.action_name} ({coil})"
                 if cfg.display:
@@ -258,8 +274,18 @@ FW_MIN_CONFIRM = 30200          # v3.2.0 — first build that counts presses
 
 
 @dataclass
+class PickPressed:
+    """The button was pressed; this slot is now waiting for its drawer."""
+    device_id: int
+    seq: int = 0
+
+
+@dataclass
 class PickConfig:
     preset: int = 1              # enable coil 1000+n lights the slot
+    display: bool = True         # + the slot's number on the OLED
+    unlock: bool = True          # + release the latch, as a real pick does
+    require_locked: bool = True  # only finish once the drawer is closed again
     timeout_s: float = 60.0      # per batch; 0 = wait until cancelled
     # A batch sits on one hub channel, so a sweep of it is cheap (~100 ms a
     # slot) and the pause between sweeps is a real part of how long the light
@@ -268,6 +294,19 @@ class PickConfig:
     poll_s: float = 0.25         # pause between sweeps of the waiting slots
     batch: int = 4               # slots lit together; 0 = every slot at once
     by_channel: bool = True      # keep a batch on one hub channel
+
+    @property
+    def action_coil(self) -> int:
+        """What lights the slot: 1000+n, +10 with the display, +20 with the latch."""
+        n = max(1, min(8, self.preset))
+        return coil_enable(n) + (10 if self.display else 0) \
+                              + (20 if self.unlock else 0)
+
+    @property
+    def clear_coil(self) -> int:
+        """The state coil that puts it out — see CheckConfig.clear_coil."""
+        n = max(1, min(8, self.preset))
+        return coil_enable(n) + (10 if self.display else 0)
 
 
 def _poll_order(ids: Sequence[int]) -> list:
@@ -335,8 +374,13 @@ def run_pick_sequence(ops: FieldOps, cfg: PickConfig, ids: Sequence[int],
     """
     report = CheckReport(started=datetime.now())
     total = len(ids)
-    coil = 1000 + max(1, min(8, cfg.preset))
-    waiting: dict = {}           # device_id -> (result, baseline count)
+    coil = cfg.action_coil
+    clear = cfg.clear_coil
+    # device_id -> [result, baseline count, phase] where phase is "press"
+    # while the slot waits for its button and "close" once it has been
+    # pressed and is waiting for the drawer. Polling one phase at a time
+    # keeps a sweep to one read per slot however long the loop gets.
+    waiting: dict = {}
     lit: set = set()
     index = 0
 
@@ -374,12 +418,30 @@ def run_pick_sequence(ops: FieldOps, cfg: PickConfig, ids: Sequence[int],
                 result.steps.append(StepOutcome(
                     "firmware counts presses (reg 18)", True))
 
+                # A pick releases the latch, and the firmware only pulses one
+                # that reads locked — so an open drawer is caught here rather
+                # than looking like a slot whose latch is broken.
+                if cfg.unlock:
+                    sense = ops.read_reg(device_id, MB_REG_LATCH_LOCKED)
+                    if not (sense.ok and sense.value):
+                        result.steps.append(StepOutcome(
+                            "latch ready", False,
+                            "drawer is open — close it before starting"
+                            if sense.ok else f"cannot read the latch sense ({sense.note})"))
+                        finish(result)
+                        continue
+                    result.steps.append(StepOutcome("latch ready", True))
+
                 base = ops.read_reg(device_id, MB_REG_BUTTON_PRESSES)
                 if not base.ok:
                     result.steps.append(StepOutcome("read press counter", False,
                                                     base.note))
                     finish(result)
                     continue
+
+                if cfg.display:
+                    ops.write_reg(device_id, 60, _display_value(device_id))
+                    ops.sleep(INTER_TXN_S)
 
                 on = ops.write_coil(device_id, coil, 1)
                 if not on.ok:
@@ -388,7 +450,7 @@ def run_pick_sequence(ops: FieldOps, cfg: PickConfig, ids: Sequence[int],
                     finish(result)
                     continue
                 lit.add(device_id)
-                waiting[device_id] = (result, base.value)
+                waiting[device_id] = [result, base.value, "press"]
 
             if not waiting:
                 continue                    # nothing in this batch could light
@@ -400,16 +462,36 @@ def run_pick_sequence(ops: FieldOps, cfg: PickConfig, ids: Sequence[int],
                 if cfg.timeout_s > 0 and time.monotonic() - started >= cfg.timeout_s:
                     break
                 for device_id in _poll_order(list(waiting)):
-                    now = ops.read_reg(device_id, MB_REG_BUTTON_PRESSES)
-                    result, base_count = waiting[device_id]
-                    if now.ok and now.value != base_count:
-                        ops.write_coil(device_id, coil, 0)
+                    entry = waiting[device_id]
+                    result, base_count, phase = entry
+
+                    def done(note: str) -> None:
+                        ops.write_coil(device_id, clear, 0)
                         lit.discard(device_id)
-                        del waiting[device_id]
+                        waiting.pop(device_id, None)
                         result.steps.append(StepOutcome(
-                            "confirmed by button press", True,
-                            f"after {time.monotonic() - started:.1f}s"))
+                            "picked and put back", True, note))
                         finish(result)
+
+                    if phase == "press":
+                        now = ops.read_reg(device_id, MB_REG_BUTTON_PRESSES)
+                        if now.ok and now.value != base_count:
+                            pressed = f"pressed after {time.monotonic() - started:.1f}s"
+                            if cfg.require_locked:
+                                # The pick is not over until the drawer is
+                                # shut: leaving a narcotic slot open is the
+                                # thing this walkthrough exists to catch.
+                                entry[2] = "close"
+                                result.steps.append(StepOutcome(
+                                    "confirmed by button press", True, pressed))
+                                emit(PickPressed(device_id))
+                            else:
+                                done(pressed)
+                    else:
+                        locked = ops.read_reg(device_id, MB_REG_LATCH_LOCKED)
+                        if locked.ok and locked.value:
+                            done(f"drawer closed after "
+                                 f"{time.monotonic() - started:.1f}s")
                     ops.sleep(INTER_TXN_S)
                 if waiting:
                     ops.sleep(cfg.poll_s)   # nothing left to watch: light the
@@ -419,27 +501,31 @@ def run_pick_sequence(ops: FieldOps, cfg: PickConfig, ids: Sequence[int],
             # out now rather than at the end of the run — the next batch is
             # about to draw the operator somewhere else.
             for device_id in sorted(waiting):
-                result, _ = waiting[device_id]
-                ops.write_coil(device_id, coil, 0)
+                result, _, phase = waiting[device_id]
+                ops.write_coil(device_id, clear, 0)
                 lit.discard(device_id)
                 result.steps.append(StepOutcome(
-                    "confirmed by button press", False,
+                    "picked and put back", False,
+                    f"drawer still open after {cfg.timeout_s:.0f}s"
+                    if phase == "close" else
                     f"no press within {cfg.timeout_s:.0f}s"))
                 finish(result)
             waiting.clear()
     except CheckCancelled:
         report.cancelled = True
         for device_id in sorted(waiting):
-            result, _ = waiting[device_id]
-            result.steps.append(StepOutcome("confirmed by button press", False,
-                                            "cancelled"))
+            result, _, phase = waiting[device_id]
+            result.steps.append(StepOutcome(
+                "picked and put back", False,
+                "cancelled while the drawer was open" if phase == "close"
+                else "cancelled"))
             finish(result)
         waiting.clear()
     finally:
         # However this ended, no slot is left lit with nobody working it.
         for device_id in sorted(lit):
             try:
-                ops.write_coil(device_id, coil, 0)
+                ops.write_coil(device_id, clear, 0)
             except CheckCancelled:
                 pass                    # already cancelled; keep clearing
     report.finished = datetime.now()

@@ -9,13 +9,15 @@ from nicegui import ui
 from ..config_store import data_dir
 from ..i18n import t
 from ..fieldcheck import (CheckConfig, CheckDone, DeviceDone, DeviceStart,
-                          PickConfig, PickLit, check_csv_bytes)
+                          PickConfig, PickLit, PickPressed, check_csv_bytes)
 from ..lgs_map import CABINET_LAYOUTS, GRID_COLS, GRID_ROWS
 from . import Ctx, helps, inline_warning
 
 COLOR_UNSELECTED = "grey-5"
 COLOR_SELECTED = "primary"
 COLOR_TESTING = "amber"
+# Pressed, but the drawer is still open — the pick is not finished.
+COLOR_CLOSING = "deep-orange"
 COLOR_PASS = "positive"
 COLOR_FAIL = "negative"
 
@@ -25,7 +27,8 @@ def build(ctx: Ctx) -> None:
     cells: dict[int, ui.button] = {}
     selected: set[int] = set()
     results: dict[int, bool] = {}
-    state = {"seq": 0, "report": None, "testing": None, "waiting": set()}
+    state = {"seq": 0, "report": None, "testing": None, "waiting": set(),
+             "closing": set()}
 
     def paint(gid: int) -> None:
         # A result outranks "still lit": in the pick walkthrough a slot stays
@@ -33,6 +36,8 @@ def build(ctx: Ctx) -> None:
         # a result the operator should see that, not the amber.
         if gid in results:
             color = COLOR_PASS if results[gid] else COLOR_FAIL
+        elif gid in state["closing"]:
+            color = COLOR_CLOSING
         elif gid == state["testing"] or gid in state["waiting"]:
             color = COLOR_TESTING
         else:
@@ -162,6 +167,13 @@ def build(ctx: Ctx) -> None:
                                          min=0, max=600, format="%d") \
                     .props("dense outlined").classes("w-36") \
                     .tooltip(t("ins.pick_timeout_tip"))
+            with ui.row().classes("gap-3 flex-wrap"):
+                pick_display = helps(ui.checkbox(t("ins.pick_display"), value=True),
+                                     t("ins.pick_display_tip"))
+                pick_unlock = helps(ui.checkbox(t("ins.pick_unlock"), value=True),
+                                    t("ins.pick_unlock_tip"))
+                pick_closed = helps(ui.checkbox(t("ins.pick_closed"), value=True),
+                                    t("ins.pick_closed_tip"))
             pick_same_ch = helps(
                 ui.checkbox(t("ins.pick_same_channel"), value=True),
                 t("ins.pick_same_channel_tip"))
@@ -229,6 +241,7 @@ def build(ctx: Ctx) -> None:
             return False
         results.clear()
         state["waiting"] = set()
+        state["closing"] = set()
         state["testing"] = None
         repaint_all()
         table.rows = []
@@ -256,6 +269,9 @@ def build(ctx: Ctx) -> None:
             return
         state["pick_mode"] = True
         cfg = PickConfig(preset=int(pick_preset.value or 1),
+                         display=bool(pick_display.value),
+                         unlock=bool(pick_unlock.value),
+                         require_locked=bool(pick_closed.value),
                          timeout_s=float(pick_timeout.value or 0),
                          batch=int(pick_batch.value or 0),
                          by_channel=bool(pick_same_ch.value))
@@ -284,20 +300,32 @@ def build(ctx: Ctx) -> None:
                 # Every slot in this batch is lit and waiting for its person.
                 state["testing"] = None
                 state["waiting"] = set(ev.ids)
+                state["closing"] = set()
                 state["pick_total"] = ev.total
                 repaint_all()
                 progress.set_value(len(results) / max(1, ev.total))
                 progress_label.set_text(t("ins.pick_waiting", n=len(ev.ids)))
+            elif isinstance(ev, PickPressed):
+                # Button seen, drawer still open — the slot is not finished.
+                state["waiting"].discard(ev.device_id)
+                state["closing"].add(ev.device_id)
+                paint(ev.device_id)
+                progress_label.set_text(
+                    t("ins.pick_closing", n=len(state["closing"]),
+                      lit=len(state["waiting"])))
             elif isinstance(ev, DeviceDone):
                 r = ev.result
                 state["testing"] = None
                 state["waiting"].discard(r.device_id)
+                state["closing"].discard(r.device_id)
                 results[r.device_id] = r.ok
                 paint(r.device_id)
-                if state.get("pick_mode") and state["waiting"]:
+                if state.get("pick_mode") and (state["waiting"] or state["closing"]):
                     progress.set_value(len(results)
                                        / max(1, state.get("pick_total", 1)))
                     progress_label.set_text(
+                        t("ins.pick_closing", n=len(state["closing"]),
+                          lit=len(state["waiting"])) if state["closing"] else
                         t("ins.pick_waiting", n=len(state["waiting"])))
                 detail = "; ".join(f"{s.label}: {'ok' if s.ok else 'FAIL'}"
                                    + (f" ({s.note})" if s.note and not s.ok else "")
@@ -313,6 +341,7 @@ def build(ctx: Ctx) -> None:
                 state["report"] = ev.report
                 state["testing"] = None
                 state["waiting"] = set()
+                state["closing"] = set()
                 progress.set_value(1.0)
                 rep = ev.report
                 missing = rep.missing

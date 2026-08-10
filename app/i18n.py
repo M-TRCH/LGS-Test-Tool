@@ -326,6 +326,29 @@ TEXTS: dict[str, dict[str, str]] = {
               "ต้องเงียบราว 2 วินาทีเพื่อสลับช่อง การเฝ้าสองแถวพร้อมกันจึงหน่วงหลายวินาที"
               "กว่าจะเห็นการกด ขณะที่เพิ่มช่องในแถวเดียวกันแทบไม่มีค่าใช้จ่าย "
               "ใส่ 0 = จุดทุกช่องที่เลือกพร้อมกัน ตรงกับระบบจริงแต่ยืนยันช้าเมื่อข้ามแถว"},
+    "ins.pick_display": {"en": "Show the slot number", "th": "โชว์เลขช่องบนจอ"},
+    "ins.pick_display_tip": {"en": "Uses the coil that lights the ring and the "
+                                   "display together, with the slot's own ID on it.",
+                             "th": "ใช้ coil ที่เปิดไฟพร้อมจอในคำสั่งเดียว "
+                                   "และแสดงเลขประจำช่องนั้น"},
+    "ins.pick_unlock": {"en": "Release the latch", "th": "ปลดกลอน"},
+    "ins.pick_unlock_tip": {"en": "What a real pick does. The drawer must be closed "
+                                  "when the slot lights, or the firmware will not "
+                                  "pulse the latch and the slot is reported as such.",
+                            "th": "เหมือนการหยิบยาจริง ลิ้นชักต้องปิดอยู่ตอนไฟติด "
+                                  "ไม่งั้นเฟิร์มแวร์จะไม่ปล่อยพัลส์ และระบบจะรายงานให้ทราบ"},
+    "ins.pick_closed": {"en": "Wait for the drawer to close",
+                        "th": "รอปิดลิ้นชักก่อนดับไฟ"},
+    "ins.pick_closed_tip": {"en": "The pick is not over when the button is pressed — "
+                                  "it is over when the drawer is shut again. With "
+                                  "this on, the light stays on until the module "
+                                  "reports its latch locked, so a slot left open "
+                                  "cannot pass.",
+                            "th": "การหยิบยายังไม่จบตอนกดปุ่ม แต่จบเมื่อปิดลิ้นชักแล้ว "
+                                  "เปิดตัวเลือกนี้ไฟจะติดค้างจนโมดูลรายงานว่ากลอนล็อก "
+                                  "ช่องที่เปิดค้างไว้จึงผ่านไม่ได้"},
+    "ins.pick_closing": {"en": "{n} waiting to be closed, {lit} still lit",
+                         "th": "รอปิดลิ้นชัก {n} ช่อง, ไฟยังติดอีก {lit} ช่อง"},
     "ins.pick_same_channel": {"en": "Keep a batch on one hub channel",
                               "th": "หนึ่งชุดอยู่ช่องฮับเดียว"},
     "ins.pick_same_channel_tip": {
