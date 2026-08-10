@@ -319,6 +319,19 @@ TEXTS: dict[str, dict[str, str]] = {
               "ต้องเงียบราว 2 วินาทีเพื่อสลับช่อง การเฝ้าสองแถวพร้อมกันจึงหน่วงหลายวินาที"
               "กว่าจะเห็นการกด ขณะที่เพิ่มช่องในแถวเดียวกันแทบไม่มีค่าใช้จ่าย "
               "ใส่ 0 = จุดทุกช่องที่เลือกพร้อมกัน ตรงกับระบบจริงแต่ยืนยันช้าเมื่อข้ามแถว"},
+    "ins.pick_same_channel": {"en": "Keep a batch on one hub channel",
+                              "th": "หนึ่งชุดอยู่ช่องฮับเดียว"},
+    "ins.pick_same_channel_tip": {
+        "en": "On: slots either side of a channel boundary light one batch "
+              "after the other, which keeps confirmation under a second. Off: "
+              "the batch holds as many slots as you asked for wherever they "
+              "are, the way a real prescription lights them — but watching two "
+              "channels costs about two seconds per sweep, so the light takes "
+              "that much longer to go out.",
+        "th": "เปิด: ช่องที่อยู่คนละช่องฮับจะติดเป็นคนละชุดต่อกันไป ทำให้ยืนยันได้"
+              "ภายในไม่ถึงวินาที / ปิด: หนึ่งชุดจะจุดครบตามจำนวนที่ตั้งไม่ว่าอยู่ช่องใด "
+              "เหมือนใบสั่งยาจริง แต่การเฝ้าสองช่องเสียเวลาราว 2 วินาทีต่อรอบ "
+              "ไฟจึงดับช้าลงเท่านั้น"},
     "ins.pick_timeout": {"en": "Timeout/batch (s)", "th": "รอสูงสุด/ชุด (วิ)"},
     "ins.pick_timeout_tip": {"en": "Per batch, from when its lights come on. "
                                    "0 = wait until cancelled.",

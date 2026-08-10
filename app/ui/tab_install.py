@@ -153,6 +153,9 @@ def build(ctx: Ctx) -> None:
                                          min=0, max=600, format="%d") \
                     .props("dense outlined").classes("w-36") \
                     .tooltip(t("ins.pick_timeout_tip"))
+            pick_same_ch = helps(
+                ui.checkbox(t("ins.pick_same_channel"), value=True),
+                t("ins.pick_same_channel_tip"))
             pick_btn = ui.button(t("ins.pick_run"), color="primary") \
                 .props("outline").classes("q-mt-sm")
 
@@ -237,7 +240,8 @@ def build(ctx: Ctx) -> None:
         state["pick_mode"] = True
         cfg = PickConfig(preset=int(pick_preset.value or 1),
                          timeout_s=float(pick_timeout.value or 0),
-                         batch=int(pick_batch.value or 0))
+                         batch=int(pick_batch.value or 0),
+                         by_channel=bool(pick_same_ch.value))
         if not worker.start_pick_sequence(cfg, sorted(selected)):
             ui.notify(t("msg.worker_busy"), type="negative")
             banner.set_text("—")

@@ -213,6 +213,7 @@ class PickConfig:
     # so this puts the worst case a little over half a second.
     poll_s: float = 0.25         # pause between sweeps of the waiting slots
     batch: int = 4               # slots lit together; 0 = every slot at once
+    by_channel: bool = True      # keep a batch on one hub channel
 
 
 def _poll_order(ids: Sequence[int]) -> list:
@@ -227,7 +228,7 @@ def _poll_order(ids: Sequence[int]) -> list:
     return sorted(ids, key=lambda i: (hub_channel(i), i))
 
 
-def pick_batches(ids: Sequence[int], size: int) -> list:
+def pick_batches(ids: Sequence[int], size: int, by_channel: bool = True) -> list:
     """The groups of slots that light together.
 
     Measured on the cabinet: what costs time is the number of hub CHANNELS
@@ -235,21 +236,26 @@ def pick_batches(ids: Sequence[int], size: int) -> list:
     seconds of silence to change channel, so every extra channel in a batch
     adds ~2 s to each polling sweep, while an extra slot on a channel
     already being watched costs about 100 ms. Two slots on different
-    channels took 4.6 s per sweep; eight slots on one channel took 719 ms.
+    channels took 2.1 s per sweep; sixteen slots on one channel took 1.3 s.
 
-    So a batch never spans hub channels, and `size` caps how many slots of
-    one channel light at once. The channel map comes from the gateway (see
-    lgs_map.hub_channel), so re-cabling the cabinet changes the batches
-    without touching this: with rows 1-5 on a single channel a batch can be
-    drawn from any of those rows, and on a cabinet with no hub at all every
-    slot is one group. `size` of 0 lights everything selected however it is
-    spread, which is honest to the real system but slow to confirm.
+    `by_channel` (the default) keeps each batch on one channel, so `size` is
+    a cap rather than a promise: pick two slots either side of a channel
+    boundary and they light one after the other, not together. That keeps
+    confirmation quick, and the channel map comes from the gateway, so
+    re-cabling changes the batches without touching this.
+
+    Turn it off to rehearse what a real prescription does — it lights
+    whatever slots it names, wherever they are — and the batch then holds
+    `size` slots regardless of channel, at the cost of a slower sweep. A
+    `size` of 0 lights everything selected at once, spread and all.
     """
     ids = sorted(ids)
     if not ids:
         return []
     if size is None or size <= 0:
         return [tuple(ids)]
+    if not by_channel:
+        return [tuple(ids[s:s + size]) for s in range(0, len(ids), size)]
     out = []
     for channel in sorted({hub_channel(i) for i in ids}):
         same = [i for i in ids if hub_channel(i) == channel]
@@ -285,7 +291,7 @@ def run_pick_sequence(ops: FieldOps, cfg: PickConfig, ids: Sequence[int],
         emit(DeviceDone(result))
 
     try:
-        for batch in pick_batches(ids, cfg.batch):
+        for batch in pick_batches(ids, cfg.batch, cfg.by_channel):
             waiting.clear()
             # ── prepare this batch, and light the slots that are ready ─────
             for device_id in batch:
