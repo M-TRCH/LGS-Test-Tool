@@ -595,20 +595,30 @@ TEXTS: dict[str, dict[str, str]] = {
                             "เขียวคือพร้อม เหลืองคือกำลังสื่อสารกับตู้ แดงคือใช้งานไม่ได้ "
                             "ส่วนที่ตั้งได้คือเงื่อนไขว่าเมื่อไหร่ถึงจะขึ้นสีนั้น "
                             "จุดสีข้างชื่อจะสว่างตามสีที่เกตเวย์แสดงอยู่ตอนอ่านค่า"},
-    "pnl.out.none": {"en": "not fitted", "th": "ไม่ได้ติดตั้ง"},
-    "pnl.out.2": {"en": "output 2", "th": "เอาต์พุต 2"},
-    "pnl.out.3": {"en": "output 3", "th": "เอาต์พุต 3"},
-    "pnl.out.4": {"en": "output 4", "th": "เอาต์พุต 4"},
-    "pnl.out_hint": {"en": "Which output this colour is wired to ({name}). Output 1 "
-                           "is the shelf's power relay and cannot carry a lamp. Move "
-                           "a colour here if its output turns out to be dead — no "
-                           "firmware change needed.",
-                     "th": "สีนี้ต่ออยู่เอาต์พุตไหน ({name}) เอาต์พุต 1 เป็นรีเลย์ไฟเลี้ยง"
-                           "ชั้นวาง ใช้เป็นไฟสถานะไม่ได้ ถ้าเอาต์พุตไหนเสียก็ย้ายสีมาช่องอื่น"
-                           "ได้ที่นี่ ไม่ต้องแก้เฟิร์มแวร์"},
-    "pnl.lamp.green": {"en": "green — ready", "th": "เขียว — พร้อมใช้งาน"},
-    "pnl.lamp.amber": {"en": "amber — talking", "th": "เหลือง — กำลังสื่อสาร"},
-    "pnl.lamp.red": {"en": "red — not usable", "th": "แดง — ไม่พร้อมใช้งาน"},
+    "pnl.out_n": {"en": "output {n}", "th": "เอาต์พุต {n}"},
+    "pnl.out_hint": {"en": "What this output follows ({name}). Ready, busy and "
+                           "fault are three faces of one state, so mapping those "
+                           "to three outputs gives a traffic light — exactly one "
+                           "lit. The others are plain facts and can be lit "
+                           "alongside anything. The dot is lit for an output that "
+                           "was on when this page was read.",
+                     "th": "เอาต์พุตนี้ติดตามเงื่อนไขไหน ({name}) พร้อม / "
+                           "กำลังสื่อสาร / ไม่พร้อม เป็นสามหน้าของสถานะเดียวกัน "
+                           "จับสามอย่างนี้ลงสามเอาต์พุตจะได้ไฟจราจรที่ติดทีละดวง "
+                           "ส่วนเงื่อนไขอื่นติดพร้อมอย่างอื่นได้ "
+                           "จุดจะสว่างถ้าเอาต์พุตนั้นติดอยู่ตอนอ่านค่า"},
+    "pnl.src.none": {"en": "— off", "th": "— ไม่ใช้"},
+    "pnl.src.ready": {"en": "ready", "th": "พร้อมใช้งาน"},
+    "pnl.src.busy": {"en": "busy — talking to the cabinet",
+                     "th": "กำลังสื่อสารกับตู้"},
+    "pnl.src.fault": {"en": "fault — not usable", "th": "ไม่พร้อมใช้งาน"},
+    "pnl.src.link": {"en": "LAN is up", "th": "เครือข่ายเชื่อมต่อแล้ว"},
+    "pnl.src.client": {"en": "a server is connected",
+                       "th": "มีเซิร์ฟเวอร์เชื่อมต่ออยู่"},
+    "pnl.src.sweep": {"en": "a panel sweep is running",
+                      "th": "กำลังรันคำสั่งจากปุ่มหน้าตู้"},
+    "pnl.src.reset": {"en": "power is dropped (reset)",
+                      "th": "กำลังตัดไฟ (รีเซต)"},
     "gwf.panel.lamps": {"en": "Drive the status lamps", "th": "เปิดใช้ไฟสถานะ"},
     "gwf.panel.lamps.hint": {"en": "Off leaves outputs 2-4 exactly as they are — for "
                                    "a cabinet with no lamps fitted, or while "

@@ -38,9 +38,10 @@ PANEL_ACTIONS = {0: "pnl.act.none", 1: "pnl.act.all_on", 2: "pnl.act.all_off",
                  3: "pnl.act.all_unlock", 4: "pnl.act.reset"}
 # Which Opta output each lamp colour hangs off. Output 1 is the shelf's power
 # relay and the gateway refuses it, so it is not offered.
-LAMP_OUT_KEYS = (("green", "panel.lamp_green"), ("yellow", "panel.lamp_amber"),
-                 ("red", "panel.lamp_red"))
-LAMP_OUT_OPTIONS = {0: "pnl.out.none", 2: "pnl.out.2", 3: "pnl.out.3", 4: "pnl.out.4"}
+LAMP_OUT_KEYS = ("panel.out2", "panel.out3", "panel.out4")
+LAMP_SOURCES = {0: "pnl.src.none", 1: "pnl.src.ready", 2: "pnl.src.busy",
+                3: "pnl.src.fault", 4: "pnl.src.link", 5: "pnl.src.client",
+                6: "pnl.src.sweep", 7: "pnl.src.reset"}
 
 BOOL_KEYS = {"net.enabled", "net.dhcp", "panel.enabled", "panel.lamps"}
 
@@ -299,32 +300,29 @@ def build(ctx: Ctx) -> None:
             ui.separator().classes("q-my-sm")
             helps(ui.label(t("pnl.lamp_card")).classes("font-bold"),
                   t("pnl.lamp_hint"))
+            # panel.lamp reads like "2--": a digit for each output that is lit
+            # and a dash for each that is dark, as of this read.
             live = snap.info.get("panel.lamp", "")
-            with ui.row().classes("items-center gap-3 flex-wrap q-mb-xs"):
-                for colour, key in (("green", "pnl.lamp.green"),
-                                    ("yellow", "pnl.lamp.amber"),
-                                    ("red", "pnl.lamp.red")):
-                    on = live == ("amber" if colour == "yellow" else colour)
-                    with ui.row().classes("items-center gap-1 no-wrap"):
-                        ui.element("div").classes("rounded-full border")                             .style(f"width:12px;height:12px;"
-                                   f"background:{PANEL_SWATCH[colour]};"
-                                   f"opacity:{'1' if on else '0.3'}")
-                        ui.label(t(key)).classes(
-                            "text-xs" + (" text-bold" if on else " text-grey"))
-            # Which output each colour is on. Wiring, and wiring is what gets
-            # swapped in a panel — so a lamp that turns out to be on a dead
-            # output moves without a firmware change.
-            if "panel.lamp_green" in snap.settings:
-                out_options = {v: t(k) for v, k in LAMP_OUT_OPTIONS.items()}
-                for colour, key in LAMP_OUT_KEYS:
+            # What each output follows. Which colour sits on which output is
+            # wiring, and what a colour should mean is a site's call — so both
+            # are answered here rather than assumed by the firmware.
+            if "panel.out2" in snap.settings:
+                src_options = {v: t(k) for v, k in LAMP_SOURCES.items()}
+                for i, key in enumerate(LAMP_OUT_KEYS):
                     raw = snap.settings.get(key, "0")
                     value = int(raw) if raw.isdigit() else 0
+                    lit = len(live) > i and live[i] != "-"
                     with ui.row().classes("items-center gap-2 no-wrap q-mb-xs"):
-                        ui.element("div").classes("rounded-full border")                             .style(f"width:12px;height:12px;"
-                                   f"background:{PANEL_SWATCH[colour]}")
-                        el = ui.select(out_options,
-                                       value=value if value in out_options else 0,
-                                       on_change=lambda e, k=key: stage(k, int(e.value)))                             .props("dense outlined").classes("grow")
+                        ui.element("div").classes("rounded-full border").style(
+                            "width:12px;height:12px;background:"
+                            + ("#fdd835" if lit else "transparent"))
+                        ui.label(t("pnl.out_n", n=i + 2)).classes(
+                            "text-sm w-20" + ("" if lit else " text-grey"))
+                        el = ui.select(
+                            src_options,
+                            value=value if value in src_options else 0,
+                            on_change=lambda e, k=key: stage(k, int(e.value))) \
+                            .props("dense outlined").classes("grow")
                         helps(el, t("pnl.out_hint", name=key))
                         fields[key] = el
             for key in ("panel.lamps", "panel.lamp_hold_ms",
