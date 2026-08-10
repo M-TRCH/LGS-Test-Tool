@@ -708,6 +708,25 @@ class ModbusWorker:
             return gateway_config.GwActionResult(False, (), str(res))
         return res
 
+    async def gw_set_time(self, port: str, epoch: int):
+        """Set the gateway's wall clock.
+
+        Not part of gw_write: the clock is not a stored setting. The Opta
+        cannot keep time through a power cut, so this is sent every time the
+        tool meets a gateway whose clock is unset — the schedule is useless
+        until somebody does, and nobody should have to remember to.
+        """
+        def body(link):
+            res = link.command(f"TIME {int(epoch)}")
+            self._log_gw("TIME", res)
+            return gateway_config.GwActionResult(
+                res.ok, tuple(res.lines), res.error_text if not res.ok else "")
+
+        res = await self._run_job(_PRIO_MANUAL, lambda: self._do_gw_session(port, body))
+        if isinstance(res, Exception):
+            return gateway_config.GwActionResult(False, (), str(res))
+        return res
+
     async def gw_action(self, port: str, action: str):
         """action: discard | defaults | reboot"""
         def body(link):

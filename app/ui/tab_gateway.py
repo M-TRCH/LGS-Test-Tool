@@ -6,6 +6,8 @@ worker lends the COM port for the duration of each exchange.
 """
 from __future__ import annotations
 
+from datetime import datetime, timedelta
+
 from nicegui import ui
 
 from .. import config_store, firmware_bundle as fb, lgs_map
@@ -43,7 +45,8 @@ LAMP_SOURCES = {0: "pnl.src.none", 1: "pnl.src.ready", 2: "pnl.src.busy",
                 3: "pnl.src.fault", 4: "pnl.src.link", 5: "pnl.src.client",
                 6: "pnl.src.sweep", 7: "pnl.src.reset"}
 
-BOOL_KEYS = {"net.enabled", "net.dhcp", "panel.enabled", "panel.lamps"}
+BOOL_KEYS = {"net.enabled", "net.dhcp", "panel.enabled", "panel.lamps",
+             "sched.reset_enabled"}
 
 
 def label_of(key: str) -> str:
@@ -330,6 +333,62 @@ def build(ctx: Ctx) -> None:
                 if key in snap.settings:
                     field_row(key, snap)
 
+    def sched_editor(snap) -> None:
+        """The gateway's clock, and the nightly power cycle it drives."""
+        # The gateway sends ISO with a T so it survives the console's
+        # whitespace-split; a space reads better here.
+        now = snap.info.get("time.now", "unset").replace("T", " ")
+        was_set = snap.info.get("time.set") == "1"
+        last = snap.info.get("sched.last", "0")
+
+        with ui.row().classes("items-center gap-2 flex-wrap"):
+            ui.label(t("sch.now", now=now)).classes(
+                "text-sm font-mono" + ("" if was_set else " text-red"))
+
+            async def set_now() -> None:
+                res = await worker.gw_set_time(ctx.port(), wall_epoch())
+                ui.notify(t("sch.synced") if res.ok else res.note,
+                          type="positive" if res.ok else "negative")
+                await do_reload()
+
+            helps(ui.button(t("sch.sync"), on_click=set_now)
+                  .props("outline dense no-caps"), t("sch.sync_hint"))
+        if last and last != "0":
+            # sched.last is already wall time, so it must not be shifted
+            # again by this PC's timezone.
+            when = (datetime(1970, 1, 1) + timedelta(seconds=int(last)))
+            ui.label(t("sch.last", when=when.strftime("%Y-%m-%d %H:%M")))                 .classes("text-xs text-grey")
+
+        for key in ("sched.reset_enabled", "sched.reset_hhmm"):
+            if key in snap.settings:
+                field_row(key, snap)
+
+        # Days as seven checkboxes, because a bitmask is not something anyone
+        # should have to add up. All seven clear means every day, which is
+        # also what the firmware reads a zero as.
+        raw = snap.settings.get("sched.reset_days", "0")
+        mask = int(raw) if raw.isdigit() else 0
+        boxes: list = []
+
+        def push_days() -> None:
+            value = 0
+            for bit, box in enumerate(boxes):
+                if box.value:
+                    value |= 1 << bit
+            stage("sched.reset_days", 0 if value == 0x7F else value)
+
+        with ui.row().classes("gap-1 flex-wrap items-center"):
+            ui.label(t("sch.days")).classes("text-sm text-grey w-20")
+            for bit, name in enumerate(("sch.sun", "sch.mon", "sch.tue", "sch.wed",
+                                        "sch.thu", "sch.fri", "sch.sat")):
+                box = ui.checkbox(t(name),
+                                  value=bool(mask == 0 or (mask & (1 << bit))),
+                                  on_change=lambda _: push_days()) \
+                    .props("dense").classes("text-xs")
+                boxes.append(box)
+        helps(ui.label(t("sch.days_hint")).classes("text-xs text-grey"),
+              t("sch.days_hint"))
+
     def apply_pending(values: dict) -> None:
         """Drop values into the fields as ordinary unsaved edits."""
         for key, text in values.items():
@@ -437,9 +496,44 @@ def build(ctx: Ctx) -> None:
                         helps(ui.label(t("pnl.card")).classes("font-bold"),
                               t("pnl.hint"))
                         panel_editor(snap)
+                if "sched.reset_enabled" in snap.settings:
+                    with ui.card().classes("p-3 grow"):
+                        helps(ui.label(t("sch.card")).classes("font-bold"),
+                              t("sch.hint"))
+                        sched_editor(snap)
 
     def say(text: str) -> None:
         log_box.push(text)
+
+    def wall_epoch() -> int:
+        """This PC's wall clock as seconds since 1970, local — not UTC.
+
+        The gateway keeps the time on the wall in front of the cabinet and
+        knows nothing about timezones, so a schedule that says 03:00 means
+        the 03:00 a pharmacist would recognise. Sending UTC here would make
+        every schedule silently wrong by the offset.
+        """
+        now = datetime.now().astimezone()
+        return int(now.timestamp() + now.utcoffset().total_seconds())
+
+    async def sync_clock(snap) -> None:
+        """Set the gateway's clock when it has none.
+
+        The Opta loses the time whenever it loses power — the very event a
+        scheduled reset exists to recover from — so the tool sets it on every
+        read rather than leaving a schedule that quietly never runs.
+        """
+        if not snap or not snap.ok:
+            return
+        if snap.info.get("time.set") == "1":
+            return
+        res = await worker.gw_set_time(ctx.port(), wall_epoch())
+        if res.ok:
+            snap.info["time.set"] = "1"
+            say(t("sch.synced"))
+            ui.notify(t("sch.synced"), type="positive")
+        else:
+            say(f"clock not set: {res.note}")
 
     def adopt_hub_map(snap) -> None:
         """Take the cabinet's wiring from the gateway, which owns it.
@@ -495,6 +589,7 @@ def build(ctx: Ctx) -> None:
             status.props("color=red")
             say(f"read failed: {snap.note}")
         adopt_hub_map(snap)
+        await sync_clock(snap)
         render(snap)
 
     async def run_action(action: str) -> None:

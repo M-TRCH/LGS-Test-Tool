@@ -562,6 +562,53 @@ TEXTS: dict[str, dict[str, str]] = {
                           "หลังสลับช่องและเงียบไป ~2 วินาที เกตเวย์ซ่อมโดยหน่วงคำขอถัดไป"
                           "จนฮับพร้อม ฝั่งเซิร์ฟเวอร์ต้อง retry อย่างน้อย 1 ครั้ง "
                           "หรือรอนานกว่าเวลาฮับพร้อม"},
+    "sch.card": {"en": "Clock and scheduled reset",
+                 "th": "นาฬิกาและการรีเซตตามเวลา"},
+    "sch.hint": {"en": "The Opta has no battery for its clock, so the time is "
+                       "lost on every power cut — the very thing a scheduled "
+                       "reset exists to recover from. This tool sets it whenever "
+                       "it reads a gateway whose clock is unset, and nothing is "
+                       "ever scheduled while it is unset. The clock keeps the "
+                       "time on the wall, not UTC: 03:00 means 03:00 here.",
+                 "th": "Opta ไม่มีแบตเตอรี่เลี้ยงนาฬิกา เวลาจึงหายทุกครั้งที่ไฟดับ "
+                       "ซึ่งเป็นเหตุการณ์ที่การรีเซตตามเวลามีไว้รองรับพอดี "
+                       "เครื่องมือนี้จะตั้งเวลาให้ทุกครั้งที่พบว่าเกตเวย์ยังไม่มีเวลา "
+                       "และจะไม่มีการตั้งเวลาใดทำงานจนกว่านาฬิกาจะถูกตั้ง "
+                       "นาฬิกาเก็บเวลาท้องถิ่น ไม่ใช่ UTC ดังนั้น 03:00 คือตีสามที่นี่"},
+    "sch.now": {"en": "gateway clock: {now}", "th": "นาฬิกาเกตเวย์: {now}"},
+    "sch.sync": {"en": "SET FROM THIS PC", "th": "ตั้งจากเครื่องนี้"},
+    "sch.sync_hint": {"en": "Sends this PC's wall clock. Done automatically "
+                            "whenever the gateway's clock is unset.",
+                      "th": "ส่งเวลาของเครื่องนี้ไปให้ ระบบจะตั้งให้เองทุกครั้ง"
+                            "ที่พบว่าเกตเวย์ยังไม่มีเวลา"},
+    "sch.synced": {"en": "gateway clock set from this PC",
+                   "th": "ตั้งนาฬิกาเกตเวย์จากเครื่องนี้แล้ว"},
+    "sch.last": {"en": "last scheduled reset: {when}",
+                 "th": "รีเซตตามเวลาครั้งล่าสุด: {when}"},
+    "sch.days": {"en": "days", "th": "วัน"},
+    "sch.days_hint": {"en": "Leave every day ticked to run daily.",
+                      "th": "ติ๊กครบทุกวัน = ทำทุกวัน"},
+    "sch.sun": {"en": "Sun", "th": "อา"},
+    "sch.mon": {"en": "Mon", "th": "จ"},
+    "sch.tue": {"en": "Tue", "th": "อ"},
+    "sch.wed": {"en": "Wed", "th": "พ"},
+    "sch.thu": {"en": "Thu", "th": "พฤ"},
+    "sch.fri": {"en": "Fri", "th": "ศ"},
+    "sch.sat": {"en": "Sat", "th": "ส"},
+    "gwf.sched.reset_enabled": {"en": "Reset the shelf on a schedule",
+                                "th": "รีเซตชั้นวางตามเวลา"},
+    "gwf.sched.reset_enabled.hint": {
+        "en": "Off by default — a cabinet that power-cycles itself at an hour "
+              "nobody chose is a fault, not a feature. It does the same thing "
+              "the white button does.",
+        "th": "ปิดไว้เป็นค่าเริ่มต้น ตู้ที่ตัดไฟตัวเองในเวลาที่ไม่มีใครกำหนด"
+              "คือความผิดปกติ ไม่ใช่คุณสมบัติ การทำงานเหมือนกดปุ่มขาว"},
+    "gwf.sched.reset_hhmm": {"en": "Time of day (HHMM)", "th": "เวลา (HHMM)"},
+    "gwf.sched.reset_hhmm.hint": {
+        "en": "As a clock reading: 300 is 03:00, 1430 is 14:30. Wall time at "
+              "the cabinet, not UTC.",
+        "th": "อ่านแบบหน้าปัด: 300 คือ 03:00, 1430 คือ 14:30 "
+              "เป็นเวลาท้องถิ่นที่ตู้ ไม่ใช่ UTC"},
     "pnl.card": {"en": "Front-panel buttons", "th": "ปุ่มหน้าตู้"},
     "pnl.hint": {"en": "Five buttons wired to the Opta's inputs 1-5, so the cabinet "
                        "can be exercised at the cabinet with no PC and no network. "
