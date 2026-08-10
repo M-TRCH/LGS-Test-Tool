@@ -449,6 +449,32 @@ TEXTS: dict[str, dict[str, str]] = {
                                      "th": "แค่ทำให้เปิดเครื่องช้าลง ถ้าเสียบทีหลังระบบก็จับได้เอง"},
     "gwf.net.mac": {"en": "Hardware address (MAC)", "th": "ที่อยู่ฮาร์ดแวร์ (MAC)"},
 
+    "fws.card": {"en": "Cabinet firmware", "th": "เฟิร์มแวร์ทั้งตู้"},
+    "fws.hint": {"en": "Reads every module's firmware version — nothing is written. "
+                       "Run it before an update to see who still needs it, and after "
+                       "one to confirm they all took it.",
+                 "th": "อ่านเวอร์ชันเฟิร์มแวร์ของทุกโมดูล ไม่มีการเขียนใดๆ ใช้ก่อนอัปเดต"
+                       "เพื่อดูว่าเหลือตัวไหน และใช้หลังอัปเดตเพื่อยืนยันว่าขึ้นครบทุกตัว"},
+    "fws.cabinet_tip": {"en": "Survey this cabinet ({n} modules)",
+                        "th": "สำรวจตู้นี้ ({n} โมดูล)"},
+    "fws.selected": {"en": "the targets above", "th": "ตามรายการเป้าหมายด้านบน"},
+    "fws.selected_tip": {"en": "Survey exactly the IDs in the target box",
+                         "th": "สำรวจเฉพาะไอดีในช่องเป้าหมาย"},
+    "fws.running": {"en": "reading {done}/{total}", "th": "กำลังอ่าน {done}/{total}"},
+    "fws.done": {"en": "{n}/{total} answered — {summary}",
+                 "th": "ตอบ {n}/{total} — {summary}"},
+    "fws.groups": {"en": "versions found:", "th": "เวอร์ชันที่พบ:"},
+    "fws.group_tip": {"en": "Make the modules on {v} the update targets",
+                      "th": "ตั้งโมดูลที่รัน {v} เป็นเป้าหมายอัปเดต"},
+    "fws.targets_set": {"en": "{n} modules on {v} set as targets",
+                        "th": "ตั้งเป้าหมาย {n} โมดูลที่รัน {v} แล้ว"},
+    "fws.cell_tip": {"en": "firmware {v}", "th": "เฟิร์มแวร์ {v}"},
+    "fws.silent_tip": {"en": "These did not answer. Find out why before updating "
+                             "anything — firmware is not sent to a module that "
+                             "cannot be read.",
+                       "th": "กลุ่มนี้ไม่ตอบ ควรหาสาเหตุก่อนอัปเดต ระบบจะไม่ส่งเฟิร์มแวร์"
+                             "ไปยังโมดูลที่อ่านค่าไม่ได้"},
+
     "fw.use": {"en": "USE THIS", "th": "ใช้ไฟล์นี้"},
     "fw.or_upload": {"en": "or upload your own file:", "th": "หรืออัปโหลดไฟล์เอง:"},
     "fw.bundled_hint": {"en": "Released firmware shipped inside this tool, so a "

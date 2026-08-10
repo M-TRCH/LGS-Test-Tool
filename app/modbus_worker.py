@@ -25,8 +25,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Callable, Optional, Sequence
 
-from . import (commission, fieldcheck, gateway_config, lgs_map, opta_flash,
-               opta_update, ota, stlink, testsuite)
+from . import (commission, fieldcheck, fw_survey, gateway_config, lgs_map,
+               opta_flash, opta_update, ota, stlink, testsuite)
 from .lgs_map import (CoilClass, HUB_WAKE_GAP_S, HUB_WAKE_TRIES,
                       INTER_CH_S, INTER_TXN_S, LATCH_COOLDOWN_S,
                       hub_channel)
@@ -153,6 +153,9 @@ class ModbusWorker:
         self._check_cancel = threading.Event()
         self._check_events: list = []
         self._check_lock = threading.Lock()
+        self._survey_cancel = threading.Event()
+        self._survey_events: list = []
+        self._survey_lock = threading.Lock()
         self._ota_running = False
         self._ota_cancel = threading.Event()
         self._ota_events: list = []
@@ -964,6 +967,46 @@ class ModbusWorker:
         finally:
             self._check_running = False
 
+    # ── firmware survey (read-only, its own event stream) ──────────────────
+    def start_fw_survey(self, ids: Sequence[int]) -> bool:
+        """Read every module's firmware version.
+
+        Shares the long-job guard with the installation check: one bus, one
+        sweep at a time. Its events go to their own queue so the two pages
+        never read each other's.
+        """
+        if self._check_running or self._sweep_running or self._scan_running \
+                or self._ota_running or not self._connected or not ids:
+            return False
+        self._survey_cancel.clear()
+        with self._survey_lock:
+            self._survey_events.clear()
+        self._check_running = True                # occupies the same slot
+        self._submit(_PRIO_LONG, lambda: self._do_fw_survey(list(ids)))
+        return True
+
+    def cancel_fw_survey(self) -> None:
+        self._survey_cancel.set()
+        self._check_cancel.set()                  # _SurveyOps.sleep watches this
+
+    def drain_fw_survey_events(self, since: int) -> tuple[int, list]:
+        with self._survey_lock:
+            fresh = [e for e in self._survey_events if e.seq > since]
+            return (fresh[-1].seq if fresh else since), fresh
+
+    def _do_fw_survey(self, ids: list) -> None:
+        def emit(ev) -> None:
+            with self._survey_lock:
+                self._event_seq += 1
+                ev.seq = self._event_seq
+                self._survey_events.append(ev)
+
+        try:
+            self._check_cancel.clear()
+            fw_survey.run_survey(_SurveyOps(self), ids, emit, self._survey_cancel)
+        finally:
+            self._check_running = False
+
     # ── danger actions ─────────────────────────────────────────────────────
     async def danger_action(self, action: DangerAction, device_id: int) -> DangerResult:
         guard = self._guard(device_id)
@@ -1125,6 +1168,23 @@ class _FieldOps:
         while time.monotonic() < end:
             if self._w._check_cancel.is_set():
                 raise fieldcheck.CheckCancelled()
+            time.sleep(min(0.05, max(0.0, end - time.monotonic())))
+
+
+class _SurveyOps:
+    """fw_survey.SurveyOps — read-only, one transaction per module."""
+
+    def __init__(self, worker: ModbusWorker) -> None:
+        self._w = worker
+
+    def read_regs(self, device_id: int, addr: int, count: int) -> TxnResult:
+        return self._w._do_read_registers(addr, count, device_id, "survey")
+
+    def sleep(self, seconds: float) -> None:
+        end = time.monotonic() + seconds
+        while time.monotonic() < end:
+            if self._w._check_cancel.is_set():
+                return              # the loop checks cancel; nothing to unwind
             time.sleep(min(0.05, max(0.0, end - time.monotonic())))
 
 

@@ -8,11 +8,23 @@ from __future__ import annotations
 from nicegui import ui
 
 from .. import firmware_bundle as fb
+from ..fw_survey import SurveyDone, SurveyProgress, SurveyRead
 from ..i18n import t
+from ..lgs_map import CABINET_LAYOUTS, GRID_COLS, GRID_ROWS
 from ..ota import Done, Line, MAX_IMAGE_SIZE, OtaConfig, Progress
 from . import Ctx, bundled_picker, helps, inline_warning, warning_banner
 
 LEVEL_CLASS = {"info": "", "ok": "text-green", "warn": "text-orange", "err": "text-red"}
+
+# Firmware survey grid. Version groups get their colours in order, so the
+# newest firmware in the cabinet is always the first colour — what matters is
+# that unlike versions look unlike, not which colour any one version gets.
+SURVEY_IDLE = "grey-4"        # slot not part of this survey
+SURVEY_QUEUED = "grey-7"      # in the survey, not read yet
+SURVEY_READING = "amber"
+SURVEY_ANSWERED = "blue-grey"  # answered; recoloured by group when the run ends
+SURVEY_SILENT = "negative"    # no answer — a real fault, not an empty slot
+SURVEY_COLORS = ("positive", "primary", "purple", "teal", "brown", "indigo")
 
 
 def build(ctx: Ctx) -> None:
@@ -79,6 +91,131 @@ def build(ctx: Ctx) -> None:
             if part.isdigit() and 1 <= int(part) <= 247:
                 out.append(int(part))
         return sorted(set(out))
+
+    def set_ids(ids) -> None:
+        ids_input.set_value(", ".join(str(i) for i in sorted(ids)))
+
+    # ── cabinet firmware ───────────────────────────────────────────────────
+    # Read-only, and the reason the rest of this page is safe to use: before
+    # an update it says who still needs it, after one whether they all took
+    # it. Its groups double as the target picker, so "update the ones still
+    # on v3.1.0" is a click rather than a list typed out by hand.
+    with ui.card().classes("p-3 w-full"):
+        with ui.row().classes("items-center gap-2 flex-wrap"):
+            helps(ui.label(t("fws.card")).classes("font-bold"), t("fws.hint"))
+            for layout in CABINET_LAYOUTS:
+                ui.button(layout.label,
+                          on_click=lambda layout=layout: survey_start(layout.ids)) \
+                    .props("outline dense no-caps") \
+                    .tooltip(t("fws.cabinet_tip", n=layout.count))
+            ui.button(t("fws.selected"),
+                      on_click=lambda: survey_start(parse_ids())) \
+                .props("flat dense no-caps").tooltip(t("fws.selected_tip"))
+            ui.button(t("btn.cancel"),
+                      on_click=lambda: worker.cancel_fw_survey()).props("flat dense")
+            survey_progress = ui.linear_progress(value=0.0, show_value=False) \
+                .classes("w-40")
+            survey_label = ui.label(t("mt.idle")).classes("text-sm font-mono")
+
+        # The whole grid is drawn once; a survey lights the slots it covers
+        # and leaves the rest grey, so the cabinet's shape stays readable.
+        survey_cells: dict = {}
+        with ui.column().classes("gap-1 q-mt-sm"):
+            for r in range(1, GRID_ROWS + 1):
+                with ui.row().classes("gap-1 flex-nowrap items-center"):
+                    ui.label(f"R{r}").classes("w-8 text-xs text-grey font-mono")
+                    for gid in (r * 10 + c for c in range(1, GRID_COLS + 1)):
+                        survey_cells[gid] = ui.button(str(gid)) \
+                            .props(f"unelevated no-caps dense color={SURVEY_IDLE}") \
+                            .classes("w-14 min-w-0 font-mono")
+
+        groups_row = ui.row().classes("items-center gap-2 flex-wrap q-mt-sm")
+
+    def survey_paint(gid: int, color: str, tip: str = "") -> None:
+        cell = survey_cells.get(gid)
+        if cell is None:
+            return
+        cell.props(f"color={color}")
+        if tip:
+            cell.tooltip(tip)
+
+    def survey_reset(ids) -> None:
+        chosen = set(ids)
+        for gid in survey_cells:
+            survey_paint(gid, SURVEY_QUEUED if gid in chosen else SURVEY_IDLE)
+        groups_row.clear()
+
+    def survey_start(ids) -> None:
+        if not worker.get_state().connected:
+            ui.notify(t("msg.not_connected"), type="negative")
+            return
+        ids = [i for i in ids if i in survey_cells]
+        if not ids:
+            ui.notify(t("ota.no_ids"), type="warning")
+            return
+        if not worker.start_fw_survey(ids):
+            ui.notify(t("msg.worker_busy"), type="negative")
+            return
+        survey_reset(ids)
+        survey_progress.set_value(0.0)
+        survey_label.set_text(t("fws.running", done=0, total=len(ids)))
+
+    def survey_show_groups(report) -> None:
+        """One chip per version — click it to make that group the targets."""
+        groups_row.clear()
+        with groups_row:
+            ui.label(t("fws.groups")).classes("text-sm text-grey")
+            shade = 0
+            for group in report.groups():
+                if group.silent:
+                    colour = SURVEY_SILENT
+                else:
+                    colour = SURVEY_COLORS[shade % len(SURVEY_COLORS)]
+                    shade += 1
+                for gid in group.ids:
+                    survey_paint(gid, colour, t("fws.cell_tip", v=group.label))
+                if group.silent:
+                    # Not offered as a target: a module that would not answer a
+                    # read is not one to start writing firmware to.
+                    ui.badge(f"{group.label} × {group.count}") \
+                        .props(f"color={colour}").tooltip(t("fws.silent_tip"))
+                    continue
+
+                def target(g=group) -> None:
+                    set_ids(g.ids)
+                    ui.notify(t("fws.targets_set", n=g.count, v=g.label),
+                              type="positive")
+
+                ui.button(f"{group.label} × {group.count}", on_click=target) \
+                    .props(f"unelevated dense no-caps color={colour}") \
+                    .tooltip(t("fws.group_tip", v=group.label))
+
+    def survey_drain() -> None:
+        survey_state["seq"], events = worker.drain_fw_survey_events(
+            survey_state["seq"])
+        for ev in events:
+            if isinstance(ev, SurveyProgress):
+                survey_paint(ev.device_id, SURVEY_READING)
+                survey_progress.set_value((ev.index - 1) / max(1, ev.total))
+                survey_label.set_text(t("fws.running", done=ev.index - 1,
+                                        total=ev.total))
+            elif isinstance(ev, SurveyRead):
+                r = ev.result
+                survey_paint(r.device_id,
+                             SURVEY_ANSWERED if r.responded else SURVEY_SILENT,
+                             r.version or r.note)
+            elif isinstance(ev, SurveyDone):
+                survey_progress.set_value(1.0)
+                survey_show_groups(ev.report)
+                survey_label.set_text(
+                    t("fws.done", n=ev.report.answered,
+                      total=len(ev.report.results), summary=ev.report.summary()))
+                say(t("fws.done", n=ev.report.answered,
+                      total=len(ev.report.results),
+                      summary=ev.report.summary()), "ok")
+
+    survey_state = {"seq": 0}
+    ui.timer(0.2, survey_drain)
 
     # ── actions ────────────────────────────────────────────────────────────
     with ui.row().classes("items-center gap-3 flex-wrap"):
