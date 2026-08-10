@@ -642,6 +642,21 @@ TEXTS: dict[str, dict[str, str]] = {
                             "เขียวคือพร้อม เหลืองคือกำลังสื่อสารกับตู้ แดงคือใช้งานไม่ได้ "
                             "ส่วนที่ตั้งได้คือเงื่อนไขว่าเมื่อไหร่ถึงจะขึ้นสีนั้น "
                             "จุดสีข้างชื่อจะสว่างตามสีที่เกตเวย์แสดงอยู่ตอนอ่านค่า"},
+    "pnl.colour.green": {"en": "green", "th": "เขียว"},
+    "pnl.colour.amber": {"en": "amber", "th": "เหลือง"},
+    "pnl.colour.red": {"en": "red", "th": "แดง"},
+    "pnl.colour.blue": {"en": "blue", "th": "น้ำเงิน"},
+    "pnl.colour.white": {"en": "white", "th": "ขาว"},
+    "pnl.colour.none": {"en": "no lamp", "th": "ไม่มีไฟ"},
+    "pnl.colour_hint": {"en": "Which lamp is actually fitted to this output. The gateway "
+                              "drives outputs, not colours, so this is only how this "
+                              "page draws the panel — it is saved here and never sent "
+                              "to the gateway. Set it to match the panel in front of "
+                              "you and the dots read like the real thing.",
+                        "th": "เอาต์พุตนี้ติดไฟสีอะไรจริง เกตเวย์สั่งงานเป็นเอาต์พุต "
+                              "ไม่รู้จักสี ค่านี้จึงใช้วาดหน้านี้เท่านั้น เก็บไว้ที่นี่ "
+                              "ไม่ได้ส่งไปที่เกตเวย์ ตั้งให้ตรงกับตู้จริงแล้วจุดสี"
+                              "จะอ่านได้เหมือนดูของจริง"},
     "pnl.out_n": {"en": "output {n}", "th": "เอาต์พุต {n}"},
     "pnl.out_hint": {"en": "What this output follows ({name}). Ready, busy and "
                            "fault are three faces of one state, so mapping those "

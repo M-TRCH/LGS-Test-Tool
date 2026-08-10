@@ -44,6 +44,14 @@ LAMP_OUT_KEYS = ("panel.out2", "panel.out3", "panel.out4")
 LAMP_SOURCES = {0: "pnl.src.none", 1: "pnl.src.ready", 2: "pnl.src.busy",
                 3: "pnl.src.fault", 4: "pnl.src.link", 5: "pnl.src.client",
                 6: "pnl.src.sweep", 7: "pnl.src.reset"}
+# What colour of lamp is actually fitted to each output. The gateway does not
+# know and should not — it drives outputs, not colours — but the person
+# reading this page is looking at a panel of coloured lamps, so the tool keeps
+# its own note of which is which.
+LAMP_COLOURS = ("green", "amber", "red", "blue", "white", "none")
+LAMP_COLOUR_HEX = {"green": "#43a047", "amber": "#fdd835", "red": "#e53935",
+                   "blue": "#1e88e5", "white": "#fafafa", "none": "#9e9e9e"}
+LAMP_COLOUR_DEFAULT = ("green", "amber", "red")
 
 BOOL_KEYS = {"net.enabled", "net.dhcp", "panel.enabled", "panel.lamps",
              "sched.reset_enabled"}
@@ -311,16 +319,34 @@ def build(ctx: Ctx) -> None:
             # are answered here rather than assumed by the firmware.
             if "panel.out2" in snap.settings:
                 src_options = {v: t(k) for v, k in LAMP_SOURCES.items()}
+                colour_options = {c: t(f"pnl.colour.{c}") for c in LAMP_COLOURS}
+                fitted = lamp_colours()
                 for i, key in enumerate(LAMP_OUT_KEYS):
                     raw = snap.settings.get(key, "0")
                     value = int(raw) if raw.isdigit() else 0
                     lit = len(live) > i and live[i] != "-"
+                    colour = fitted[i]
                     with ui.row().classes("items-center gap-2 no-wrap q-mb-xs"):
-                        ui.element("div").classes("rounded-full border").style(
-                            "width:12px;height:12px;background:"
-                            + ("#fdd835" if lit else "transparent"))
+                        # Always drawn, in the lamp's own colour: filled while
+                        # it is lit, faded while it is dark. A dot that
+                        # disappears when the lamp is off says nothing about
+                        # which lamp that row is.
+                        ui.element("div").classes("rounded-full").style(
+                            f"width:14px;height:14px;flex:0 0 auto;"
+                            f"background:{LAMP_COLOUR_HEX[colour]};"
+                            f"opacity:{'1' if lit else '0.25'};"
+                            f"box-shadow:{'0 0 6px ' + LAMP_COLOUR_HEX[colour] if lit else 'none'};"
+                            f"border:1px solid rgba(128,128,128,.6)")
                         ui.label(t("pnl.out_n", n=i + 2)).classes(
-                            "text-sm w-20" + ("" if lit else " text-grey"))
+                            "text-sm w-16" + ("" if lit else " text-grey"))
+                        # The lamp's colour is the tool's note about the panel
+                        # in front of it — the gateway has no idea, and should
+                        # not, so this is saved here and not sent anywhere.
+                        helps(ui.select(
+                            colour_options, value=colour,
+                            on_change=lambda e, n=i: set_lamp_colour(n, e.value)) \
+                            .props("dense outlined borderless").classes("w-28"),
+                            t("pnl.colour_hint"))
                         el = ui.select(
                             src_options,
                             value=value if value in src_options else 0,
@@ -504,6 +530,22 @@ def build(ctx: Ctx) -> None:
 
     def say(text: str) -> None:
         log_box.push(text)
+
+    def lamp_colours() -> list:
+        """Which colour is fitted to outputs 2, 3 and 4, per this tool's config."""
+        parts = [p.strip() for p in str(ctx.cfg.lamp_colours or "").split(",")]
+        out = list(LAMP_COLOUR_DEFAULT)
+        for i in range(3):
+            if i < len(parts) and parts[i] in LAMP_COLOUR_HEX:
+                out[i] = parts[i]
+        return out
+
+    def set_lamp_colour(index: int, colour: str) -> None:
+        current = lamp_colours()
+        current[index] = colour
+        ctx.cfg.lamp_colours = ",".join(current)
+        config_store.save(ctx.cfg)
+        render(state["snapshot"])       # redraw the dots in the new colour
 
     def wall_epoch() -> int:
         """This PC's wall clock as seconds since 1970, local — not UTC.
