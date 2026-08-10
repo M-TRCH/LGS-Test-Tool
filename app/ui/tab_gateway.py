@@ -36,6 +36,11 @@ PANEL_SWATCH = {"red": "#e53935", "green": "#43a047", "blue": "#1e88e5",
                 "yellow": "#fdd835", "white": "#fafafa"}
 PANEL_ACTIONS = {0: "pnl.act.none", 1: "pnl.act.all_on", 2: "pnl.act.all_off",
                  3: "pnl.act.all_unlock", 4: "pnl.act.reset"}
+# Which Opta output each lamp colour hangs off. Output 1 is the shelf's power
+# relay and the gateway refuses it, so it is not offered.
+LAMP_OUT_KEYS = (("green", "panel.lamp_green"), ("yellow", "panel.lamp_amber"),
+                 ("red", "panel.lamp_red"))
+LAMP_OUT_OPTIONS = {0: "pnl.out.none", 2: "pnl.out.2", 3: "pnl.out.3", 4: "pnl.out.4"}
 
 BOOL_KEYS = {"net.enabled", "net.dhcp", "panel.enabled", "panel.lamps"}
 
@@ -306,6 +311,22 @@ def build(ctx: Ctx) -> None:
                                    f"opacity:{'1' if on else '0.3'}")
                         ui.label(t(key)).classes(
                             "text-xs" + (" text-bold" if on else " text-grey"))
+            # Which output each colour is on. Wiring, and wiring is what gets
+            # swapped in a panel — so a lamp that turns out to be on a dead
+            # output moves without a firmware change.
+            if "panel.lamp_green" in snap.settings:
+                out_options = {v: t(k) for v, k in LAMP_OUT_OPTIONS.items()}
+                for colour, key in LAMP_OUT_KEYS:
+                    raw = snap.settings.get(key, "0")
+                    value = int(raw) if raw.isdigit() else 0
+                    with ui.row().classes("items-center gap-2 no-wrap q-mb-xs"):
+                        ui.element("div").classes("rounded-full border")                             .style(f"width:12px;height:12px;"
+                                   f"background:{PANEL_SWATCH[colour]}")
+                        el = ui.select(out_options,
+                                       value=value if value in out_options else 0,
+                                       on_change=lambda e, k=key: stage(k, int(e.value)))                             .props("dense outlined").classes("grow")
+                        helps(el, t("pnl.out_hint", name=key))
+                        fields[key] = el
             for key in ("panel.lamps", "panel.lamp_hold_ms",
                         "panel.lamp_dwell_ms", "panel.lamp_dead"):
                 if key in snap.settings:

@@ -595,6 +595,17 @@ TEXTS: dict[str, dict[str, str]] = {
                             "เขียวคือพร้อม เหลืองคือกำลังสื่อสารกับตู้ แดงคือใช้งานไม่ได้ "
                             "ส่วนที่ตั้งได้คือเงื่อนไขว่าเมื่อไหร่ถึงจะขึ้นสีนั้น "
                             "จุดสีข้างชื่อจะสว่างตามสีที่เกตเวย์แสดงอยู่ตอนอ่านค่า"},
+    "pnl.out.none": {"en": "not fitted", "th": "ไม่ได้ติดตั้ง"},
+    "pnl.out.2": {"en": "output 2", "th": "เอาต์พุต 2"},
+    "pnl.out.3": {"en": "output 3", "th": "เอาต์พุต 3"},
+    "pnl.out.4": {"en": "output 4", "th": "เอาต์พุต 4"},
+    "pnl.out_hint": {"en": "Which output this colour is wired to ({name}). Output 1 "
+                           "is the shelf's power relay and cannot carry a lamp. Move "
+                           "a colour here if its output turns out to be dead — no "
+                           "firmware change needed.",
+                     "th": "สีนี้ต่ออยู่เอาต์พุตไหน ({name}) เอาต์พุต 1 เป็นรีเลย์ไฟเลี้ยง"
+                           "ชั้นวาง ใช้เป็นไฟสถานะไม่ได้ ถ้าเอาต์พุตไหนเสียก็ย้ายสีมาช่องอื่น"
+                           "ได้ที่นี่ ไม่ต้องแก้เฟิร์มแวร์"},
     "pnl.lamp.green": {"en": "green — ready", "th": "เขียว — พร้อมใช้งาน"},
     "pnl.lamp.amber": {"en": "amber — talking", "th": "เหลือง — กำลังสื่อสาร"},
     "pnl.lamp.red": {"en": "red — not usable", "th": "แดง — ไม่พร้อมใช้งาน"},
