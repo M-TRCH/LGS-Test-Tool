@@ -15,6 +15,8 @@ from typing import Callable, Optional, Protocol, Sequence
 
 from .lgs_map import DEVICE_TYPES, INTER_TXN_S, coil_enable, hub_channel
 
+MB_REG_LATCH_LOCKED = 41    # 1 = the module's latch sense reads locked
+
 
 class CheckCancelled(Exception):
     pass
@@ -178,6 +180,21 @@ def run_check(ops: FieldOps, cfg: CheckConfig, ids: Sequence[int],
                 notes = []
                 ok = True
                 value = _display_value(device_id)
+
+                # The safety-gated latch coils only pulse when the module's
+                # own sense reads locked; when it does not, the firmware
+                # finishes the request without energising anything and the
+                # write still succeeds. Reported as a pass, that would sign
+                # off a slot whose latch never moved — so ask first.
+                latch_ready = True
+                if cfg.unlock:
+                    sense = ops.read_reg(device_id, MB_REG_LATCH_LOCKED)
+                    latch_ready = bool(sense.ok and sense.value)
+                    if not latch_ready:
+                        notes.append(
+                            "latch sense does not read locked" if sense.ok
+                            else f"cannot read the latch sense ({sense.note})")
+                    ops.sleep(INTER_TXN_S)
                 if cfg.display:                     # the number to show first
                     w = ops.write_reg(device_id, 60, value)
                     ok = ok and w.ok
@@ -203,7 +220,8 @@ def run_check(ops: FieldOps, cfg: CheckConfig, ids: Sequence[int],
                 if cfg.display:
                     label += f" showing {value}"
                 result.steps.append(StepOutcome(
-                    label, ok, "; ".join(n for n in notes if n)))
+                    label, ok and latch_ready,
+                    "; ".join(n for n in notes if n)))
 
             if cfg.identify:
                 ident = ops.write_coil(device_id, 509, 1)
