@@ -10,7 +10,7 @@ from nicegui import ui
 
 from .. import config_store, firmware_bundle as fb, lgs_map
 from ..i18n import t
-from ..lgs_map import BAUD_WHITELIST
+from ..lgs_map import BAUD_WHITELIST, CABINET_LAYOUTS
 from ..opta_update import OptaConfig
 from ..ota import Done, Line, Progress
 from . import Ctx, bundled_picker, helps
@@ -23,12 +23,9 @@ CARD_USB = ("usb.gap_ms", "usb.max_ms")
 CARD_NET = ("net.enabled", "net.dhcp", "net.ip", "net.mask", "net.gw", "net.dns",
             "net.port", "net.link_timeout_ms")
 # Only rendered when the firmware reports these keys (gateway >= 1.2.0).
+# bus.hub_map comes first and is drawn by hub_map_editor, not as a plain field.
 CARD_HUB = ("bus.hub_map", "bus.hub_settle_ms", "bus.hub_budget_ms",
             "bus.hub_retry", "bus.hub_gap_ms")
-# One click instead of typing the LGS-64 wiring by hand: rows 1-8 channel-per-
-# row, rows 9 and 10 doubled onto channels 1 and 2.
-HUB_MAP_LGS64 = "1,2,3,4,5,6,7,8,1,2"
-HUB_MAP_NONE = "0,0,0,0,0,0,0,0,0,0"
 
 BOOL_KEYS = {"net.enabled", "net.dhcp"}
 
@@ -168,6 +165,91 @@ def build(ctx: Ctx) -> None:
                     .classes("text-xs text-orange leading-tight mt-1")
         fields[key] = el
 
+    def hub_map_editor(snap) -> None:
+        """One channel picker per row, sized to the cabinet in front of you.
+
+        The console value is a comma list, which is fine to read and awful to
+        type — and typing ten numbers is plainly wrong for an LGS with five
+        rows. So the rows come first: say how many the cabinet has, then set
+        each row's channel. The text field stays as the single staged value
+        (that is what SAVE sends) and follows whatever the pickers say.
+        """
+        current = str(snap.settings.get("bus.hub_map", "") or "")
+        try:
+            channels = lgs_map.parse_hub_map(current)
+        except ValueError:
+            channels = [0] * lgs_map.HUB_ROWS
+        # Default the cabinet size to the last row that is actually wired, so
+        # a five-row map opens as a five-row cabinet rather than ten.
+        wired = [r for r, ch in enumerate(channels, 1) if ch]
+        rows_default = max(wired) if wired else lgs_map.HUB_ROWS
+
+        # The staged value. Kept visible: it is exactly what the console
+        # stores, and it can still be pasted from another cabinet's notes.
+        text = ui.input(label_of("bus.hub_map"), value=current,
+                        on_change=lambda e: stage("bus.hub_map", e.value)) \
+            .props("dense outlined").classes("w-72")
+        helps(text, f"{hint_of('bus.hub_map')} (bus.hub_map)")
+        fields["bus.hub_map"] = text
+
+        pickers: list = []
+
+        def push() -> None:
+            """Rebuild the console value from the pickers."""
+            text.set_value(",".join(str(int(p.value or 0)) for p in pickers))
+
+        def build_rows(n: int) -> None:
+            row_box.clear()
+            pickers.clear()
+            options = {0: "—"} | {c: str(c) for c in range(1, lgs_map.HUB_CHANNELS + 1)}
+            with row_box:
+                for r in range(1, int(n) + 1):
+                    with ui.column().classes("gap-0 items-center"):
+                        ui.label(f"R{r}").classes("text-xs text-grey")
+                        sel = ui.select(options,
+                                        value=channels[r - 1] if r <= len(channels) else 0,
+                                        on_change=lambda _: push()) \
+                            .props("dense outlined").classes("w-16")
+                        pickers.append(sel)
+            push()
+
+        with ui.row().classes("items-center gap-2 q-mt-sm flex-wrap"):
+            rows_input = ui.number(t("gw.hub_rows"), value=rows_default,
+                                   min=1, max=lgs_map.HUB_ROWS, format="%d") \
+                .props("dense outlined").classes("w-32")
+            helps(rows_input, t("gw.hub_rows_tip"))
+            for layout in CABINET_LAYOUTS:
+                ui.button(layout.label,
+                          on_click=lambda l=layout: rows_input.set_value(l.row_count)) \
+                    .props("flat dense no-caps") \
+                    .tooltip(t("gw.hub_rows_from", label=layout.label,
+                               n=layout.row_count))
+
+        row_box = ui.row().classes("gap-1 q-mt-sm flex-wrap items-end")
+
+        with ui.row().classes("gap-2 q-mt-xs"):
+            def preset(fn) -> None:
+                for i, p in enumerate(pickers, 1):
+                    p.set_value(fn(i))
+                push()
+
+            ui.button(t("gw.hub.per_row"),
+                      on_click=lambda: preset(
+                          lambda r: ((r - 1) % lgs_map.HUB_CHANNELS) + 1)) \
+                .props("flat dense no-caps").tooltip(t("gw.hub.per_row_tip"))
+            ui.button(t("gw.hub.one_channel"),
+                      on_click=lambda: preset(lambda r: 1)) \
+                .props("flat dense no-caps").tooltip(t("gw.hub.one_channel_tip"))
+            ui.button(t("gw.hub.nohub"), on_click=lambda: preset(lambda r: 0)) \
+                .props("flat dense no-caps").tooltip(t("gw.hub.nohub_tip"))
+
+        rows_input.on_value_change(
+            lambda e: build_rows(max(1, int(e.value or 1))))
+        build_rows(rows_default)
+        # build_rows() staged a value simply by rendering; the card opens
+        # clean unless the operator actually changes something.
+        stage("bus.hub_map", current)
+
     def apply_pending(values: dict) -> None:
         """Drop values into the fields as ordinary unsaved edits."""
         for key, text in values.items():
@@ -265,17 +347,9 @@ def build(ctx: Ctx) -> None:
                     with ui.card().classes("p-3 grow"):
                         helps(ui.label(t("gw.card.hub")).classes("font-bold"),
                               t("gw.hub_hint"))
-                        for key in CARD_HUB:
+                        hub_map_editor(snap)
+                        for key in CARD_HUB[1:]:        # hub_map has its own
                             field_row(key, snap)
-                        # set_value fires on_change, so a preset lands as an
-                        # ordinary unsaved edit — same path as typing it.
-                        with ui.row().classes("gap-2"):
-                            ui.button("LGS-64",
-                                      on_click=lambda: fields["bus.hub_map"]
-                                      .set_value(HUB_MAP_LGS64)).props("flat dense")
-                            ui.button(t("gw.hub.nohub"),
-                                      on_click=lambda: fields["bus.hub_map"]
-                                      .set_value(HUB_MAP_NONE)).props("flat dense")
 
     def say(text: str) -> None:
         log_box.push(text)

@@ -514,7 +514,27 @@ TEXTS: dict[str, dict[str, str]] = {
                           "หลังสลับช่องและเงียบไป ~2 วินาที เกตเวย์ซ่อมโดยหน่วงคำขอถัดไป"
                           "จนฮับพร้อม ฝั่งเซิร์ฟเวอร์ต้อง retry อย่างน้อย 1 ครั้ง "
                           "หรือรอนานกว่าเวลาฮับพร้อม"},
+    "gw.hub_rows": {"en": "Rows", "th": "จำนวนชั้น"},
+    "gw.hub_rows_tip": {"en": "How many rows this cabinet has. Not every LGS is "
+                              "ten rows tall, and rows it does not have should "
+                              "not appear in the wiring.",
+                        "th": "ตู้นี้มีกี่ชั้น ตู้ LGS ไม่ได้มี 10 ชั้นทุกรุ่น "
+                              "ชั้นที่ไม่มีอยู่จริงไม่ควรโผล่ในผังสาย"},
+    "gw.hub_rows_from": {"en": "{label} has {n} rows", "th": "{label} มี {n} ชั้น"},
+    "gw.hub.per_row": {"en": "one channel per row", "th": "ช่องละชั้น"},
+    "gw.hub.per_row_tip": {"en": "Row 1 to channel 1, row 2 to channel 2, and so "
+                                 "on — the straightforward wiring.",
+                           "th": "ชั้น 1 เข้าช่อง 1, ชั้น 2 เข้าช่อง 2 ไล่ไปตามลำดับ "
+                                 "คือการเดินสายแบบตรงไปตรงมา"},
+    "gw.hub.one_channel": {"en": "all one channel", "th": "รวมช่องเดียว"},
+    "gw.hub.one_channel_tip": {"en": "Every row on channel 1. Nothing ever has to "
+                                     "switch, so confirmations stay fast.",
+                               "th": "ทุกชั้นอยู่ช่อง 1 ไม่มีการสลับช่องเลย "
+                                     "การยืนยันจึงไวที่สุด"},
     "gw.hub.nohub": {"en": "no hub", "th": "ไม่มีฮับ"},
+    "gw.hub.nohub_tip": {"en": "The bus is wired straight to the modules — turns "
+                               "the hub handling off entirely.",
+                         "th": "บัสต่อตรงเข้าโมดูล ปิดการจัดการฮับทั้งหมด"},
     "gw.hub_map_adopted": {
         "en": "Cabinet wiring updated from the gateway: {map}. The tool now "
               "groups slots by these channels.",

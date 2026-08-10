@@ -125,6 +125,15 @@ class CabinetLayout:
         return len(self.ids)
 
     @property
+    def row_count(self) -> int:
+        """How many rows this cabinet actually has.
+
+        Read from the IDs, not from `rows`: a layout may carry an explicit ID
+        list instead (LGS 64 does), and not every LGS is ten rows tall.
+        """
+        return max(i // 10 for i in self.ids) if self.ids else 0
+
+    @property
     def detail(self) -> str:
         return (f"{self.rows} rows x {self.cols} columns — {self.count} modules "
                 f"({self.ids[0]}-{self.ids[self.cols - 1]} … {self.ids[-self.cols]}-{self.ids[-1]})")
