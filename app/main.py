@@ -6,7 +6,7 @@ import os
 
 from nicegui import app, ui
 
-from . import config_store, i18n
+from . import config_store, i18n, lgs_map
 from .modbus_worker import ModbusWorker
 from .txn_log import TxnLog
 from .ui import (Ctx, connection_bar, helps, log_pane, tab_autotest,
@@ -22,6 +22,14 @@ worker.start()
 cfg = config_store.load()
 worker.cubeprog_path = cfg.cubeprog_path
 worker.dfu_util_path = cfg.dfu_util_path
+if cfg.hub_map:
+    # Last known cabinet wiring. A stored value that no longer parses is
+    # ignored rather than fatal — the Gateway tab refreshes it from the
+    # gateway, which is the authority, as soon as anyone reads it.
+    try:
+        lgs_map.set_hub_map(cfg.hub_map)
+    except ValueError:
+        pass
 
 
 @ui.page("/")

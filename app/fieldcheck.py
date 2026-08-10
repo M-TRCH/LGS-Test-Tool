@@ -234,13 +234,16 @@ def pick_batches(ids: Sequence[int], size: int) -> list:
     watched at once, not the number of slots. The hub needs about two
     seconds of silence to change channel, so every extra channel in a batch
     adds ~2 s to each polling sweep, while an extra slot on a channel
-    already being watched costs about 70 ms. Two slots on different rows
-    took 4.6 s per sweep; a whole row takes well under one second.
+    already being watched costs about 100 ms. Two slots on different
+    channels took 4.6 s per sweep; eight slots on one channel took 719 ms.
 
-    So a batch never spans rows. A row is one hub channel and also one place
-    to stand at the cabinet, which makes the fast arrangement the natural
-    one. `size` caps how many of that row light at once; 0 lights everything
-    selected however it is spread, which is honest but slow to confirm.
+    So a batch never spans hub channels, and `size` caps how many slots of
+    one channel light at once. The channel map comes from the gateway (see
+    lgs_map.hub_channel), so re-cabling the cabinet changes the batches
+    without touching this: with rows 1-5 on a single channel a batch can be
+    drawn from any of those rows, and on a cabinet with no hub at all every
+    slot is one group. `size` of 0 lights everything selected however it is
+    spread, which is honest to the real system but slow to confirm.
     """
     ids = sorted(ids)
     if not ids:
@@ -248,10 +251,10 @@ def pick_batches(ids: Sequence[int], size: int) -> list:
     if size is None or size <= 0:
         return [tuple(ids)]
     out = []
-    for row in sorted({i // 10 for i in ids}):
-        row_ids = [i for i in ids if i // 10 == row]
-        for start in range(0, len(row_ids), size):
-            out.append(tuple(row_ids[start:start + size]))
+    for channel in sorted({hub_channel(i) for i in ids}):
+        same = [i for i in ids if hub_channel(i) == channel]
+        for start in range(0, len(same), size):
+            out.append(tuple(same[start:start + size]))
     return out
 
 

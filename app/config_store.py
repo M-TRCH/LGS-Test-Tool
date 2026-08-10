@@ -26,6 +26,11 @@ class AppConfig:
     cubeprog_path: str = ""              # "" = look in the usual install dirs
     dfu_util_path: str = ""              # "" = beside the exe, then PlatformIO
     advanced_mode: bool = False          # False = everyday pages only
+    # Row -> RS485 hub channel as the gateway reports it ("1,1,1,1,1,2,3,4,5,6").
+    # "" = the built-in default. Stored so a re-cabled cabinet stays correct
+    # across restarts; the Gateway tab refreshes it whenever it reads the
+    # gateway, which is the authority on the wiring.
+    hub_map: str = ""
 
 
 def data_dir() -> Path:

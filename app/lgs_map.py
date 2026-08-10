@@ -24,33 +24,75 @@ LATCH_COOLDOWN_S = 2.2      # firmware enforces >=2000 ms between unlock pulses
 INTER_TXN_S = 0.025         # RS485 breather between transactions
 
 # ── RS485 switch hub ───────────────────────────────────────────────────────
-# The bus leaves the Opta through an 8-channel RS485 switch hub. Rows 1-8 sit
-# on channels 1-8; rows 9 and 10 double up on channels 1 and 2.
+# The bus can leave the Opta through an 8-channel RS485 switch hub, which
+# follows traffic: the first frame on a new channel makes it switch, that
+# frame is swallowed, and the channel stays deaf for about two seconds
+# (measured on the cabinet). So slots that share a channel can be watched
+# together for about 100 ms each, while every extra channel in the set adds
+# ~2 s to each sweep. Which slots share a channel is therefore worth knowing.
 #
-# The hub follows traffic rather than a clock: it switches to whichever
-# channel it just saw a frame on, and the frames it switches *during* are
-# swallowed. Waiting longer does not help — measured on a live cabinet,
-# 120 ms and 700 ms gaps gave the identical 2-of-10 result, while simply
-# repeating the request reached 10 of 10. What the first frames buy is the
-# switch itself, so the fix is to spend a few of them on purpose.
+# Which row hangs off which channel is wiring, and the wiring changes — rows
+# 1-5 were re-cabled onto a single channel on 2026-08-10. The gateway holds
+# the authoritative map at `bus.hub_map`; this is the tool's copy of it, kept
+# in step by the Gateway tab whenever it reads the gateway. The default below
+# is the original cabinet: rows 1-8 on channels 1-8, rows 9-10 doubled onto
+# channels 1-2.
 #
-# Measured: the 3rd frame answered on every channel in one run and the 4th
-# in the next, so the ceiling is set well above both. Costs nothing when the
-# hub is already on the right channel: the first frame answers and the rest
-# are never sent.
+# A channel of 0 means "not behind a hub". An all-zero map therefore says
+# there is no hub at all, and every slot can be watched together.
 HUB_CHANNELS = 8
 INTER_CH_S = 0.03           # brief settle; the retries do the real work
 HUB_WAKE_TRIES = 6          # attempts allowed on the first txn after a switch
 HUB_WAKE_GAP_S = 0.04       # between those attempts
+HUB_ROWS = 10               # slave IDs 11-108; same span as GRID_ROWS below
+
+_HUB_MAP = [((r - 1) % HUB_CHANNELS) + 1 for r in range(1, HUB_ROWS + 1)]
+
+
+def hub_map() -> list:
+    """The tool's row -> channel map, row 1 first."""
+    return list(_HUB_MAP)
+
+
+def format_hub_map() -> str:
+    return ",".join(str(v) for v in _HUB_MAP)
+
+
+def parse_hub_map(text: str) -> list:
+    """Read a `bus.hub_map` value ("1,1,1,1,1,2,3,4,5,6") into a list.
+
+    Raises ValueError on anything that is not a channel, so a garbled console
+    reply can never quietly become a wrong map.
+    """
+    parts = [p.strip() for p in str(text).replace(";", ",").split(",") if p.strip()]
+    if not parts:
+        raise ValueError("empty hub map")
+    out = []
+    for p in parts:
+        if not p.isdigit() or int(p) > HUB_CHANNELS:
+            raise ValueError(f"{p!r} is not a hub channel (0-{HUB_CHANNELS})")
+        out.append(int(p))
+    return out[:HUB_ROWS] + [0] * max(0, HUB_ROWS - len(out))
+
+
+def set_hub_map(values) -> list:
+    """Adopt a row -> channel map. Accepts a list or a console string."""
+    global _HUB_MAP
+    if isinstance(values, str):
+        values = parse_hub_map(values)
+    values = list(values)[:HUB_ROWS]
+    _HUB_MAP = values + [0] * max(0, HUB_ROWS - len(values))
+    return list(_HUB_MAP)
 
 
 def hub_channel(device_id: int) -> int:
-    """Which hub channel a module hangs off (1-8).
+    """Which hub channel a module hangs off, or 0 when it is not behind one."""
+    row = device_id // 10
+    if 1 <= row <= len(_HUB_MAP):
+        return _HUB_MAP[row - 1]
+    return 0
 
-    Row 9 shares channel 1 with row 1 and row 10 shares channel 2 with row 2,
-    so this is the row wrapped onto the hub's eight outputs.
-    """
-    return ((device_id // 10 - 1) % HUB_CHANNELS) + 1
+
 GRID_ROWS = 10
 GRID_COLS = 8
 GRID_IDS = tuple(r * 10 + c for r in range(1, GRID_ROWS + 1)

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from nicegui import ui
 
-from .. import firmware_bundle as fb
+from .. import config_store, firmware_bundle as fb, lgs_map
 from ..i18n import t
 from ..lgs_map import BAUD_WHITELIST
 from ..opta_update import OptaConfig
@@ -280,6 +280,30 @@ def build(ctx: Ctx) -> None:
     def say(text: str) -> None:
         log_box.push(text)
 
+    def adopt_hub_map(snap) -> None:
+        """Take the cabinet's wiring from the gateway, which owns it.
+
+        The tool uses the row -> channel map to decide which slots can be
+        watched together cheaply (pick walkthrough batches, sweep order). A
+        stale copy is not a wrong reading, only a slow one — but re-cabling
+        happens during commissioning, and nobody should have to remember to
+        tell the tool about it twice.
+        """
+        if not snap or not snap.ok:
+            return
+        text = snap.settings.get("bus.hub_map")
+        if not text or text == lgs_map.format_hub_map():
+            return
+        try:
+            lgs_map.set_hub_map(text)
+        except ValueError as exc:
+            say(f"hub map from gateway ignored: {exc}")
+            return
+        ctx.cfg.hub_map = text
+        config_store.save(ctx.cfg)
+        say(t("gw.hub_map_adopted", map=text))
+        ui.notify(t("gw.hub_map_adopted", map=text), type="positive", timeout=5000)
+
     # ── actions ────────────────────────────────────────────────────────────
     async def do_detect() -> None:
         ok, message = usable()
@@ -309,6 +333,7 @@ def build(ctx: Ctx) -> None:
             status.set_text(snap.note or t("gw.not_found", port=ctx.port()))
             status.props("color=red")
             say(f"read failed: {snap.note}")
+        adopt_hub_map(snap)
         render(snap)
 
     async def run_action(action: str) -> None:

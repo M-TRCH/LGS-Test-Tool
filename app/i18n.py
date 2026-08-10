@@ -515,6 +515,10 @@ TEXTS: dict[str, dict[str, str]] = {
                           "จนฮับพร้อม ฝั่งเซิร์ฟเวอร์ต้อง retry อย่างน้อย 1 ครั้ง "
                           "หรือรอนานกว่าเวลาฮับพร้อม"},
     "gw.hub.nohub": {"en": "no hub", "th": "ไม่มีฮับ"},
+    "gw.hub_map_adopted": {
+        "en": "Cabinet wiring updated from the gateway: {map}. The tool now "
+              "groups slots by these channels.",
+        "th": "อัปเดตผังสายจากเกตเวย์แล้ว: {map} เครื่องมือจะจัดกลุ่มช่องตามนี้"},
     "gwf.bus.hub_map": {"en": "Row → hub channel", "th": "ผังแถว → ช่องฮับ"},
     "gwf.bus.hub_map.hint": {"en": "One entry per row 1-10, comma-separated. Value = "
                                    "hub channel 1-8; 0 = wired straight, no hub. All "
