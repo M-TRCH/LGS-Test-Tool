@@ -10,12 +10,13 @@ from pathlib import Path
 from nicegui import ui
 
 from .. import commission_image as ci
+from .. import firmware_bundle as fb
 from ..commission import BatchConfig, BoardDone, BoardNext, CommissionConfig
 from ..config_store import data_dir
 from ..i18n import t
 from ..lgs_map import GRID_COLS, GRID_ROWS, valid_assignable_id
 from ..ota import Done, Line, Progress
-from . import Ctx, helps, warning_banner
+from . import Ctx, bundled_picker, helps, warning_banner
 
 LEVEL_CLASS = {"info": "", "ok": "text-green", "warn": "text-orange", "err": "text-red"}
 
@@ -41,21 +42,34 @@ def build(ctx: Ctx) -> None:
         with ui.card().classes("p-3 grow"):
             helps(ui.label(t("cm.image")).classes("font-bold"), t("cm.image_hint"))
 
-            def on_upload(e) -> None:
-                data = e.content.read()
-                state["image"], state["name"] = data, e.name
+            # A bundled image goes through the very same check as an uploaded
+            # one: shipping it with the tool says where it came from, not that
+            # it is exempt from carrying a commissioning block.
+            def arm(data: bytes, name: str) -> None:
+                state["image"], state["name"] = data, name
                 try:
+                    # Block first: it answers "is this an LGS module image at
+                    # all?". Only then is "factory or OTA?" the useful
+                    # question — asking it of a foreign binary would explain
+                    # the wrong problem.
                     block = ci.find_block(data)
+                    ci.check_factory_image(data)
                 except ci.ImageError as exc:
                     state["image"] = b""
                     image_label.set_text(str(exc))
                     image_label.classes(add="text-red", remove="text-green")
                     return
-                image_label.set_text(t("cm.image_ok", name=e.name,
+                image_label.set_text(t("cm.image_ok", name=name,
                                        size=f"{len(data):,}",
                                        detail=ci.describe(block)))
                 image_label.classes(add="text-green", remove="text-red")
 
+            def on_upload(e) -> None:
+                arm(e.content.read(), e.name)
+
+            bundled_picker(fb.KIND_MODULE_FACTORY,
+                           lambda data, name, img: arm(data, name))
+            ui.label(t("fw.or_upload")).classes("text-xs text-grey")
             ui.upload(on_upload=on_upload, auto_upload=True, max_files=1) \
                 .props('accept=".bin" flat dense').classes("w-full")
             image_label = ui.label(t("cm.no_image")).classes("text-sm")

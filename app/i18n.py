@@ -449,6 +449,15 @@ TEXTS: dict[str, dict[str, str]] = {
                                      "th": "แค่ทำให้เปิดเครื่องช้าลง ถ้าเสียบทีหลังระบบก็จับได้เอง"},
     "gwf.net.mac": {"en": "Hardware address (MAC)", "th": "ที่อยู่ฮาร์ดแวร์ (MAC)"},
 
+    "fw.use": {"en": "USE THIS", "th": "ใช้ไฟล์นี้"},
+    "fw.or_upload": {"en": "or upload your own file:", "th": "หรืออัปโหลดไฟล์เอง:"},
+    "fw.bundled_hint": {"en": "Released firmware shipped inside this tool, so a "
+                              "site visit needs no download. The tool checks each "
+                              "one against the released file before using it.",
+                        "th": "เฟิร์มแวร์ที่ปล่อยแล้วและติดมากับเครื่องมือ ออกหน้างานได้"
+                              "โดยไม่ต้องโหลดไฟล์ ระบบตรวจสอบความถูกต้องกับไฟล์ที่ปล่อยจริง"
+                              "ก่อนใช้งานทุกครั้ง"},
+
     "gw.card.hub": {"en": "RS485 switch hub", "th": "ฮับสลับ RS485"},
     "gw.hub_hint": {"en": "For cabinets whose RS485 runs through a channel-switching "
                           "hub (LGS-64). The hub swallows the first frame after every "

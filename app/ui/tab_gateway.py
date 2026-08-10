@@ -8,11 +8,12 @@ from __future__ import annotations
 
 from nicegui import ui
 
+from .. import firmware_bundle as fb
 from ..i18n import t
 from ..lgs_map import BAUD_WHITELIST
 from ..opta_update import OptaConfig
 from ..ota import Done, Line, Progress
-from . import Ctx, helps
+from . import Ctx, bundled_picker, helps
 
 # Which settings each card shows, in display order.
 CARD_IDENTITY = ("sys.name",)
@@ -90,11 +91,15 @@ def build(ctx: Ctx) -> None:
         helps(ui.label(t("gw.fw_card")).classes("font-bold text-orange"),
               t("gw.fw_hint"))
 
-        def on_fw_upload(e) -> None:
-            fw_state["image"], fw_state["name"] = e.content.read(), e.name
-            fw_label.set_text(t("gw.fw_chosen", name=e.name,
-                                size=f"{len(fw_state['image']):,}"))
+        def arm(data: bytes, name: str) -> None:
+            fw_state["image"], fw_state["name"] = data, name
+            fw_label.set_text(t("gw.fw_chosen", name=name, size=f"{len(data):,}"))
 
+        def on_fw_upload(e) -> None:
+            arm(e.content.read(), e.name)
+
+        bundled_picker(fb.KIND_GATEWAY, lambda data, name, img: arm(data, name))
+        ui.label(t("fw.or_upload")).classes("text-xs text-grey")
         ui.upload(on_upload=on_fw_upload, auto_upload=True, max_files=1) \
             .props('accept=".bin" flat dense').classes("w-full")
         fw_label = ui.label(t("gw.fw_none")).classes("text-sm")

@@ -54,9 +54,26 @@ if (-not (Test-Path "app\docs\LGS-Control-Table.md")) {
 }
 # Preparing a factory-fresh Opta needs Arduino's QSPIFormat image on site,
 # where there is no PlatformIO to build it from. See app\blobs\README.md.
-if (-not (Test-Path "app\blobs\qspiformat_opta.bin")) {
-    Write-Host "ERROR: app\blobs\qspiformat_opta.bin missing - see app\blobs\README.md"
-    exit 1
+# The firmware images are bundled for the same reason, and are checked here by
+# content: a truncated or swapped image must stop the build, not reach a
+# cabinet. app\firmware_bundle.py holds the same hashes and re-checks at load.
+$blobs = @{
+    "qspiformat_opta.bin"            = "62003812"
+    "gateway_opta_v1.2.0.bin"        = "ecd8dd42"
+    "module_g070_v3.2.0_factory.bin" = "7972a50a"
+    "module_g070_v3.2.0_ota.bin"     = "d0a27512"
+}
+foreach ($blob in $blobs.Keys) {
+    $path = "app\blobs\$blob"
+    if (-not (Test-Path $path)) {
+        Write-Host "ERROR: $path missing - see app\blobs\README.md"
+        exit 1
+    }
+    $hash = (Get-FileHash $path -Algorithm SHA256).Hash.ToLower()
+    if (-not $hash.StartsWith($blobs[$blob])) {
+        Write-Host "ERROR: $path is not the expected image (sha256 starts $($hash.Substring(0,8)), expected $($blobs[$blob]))"
+        exit 1
+    }
 }
 & ".venv\Scripts\nicegui-pack.exe" --onefile --name $name `
     --add-data "app\docs;app/docs" `

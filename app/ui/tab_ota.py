@@ -7,9 +7,10 @@ from __future__ import annotations
 
 from nicegui import ui
 
+from .. import firmware_bundle as fb
 from ..i18n import t
 from ..ota import Done, Line, MAX_IMAGE_SIZE, OtaConfig, Progress
-from . import Ctx, helps, inline_warning, warning_banner
+from . import Ctx, bundled_picker, helps, inline_warning, warning_banner
 
 LEVEL_CLASS = {"info": "", "ok": "text-green", "warn": "text-orange", "err": "text-red"}
 
@@ -26,20 +27,25 @@ def build(ctx: Ctx) -> None:
             helps(ui.label(t("ota.image")).classes("font-bold"),
                   t("ota.upload_hint", max=f"{MAX_IMAGE_SIZE:,}"))
 
-            def on_upload(e) -> None:
-                data = e.content.read()
-                state["image"], state["name"] = data, e.name
-                cfg = OtaConfig(image=data, filename=e.name)
+            def arm(data: bytes, name: str) -> None:
+                state["image"], state["name"] = data, name
+                cfg = OtaConfig(image=data, filename=name)
                 err = cfg.size_error()
                 if err:
                     image_label.set_text(err)
                     image_label.classes(add="text-red", remove="text-green")
                     state["image"] = b""
                 else:
-                    image_label.set_text(t("ota.image_info", name=e.name, size=f"{len(data):,}",
+                    image_label.set_text(t("ota.image_info", name=name, size=f"{len(data):,}",
                                            crc=f"{cfg.crc32:08X}", chunks=cfg.total_chunks))
                     image_label.classes(add="text-green", remove="text-red")
 
+            def on_upload(e) -> None:
+                arm(e.content.read(), e.name)
+
+            bundled_picker(fb.KIND_MODULE_OTA,
+                           lambda data, name, img: arm(data, name))
+            ui.label(t("fw.or_upload")).classes("text-xs text-grey")
             ui.upload(on_upload=on_upload, auto_upload=True, max_files=1) \
                 .props('accept=".bin" flat dense').classes("w-full")
             image_label = ui.label(t("ota.no_image")).classes("text-sm")

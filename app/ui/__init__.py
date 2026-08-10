@@ -52,6 +52,44 @@ def helps(element, text: str):
     return element
 
 
+def bundled_picker(kind: str, on_pick) -> None:
+    """Offer the released images that ship inside the tool, for one job.
+
+    `on_pick(data, filename, image)` gets the same things an upload produces,
+    so each caller keeps one code path for validating and arming an image.
+    Picking is a deliberate click rather than a pre-armed default: an image
+    that armed itself when a tab opened would sit one stray click away from
+    being flashed into a cabinet.
+    """
+    from nicegui import ui
+
+    from .. import firmware_bundle as fb
+    from ..i18n import t
+
+    images = fb.for_kind(kind)
+    if not images:
+        return
+    options = {img.key: img.label for img in images}
+    with ui.row().classes("items-center gap-2 w-full no-wrap"):
+        select = helps(
+            ui.select(options, value=images[0].key)
+              .props("dense outlined").classes("grow"),
+            t("fw.bundled_hint"))
+
+        def use() -> None:
+            image = fb.by_key(select.value)
+            if image is None:
+                return
+            try:
+                data = fb.load(image)
+            except fb.BundleError as exc:
+                ui.notify(str(exc), type="negative", timeout=9000)
+                return
+            on_pick(data, image.filename, image)
+
+        ui.button(t("fw.use"), on_click=use).props("outline dense no-caps")
+
+
 @dataclass
 class Ctx:
     worker: ModbusWorker

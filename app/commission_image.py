@@ -118,6 +118,36 @@ def _candidates(image: bytes) -> list[Block]:
                            device_type=dtype))
 
 
+# Where the application starts. Everything below it is the bootloader.
+APP_BASE = 0x08001000
+
+
+def check_factory_image(image: bytes) -> None:
+    """Refuse an OTA image where a factory image is meant.
+
+    The two look alike to every other check here: the OTA image is a byte
+    slice of the factory image starting at the application, so it carries the
+    same commissioning block and passes `find_block` happily. Flashing it over
+    ST-Link would write the application to 0x08000000, where the bootloader
+    belongs — a board that has to be recovered before it will run again.
+
+    They differ in the one place that says where the image expects to live:
+    the reset vector. A factory image starts with the bootloader's vector
+    table, so its reset handler sits in the first 4 KB; an application linked
+    at 0x08001000 points well past it. Checked against every released image
+    from v3.0.0 to v3.3.0.
+    """
+    if len(image) < 8:
+        raise ImageError("This file is too small to be a firmware image.")
+    reset = struct.unpack_from("<I", image, 4)[0] & ~1
+    if reset >= APP_BASE:
+        raise ImageError(
+            "This is an over-the-air image (application only) — its reset "
+            f"vector points to 0x{reset:08X}, past the bootloader. Flashing "
+            "it over ST-Link would leave the module without one. Use the "
+            "*factory* image here, and this one on the Firmware (OTA) tab.")
+
+
 def find_block(image: bytes) -> Block:
     """Locate the one commissioning block, or explain why there isn't one."""
     blocks = _candidates(image)
