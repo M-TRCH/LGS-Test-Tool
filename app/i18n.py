@@ -283,14 +283,21 @@ TEXTS: dict[str, dict[str, str]] = {
     "ins.always": {"en": "Always included — check that the module answers on the bus "
                          "(reads its device type).",
                    "th": "ทำทุกครั้ง — ตรวจว่าโมดูลตอบสนองบนบัส (อ่านชนิดอุปกรณ์)"},
-    "ins.do_light": {"en": "Turn the light on, then off (1001)",
-                     "th": "เปิดไฟแล้วปิด (1001)"},
-    "ins.do_display": {"en": "Show its number on the display (reg 60 + 1010)",
-                       "th": "โชว์เลขประจำตัวบนจอ (reg 60 + 1010)"},
-    "ins.do_display_tip": {"en": "Shows the slave ID; IDs above 99 show the column "
-                                 "number because the display holds two digits",
-                           "th": "แสดง Slave ID; ถ้าเกิน 99 จะแสดงเลขช่องแทน "
-                                 "เพราะจอรองรับสองหลัก"},
+    "ins.act.skip": {"en": "skip", "th": "ข้าม"},
+    "ins.act.light": {"en": "light", "th": "เปิดไฟ"},
+    "ins.act.light_display": {"en": "light + display", "th": "เปิดไฟ+จอ"},
+    "ins.act_hint": {
+        "en": "One command per module, the same combinations the firmware "
+              "offers: 1001 lights the ring, 1011 lights it and shows the "
+              "module's number. Adding the latch below upgrades whichever is "
+              "chosen to 1021 or 1031. The display shows the slave ID; IDs "
+              "above 99 show the column number, because it holds two digits.",
+        "th": "หนึ่งคำสั่งต่อโมดูล ใช้ชุดเดียวกับที่เฟิร์มแวร์มีให้: 1001 เปิดไฟวงแหวน, "
+              "1011 เปิดไฟพร้อมโชว์เลขประจำช่อง ถ้าติ๊กกลอนด้านล่างจะยกระดับเป็น "
+              "1021 หรือ 1031 จอแสดง Slave ID ถ้าเกิน 99 จะแสดงเลขช่องแทน "
+              "เพราะจอรองรับสองหลัก"},
+    "ins.act_coil": {"en": "will send coil {coil} ({what})",
+                     "th": "จะส่ง coil {coil} ({what})"},
     "ins.do_identify": {"en": "Identify — blink white ~5 s (509)",
                         "th": "ระบุตัวตน — กะพริบสีขาว ~5 วิ (509)"},
     "ins.hold": {"en": "Hold each step (s)", "th": "ค้างแต่ละขั้น (วินาที)"},
@@ -346,8 +353,8 @@ TEXTS: dict[str, dict[str, str]] = {
         "th": "ไฟติด {n} ช่อง — กดปุ่มหน้าช่อง หยิบช่องไหนก่อนก็ได้"},
     "ins.unlock_card": {"en": "Unlock — moves the physical latch",
                         "th": "ปลดล็อก — กลอนจะทำงานจริง"},
-    "ins.do_unlock": {"en": "Light + unlock each module (1021)",
-                      "th": "เปิดไฟ + ปลดล็อกทุกโมดูล (1021)"},
+    "ins.do_unlock": {"en": "Also throw the latch (1021 / 1031)",
+                      "th": "ปลดกลอนด้วย (1021 / 1031)"},
     "ins.warn_unlock": {"en": "this run will unlock {n} module(s)",
                         "th": "รอบนี้จะปลดล็อก {n} โมดูล"},
     "ins.cooldown_note": {"en": "Each module keeps its own 2 s cooldown, so a sweep "

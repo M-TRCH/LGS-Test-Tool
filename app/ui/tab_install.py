@@ -121,19 +121,28 @@ def build(ctx: Ctx) -> None:
     with ui.row().classes("gap-3 flex-wrap items-stretch w-full"):
         with ui.card().classes("p-3 grow"):
             helps(ui.label(t("ins.what")).classes("font-bold"), t("ins.always"))
-            with ui.column().classes("gap-1 q-mt-sm"):
-                cb_light = ui.checkbox(t("ins.do_light"), value=True)
-                cb_display = ui.checkbox(t("ins.do_display"), value=False) \
-                    .tooltip(t("ins.do_display_tip"))
-                cb_identify = ui.checkbox(t("ins.do_identify"), value=False)
+            # One choice, one coil — the same combinations the firmware
+            # offers, so the check drives a module the way a master does.
+            action = ui.toggle({"skip": t("ins.act.skip"),
+                                "light": t("ins.act.light"),
+                                "light_display": t("ins.act.light_display")},
+                               value="light").props("no-caps dense").classes("q-mt-sm")
+            helps(action, t("ins.act_hint"))
+            cb_identify = ui.checkbox(t("ins.do_identify"), value=False) \
+                .classes("q-mt-sm")
             hold = ui.number(t("ins.hold"), value=1.0, min=0.2, max=5, step=0.1) \
                 .props("dense outlined").classes("w-44 q-mt-sm")
 
         with ui.card().classes("p-3 grow border border-orange-400"):
             with ui.row().classes("items-center gap-2"):
                 ui.label(t("ins.unlock_card")).classes("font-bold text-orange")
+            # Adding the latch upgrades the chosen action to its latch twin
+            # (1001 -> 1021, 1011 -> 1031) rather than firing a second command
+            # at the module. The physical action keeps its own card and its
+            # own live warning.
             cb_unlock = helps(ui.checkbox(t("ins.do_unlock"), value=False),
                               t("ins.cooldown_note"))
+            coil_caption = ui.label("").classes("text-sm text-grey")
             # Stays on screen: it is a live warning about what will happen.
             unlock_caption = inline_warning("text-red text-sm")
 
@@ -160,15 +169,23 @@ def build(ctx: Ctx) -> None:
                 .props("outline").classes("q-mt-sm")
 
     def make_cfg() -> CheckConfig:
-        return CheckConfig(light=bool(cb_light.value), unlock=bool(cb_unlock.value),
-                           display=bool(cb_display.value),
+        choice = str(action.value or "skip")
+        return CheckConfig(light=choice != "skip",
+                           unlock=bool(cb_unlock.value),
+                           display=choice == "light_display",
                            identify=bool(cb_identify.value), hold_s=float(hold.value))
 
     def update_caption() -> None:
-        n = make_cfg().unlock_count(len(selected))
+        cfg = make_cfg()
+        n = cfg.unlock_count(len(selected))
         unlock_caption.set_text(t("ins.warn_unlock", n=n) if n else "")
+        # Say which command will actually go out: 1001 / 1011 / 1021 / 1031
+        # is the difference between a light and a latch throwing.
+        coil_caption.set_text(t("ins.act_coil", coil=cfg.action_coil,
+                                what=cfg.action_name) if cfg.light else "")
 
     cb_unlock.on_value_change(update_caption)
+    action.on_value_change(update_caption)
 
     # ── run + results ──────────────────────────────────────────────────────
     with ui.row().classes("items-center gap-3 flex-wrap"):

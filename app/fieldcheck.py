@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Callable, Optional, Protocol, Sequence
 
-from .lgs_map import DEVICE_TYPES, INTER_TXN_S, hub_channel
+from .lgs_map import DEVICE_TYPES, INTER_TXN_S, coil_enable, hub_channel
 
 
 class CheckCancelled(Exception):
@@ -31,14 +31,37 @@ class FieldOps(Protocol):
 
 @dataclass
 class CheckConfig:
-    light: bool = True              # coil 1001 — ring on, hold, off
-    unlock: bool = False            # coil 1021 — ring + latch pulse (physical!)
-    display: bool = False           # reg 60 + coil 1010 — number on the OLED
+    """What to do at each module.
+
+    The firmware already offers the combinations as single coils — 1001 ring,
+    1011 ring + number on the OLED, 1021 ring + latch, 1031 all three — so
+    the check sends the one coil that does what was asked instead of lighting
+    the module two or three times in a row. That is also how a master drives
+    it in service, which is the behaviour worth rehearsing.
+    """
+    light: bool = True              # do the ring action at all
+    unlock: bool = False            # + move the physical latch (1021 / 1031)
+    display: bool = False           # + show the module's number (1011 / 1031)
     identify: bool = False          # coil 509 — blink white ~5 s, self-restoring
     hold_s: float = 1.0             # how long the light/number stays visible
 
+    @property
+    def action_coil(self) -> int:
+        """The single coil that performs the chosen combination, preset 1."""
+        return coil_enable(1) + (10 if self.display else 0) \
+                              + (20 if self.unlock else 0)
+
+    @property
+    def action_name(self) -> str:
+        parts = ["light"]
+        if self.display:
+            parts.append("display")
+        if self.unlock:
+            parts.append("latch")
+        return " + ".join(parts)
+
     def unlock_count(self, device_count: int) -> int:
-        return device_count if self.unlock else 0
+        return device_count if (self.unlock and self.light) else 0
 
 
 @dataclass
@@ -151,31 +174,36 @@ def run_check(ops: FieldOps, cfg: CheckConfig, ids: Sequence[int],
                                             result.type_name))
 
             if cfg.light:
-                on = ops.write_coil(device_id, 1001, 1)
-                ops.sleep(cfg.hold_s)
-                off = ops.write_coil(device_id, 1001, 0)
-                result.steps.append(StepOutcome(
-                    "light on/off (1001)", on.ok and off.ok,
-                    on.note or off.note))
-
-            if cfg.display:
+                coil = cfg.action_coil
+                notes = []
+                ok = True
                 value = _display_value(device_id)
-                w = ops.write_reg(device_id, 60, value)
-                ops.sleep(INTER_TXN_S)
-                on = ops.write_coil(device_id, 1010, 1)
-                ops.sleep(cfg.hold_s)
-                off = ops.write_coil(device_id, 1010, 0)
-                ops.write_reg(device_id, 60, 0)
-                result.steps.append(StepOutcome(
-                    f"display shows {value} (reg 60 + 1010)",
-                    w.ok and on.ok and off.ok, w.note or on.note or off.note))
+                if cfg.display:                     # the number to show first
+                    w = ops.write_reg(device_id, 60, value)
+                    ok = ok and w.ok
+                    notes.append(w.note)
+                    ops.sleep(INTER_TXN_S)
 
-            if cfg.unlock:
-                fire = ops.write_coil(device_id, 1021, 1)
-                ops.sleep(max(0.6, cfg.hold_s))     # let the pulse resolve
-                ops.write_coil(device_id, 1001, 0)  # 1021 leaves the ring lit
-                result.steps.append(StepOutcome("light + unlock (1021)",
-                                                fire.ok, fire.note))
+                on = ops.write_coil(device_id, coil, 1)
+                ok = ok and on.ok
+                notes.append(on.note)
+                # A latch pulse needs time to throw before anything clears it.
+                ops.sleep(max(0.6, cfg.hold_s) if cfg.unlock else cfg.hold_s)
+
+                # The latch coils leave the ring lit and are not cleared by
+                # writing them back, so the base coil is what turns it off.
+                off = ops.write_coil(device_id, coil_enable(1) if cfg.unlock
+                                     else coil, 0)
+                ok = ok and off.ok
+                notes.append(off.note)
+                if cfg.display:
+                    ops.write_reg(device_id, 60, 0)
+
+                label = f"{cfg.action_name} ({coil})"
+                if cfg.display:
+                    label += f" showing {value}"
+                result.steps.append(StepOutcome(
+                    label, ok, "; ".join(n for n in notes if n)))
 
             if cfg.identify:
                 ident = ops.write_coil(device_id, 509, 1)
