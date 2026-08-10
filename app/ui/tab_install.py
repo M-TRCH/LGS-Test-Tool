@@ -145,6 +145,10 @@ def build(ctx: Ctx) -> None:
                 pick_preset = ui.select({n: f"Preset {n}" for n in range(1, 9)},
                                         value=1, label=t("ins.pick_preset")) \
                     .props("dense outlined").classes("w-36")
+                pick_batch = ui.number(t("ins.pick_batch"), value=4,
+                                       min=0, max=16, format="%d") \
+                    .props("dense outlined").classes("w-36") \
+                    .tooltip(t("ins.pick_batch_tip"))
                 pick_timeout = ui.number(t("ins.pick_timeout"), value=60,
                                          min=0, max=600, format="%d") \
                     .props("dense outlined").classes("w-36") \
@@ -232,7 +236,8 @@ def build(ctx: Ctx) -> None:
             return
         state["pick_mode"] = True
         cfg = PickConfig(preset=int(pick_preset.value or 1),
-                         timeout_s=float(pick_timeout.value or 0))
+                         timeout_s=float(pick_timeout.value or 0),
+                         batch=int(pick_batch.value or 0))
         if not worker.start_pick_sequence(cfg, sorted(selected)):
             ui.notify(t("msg.worker_busy"), type="negative")
             banner.set_text("—")

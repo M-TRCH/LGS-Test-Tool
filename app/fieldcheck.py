@@ -206,8 +206,13 @@ FW_MIN_CONFIRM = 30200          # v3.2.0 — first build that counts presses
 @dataclass
 class PickConfig:
     preset: int = 1              # enable coil 1000+n lights the slot
-    timeout_s: float = 60.0      # for the whole run; 0 = wait until cancelled
-    poll_s: float = 0.4          # pause between sweeps of the waiting slots
+    timeout_s: float = 60.0      # per batch; 0 = wait until cancelled
+    # A batch sits on one hub channel, so a sweep of it is cheap (~100 ms a
+    # slot) and the pause between sweeps is a real part of how long the light
+    # takes to go out. Measured on the cabinet: a batch of 4 sweeps in 406 ms,
+    # so this puts the worst case a little over half a second.
+    poll_s: float = 0.25         # pause between sweeps of the waiting slots
+    batch: int = 4               # slots lit together; 0 = every slot at once
 
 
 def _poll_order(ids: Sequence[int]) -> list:
@@ -222,103 +227,143 @@ def _poll_order(ids: Sequence[int]) -> list:
     return sorted(ids, key=lambda i: (hub_channel(i), i))
 
 
+def pick_batches(ids: Sequence[int], size: int) -> list:
+    """The groups of slots that light together.
+
+    Measured on the cabinet: what costs time is the number of hub CHANNELS
+    watched at once, not the number of slots. The hub needs about two
+    seconds of silence to change channel, so every extra channel in a batch
+    adds ~2 s to each polling sweep, while an extra slot on a channel
+    already being watched costs about 70 ms. Two slots on different rows
+    took 4.6 s per sweep; a whole row takes well under one second.
+
+    So a batch never spans rows. A row is one hub channel and also one place
+    to stand at the cabinet, which makes the fast arrangement the natural
+    one. `size` caps how many of that row light at once; 0 lights everything
+    selected however it is spread, which is honest but slow to confirm.
+    """
+    ids = sorted(ids)
+    if not ids:
+        return []
+    if size is None or size <= 0:
+        return [tuple(ids)]
+    out = []
+    for row in sorted({i // 10 for i in ids}):
+        row_ids = [i for i in ids if i // 10 == row]
+        for start in range(0, len(row_ids), size):
+            out.append(tuple(row_ids[start:start + size]))
+    return out
+
+
 def run_pick_sequence(ops: FieldOps, cfg: PickConfig, ids: Sequence[int],
                       emit: Callable, cancel: threading.Event) -> CheckReport:
-    """Light every selected slot at once, then watch for the confirmations.
+    """Light a batch of slots together, then watch for the confirmations.
 
-    This is how a prescription actually arrives: several slots light
-    together and the person picks them in whatever order suits them, each
-    light going out as its button is pressed.
+    This is how a prescription arrives: several slots light at once and the
+    person picks them in whatever order suits them, each light going out as
+    its button is pressed. `cfg.batch` caps how many light together and
+    `pick_batches` keeps a batch inside one row, because the cost of
+    watching several slots is really the cost of watching several hub
+    channels — see that function.
 
-    Polling many modules is slower than watching one, and on a hubbed
-    cabinet a full sweep can take tens of seconds — but a press is never
-    missed, because reg 18 is a cumulative counter rather than a live state.
-    A slot pressed early simply goes dark on the sweep that reaches it.
+    A press is never missed while the tool is looking elsewhere: reg 18 is a
+    cumulative counter, not a live state, so a slot pressed early simply
+    goes dark on the sweep that reaches it.
     """
     report = CheckReport(started=datetime.now())
     total = len(ids)
     coil = 1000 + max(1, min(8, cfg.preset))
     waiting: dict = {}           # device_id -> (result, baseline count)
     lit: set = set()
+    index = 0
 
     def finish(result: DeviceResult) -> None:
         report.results.append(result)
         emit(DeviceDone(result))
 
     try:
-        # ── prepare each slot, and light the ones that are ready ───────────
-        for index, device_id in enumerate(ids, 1):
-            emit(DeviceStart(device_id, index, total))
-            result = DeviceResult(device_id=device_id, responded=False)
+        for batch in pick_batches(ids, cfg.batch):
+            waiting.clear()
+            # ── prepare this batch, and light the slots that are ready ─────
+            for device_id in batch:
+                index += 1
+                emit(DeviceStart(device_id, index, total))
+                result = DeviceResult(device_id=device_id, responded=False)
 
-            probe = ops.read_reg(device_id, 0)
-            if not probe.ok:
-                result.steps.append(StepOutcome("answers on the bus", False,
-                                                probe.note or "no reply"))
-                finish(result)
-                continue
-            result.responded = True
-            result.device_type = probe.value
-            result.steps.append(StepOutcome("answers on the bus", True,
-                                            result.type_name))
-
-            fw = ops.read_reg(device_id, MB_REG_FW)
-            if not fw.ok or fw.value < FW_MIN_CONFIRM:
-                result.steps.append(StepOutcome(
-                    "firmware counts presses (reg 18)", False,
-                    f"needs v3.2.0+, module reports {fw.value if fw.ok else '?'}"))
-                finish(result)
-                continue
-            result.steps.append(StepOutcome("firmware counts presses (reg 18)",
-                                            True))
-
-            base = ops.read_reg(device_id, MB_REG_BUTTON_PRESSES)
-            if not base.ok:
-                result.steps.append(StepOutcome("read press counter", False,
-                                                base.note))
-                finish(result)
-                continue
-
-            on = ops.write_coil(device_id, coil, 1)
-            if not on.ok:
-                result.steps.append(StepOutcome(f"light on ({coil})", False,
-                                                on.note))
-                finish(result)
-                continue
-            lit.add(device_id)
-            waiting[device_id] = (result, base.value)
-
-        emit(PickLit(tuple(sorted(waiting)), total))
-
-        # ── the human is now part of the loop ──────────────────────────────
-        started = time.monotonic()
-        while waiting:
-            elapsed = time.monotonic() - started
-            if cfg.timeout_s > 0 and elapsed >= cfg.timeout_s:
-                break
-            for device_id in _poll_order(list(waiting)):
-                now = ops.read_reg(device_id, MB_REG_BUTTON_PRESSES)
-                result, base_count = waiting[device_id]
-                if now.ok and now.value != base_count:
-                    ops.write_coil(device_id, coil, 0)
-                    lit.discard(device_id)
-                    del waiting[device_id]
-                    result.steps.append(StepOutcome(
-                        "confirmed by button press", True,
-                        f"after {time.monotonic() - started:.1f}s"))
+                probe = ops.read_reg(device_id, 0)
+                if not probe.ok:
+                    result.steps.append(StepOutcome("answers on the bus", False,
+                                                    probe.note or "no reply"))
                     finish(result)
-                ops.sleep(INTER_TXN_S)
-            ops.sleep(cfg.poll_s)
+                    continue
+                result.responded = True
+                result.device_type = probe.value
+                result.steps.append(StepOutcome("answers on the bus", True,
+                                                result.type_name))
 
-        # Anything still waiting ran out of time (or the run was cancelled,
-        # which lands here through CheckCancelled below).
-        for device_id in sorted(waiting):
-            result, _ = waiting[device_id]
-            result.steps.append(StepOutcome(
-                "confirmed by button press", False,
-                f"no press within {cfg.timeout_s:.0f}s"))
-            finish(result)
-        waiting.clear()
+                fw = ops.read_reg(device_id, MB_REG_FW)
+                if not fw.ok or fw.value < FW_MIN_CONFIRM:
+                    result.steps.append(StepOutcome(
+                        "firmware counts presses (reg 18)", False,
+                        f"needs v3.2.0+, module reports {fw.value if fw.ok else '?'}"))
+                    finish(result)
+                    continue
+                result.steps.append(StepOutcome(
+                    "firmware counts presses (reg 18)", True))
+
+                base = ops.read_reg(device_id, MB_REG_BUTTON_PRESSES)
+                if not base.ok:
+                    result.steps.append(StepOutcome("read press counter", False,
+                                                    base.note))
+                    finish(result)
+                    continue
+
+                on = ops.write_coil(device_id, coil, 1)
+                if not on.ok:
+                    result.steps.append(StepOutcome(f"light on ({coil})", False,
+                                                    on.note))
+                    finish(result)
+                    continue
+                lit.add(device_id)
+                waiting[device_id] = (result, base.value)
+
+            if not waiting:
+                continue                    # nothing in this batch could light
+            emit(PickLit(tuple(sorted(waiting)), total))
+
+            # ── the human is now part of the loop ──────────────────────────
+            started = time.monotonic()
+            while waiting:
+                if cfg.timeout_s > 0 and time.monotonic() - started >= cfg.timeout_s:
+                    break
+                for device_id in _poll_order(list(waiting)):
+                    now = ops.read_reg(device_id, MB_REG_BUTTON_PRESSES)
+                    result, base_count = waiting[device_id]
+                    if now.ok and now.value != base_count:
+                        ops.write_coil(device_id, coil, 0)
+                        lit.discard(device_id)
+                        del waiting[device_id]
+                        result.steps.append(StepOutcome(
+                            "confirmed by button press", True,
+                            f"after {time.monotonic() - started:.1f}s"))
+                        finish(result)
+                    ops.sleep(INTER_TXN_S)
+                if waiting:
+                    ops.sleep(cfg.poll_s)   # nothing left to watch: light the
+                                            # next batch now, not a beat later
+
+            # Whatever is left in this batch ran out of time. Its light goes
+            # out now rather than at the end of the run — the next batch is
+            # about to draw the operator somewhere else.
+            for device_id in sorted(waiting):
+                result, _ = waiting[device_id]
+                ops.write_coil(device_id, coil, 0)
+                lit.discard(device_id)
+                result.steps.append(StepOutcome(
+                    "confirmed by button press", False,
+                    f"no press within {cfg.timeout_s:.0f}s"))
+                finish(result)
+            waiting.clear()
     except CheckCancelled:
         report.cancelled = True
         for device_id in sorted(waiting):

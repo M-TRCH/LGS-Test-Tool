@@ -296,20 +296,33 @@ TEXTS: dict[str, dict[str, str]] = {
     "ins.hold": {"en": "Hold each step (s)", "th": "ค้างแต่ละขั้น (วินาที)"},
     "ins.pick_card": {"en": "Pick walkthrough", "th": "ทดสอบลำดับหยิบยา"},
     "ins.pick_hint": {
-        "en": "The dispensing flow as a rehearsal: every selected slot lights "
-              "up at once, just as a prescription lights them, and someone at "
+        "en": "The dispensing flow as a rehearsal: a batch of slots lights up "
+              "together, just as a prescription lights them, and someone at "
               "the cabinet picks them in any order — each light goes out as "
-              "its front button is pressed. Proves lights, buttons and the "
-              "confirm loop in one walk. Needs module firmware v3.2.0.",
-        "th": "ซ้อมขั้นตอนจ่ายยาจริง: ไฟติดพร้อมกันทุกช่องที่เลือก เหมือนตอนใบสั่งยา"
-              "สั่งงานจริง คนที่หน้าตู้หยิบช่องไหนก่อนก็ได้ ไฟแต่ละช่องจะดับเมื่อกดปุ่ม"
-              "หน้าช่องนั้น — พิสูจน์ไฟ ปุ่ม และวงจรยืนยันครบในรอบเดียว "
+              "its front button is pressed. When the batch is done the next "
+              "one lights. Proves lights, buttons and the confirm loop in one "
+              "walk. Needs module firmware v3.2.0.",
+        "th": "ซ้อมขั้นตอนจ่ายยาจริง: ไฟติดพร้อมกันเป็นชุด เหมือนตอนใบสั่งยาสั่งงานจริง "
+              "คนที่หน้าตู้หยิบช่องไหนก่อนก็ได้ ไฟแต่ละช่องจะดับเมื่อกดปุ่มหน้าช่องนั้น "
+              "ครบชุดแล้วชุดถัดไปจะติดต่อ — พิสูจน์ไฟ ปุ่ม และวงจรยืนยันครบในรอบเดียว "
               "ต้องใช้เฟิร์มแวร์โมดูล v3.2.0"},
     "ins.pick_preset": {"en": "Preset", "th": "Preset สี"},
-    "ins.pick_timeout": {"en": "Timeout (s)", "th": "รอสูงสุด (วิ)"},
-    "ins.pick_timeout_tip": {"en": "For the whole run, from when the lights come "
-                                   "on. 0 = wait until cancelled.",
-                             "th": "นับรวมทั้งรอบ เริ่มจับเวลาตอนไฟติด "
+    "ins.pick_batch": {"en": "Light together", "th": "จุดพร้อมกัน (ช่อง)"},
+    "ins.pick_batch_tip": {
+        "en": "How many slots light at once. A batch never spans rows: the "
+              "cabinet's RS485 hub needs about two seconds of silence to "
+              "change channel, so watching two rows at once adds seconds "
+              "before a press is noticed, while extra slots in one row cost "
+              "milliseconds. 0 lights everything selected at once — honest to "
+              "the real system, but slow to confirm across rows.",
+        "th": "จำนวนช่องที่ไฟติดพร้อมกัน หนึ่งชุดจะอยู่ในแถวเดียวเสมอ เพราะฮับ RS485 "
+              "ต้องเงียบราว 2 วินาทีเพื่อสลับช่อง การเฝ้าสองแถวพร้อมกันจึงหน่วงหลายวินาที"
+              "กว่าจะเห็นการกด ขณะที่เพิ่มช่องในแถวเดียวกันแทบไม่มีค่าใช้จ่าย "
+              "ใส่ 0 = จุดทุกช่องที่เลือกพร้อมกัน ตรงกับระบบจริงแต่ยืนยันช้าเมื่อข้ามแถว"},
+    "ins.pick_timeout": {"en": "Timeout/batch (s)", "th": "รอสูงสุด/ชุด (วิ)"},
+    "ins.pick_timeout_tip": {"en": "Per batch, from when its lights come on. "
+                                   "0 = wait until cancelled.",
+                             "th": "นับต่อหนึ่งชุด เริ่มจับเวลาตอนไฟชุดนั้นติด "
                                    "ใส่ 0 = รอจนกว่าจะกดยกเลิก"},
     "ins.pick_run": {"en": "Start walkthrough", "th": "เริ่มเดินทดสอบ"},
     "ins.pick_preparing": {
