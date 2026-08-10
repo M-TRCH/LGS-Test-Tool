@@ -296,22 +296,28 @@ TEXTS: dict[str, dict[str, str]] = {
     "ins.hold": {"en": "Hold each step (s)", "th": "ค้างแต่ละขั้น (วินาที)"},
     "ins.pick_card": {"en": "Pick walkthrough", "th": "ทดสอบลำดับหยิบยา"},
     "ins.pick_hint": {
-        "en": "The dispensing flow as a rehearsal: each selected slot lights "
-              "up in turn, someone at the cabinet picks and presses the "
-              "slot's front button, the light goes out and the next slot "
-              "lights. Proves lights, buttons and the confirm loop in one "
-              "walk. Needs module firmware v3.2.0.",
-        "th": "ซ้อมขั้นตอนจ่ายยาจริง: ไฟติดทีละช่องตามที่เลือก คนที่หน้าตู้หยิบยา"
-              "แล้วกดปุ่มหน้าช่องนั้น ไฟดับแล้วช่องถัดไปติดต่อทันที — พิสูจน์ไฟ ปุ่ม "
-              "และวงจรยืนยันครบในเดินรอบเดียว ต้องใช้เฟิร์มแวร์โมดูล v3.2.0"},
+        "en": "The dispensing flow as a rehearsal: every selected slot lights "
+              "up at once, just as a prescription lights them, and someone at "
+              "the cabinet picks them in any order — each light goes out as "
+              "its front button is pressed. Proves lights, buttons and the "
+              "confirm loop in one walk. Needs module firmware v3.2.0.",
+        "th": "ซ้อมขั้นตอนจ่ายยาจริง: ไฟติดพร้อมกันทุกช่องที่เลือก เหมือนตอนใบสั่งยา"
+              "สั่งงานจริง คนที่หน้าตู้หยิบช่องไหนก่อนก็ได้ ไฟแต่ละช่องจะดับเมื่อกดปุ่ม"
+              "หน้าช่องนั้น — พิสูจน์ไฟ ปุ่ม และวงจรยืนยันครบในรอบเดียว "
+              "ต้องใช้เฟิร์มแวร์โมดูล v3.2.0"},
     "ins.pick_preset": {"en": "Preset", "th": "Preset สี"},
-    "ins.pick_timeout": {"en": "Timeout/slot (s)", "th": "รอสูงสุด/ช่อง (วิ)"},
-    "ins.pick_timeout_tip": {"en": "0 = wait until cancelled",
-                             "th": "0 = รอจนกว่าจะกดยกเลิก"},
+    "ins.pick_timeout": {"en": "Timeout (s)", "th": "รอสูงสุด (วิ)"},
+    "ins.pick_timeout_tip": {"en": "For the whole run, from when the lights come "
+                                   "on. 0 = wait until cancelled.",
+                             "th": "นับรวมทั้งรอบ เริ่มจับเวลาตอนไฟติด "
+                                   "ใส่ 0 = รอจนกว่าจะกดยกเลิก"},
     "ins.pick_run": {"en": "Start walkthrough", "th": "เริ่มเดินทดสอบ"},
+    "ins.pick_preparing": {
+        "en": "lighting slot {id}  ({i}/{total})",
+        "th": "กำลังเปิดไฟช่อง {id}  ({i}/{total})"},
     "ins.pick_waiting": {
-        "en": "press the button on slot {id}  ({i}/{total})",
-        "th": "กดปุ่มที่ช่อง {id}  ({i}/{total})"},
+        "en": "{n} slots lit — press each slot's button, in any order",
+        "th": "ไฟติด {n} ช่อง — กดปุ่มหน้าช่อง หยิบช่องไหนก่อนก็ได้"},
     "ins.unlock_card": {"en": "Unlock — moves the physical latch",
                         "th": "ปลดล็อก — กลอนจะทำงานจริง"},
     "ins.do_unlock": {"en": "Light + unlock each module (1021)",

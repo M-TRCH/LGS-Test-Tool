@@ -9,7 +9,7 @@ from nicegui import ui
 from ..config_store import data_dir
 from ..i18n import t
 from ..fieldcheck import (CheckConfig, CheckDone, DeviceDone, DeviceStart,
-                          PickConfig, check_csv_bytes)
+                          PickConfig, PickLit, check_csv_bytes)
 from ..lgs_map import CABINET_LAYOUTS, GRID_COLS, GRID_ROWS
 from . import Ctx, helps, inline_warning
 
@@ -25,13 +25,16 @@ def build(ctx: Ctx) -> None:
     cells: dict[int, ui.button] = {}
     selected: set[int] = set()
     results: dict[int, bool] = {}
-    state = {"seq": 0, "report": None, "testing": None}
+    state = {"seq": 0, "report": None, "testing": None, "waiting": set()}
 
     def paint(gid: int) -> None:
-        if gid == state["testing"]:
-            color = COLOR_TESTING
-        elif gid in results:
+        # A result outranks "still lit": in the pick walkthrough a slot stays
+        # in `waiting` until its light is confirmed off, and the moment it has
+        # a result the operator should see that, not the amber.
+        if gid in results:
             color = COLOR_PASS if results[gid] else COLOR_FAIL
+        elif gid == state["testing"] or gid in state["waiting"]:
+            color = COLOR_TESTING
         else:
             color = COLOR_SELECTED if gid in selected else COLOR_UNSELECTED
         cells[gid].props(f"color={color}")
@@ -201,6 +204,8 @@ def build(ctx: Ctx) -> None:
             ui.notify(t("ins.select_one"), type="warning")
             return False
         results.clear()
+        state["waiting"] = set()
+        state["testing"] = None
         repaint_all()
         table.rows = []
         table.update()
@@ -245,14 +250,29 @@ def build(ctx: Ctx) -> None:
                 paint(ev.device_id)
                 progress.set_value((ev.index - 1) / max(1, ev.total))
                 progress_label.set_text(
-                    t("ins.pick_waiting", id=ev.device_id, i=ev.index, total=ev.total)
+                    t("ins.pick_preparing", id=ev.device_id, i=ev.index,
+                      total=ev.total)
                     if state.get("pick_mode") else
                     t("ins.module_progress", id=ev.device_id, i=ev.index, total=ev.total))
+            elif isinstance(ev, PickLit):
+                # Every slot in this batch is lit and waiting for its person.
+                state["testing"] = None
+                state["waiting"] = set(ev.ids)
+                state["pick_total"] = ev.total
+                repaint_all()
+                progress.set_value(len(results) / max(1, ev.total))
+                progress_label.set_text(t("ins.pick_waiting", n=len(ev.ids)))
             elif isinstance(ev, DeviceDone):
                 r = ev.result
                 state["testing"] = None
+                state["waiting"].discard(r.device_id)
                 results[r.device_id] = r.ok
                 paint(r.device_id)
+                if state.get("pick_mode") and state["waiting"]:
+                    progress.set_value(len(results)
+                                       / max(1, state.get("pick_total", 1)))
+                    progress_label.set_text(
+                        t("ins.pick_waiting", n=len(state["waiting"])))
                 detail = "; ".join(f"{s.label}: {'ok' if s.ok else 'FAIL'}"
                                    + (f" ({s.note})" if s.note and not s.ok else "")
                                    for s in r.steps)
@@ -266,6 +286,7 @@ def build(ctx: Ctx) -> None:
             elif isinstance(ev, CheckDone):
                 state["report"] = ev.report
                 state["testing"] = None
+                state["waiting"] = set()
                 progress.set_value(1.0)
                 rep = ev.report
                 missing = rep.missing

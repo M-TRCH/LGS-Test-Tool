@@ -8,11 +8,12 @@ in testsuite.py.
 from __future__ import annotations
 
 import threading
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Callable, Optional, Protocol, Sequence
 
-from .lgs_map import DEVICE_TYPES, INTER_TXN_S
+from .lgs_map import DEVICE_TYPES, INTER_TXN_S, hub_channel
 
 
 class CheckCancelled(Exception):
@@ -76,6 +77,18 @@ class DeviceStart:
 @dataclass
 class DeviceDone:
     result: DeviceResult
+    seq: int = 0
+
+
+@dataclass
+class PickLit:
+    """The pick walkthrough has lit these slots; the operator is now working.
+
+    One event for the whole batch rather than a start per module: in this run
+    mode every slot is waiting at once, and the page has to show that.
+    """
+    ids: tuple
+    total: int
     seq: int = 0
 
 
@@ -193,16 +206,47 @@ FW_MIN_CONFIRM = 30200          # v3.2.0 — first build that counts presses
 @dataclass
 class PickConfig:
     preset: int = 1              # enable coil 1000+n lights the slot
-    timeout_s: float = 60.0      # per module; 0 = wait until cancelled
-    poll_s: float = 0.4          # reg-18 polling cadence while waiting
+    timeout_s: float = 60.0      # for the whole run; 0 = wait until cancelled
+    poll_s: float = 0.4          # pause between sweeps of the waiting slots
+
+
+def _poll_order(ids: Sequence[int]) -> list:
+    """Waiting slots, grouped by the hub channel they hang off.
+
+    On a cabinet wired through the RS485 switch hub, the first transaction
+    after a channel change costs seconds while the hub settles. Sweeping in
+    ID order would pay that on nearly every module; sweeping channel by
+    channel pays it once per channel. Where there is no hub the order is
+    simply by ID and nothing is lost.
+    """
+    return sorted(ids, key=lambda i: (hub_channel(i), i))
 
 
 def run_pick_sequence(ops: FieldOps, cfg: PickConfig, ids: Sequence[int],
                       emit: Callable, cancel: threading.Event) -> CheckReport:
+    """Light every selected slot at once, then watch for the confirmations.
+
+    This is how a prescription actually arrives: several slots light
+    together and the person picks them in whatever order suits them, each
+    light going out as its button is pressed.
+
+    Polling many modules is slower than watching one, and on a hubbed
+    cabinet a full sweep can take tens of seconds — but a press is never
+    missed, because reg 18 is a cumulative counter rather than a live state.
+    A slot pressed early simply goes dark on the sweep that reaches it.
+    """
     report = CheckReport(started=datetime.now())
     total = len(ids)
     coil = 1000 + max(1, min(8, cfg.preset))
+    waiting: dict = {}           # device_id -> (result, baseline count)
+    lit: set = set()
+
+    def finish(result: DeviceResult) -> None:
+        report.results.append(result)
+        emit(DeviceDone(result))
+
     try:
+        # ── prepare each slot, and light the ones that are ready ───────────
         for index, device_id in enumerate(ids, 1):
             emit(DeviceStart(device_id, index, total))
             result = DeviceResult(device_id=device_id, responded=False)
@@ -211,8 +255,7 @@ def run_pick_sequence(ops: FieldOps, cfg: PickConfig, ids: Sequence[int],
             if not probe.ok:
                 result.steps.append(StepOutcome("answers on the bus", False,
                                                 probe.note or "no reply"))
-                report.results.append(result)
-                emit(DeviceDone(result))
+                finish(result)
                 continue
             result.responded = True
             result.device_type = probe.value
@@ -224,8 +267,7 @@ def run_pick_sequence(ops: FieldOps, cfg: PickConfig, ids: Sequence[int],
                 result.steps.append(StepOutcome(
                     "firmware counts presses (reg 18)", False,
                     f"needs v3.2.0+, module reports {fw.value if fw.ok else '?'}"))
-                report.results.append(result)
-                emit(DeviceDone(result))
+                finish(result)
                 continue
             result.steps.append(StepOutcome("firmware counts presses (reg 18)",
                                             True))
@@ -234,43 +276,64 @@ def run_pick_sequence(ops: FieldOps, cfg: PickConfig, ids: Sequence[int],
             if not base.ok:
                 result.steps.append(StepOutcome("read press counter", False,
                                                 base.note))
-                report.results.append(result)
-                emit(DeviceDone(result))
+                finish(result)
                 continue
 
-            lit = ops.write_coil(device_id, coil, 1)
-            if not lit.ok:
+            on = ops.write_coil(device_id, coil, 1)
+            if not on.ok:
                 result.steps.append(StepOutcome(f"light on ({coil})", False,
-                                                lit.note))
-                report.results.append(result)
-                emit(DeviceDone(result))
+                                                on.note))
+                finish(result)
                 continue
+            lit.add(device_id)
+            waiting[device_id] = (result, base.value)
 
-            # The human is now part of the loop: wait for the counter to move.
-            waited = 0.0
-            confirmed = False
-            try:
-                while cfg.timeout_s <= 0 or waited < cfg.timeout_s:
-                    ops.sleep(cfg.poll_s)
-                    waited += cfg.poll_s
-                    now = ops.read_reg(device_id, MB_REG_BUTTON_PRESSES)
-                    if now.ok and now.value != base.value:
-                        confirmed = True
-                        break
-            finally:
-                # Whatever happened — confirmed, timed out, cancelled — the
-                # light never stays on for a slot nobody is working.
-                ops.write_coil(device_id, coil, 0)
+        emit(PickLit(tuple(sorted(waiting)), total))
 
+        # ── the human is now part of the loop ──────────────────────────────
+        started = time.monotonic()
+        while waiting:
+            elapsed = time.monotonic() - started
+            if cfg.timeout_s > 0 and elapsed >= cfg.timeout_s:
+                break
+            for device_id in _poll_order(list(waiting)):
+                now = ops.read_reg(device_id, MB_REG_BUTTON_PRESSES)
+                result, base_count = waiting[device_id]
+                if now.ok and now.value != base_count:
+                    ops.write_coil(device_id, coil, 0)
+                    lit.discard(device_id)
+                    del waiting[device_id]
+                    result.steps.append(StepOutcome(
+                        "confirmed by button press", True,
+                        f"after {time.monotonic() - started:.1f}s"))
+                    finish(result)
+                ops.sleep(INTER_TXN_S)
+            ops.sleep(cfg.poll_s)
+
+        # Anything still waiting ran out of time (or the run was cancelled,
+        # which lands here through CheckCancelled below).
+        for device_id in sorted(waiting):
+            result, _ = waiting[device_id]
             result.steps.append(StepOutcome(
-                "confirmed by button press",
-                confirmed,
-                f"after {waited:.1f}s" if confirmed
-                else f"no press within {cfg.timeout_s:.0f}s"))
-            report.results.append(result)
-            emit(DeviceDone(result))
+                "confirmed by button press", False,
+                f"no press within {cfg.timeout_s:.0f}s"))
+            finish(result)
+        waiting.clear()
     except CheckCancelled:
         report.cancelled = True
+        for device_id in sorted(waiting):
+            result, _ = waiting[device_id]
+            result.steps.append(StepOutcome("confirmed by button press", False,
+                                            "cancelled"))
+            finish(result)
+        waiting.clear()
+    finally:
+        # However this ended, no slot is left lit with nobody working it.
+        for device_id in sorted(lit):
+            try:
+                ops.write_coil(device_id, coil, 0)
+            except CheckCancelled:
+                pass                    # already cancelled; keep clearing
     report.finished = datetime.now()
     emit(CheckDone(report))
     return report
