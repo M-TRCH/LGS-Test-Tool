@@ -27,6 +27,16 @@ CARD_NET = ("net.enabled", "net.dhcp", "net.ip", "net.mask", "net.gw", "net.dns"
 CARD_HUB = ("bus.hub_map", "bus.hub_settle_ms", "bus.hub_budget_ms",
             "bus.hub_retry", "bus.hub_gap_ms")
 
+# Front-panel buttons (gateway >= 1.3.0). The colours are how they are wired
+# to inputs 1-5; what each one does is what this card sets.
+PANEL_KEYS = ("panel.btn1", "panel.btn2", "panel.btn3", "panel.btn4",
+              "panel.btn5")
+PANEL_COLORS = ("red", "green", "blue", "yellow", "white")
+PANEL_SWATCH = {"red": "#e53935", "green": "#43a047", "blue": "#1e88e5",
+                "yellow": "#fdd835", "white": "#fafafa"}
+PANEL_ACTIONS = {0: "pnl.act.none", 1: "pnl.act.all_on", 2: "pnl.act.all_off",
+                 3: "pnl.act.all_unlock", 4: "pnl.act.reset"}
+
 BOOL_KEYS = {"net.enabled", "net.dhcp"}
 
 
@@ -250,6 +260,35 @@ def build(ctx: Ctx) -> None:
         # clean unless the operator actually changes something.
         stage("bus.hub_map", current)
 
+    def panel_editor(snap) -> None:
+        """One row per button, in the colours they are wired in.
+
+        The buttons exist so the cabinet can be exercised at the cabinet with
+        no PC, which means the person setting them up is looking at coloured
+        caps, not at input numbers — so the colour leads and `panel.btnN` is
+        the hover text.
+        """
+        options = {v: t(k) for v, k in PANEL_ACTIONS.items()}
+        for i, key in enumerate(PANEL_KEYS):
+            if key not in snap.settings:
+                continue
+            raw = snap.settings.get(key, "0")
+            value = int(raw) if raw.isdigit() else 0
+            colour = PANEL_COLORS[i]
+            with ui.row().classes("items-center gap-2 no-wrap q-mb-xs"):
+                ui.element("div").classes("rounded-full border") \
+                    .style(f"width:14px;height:14px;background:{PANEL_SWATCH[colour]}")
+                ui.label(t(f"pnl.color.{colour}")).classes("text-sm w-20")
+                el = ui.select(options, value=value,
+                               on_change=lambda e, k=key: stage(k, int(e.value))) \
+                    .props("dense outlined").classes("grow")
+                helps(el, t("pnl.input", n=i + 1, name=key))
+                fields[key] = el
+        for key in ("panel.enabled", "panel.cabinet", "panel.step_ms",
+                    "panel.reset_ms"):
+            if key in snap.settings:
+                field_row(key, snap)
+
     def apply_pending(values: dict) -> None:
         """Drop values into the fields as ordinary unsaved edits."""
         for key, text in values.items():
@@ -350,6 +389,13 @@ def build(ctx: Ctx) -> None:
                         hub_map_editor(snap)
                         for key in CARD_HUB[1:]:        # hub_map has its own
                             field_row(key, snap)
+                # Older firmware has no panel keys; the card stays away rather
+                # than offering settings the console would reject.
+                if "panel.btn1" in snap.settings:
+                    with ui.card().classes("p-3 grow"):
+                        helps(ui.label(t("pnl.card")).classes("font-bold"),
+                              t("pnl.hint"))
+                        panel_editor(snap)
 
     def say(text: str) -> None:
         log_box.push(text)

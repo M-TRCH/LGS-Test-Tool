@@ -562,6 +562,53 @@ TEXTS: dict[str, dict[str, str]] = {
                           "หลังสลับช่องและเงียบไป ~2 วินาที เกตเวย์ซ่อมโดยหน่วงคำขอถัดไป"
                           "จนฮับพร้อม ฝั่งเซิร์ฟเวอร์ต้อง retry อย่างน้อย 1 ครั้ง "
                           "หรือรอนานกว่าเวลาฮับพร้อม"},
+    "pnl.card": {"en": "Front-panel buttons", "th": "ปุ่มหน้าตู้"},
+    "pnl.hint": {"en": "Five buttons wired to the Opta's inputs 1-5, so the cabinet "
+                       "can be exercised at the cabinet with no PC and no network. "
+                       "Each one runs its job across the whole cabinet, slot by "
+                       "slot; pressing another button replaces whatever is running.",
+                 "th": "ปุ่ม 5 ตัวต่อกับอินพุต 1-5 ของ Opta ใช้ทดสอบตู้ที่หน้าตู้ได้เลย "
+                       "ไม่ต้องมีคอมพิวเตอร์และไม่ต้องมีเครือข่าย แต่ละปุ่มจะทำงานไล่ทั้งตู้"
+                       "ทีละช่อง กดปุ่มอื่นระหว่างทำงานจะแทนที่งานเดิม"},
+    "pnl.input": {"en": "Opta input {n} ({name})", "th": "อินพุต {n} ของ Opta ({name})"},
+    "pnl.color.red": {"en": "Red", "th": "แดง"},
+    "pnl.color.green": {"en": "Green", "th": "เขียว"},
+    "pnl.color.blue": {"en": "Blue", "th": "น้ำเงิน"},
+    "pnl.color.yellow": {"en": "Yellow", "th": "เหลือง"},
+    "pnl.color.white": {"en": "White", "th": "ขาว"},
+    "pnl.act.none": {"en": "— unassigned", "th": "— ยังไม่กำหนด"},
+    "pnl.act.all_on": {"en": "Light + number, whole cabinet",
+                       "th": "เปิดไฟ+จอ ทั้งตู้"},
+    "pnl.act.all_off": {"en": "Everything off", "th": "ดับทั้งหมด"},
+    "pnl.act.all_unlock": {"en": "Light + number + latch, whole cabinet",
+                           "th": "เปิดไฟ+จอ+กลอน ทั้งตู้"},
+    "pnl.act.reset": {"en": "Power-cycle the shelf (relays)",
+                      "th": "สับรีเลย์ตัดไฟชั้นวาง (hardware reset)"},
+
+    "gwf.panel.enabled": {"en": "Use the panel buttons", "th": "เปิดใช้ปุ่มหน้าตู้"},
+    "gwf.panel.enabled.hint": {"en": "Off on a bench, where nothing is wired to the "
+                                     "inputs and a stray voltage must not sweep a "
+                                     "cabinet.",
+                               "th": "ปิดไว้ตอนทดสอบบนโต๊ะ เพราะไม่มีอะไรต่อที่อินพุต "
+                                     "และไฟรั่วเข้ามาต้องไม่ทำให้ตู้ทำงานเอง"},
+    "gwf.panel.cabinet": {"en": "Cabinet size", "th": "ขนาดตู้"},
+    "gwf.panel.cabinet.hint": {"en": "40, 64 or 80 — decides which slots a sweep "
+                                     "walks and in what order.",
+                               "th": "40, 64 หรือ 80 — กำหนดว่าจะไล่ช่องไหนบ้างและ"
+                                     "เรียงลำดับอย่างไร"},
+    "gwf.panel.step_ms": {"en": "Pause between slots (ms)", "th": "หน่วงระหว่างช่อง (ms)"},
+    "gwf.panel.step_ms.hint": {"en": "Extra breathing room on top of the bus, which "
+                                     "already costs about 100 ms a slot. 0 runs as "
+                                     "fast as the bus allows.",
+                               "th": "หน่วงเพิ่มจากเวลาบัสซึ่งกินราว 100 ms ต่อช่องอยู่แล้ว "
+                                     "ใส่ 0 = เร็วที่สุดเท่าที่บัสไหว"},
+    "gwf.panel.reset_ms": {"en": "Power off for (ms)", "th": "ตัดไฟนาน (ms)"},
+    "gwf.panel.reset_ms.hint": {"en": "How long both relays drop on a reset press — "
+                                      "long enough for the modules' rails to "
+                                      "actually collapse.",
+                                "th": "ระยะเวลาที่รีเลย์ทั้งสองตัวตัดไฟตอนกดปุ่มรีเซ็ต "
+                                      "ต้องนานพอให้ไฟในโมดูลตกจริง"},
+
     "gw.hub_rows": {"en": "Rows", "th": "จำนวนชั้น"},
     "gw.hub_rows_tip": {"en": "How many rows this cabinet has. Not every LGS is "
                               "ten rows tall, and rows it does not have should "
