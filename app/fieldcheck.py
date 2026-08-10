@@ -418,10 +418,13 @@ def run_pick_sequence(ops: FieldOps, cfg: PickConfig, ids: Sequence[int],
                 result.steps.append(StepOutcome(
                     "firmware counts presses (reg 18)", True))
 
-                # A pick releases the latch, and the firmware only pulses one
-                # that reads locked — so an open drawer is caught here rather
-                # than looking like a slot whose latch is broken.
-                if cfg.unlock:
+                # The firmware only pulses a latch that reads locked, so an
+                # open drawer is caught here rather than looking like a slot
+                # whose latch is broken. Only worth blocking on when the run
+                # actually tracks the drawer: without that, an open one is a
+                # latch pulse that changes nothing, and the light, display
+                # and button are still worth testing.
+                if cfg.unlock and cfg.require_locked:
                     sense = ops.read_reg(device_id, MB_REG_LATCH_LOCKED)
                     if not (sense.ok and sense.value):
                         result.steps.append(StepOutcome(

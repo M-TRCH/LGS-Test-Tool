@@ -332,21 +332,26 @@ TEXTS: dict[str, dict[str, str]] = {
                              "th": "ใช้ coil ที่เปิดไฟพร้อมจอในคำสั่งเดียว "
                                    "และแสดงเลขประจำช่องนั้น"},
     "ins.pick_unlock": {"en": "Release the latch", "th": "ปลดกลอน"},
-    "ins.pick_unlock_tip": {"en": "What a real pick does. The drawer must be closed "
-                                  "when the slot lights, or the firmware will not "
-                                  "pulse the latch and the slot is reported as such.",
-                            "th": "เหมือนการหยิบยาจริง ลิ้นชักต้องปิดอยู่ตอนไฟติด "
-                                  "ไม่งั้นเฟิร์มแวร์จะไม่ปล่อยพัลส์ และระบบจะรายงานให้ทราบ"},
+    "ins.pick_unlock_tip": {"en": "What a real pick does. A latch that is already "
+                                  "open cannot be pulsed, but on its own that only "
+                                  "means the pulse changed nothing — the light, the "
+                                  "display and the button are still tested. Tick "
+                                  "'wait for the drawer to close' to make the drawer "
+                                  "part of the result.",
+                            "th": "เหมือนการหยิบยาจริง กลอนที่เปิดอยู่แล้วจะปล่อยพัลส์"
+                                  "ไม่ได้ แต่ลำพังเรื่องนี้แปลว่าพัลส์นั้นไม่ได้เปลี่ยนอะไร "
+                                  "ไฟ จอ และปุ่มยังทดสอบได้ตามปกติ ถ้าต้องการให้สถานะ"
+                                  "ลิ้นชักมีผลกับการตัดสิน ให้ติ๊ก 'รอปิดลิ้นชักก่อนดับไฟ'"},
     "ins.pick_closed": {"en": "Wait for the drawer to close",
                         "th": "รอปิดลิ้นชักก่อนดับไฟ"},
     "ins.pick_closed_tip": {"en": "The pick is not over when the button is pressed — "
                                   "it is over when the drawer is shut again. With "
-                                  "this on, the light stays on until the module "
-                                  "reports its latch locked, so a slot left open "
-                                  "cannot pass.",
+                                  "this on, the slot must start closed and the light "
+                                  "stays on until the module reports its latch "
+                                  "locked, so a slot left open cannot pass.",
                             "th": "การหยิบยายังไม่จบตอนกดปุ่ม แต่จบเมื่อปิดลิ้นชักแล้ว "
-                                  "เปิดตัวเลือกนี้ไฟจะติดค้างจนโมดูลรายงานว่ากลอนล็อก "
-                                  "ช่องที่เปิดค้างไว้จึงผ่านไม่ได้"},
+                                  "เปิดตัวเลือกนี้ ช่องนั้นต้องปิดอยู่ก่อนเริ่ม และไฟจะติดค้าง"
+                                  "จนโมดูลรายงานว่ากลอนล็อก ช่องที่เปิดค้างไว้จึงผ่านไม่ได้"},
     "ins.pick_closing": {"en": "{n} waiting to be closed, {lit} still lit",
                          "th": "รอปิดลิ้นชัก {n} ช่อง, ไฟยังติดอีก {lit} ช่อง"},
     "ins.pick_same_channel": {"en": "Keep a batch on one hub channel",
