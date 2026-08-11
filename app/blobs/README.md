@@ -13,11 +13,12 @@ To add a newer release: copy the asset in, add an entry to
 `app/firmware_bundle.py` (newest first — the first entry of a kind is the one
 its tab offers), and add the hash to `build_exe.ps1`.
 
-## gateway_opta_v1.2.0.bin
+## gateway_opta_v1.9.0.bin
 
-`LGS-Gateway-Opta-v1.2.0.bin` from LGS-Gateway-Arduino-Opta release v1.2.0.
+`LGS-Gateway-Opta-v1.9.0.bin` from LGS-Gateway-Arduino-Opta release v1.9.0.
 Offered by the Gateway tab for UPDATE FIRMWARE, and as the firmware restored
-at the end of PREPARE A NEW OPTA.
+at the end of PREPARE A NEW OPTA. Upgrading a unit from ≤ v1.7.0 wipes its
+stored settings (schema change) — export the config first, flash, import.
 
 ## module_g070_v3.2.0_factory.bin
 

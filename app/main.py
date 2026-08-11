@@ -9,6 +9,15 @@ from nicegui import app, ui
 from . import config_store, i18n, lgs_map
 from .modbus_worker import ModbusWorker
 from .txn_log import TxnLog
+
+# The Gateway tab imports the PDF report lazily so a bare interpreter without
+# fpdf2 loses only the report button — but PyInstaller follows STATIC imports,
+# so a frozen build would silently ship without the PDF stack. This import
+# exists for the packer; the try keeps the lazy story true everywhere else.
+try:
+    from . import report_pdf  # noqa: F401
+except ImportError:
+    pass
 from .ui import (Ctx, connection_bar, helps, log_pane, tab_autotest,
                  tab_commission, tab_control, tab_danger, tab_gateway,
                  tab_install, tab_monitor, tab_ota, theme)

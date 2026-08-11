@@ -16,6 +16,34 @@ class Release:
 
 
 RELEASES: tuple = (
+    Release("1.5.0", "2026-08-11", (
+        "The cabinet type is picked once, in the header, and remembered — "
+        "LGS 80 / 64 / 56 / 40, SMT type 12, or a Custom shape you describe "
+        "yourself: how many rows and how many slots on each. Every "
+        "whole-cabinet action follows that one choice, and the Gateway page "
+        "warns when the gateway disagrees, with a one-click fix.",
+        "Site report PDF from the Gateway page: the gateway's identity and "
+        "settings, the cabinet's shape, and one row per module — chip UID, "
+        "type, firmware, hardware, boot count, health — read from the "
+        "modules themselves. A copy is kept in data/exports.",
+        "Gateway settings export and import as a file. A firmware upgrade "
+        "that changes the settings layout wipes the gateway's store — the "
+        "path is now export, flash, import, Save. Import stages values for "
+        "the normal review and skips keys the firmware does not have.",
+        "Gateway pages for everything firmware v1.9.0 configures: the five "
+        "panel buttons, all four relay outputs, up to four scheduled resets "
+        "a day behind one switch, the watchdog period, and a sweep shape "
+        "for cabinets that are not a 40/64/80. The bundled gateway image "
+        "is v1.9.0.",
+        "Firmware survey and whole-cabinet monitoring of every module's "
+        "version, with each version group clickable as update targets.",
+        "Every write to the gateway now starts from a clean slate, so "
+        "values someone staged over a console session and forgot can never "
+        "ride along with a save. Long writes are split to fit the console's "
+        "line limit.",
+        "Module Test moved behind the Advanced switch beside the other "
+        "maintenance pages.",
+    )),
     Release("1.4.0", "2026-08-06", (
         "Pick walkthrough on the Installation Check page: each selected slot "
         "lights up in turn, the person at the cabinet picks and presses the "
