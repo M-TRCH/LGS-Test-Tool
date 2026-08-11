@@ -30,11 +30,19 @@ RELEASES: tuple = (
         "that changes the settings layout wipes the gateway's store — the "
         "path is now export, flash, import, Save. Import stages values for "
         "the normal review and skips keys the firmware does not have.",
-        "Gateway pages for everything firmware v1.9.0 configures: the five "
+        "Gateway pages for everything firmware v1.10.0 configures: the five "
         "panel buttons, all four relay outputs, up to four scheduled resets "
-        "a day behind one switch, the watchdog period, and a sweep shape "
-        "for cabinets that are not a 40/64/80. The bundled gateway image "
-        "is v1.9.0.",
+        "a day behind one switch, the watchdog period, a sweep shape for "
+        "cabinets that are not a 40/64/80, which module preset the buttons "
+        "fire, a temporary test brightness, and one pace per sweep kind — "
+        "the unlock pace spaces the solenoid firings out. The bundled "
+        "gateway image is v1.10.0.",
+        "Every section is led by its switch, and a setting whose action or "
+        "state is not selected anywhere is disabled until it is — a value "
+        "that can be set but can never fire reads as a broken cabinet.",
+        "The transaction log opens collapsed (it keeps recording), and the "
+        "\"...\" menu gains Quit: settings saved, server down, terminal "
+        "window closed.",
         "Firmware survey and whole-cabinet monitoring of every module's "
         "version, with each version group clickable as update targets.",
         "Every write to the gateway now starts from a clean slate, so "
