@@ -154,7 +154,8 @@ CABINET_LAYOUTS = (
     CabinetLayout("lgs64", "LGS type 64", 0, 0, ids_override=_LGS64_IDS,
                   panel_cabinet="64"),
     CabinetLayout("lgs40", "LGS type 40", 10, 4, panel_cabinet="40"),
-    CabinetLayout("smt", "SMT", 3, 4),
+    # The key stays "smt" — it is what saved configs hold.
+    CabinetLayout("smt", "SMT type 12", 3, 4),
 )
 
 # The cabinet the tool assumes until somebody picks one (header, persisted in
@@ -206,6 +207,35 @@ def layout_by_key(key: str) -> CabinetLayout:
         if layout.key == key:
             return layout
     return layout_by_key(DEFAULT_CABINET_KEY)
+
+
+def layout_widths(layout: CabinetLayout) -> list:
+    """Per-row widths derived from the ID list, trailing absent rows dropped.
+
+    Sound for every layout this module builds, because their rows are always
+    columns 1..w — which is also the only shape the gateway's `panel.shape`
+    can express.
+    """
+    widths = []
+    for r in range(1, GRID_ROWS + 1):
+        cols = [i % 10 for i in layout.ids if i // 10 == r]
+        widths.append(max(cols) if cols else 0)
+    while widths and widths[-1] == 0:
+        widths.pop()
+    return widths
+
+
+def same_shape(a_text: str, b_text: str) -> bool:
+    """Do two width lists describe the same shape? "0"/blank/garbage all
+    read as "no shape", and trailing zeros do not count."""
+    def norm(text):
+        try:
+            w = parse_custom_widths(text)
+        except ValueError:
+            w = []
+        w = list(w)[:GRID_ROWS]
+        return w + [0] * (GRID_ROWS - len(w))
+    return norm(a_text) == norm(b_text)
 
 
 def resolve_cabinet(key: str, custom_text: str) -> CabinetLayout:
@@ -470,6 +500,12 @@ assert resolve_cabinet(CUSTOM_CABINET_KEY, "3,0,5").ids == (11, 12, 13, 31, 32, 
 assert resolve_cabinet(CUSTOM_CABINET_KEY, "garbage").key == DEFAULT_CABINET_KEY
 assert resolve_cabinet("lgs40", "").count == 40
 assert not custom_layout([4] * 3).panel_cabinet          # custom never maps to the gateway
+# Widths round-trip: a layout's derived widths rebuild its exact ID list,
+# which is what lets the tool hand any layout to the gateway's panel.shape.
+for _layout in CABINET_LAYOUTS:
+    assert custom_layout(layout_widths(_layout)).ids == _layout.ids
+assert same_shape("8,8,4,0,0", "8,8,4") and not same_shape("8,8", "8,8,1")
+assert same_shape("0", "") and same_shape("garbage", "0")
 assert valid_target_id(SETID_TEMP_ID) and not valid_assignable_id(SETID_TEMP_ID)
 assert not valid_target_id(0) and valid_target_id(247)
 assert classify_coil(505) is CoilClass.FORBIDDEN

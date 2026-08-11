@@ -55,8 +55,10 @@ def index() -> None:
         # Everyday pages stay; the installation / maintenance pages appear
         # only in advanced mode. Hiding Danger from the default view is the
         # point, not a side effect: the people this switch exists for are the
-        # ones a stray factory reset would hurt.
-        advanced_tabs = (t_ota, t_commission, t_gateway, t_danger)
+        # ones a stray factory reset would hurt. Module Test sits here too:
+        # a full R5.0 sweep (including an optional unlock) is a bench job,
+        # not something to trip over during a site visit.
+        advanced_tabs = (t_module, t_ota, t_commission, t_gateway, t_danger)
         adv = helps(ui.switch(i18n.t("hdr.advanced"), value=cfg.advanced_mode)
                     .props("dense").classes("shrink-0 pr-2"),
                     i18n.t("hdr.advanced_tip"))

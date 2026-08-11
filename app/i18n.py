@@ -799,10 +799,22 @@ TEXTS: dict[str, dict[str, str]] = {
                              "review and Save to apply.",
                        "th": "ใส่ค่า panel.cabinet = {code} เป็นรายการแก้ไขปกติ "
                              "ตรวจแล้วกดบันทึกเพื่อให้มีผล"},
-    "gw.cab.no_code": {"en": "Tool is set to {label} — the gateway knows only "
-                             "40, 64 and 80, so nothing is checked here.",
-                       "th": "เครื่องมือเลือก {label} — เกตเวย์รู้จักเฉพาะ 40, 64, 80 "
-                             "จึงไม่ตรวจเทียบ"},
+    "gw.cab.no_code": {"en": "Tool is set to {label} — this firmware knows only "
+                             "40, 64 and 80 (panel.shape needs gateway 1.9.0).",
+                       "th": "เครื่องมือเลือก {label} — เฟิร์มแวร์รุ่นนี้รู้จักเฉพาะ "
+                             "40, 64, 80 (ทรงอิสระต้องใช้ gateway 1.9.0 ขึ้นไป)"},
+    "gw.cab.shape_mismatch": {"en": "Sweep shape mismatch — this tool is set to "
+                                    "{tool}, which is {want} per row.",
+                              "th": "ทรงกวาดไม่ตรงกัน — เครื่องมือเลือก {tool} "
+                                    "ซึ่งเป็นชั้นละ {want}"},
+    "gw.cab.stray_shape": {"en": "The gateway follows a custom sweep shape, but "
+                                 "this tool is set to {tool}.",
+                           "th": "เกตเวย์กำลังใช้ทรงกวาดแบบกำหนดเอง "
+                                 "แต่เครื่องมือเลือก {tool} ไว้"},
+    "gw.cab.set_shape": {"en": "Set shape", "th": "ตั้งทรงนี้"},
+    "gw.cab.shape_active": {"en": "Sweep shape {shape} is set — it overrides "
+                                  "the size above.",
+                            "th": "กำลังใช้ทรงกวาด {shape} — มีผลแทนขนาดด้านบน"},
     "gwf.panel.step_ms": {"en": "Pause between slots (ms)", "th": "หน่วงระหว่างช่อง (ms)"},
     "gwf.panel.step_ms.hint": {"en": "Extra breathing room on top of the bus, which "
                                      "already costs about 100 ms a slot. 0 runs as "
@@ -842,6 +854,14 @@ TEXTS: dict[str, dict[str, str]] = {
         "en": "Cabinet wiring updated from the gateway: {map}. The tool now "
               "groups slots by these channels.",
         "th": "อัปเดตผังสายจากเกตเวย์แล้ว: {map} เครื่องมือจะจัดกลุ่มช่องตามนี้"},
+    "gwf.panel.shape": {"en": "Sweep shape (slots per row)",
+                        "th": "ทรงกวาด (ช่องต่อชั้น)"},
+    "gwf.panel.shape.hint": {"en": "Slots per row from the top, e.g. 8,8,4,4,2. "
+                                   "When set, button sweeps walk this instead of "
+                                   "the preset size; 0 clears it.",
+                             "th": "จำนวนช่องของแต่ละชั้นจากบนลงล่าง เช่น 8,8,4,4,2 "
+                                   "ถ้าตั้งไว้ ปุ่มหน้าตู้จะกวาดตามนี้แทนขนาดสำเร็จรูป "
+                                   "ใส่ 0 เพื่อล้าง"},
     "gwf.bus.hub_map": {"en": "Row → hub channel", "th": "ผังแถว → ช่องฮับ"},
     "gwf.bus.hub_map.hint": {"en": "One entry per row 1-10, comma-separated. Value = "
                                    "hub channel 1-8; 0 = wired straight, no hub. All "

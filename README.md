@@ -29,13 +29,15 @@ with the release notes. Language and theme are remembered in `data/config.json`.
 identifiers — coil and register numbers, function codes, the transaction log — stay in
 English in both languages so they always match `LGS-Control-Table.md`.
 
-The **cabinet type** (LGS 80 / 64 / 40, SMT, or **Custom**) is picked once, in the
-header, and remembered. Every whole-cabinet action follows it — the installation
-check's and the firmware survey's "Whole cabinet" buttons, the gateway hub map's
-default row count, and the check against the gateway's own `panel.cabinet`. Custom
-describes a shape of your own — how many rows, and how many slots on each row
-(rows differ; LGS 64's middle rows are half width) — edited in a small dialog and
-kept across restarts.
+The **cabinet type** (LGS 80 / 64 / 40, SMT type 12, or **Custom**) is picked once,
+in the header, and remembered. Every whole-cabinet action follows it — the
+installation check's and the firmware survey's "Whole cabinet" buttons, the gateway
+hub map's default row count, and the check against the gateway's own cabinet
+settings. Custom describes a shape of your own — how many rows, and how many slots
+on each row (rows differ; LGS 64's middle rows are half width) — edited in a small
+dialog and kept across restarts. On gateway ≥ 1.9.0 a non-catalogue shape can be
+written to the gateway too (`panel.shape`), so the cabinet's own front-panel
+buttons sweep the real slots; older firmware only accepts 40/64/80.
 
 Safety is enforced in the worker, not just the UI: OTA coils 505-508 are always refused
 (use `ota_sender.py`), danger coils only fire through the Danger tab, latch coils are

@@ -307,23 +307,68 @@ def build(ctx: Ctx) -> None:
 
         The header is the authority on what cabinet this is; the gateway's
         copy decides which slots its button sweeps walk, so the two must
-        agree. The fix button stages the matching value as an ordinary
-        edit — the normal SAVE review still stands between the click and
-        the gateway. SMT and custom shapes have no gateway size (the
-        firmware knows exactly 40/64/80), so those show a note instead of
-        a warning they cannot fix.
+        agree. The fix button stages the matching values as ordinary
+        edits — the normal SAVE review still stands between the click and
+        the gateway.
+
+        Two vocabularies, by firmware age. A preset cabinet is the code in
+        `panel.cabinet`; a shape the catalogue lacks (SMT, custom) is a
+        per-row width list in `panel.shape` (gateway >= 1.9.0), which
+        overrides the code when set. Older firmware without `panel.shape`
+        can only be told the codes, so a shape there shows a note instead
+        of a warning it cannot fix.
         """
         key = "panel.cabinet"
+        skey = "panel.shape"
         value = str(snap.settings.get(key, ""))
+        has_shape = skey in snap.settings
         tool = ctx.cabinet()                       # read at render time
         options = {"40": "40", "64": "64", "80": "80"}
+        # What the header wants on the gateway: a preset wants its code and
+        # no shape; a non-catalogue cabinet wants its widths as the shape.
+        want_shape = ("0" if tool.panel_cabinet
+                      else lgs_map.format_custom_widths(
+                          lgs_map.layout_widths(tool)))
 
-        def effective() -> str:                    # a staged edit wins
-            return state["edits"].get(key, value)
+        def eff(k: str, dflt: str) -> str:         # a staged edit wins
+            return state["edits"].get(k, str(snap.settings.get(k, dflt)))
+
+        def agreed() -> bool:
+            if tool.panel_cabinet:
+                shape_clear = (not has_shape
+                               or lgs_map.same_shape(eff(skey, "0"), "0"))
+                return shape_clear and eff(key, "") == tool.panel_cabinet
+            return has_shape and lgs_map.same_shape(eff(skey, "0"), want_shape)
+
+        def fix() -> None:
+            if tool.panel_cabinet:
+                if has_shape:
+                    stage(skey, want_shape)        # "0": the preset rules again
+                el.set_value(tool.panel_cabinet)   # no-op when already right
+                stage(key, tool.panel_cabinet)
+            else:
+                stage(skey, want_shape)
+            refresh()
+
+        def warn_text() -> str:
+            if not tool.panel_cabinet:
+                return t("gw.cab.shape_mismatch", tool=tool.label,
+                         want=want_shape)
+            if has_shape and not lgs_map.same_shape(eff(skey, "0"), "0"):
+                # The code may even match — the stray shape is what rules.
+                return t("gw.cab.stray_shape", tool=tool.label)
+            return t("gw.cab.mismatch", gw=eff(key, "") or "?",
+                     tool=tool.label)
 
         def refresh() -> None:
-            if tool.panel_cabinet:
-                warn_row.set_visibility(effective() != tool.panel_cabinet)
+            bad = not agreed()
+            warn_row.set_visibility(bad)
+            if bad:
+                warn_label.set_text(warn_text())
+
+        fixable = bool(tool.panel_cabinet) or has_shape
+        fix_label = (t("gw.cab.fix", code=tool.panel_cabinet)
+                     if tool.panel_cabinet else t("gw.cab.set_shape"))
 
         with ui.column().classes("gap-0 w-72 mb-2"):
             el = ui.select(options, value=value if value in options else None,
@@ -336,16 +381,21 @@ def build(ctx: Ctx) -> None:
             if pending is not None:
                 ui.label(t("gw.pending_on_gateway", v=shown(key, pending))) \
                     .classes("text-xs text-orange leading-tight mt-1")
-            if tool.panel_cabinet:
+            if has_shape and not lgs_map.same_shape(eff(skey, "0"), "0"):
+                # The one fact that changes how this select reads: while a
+                # shape is set, the sweeps ignore the code above.
+                ui.label(t("gw.cab.shape_active", shape=eff(skey, "0"))) \
+                    .classes("text-xs text-grey leading-tight mt-1")
+            if fixable:
                 with ui.row().classes("items-center gap-2 no-wrap mt-1") as warn_row:
-                    ui.label(t("gw.cab.mismatch", gw=effective() or "?",
-                               tool=tool.label)).classes("text-xs text-orange")
-                    helps(ui.button(t("gw.cab.fix", code=tool.panel_cabinet),
-                                    on_click=lambda: el.set_value(tool.panel_cabinet))
+                    warn_label = ui.label("").classes("text-xs text-orange")
+                    helps(ui.button(fix_label, on_click=fix)
                           .props("dense outline no-caps color=orange"),
-                          t("gw.cab.fix_tip", code=tool.panel_cabinet))
+                          t("gw.cab.fix_tip", code=want_shape
+                            if not tool.panel_cabinet else tool.panel_cabinet))
                 refresh()
             else:
+                # Old firmware, non-catalogue cabinet: nothing to offer.
                 ui.label(t("gw.cab.no_code", label=tool.label)) \
                     .classes("text-xs text-grey leading-tight mt-1")
         fields[key] = el
