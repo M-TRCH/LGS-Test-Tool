@@ -854,6 +854,30 @@ TEXTS: dict[str, dict[str, str]] = {
         "en": "Cabinet wiring updated from the gateway: {map}. The tool now "
               "groups slots by these channels.",
         "th": "อัปเดตผังสายจากเกตเวย์แล้ว: {map} เครื่องมือจะจัดกลุ่มช่องตามนี้"},
+    "gw.cfg_card": {"en": "Config file", "th": "ไฟล์ค่าตั้ง"},
+    "gw.cfg_hint": {"en": "Back up the gateway's settings to a file, or stage a "
+                          "file's settings for review. A firmware upgrade whose "
+                          "settings struct changed wipes the store — export "
+                          "first, flash, import, Save. Import never writes by "
+                          "itself: values arrive as unsaved edits.",
+                    "th": "สำรองค่าตั้งของ gateway เป็นไฟล์ หรือนำไฟล์กลับเข้ามา "
+                          "เป็นรายการแก้ไขรอตรวจ อัปเดตเฟิร์มแวร์ที่โครงสร้างค่าตั้งเปลี่ยน"
+                          "จะล้างค่าในบอร์ด — ส่งออกก่อน แฟลช นำเข้า แล้วกดบันทึก "
+                          "การนำเข้าไม่เขียนเอง ค่ามาเป็นรายการแก้ไขค้างเสมอ"},
+    "gw.cfg_export": {"en": "Export config", "th": "ส่งออกค่าตั้ง"},
+    "gw.cfg_export_tip": {"en": "Saves every setting the gateway reported, as it "
+                                "is running now — unsaved edits are not included.",
+                          "th": "บันทึกทุกค่าตามที่ gateway ใช้งานอยู่จริง "
+                                "ค่าที่แก้ค้างยังไม่บันทึกจะไม่ติดไปด้วย"},
+    "gw.cfg_import": {"en": "Import config…", "th": "นำเข้าค่าตั้ง…"},
+    "gw.cfg_need_read": {"en": "Read the gateway first — Detect, then try again.",
+                         "th": "อ่านค่าจาก gateway ก่อน — กดค้นหาแล้วลองใหม่"},
+    "gw.cfg_bad_file": {"en": "Not a gateway config file.",
+                        "th": "ไม่ใช่ไฟล์ค่าตั้งของ gateway"},
+    "gw.cfg_imported": {"en": "{n} change(s) staged — review and Save to apply.",
+                        "th": "เตรียมไว้ {n} รายการ — ตรวจแล้วกดบันทึกเพื่อให้มีผล"},
+    "gw.cfg_skipped": {"en": "{n} key(s) this firmware does not have were skipped.",
+                       "th": "ข้าม {n} คีย์ที่เฟิร์มแวร์รุ่นนี้ไม่มี"},
     "gwf.panel.shape": {"en": "Sweep shape (slots per row)",
                         "th": "ทรงกวาด (ช่องต่อชั้น)"},
     "gwf.panel.shape.hint": {"en": "Slots per row from the top, e.g. 8,8,4,4,2. "

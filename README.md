@@ -14,7 +14,7 @@ Tabs:
 | **Installation Check** | **Many modules, few commands.** One click selects the whole cabinet (the type picked in the header), or pick cells on the 10×8 map or the last scan result, then send one command per module — light, or light + the slot's number, optionally upgraded to throw the latch. Every cell turns green or red. Also holds the **Pick walkthrough**: a batch of slots lights together, someone picks them in any order, and each light goes out as its button is pressed — optionally not until the drawer is closed again. CSV export |
 | **Firmware (OTA)** | Streams a module image over the bus, and surveys the **whole cabinet's firmware versions** — every slot coloured by the version it reports, with each version group clickable to become the update targets |
 | **New Module** | Flashes a blank module over ST-Link and gives it its Modbus ID in one step, single or continuous |
-| **Gateway** | The Opta's own settings over its `$LGS` console: network, RS485 hub map, front-panel buttons, relay outputs, the watchdog, and the clock with up to four scheduled resets a day — plus DFU firmware update and first-time QSPI provisioning. Warns when the gateway's cabinet size disagrees with the header's cabinet, with a one-click fix |
+| **Gateway** | The Opta's own settings over its `$LGS` console: network, RS485 hub map, front-panel buttons, relay outputs, the watchdog, and the clock with up to four scheduled resets a day — plus DFU firmware update and first-time QSPI provisioning. Warns when the gateway's cabinet size disagrees with the header's cabinet, with a one-click fix. Settings **export/import as a JSON file** — take a backup before a firmware upgrade that wipes the store; import stages values for the normal Save review and skips keys the firmware lacks |
 | **Module Test** | **One module, everything.** The full R5.0 sweep (read → write → value limits → presets → display → light ring → optional unlock) with a live PASS/FAIL table and CSV export |
 | **Danger** | Factory reset (type-the-ID + double confirm), save-to-EEPROM, software reset, clear statistics, set slave ID — with post-reboot probes |
 
@@ -60,10 +60,16 @@ the tool can do: slots on one channel answer in ~100 ms each, and every extra ch
 batch adds ~2 s to each polling sweep. The tool reads the row→channel map from the gateway
 on every Gateway-tab read and groups its work accordingly.
 
-Upgrading gateway firmware whose settings struct changed (v1.8.0 is one) makes the Opta
-reject its stored config and come up on factory defaults — **Ethernet off, no hub map**.
-Read the Gateway tab before flashing, and re-provision after. The tool's own
-`data/config.json` keeps the hub map and the address, so those two survive regardless.
+Upgrading gateway firmware whose settings struct changed (v1.8.0 and v1.9.0 are two)
+makes the Opta reject its stored config and come up on factory defaults — **Ethernet
+off, no hub map**. **Export the config from the Gateway tab before flashing**, flash,
+import, Save. The tool's own `data/config.json` keeps the hub map and the address, so
+those two survive regardless.
+
+One `$LGS` console caveat that shaped the tool: the gateway keeps SET values staged
+across console sessions, so the tool discards the gateway's staged state before every
+write — a save commits exactly what its review dialog showed. Console lines over ~120
+characters are dropped whole, so multi-key writes go out in chunks.
 
 Module addressing: grid slave ID = `row*10 + col` (rows 1-10, cols 1-8 → 11-18, 21-28,
 … 101-108), factory default **247**, **246** = the temporary ID of a module whose switch

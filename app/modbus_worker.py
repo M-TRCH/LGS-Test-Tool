@@ -678,6 +678,17 @@ class ModbusWorker:
                                                      hello.error_text or "HELLO failed")
             steps.append("session armed")
 
+            # The gateway keeps staged edits across sessions, so anything a
+            # console experiment (or an interrupted write) left behind would
+            # ride this SAVE unseen. Start from a clean slate: this SAVE
+            # commits exactly what this dialog showed, nothing else.
+            res = link.discard()
+            self._log_gw("DISCARD", res)
+            if not res.ok:
+                link.bye()
+                return gateway_config.GwActionResult(False, tuple(steps),
+                                                     res.error_text)
+
             if changes:
                 res = link.set_many(changes)
                 self._log_gw("SET", res)

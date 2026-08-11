@@ -6,6 +6,7 @@ worker lends the COM port for the duration of each exchange.
 """
 from __future__ import annotations
 
+import json
 from datetime import datetime, timedelta
 
 from nicegui import ui
@@ -141,6 +142,24 @@ def build(ctx: Ctx) -> None:
                   on_click=lambda: confirm_defaults()).props("outline")
         ui.button(t("gw.reboot"), color="red",
                   on_click=lambda: confirm_reboot()).props("outline")
+
+    # ── config file: export / import ───────────────────────────────────────
+    # A settings file is the answer to two recurring days: the firmware whose
+    # settings struct changed wipes the store on upgrade, and a replacement
+    # unit starts from nothing. Import stages values as ordinary edits — the
+    # SAVE review still stands between a file and the gateway.
+    with ui.card().classes("p-3 w-full q-mt-sm"):
+        helps(ui.label(t("gw.cfg_card")).classes("font-bold"),
+              t("gw.cfg_hint"))
+        with ui.row().classes("items-center gap-3 flex-wrap"):
+            ui.button(t("gw.cfg_export"),
+                      on_click=lambda: do_export()) \
+                .props("outline dense no-caps") \
+                .tooltip(t("gw.cfg_export_tip"))
+            ui.upload(label=t("gw.cfg_import"),
+                      on_upload=lambda e: do_import(e),
+                      auto_upload=True, max_files=1) \
+                .props('accept=".json" flat dense')
 
     def usable() -> tuple:
         """(ok, message) — the console is USB-only and needs a port."""
@@ -581,10 +600,17 @@ def build(ctx: Ctx) -> None:
             .bind_visibility_from(master, "value", backward=lambda v: not v)
 
     def apply_pending(values: dict) -> None:
-        """Drop values into the fields as ordinary unsaved edits."""
+        """Drop values into the fields as ordinary unsaved edits.
+
+        A key with no widget of its own (the schedule's masks, panel.shape)
+        is staged directly: the SAVE dialog is where such values are seen,
+        and skipping them would silently drop part of a defaults load or an
+        imported file.
+        """
         for key, text in values.items():
             el = fields.get(key)
             if el is None:
+                stage(key, text)
                 continue
             if key in BOOL_KEYS:
                 el.set_value(text == "1")
@@ -594,6 +620,64 @@ def build(ctx: Ctx) -> None:
                 el.set_value(hhmm_text(text))    # the field holds a clock
             else:
                 el.set_value(text)
+
+    def do_export() -> None:
+        """The gateway's settings as a JSON file — what is RUNNING, not the
+        unsaved edits: a backup is a record of the cabinet, not of a half-
+        finished thought."""
+        snap = state["snapshot"]
+        if snap is None or not snap.ok:
+            ui.notify(t("gw.cfg_need_read"), type="warning")
+            return
+        payload = {
+            "app": "LGS-Test-Tool",
+            "kind": "gateway-config",
+            "fw": snap.info.get("fw", "?"),
+            "gateway_id": snap.info.get("id", ""),
+            "name": snap.settings.get("sys.name", ""),
+            "saved": datetime.now().isoformat(timespec="seconds"),
+            # net.mac is the board's identity, not a setting — a file that
+            # carried it would invite importing one gateway into another.
+            "settings": {k: v for k, v in sorted(snap.settings.items())
+                         if k != "net.mac"},
+        }
+        tag = payload["name"] or payload["gateway_id"] or "gateway"
+        fname = f"gateway-config-{tag}-{datetime.now():%Y%m%d-%H%M}.json"
+        ui.download(json.dumps(payload, indent=2).encode("utf-8"), fname)
+
+    def do_import(e) -> None:
+        """Stage a config file's values — never write them. The SAVE review
+        stands between any file and the gateway, and keys this firmware
+        does not report are skipped and said out loud."""
+        snap = state["snapshot"]
+        if snap is None or not snap.ok:
+            ui.notify(t("gw.cfg_need_read"), type="warning")
+            return
+        try:
+            data = json.loads(e.content.read().decode("utf-8-sig"))
+            if data.get("kind") != "gateway-config" \
+                    or not isinstance(data.get("settings"), dict):
+                raise ValueError("not a gateway config")
+        except (ValueError, UnicodeDecodeError):
+            ui.notify(t("gw.cfg_bad_file"), type="negative")
+            return
+        known: dict = {}
+        skipped: list = []
+        for k, v in data["settings"].items():
+            if k == "net.mac":
+                continue
+            if k in snap.settings:
+                known[k] = str(v)
+            else:
+                skipped.append(k)
+        apply_pending(known)
+        staged = len(state["edits"])
+        msg = t("gw.cfg_imported", n=staged)
+        if skipped:
+            msg += " " + t("gw.cfg_skipped", n=len(skipped))
+        ui.notify(msg, type="warning" if staged else "info", timeout=8000)
+        say(f"import: {len(known)} known, {len(skipped)} skipped, "
+            f"{staged} staged")
 
     def render(snap) -> None:
         cards.clear()

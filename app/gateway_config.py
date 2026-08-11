@@ -162,9 +162,52 @@ class GatewayLink:
     def bye(self) -> GwResponse:
         return self.command("BYE")
 
+    # The console drops any line over ~120 characters WHOLE (the reply is a
+    # timeout, not an error), and parses at most 11 key=value pairs per line.
+    # So SET is chunked: each line stays under both limits, and one bad chunk
+    # aborts the rest — half-applied staging would be worse than none, and
+    # DISCARD after a failure is the caller's move.
+    _SET_LINE_MAX = 100          # command body budget, margin under 120
+    _SET_PAIRS_MAX = 8
+
     def set_many(self, changes: dict) -> GwResponse:
-        args = " ".join(f"{k}={v}" for k, v in changes.items())
-        return self.command(f"SET {args}")
+        chunk: list = []
+        length = 0
+        responses: list = []
+
+        def flush() -> Optional[GwResponse]:
+            nonlocal chunk, length
+            if not chunk:
+                return None
+            res = self.command("SET " + " ".join(chunk))
+            chunk, length = [], 0
+            return res
+
+        for k, v in changes.items():
+            pair = f"{k}={v}"
+            if chunk and (len(chunk) >= self._SET_PAIRS_MAX
+                          or length + 1 + len(pair) > self._SET_LINE_MAX):
+                res = flush()
+                if res is not None and not res.ok:
+                    return res
+                responses.append(res)
+            chunk.append(pair)
+            length += (1 if length else 0) + len(pair)
+        res = flush()
+        if res is not None:
+            responses.append(res)
+        if res is not None and not res.ok:
+            return res
+        # One summary response so callers keep reading a single result.
+        total = sum(int(r.data.get("n", 0) or 0) for r in responses if r)
+        last = responses[-1] if responses else None
+        if last is None:
+            return GwResponse(ok=True, verb="SET", data={"n": "0"})
+        return GwResponse(ok=True, verb="SET",
+                          data={"n": str(total),
+                                "dirty": last.data.get("dirty", "?")},
+                          lines=tuple(f"#OK SET n={total} (chunked "
+                                      f"x{len(responses)})".split("\n")))
 
     def save(self) -> GwResponse:
         return self.command("SAVE", timeout_s=SAVE_TIMEOUT_S)
