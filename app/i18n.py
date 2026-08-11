@@ -783,6 +783,15 @@ TEXTS: dict[str, dict[str, str]] = {
                                      "cabinet.",
                                "th": "ปิดไว้ตอนทดสอบบนโต๊ะ เพราะไม่มีอะไรต่อที่อินพุต "
                                      "และไฟรั่วเข้ามาต้องไม่ทำให้ตู้ทำงานเอง"},
+    "pnl.preset_n": {"en": "Preset {n}", "th": "พรีเซ็ต {n}"},
+    "gwf.panel.preset": {"en": "Sweep preset", "th": "พรีเซ็ตที่ปุ่มใช้"},
+    "gwf.panel.preset.hint": {
+        "en": "Which module preset the buttons light (1-8). Brightness and "
+              "colour are that preset's own per-module settings — a panel too "
+              "bright at night is fixed by pointing it at a dimmer preset.",
+        "th": "ปุ่มหน้าตู้จุดไฟด้วยพรีเซ็ตไหน (1-8) ความสว่างและสีเป็นค่าของ"
+              "พรีเซ็ตนั้นในตัวโมดูลแต่ละตัว — ตู้สว่างเกินไปตอนกลางคืน "
+              "แก้โดยชี้ไปพรีเซ็ตที่หรี่กว่า"},
     "gwf.panel.cabinet": {"en": "Cabinet size", "th": "ขนาดตู้"},
     "gwf.panel.cabinet.hint": {"en": "40, 64 or 80 — decides which slots a sweep "
                                      "walks and in what order. Checked against "

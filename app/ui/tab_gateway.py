@@ -461,6 +461,22 @@ def build(ctx: Ctx) -> None:
                     .props("dense outlined").classes("grow")
                 helps(el, t("pnl.input", n=i + 1, name=key))
                 fields[key] = el
+        # Which module preset the sweeps fire (gateway >= 1.10.0). A select,
+        # because 1-8 typed as text invites a 9; the look itself — brightness,
+        # colour — is that preset's per-module config, which the hint says.
+        if "panel.preset" in snap.settings:
+            raw = snap.settings.get("panel.preset", "1")
+            value = int(raw) if raw.isdigit() else 1
+            with ui.column().classes("gap-0 w-72 mb-2"):
+                el = ui.select({n: t("pnl.preset_n", n=n) for n in range(1, 9)},
+                               value=value if 1 <= value <= 8 else 1,
+                               label=label_of("panel.preset"),
+                               on_change=lambda e: stage("panel.preset",
+                                                         int(e.value))) \
+                    .props("dense outlined").classes("w-full")
+                hint = hint_of("panel.preset")
+                helps(el, f"{hint} (panel.preset)" if hint else "panel.preset")
+            fields["panel.preset"] = el
         for key in ("panel.enabled", "panel.step_ms", "panel.reset_ms"):
             if key in snap.settings:
                 field_row(key, snap)

@@ -15,7 +15,11 @@ from . import Ctx
 
 
 def build(ctx: Ctx) -> None:
-    with ui.expansion(t("log.title"), value=True).classes("w-full"):
+    # Collapsed by default: the log is a diagnosis tool, not a dashboard —
+    # open it when something needs explaining. It keeps filling while closed
+    # (the drain below never stops), so opening it shows the history, not a
+    # blank pane that only starts recording once watched.
+    with ui.expansion(t("log.title"), value=False).classes("w-full"):
         with ui.row().classes("items-center gap-2"):
             paused = ui.switch(t("log.pause"), value=False).props("dense")
             source_filter = ui.select({"all": t("log.all"), "manual": "manual",
