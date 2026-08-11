@@ -18,7 +18,9 @@ from ..ota import Done, Line, Progress
 from . import Ctx, bundled_picker, helps
 
 # Which settings each card shows, in display order.
-CARD_IDENTITY = ("sys.name",)
+# sys.wdt_ms only exists on gateway >= 1.8.0; field_row skips what the
+# firmware did not report.
+CARD_IDENTITY = ("sys.name", "sys.wdt_ms")
 CARD_RS485 = ("rs485.baud", "rs485.predelay_us", "rs485.postdelay_us",
               "rs485.t1_ms", "rs485.t2_ms")
 CARD_USB = ("usb.gap_ms", "usb.max_ms")
@@ -50,12 +52,44 @@ LAMP_SOURCES = {0: "pnl.src.none", 1: "pnl.src.ready", 2: "pnl.src.busy",
 # reading this page is looking at a panel of coloured lamps, so the tool keeps
 # its own note of which is which.
 LAMP_COLOURS = ("green", "amber", "red", "blue", "white", "none")
-LAMP_COLOUR_HEX = {"green": "#43a047", "amber": "#fdd835", "red": "#e53935",
-                   "blue": "#1e88e5", "white": "#fafafa", "none": "#9e9e9e"}
 LAMP_COLOUR_DEFAULT = ("none", "green", "amber", "red")
+# A lamp's colour shown as the thing itself. The word is still carried in the
+# tooltip's legend, so nothing is lost by dropping it from the field — and a
+# column of dots is read at a glance, which a column of colour names is not.
+LAMP_COLOUR_SYMBOL = {"green": "🟢", "amber": "🟡", "red": "🔴",
+                      "blue": "🔵", "white": "⚪", "none": "—"}
 
 BOOL_KEYS = {"net.enabled", "net.dhcp", "panel.enabled", "panel.lamps",
              "sched.reset_enabled"}
+
+# The four scheduled-reset times (gateway >= 1.8.0). Slot 1 keeps the original
+# key name — the gateway's key table is append-only, so it could not be
+# renamed without moving every key after it.
+SCHED_SLOT_KEYS = ("sched.reset_hhmm", "sched.reset_hhmm2",
+                   "sched.reset_hhmm3", "sched.reset_hhmm4")
+
+
+def hhmm_text(value: str) -> str:
+    """`"300"` -> `"03:00"`. People set a clock reading, not a four-digit
+    number; the console stores the number, so the translation happens here."""
+    try:
+        v = int(value)
+    except (TypeError, ValueError):
+        return ""
+    if not 0 <= v <= 2359 or v % 100 > 59:
+        return ""
+    return f"{v // 100:02d}:{v % 100:02d}"
+
+
+def hhmm_value(text: str):
+    """`"03:00"` -> `300`, or None while the field is empty or half-typed."""
+    parts = (text or "").split(":")
+    if len(parts) != 2 or not all(p.isdigit() for p in parts):
+        return None
+    hour, minute = int(parts[0]), int(parts[1])
+    if hour > 23 or minute > 59:
+        return None
+    return hour * 100 + minute
 
 
 def label_of(key: str) -> str:
@@ -73,6 +107,8 @@ def shown(key: str, value: str) -> str:
     """A value as a person reads it — "on"/"off" rather than 1/0."""
     if key in BOOL_KEYS:
         return t("gw.on") if value == "1" else t("gw.off")
+    if key in SCHED_SLOT_KEYS:
+        return hhmm_text(value) or value or "—"
     return value or "—"
 
 
@@ -193,6 +229,25 @@ def build(ctx: Ctx) -> None:
                     .classes("text-xs text-orange leading-tight mt-1")
         fields[key] = el
 
+    def time_field(key: str, snap):
+        """One slot's time, as a clock rather than the four-digit number the
+        console stores. Returns the element so the caller can gate it."""
+        def changed(e) -> None:
+            value = hhmm_value(e.value)
+            # Half-typed or cleared: leave the staged value alone rather than
+            # stage a time nobody meant.
+            if value is not None:
+                stage(key, value)
+
+        el = ui.input(value=hhmm_text(snap.settings.get(key, "0")),
+                      on_change=changed) \
+            .props("dense outlined type=time").classes("w-28")
+        # All four slots answer the same question, so they share slot 1's
+        # explanation rather than repeating it four times.
+        helps(el, f"{hint_of('sched.reset_hhmm')} ({key})")
+        fields[key] = el
+        return el
+
     def hub_map_editor(snap) -> None:
         """One channel picker per row, sized to the cabinet in front of you.
 
@@ -312,42 +367,36 @@ def build(ctx: Ctx) -> None:
             ui.separator().classes("q-my-sm")
             helps(ui.label(t("pnl.lamp_card")).classes("font-bold"),
                   t("pnl.lamp_hint"))
-            # panel.lamp reads like "2--": a digit for each output that is lit
-            # and a dash for each that is dark, as of this read.
-            live = snap.info.get("panel.lamp", "")
             # What each output follows. Which colour sits on which output is
             # wiring, and what a colour should mean is a site's call — so both
             # are answered here rather than assumed by the firmware.
+            #
+            # No lit/dark indicator here: this page reads the gateway once, so
+            # any such mark is a photograph of a lamp that has moved on since,
+            # and a stale one is worse than none. The panel itself is the live
+            # view; `$LGS LAMP n` is how a suspect output is proven.
             if "panel.out1" in snap.settings:
                 src_options = {v: t(k) for v, k in LAMP_SOURCES.items()}
-                colour_options = {c: t(f"pnl.colour.{c}") for c in LAMP_COLOURS}
+                colour_options = {c: LAMP_COLOUR_SYMBOL[c] for c in LAMP_COLOURS}
+                # The symbols carry no words, so the hint carries the key.
+                colour_hint = t("pnl.colour_hint") + " — " + " · ".join(
+                    f"{LAMP_COLOUR_SYMBOL[c]} {t(f'pnl.colour.{c}')}"
+                    for c in LAMP_COLOURS)
                 fitted = lamp_colours()
                 for i, key in enumerate(LAMP_OUT_KEYS):
                     raw = snap.settings.get(key, "0")
                     value = int(raw) if raw.isdigit() else 0
-                    lit = len(live) > i and live[i] != "-"
                     colour = fitted[i]
                     with ui.row().classes("items-center gap-2 no-wrap q-mb-xs"):
-                        # Always drawn, in the lamp's own colour: filled while
-                        # it is lit, faded while it is dark. A dot that
-                        # disappears when the lamp is off says nothing about
-                        # which lamp that row is.
-                        ui.element("div").classes("rounded-full").style(
-                            f"width:14px;height:14px;flex:0 0 auto;"
-                            f"background:{LAMP_COLOUR_HEX[colour]};"
-                            f"opacity:{'1' if lit else '0.25'};"
-                            f"box-shadow:{'0 0 6px ' + LAMP_COLOUR_HEX[colour] if lit else 'none'};"
-                            f"border:1px solid rgba(128,128,128,.6)")
-                        ui.label(t("pnl.out_n", n=i + 1)).classes(
-                            "text-sm w-16" + ("" if lit else " text-grey"))
+                        ui.label(t("pnl.out_n", n=i + 1)).classes("text-sm w-16")
                         # The lamp's colour is the tool's note about the panel
                         # in front of it — the gateway has no idea, and should
                         # not, so this is saved here and not sent anywhere.
                         helps(ui.select(
                             colour_options, value=colour,
                             on_change=lambda e, n=i: set_lamp_colour(n, e.value)) \
-                            .props("dense outlined borderless").classes("w-28"),
-                            t("pnl.colour_hint"))
+                            .props("dense outlined borderless").classes("w-16"),
+                            colour_hint)
                         el = ui.select(
                             src_options,
                             value=value if value in src_options else 0,
@@ -386,9 +435,50 @@ def build(ctx: Ctx) -> None:
             when = (datetime(1970, 1, 1) + timedelta(seconds=int(last)))
             ui.label(t("sch.last", when=when.strftime("%Y-%m-%d %H:%M")))                 .classes("text-xs text-grey")
 
-        for key in ("sched.reset_enabled", "sched.reset_hhmm"):
-            if key in snap.settings:
-                field_row(key, snap)
+        field_row("sched.reset_enabled", snap)
+        master = fields["sched.reset_enabled"]
+        # Everything below is the schedule's detail, and detail you cannot act
+        # on is worse than absent: it invites someone to set a time and walk
+        # away believing the cabinet will reset. So the switch gates it all.
+        gated: list = []
+
+        # Four slots, each with its own tick. The times stay editable-looking
+        # while their slot is off because the firmware keeps them — untick,
+        # retick, and the hour is still there.
+        has_slots = "sched.reset_slots" in snap.settings
+        if has_slots:
+            raw_slots = snap.settings.get("sched.reset_slots", "1")
+            slot_mask = int(raw_slots) if raw_slots.isdigit() else 1
+            ticks: list = []
+
+            def push_slots() -> None:
+                value = 0
+                for bit, box in enumerate(ticks):
+                    if box.value:
+                        value |= 1 << bit
+                stage("sched.reset_slots", value)
+                none_ticked.set_visibility(value == 0)
+
+            helps(ui.label(t("sch.slots")).classes("text-sm text-grey"),
+                  t("sch.slot_hint"))
+            for i, key in enumerate(SCHED_SLOT_KEYS):
+                if key not in snap.settings:
+                    continue
+                with ui.row().classes("items-center gap-2 no-wrap q-mb-xs"):
+                    box = ui.checkbox(t("sch.slot_n", n=i + 1),
+                                      value=bool(slot_mask & (1 << i)),
+                                      on_change=lambda _: push_slots()) \
+                        .props("dense").classes("text-xs w-24")
+                    ticks.append(box)
+                    gated.append(box)
+                    gated.append(time_field(key, snap))
+            none_ticked = ui.label(t("sch.no_slots")) \
+                .classes("text-xs text-orange leading-tight")
+            none_ticked.set_visibility(slot_mask == 0)
+        else:
+            # Gateway < 1.8.0: one time, and it is on whenever the switch is.
+            field_row("sched.reset_hhmm", snap)
+            gated.append(fields["sched.reset_hhmm"])
 
         # Days as seven checkboxes, because a bitmask is not something anyone
         # should have to add up. All seven clear means every day, which is
@@ -413,8 +503,14 @@ def build(ctx: Ctx) -> None:
                                   on_change=lambda _: push_days()) \
                     .props("dense").classes("text-xs")
                 boxes.append(box)
+                gated.append(box)
         helps(ui.label(t("sch.days_hint")).classes("text-xs text-grey"),
               t("sch.days_hint"))
+
+        for widget in gated:
+            widget.bind_enabled_from(master, "value")
+        ui.label(t("sch.off_note")).classes("text-xs text-grey") \
+            .bind_visibility_from(master, "value", backward=lambda v: not v)
 
     def apply_pending(values: dict) -> None:
         """Drop values into the fields as ordinary unsaved edits."""
@@ -426,6 +522,8 @@ def build(ctx: Ctx) -> None:
                 el.set_value(text == "1")
             elif key == "rs485.baud":
                 el.set_value(int(text) if text.isdigit() else text)
+            elif key in SCHED_SLOT_KEYS:
+                el.set_value(hhmm_text(text))    # the field holds a clock
             else:
                 el.set_value(text)
 
@@ -449,6 +547,12 @@ def build(ctx: Ctx) -> None:
                         ui.label(t("gw.mac_placeholder")).classes("text-xs text-orange")
                     ui.label(f"uptime {info.get('sys.up', '?')} s · "
                              f"reset {info.get('sys.reset', '?')}").classes("text-sm")
+                    # A watchdog reset means the firmware stopped running. It
+                    # is the one reset reason worth reading twice, so it says
+                    # so rather than sitting in a line of diagnostics.
+                    if info.get("sys.reset") == "watchdog":
+                        ui.label(t("gw.reset_by_wdt")) \
+                            .classes("text-xs text-orange leading-tight")
 
                 with ui.card().classes("p-3 grow"):
                     ui.label(t("gw.card.health")).classes("font-bold")
@@ -493,7 +597,16 @@ def build(ctx: Ctx) -> None:
                 with ui.card().classes("p-3 grow"):
                     ui.label(t("gw.card.identity")).classes("font-bold")
                     for key in CARD_IDENTITY:
-                        field_row(key, snap)
+                        # Older firmware has fewer of these; an empty field
+                        # only invites a SET the console would reject.
+                        if key in snap.settings:
+                            field_row(key, snap)
+                    wdt = info.get("sys.wdt")
+                    if wdt is not None:
+                        ui.label(t("gw.wdt_running", ms=wdt) if wdt != "0"
+                                 else t("gw.wdt_off")) \
+                            .classes("text-xs " + ("text-grey" if wdt != "0"
+                                                   else "text-orange"))
                 with ui.card().classes("p-3 grow"):
                     ui.label(t("gw.card.rs485")).classes("font-bold")
                     for key in CARD_RS485:
@@ -542,7 +655,7 @@ def build(ctx: Ctx) -> None:
             parts = ["none"] + parts
         out = list(LAMP_COLOUR_DEFAULT)
         for i in range(len(out)):
-            if i < len(parts) and parts[i] in LAMP_COLOUR_HEX:
+            if i < len(parts) and parts[i] in LAMP_COLOURS:
                 out[i] = parts[i]
         return out
 

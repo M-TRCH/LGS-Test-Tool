@@ -14,7 +14,7 @@ Tabs:
 | **Installation Check** | **Many modules, few commands.** Pick a cabinet type (LGS 80 / 64 / 40, SMT), cells on the 10×8 map, or the last scan result, then send one command per module — light, or light + the slot's number, optionally upgraded to throw the latch. Every cell turns green or red. Also holds the **Pick walkthrough**: a batch of slots lights together, someone picks them in any order, and each light goes out as its button is pressed — optionally not until the drawer is closed again. CSV export |
 | **Firmware (OTA)** | Streams a module image over the bus, and surveys the **whole cabinet's firmware versions** — every slot coloured by the version it reports, with each version group clickable to become the update targets |
 | **New Module** | Flashes a blank module over ST-Link and gives it its Modbus ID in one step, single or continuous |
-| **Gateway** | The Opta's own settings over its `$LGS` console: network, RS485 hub map, front-panel buttons, relay outputs and lamps, the clock and its scheduled reset — plus DFU firmware update and first-time QSPI provisioning |
+| **Gateway** | The Opta's own settings over its `$LGS` console: network, RS485 hub map, front-panel buttons, relay outputs, the watchdog, and the clock with up to four scheduled resets a day — plus DFU firmware update and first-time QSPI provisioning |
 | **Module Test** | **One module, everything.** The full R5.0 sweep (read → write → value limits → presets → display → light ring → optional unlock) with a live PASS/FAIL table and CSV export |
 | **Danger** | Factory reset (type-the-ID + double confirm), save-to-EEPROM, software reset, clear statistics, set slave ID — with post-reboot probes |
 
@@ -49,6 +49,11 @@ seconds of silence to change channel. The gateway repairs that itself, but it sh
 the tool can do: slots on one channel answer in ~100 ms each, and every extra channel in a
 batch adds ~2 s to each polling sweep. The tool reads the row→channel map from the gateway
 on every Gateway-tab read and groups its work accordingly.
+
+Upgrading gateway firmware whose settings struct changed (v1.8.0 is one) makes the Opta
+reject its stored config and come up on factory defaults — **Ethernet off, no hub map**.
+Read the Gateway tab before flashing, and re-provision after. The tool's own
+`data/config.json` keeps the hub map and the address, so those two survive regardless.
 
 Module addressing: grid slave ID = `row*10 + col` (rows 1-10, cols 1-8 → 11-18, 21-28,
 … 101-108), factory default **247**, **246** = the temporary ID of a module whose switch
@@ -146,8 +151,9 @@ gateway ซึ่งรับทีละ 1 client — ต่อตัวที�
 กดปุ่มยืนยันแล้วไฟดับ เลือกได้ว่าต้องปิดลิ้นชักก่อนหรือไม่), **Firmware (OTA)**
 (อัปเดตเฟิร์มแวร์ผ่านบัส + สำรวจเวอร์ชันทั้งตู้ คลิกกลุ่มเวอร์ชันเพื่อตั้งเป้าหมายได้เลย),
 **New Module** (แฟลชบอร์ดเปล่าผ่าน ST-Link พร้อมตั้ง ID), **Gateway** (ตั้งค่า Opta
-ทั้งหมดผ่านคอนโซล `$LGS`: เครือข่าย ผัง hub ปุ่มหน้าตู้ ไฟสถานะ นาฬิกาและตารางรีเซต
-รวมถึงอัปเดตเฟิร์มแวร์ผ่าน DFU), **Module Test**, **Danger**
+ทั้งหมดผ่านคอนโซล `$LGS`: เครือข่าย ผัง hub ปุ่มหน้าตู้ เอาต์พุตรีเลย์ watchdog
+นาฬิกาและตารางรีเซตได้ถึงวันละ 4 ช่วง รวมถึงอัปเดตเฟิร์มแวร์ผ่าน DFU),
+**Module Test**, **Danger**
 
 **เฟิร์มแวร์ที่ปล่อยแล้วฝังมาในเครื่องมือ** ทั้งของโมดูลและของ gateway ออกหน้างานได้โดย
 ไม่ต้องโหลดไฟล์ และตรวจ SHA-256 กับไฟล์ที่ปล่อยจริงทุกครั้งก่อนใช้
@@ -155,6 +161,11 @@ gateway ซึ่งรับทีละ 1 client — ต่อตัวที�
 **ข้อควรรู้เรื่อง hub:** ถ้าบัส RS485 ผ่านฮับสลับช่อง ฮับต้องเงียบราว 2 วินาทีจึงจะสลับช่องได้
 ช่องที่อยู่ฮับเดียวกันอ่านเร็วมาก (~100 ms ต่อช่อง) แต่ทุกช่องฮับที่เพิ่มเข้ามาในหนึ่งชุด
 จะเพิ่มเวลาอีกราว 2 วินาทีต่อรอบ เครื่องมือจึงอ่านผังสายจาก gateway มาจัดกลุ่มงานให้เอง
+
+**ข้อควรรู้เรื่องอัปเดตเฟิร์มแวร์ gateway:** ถ้าโครงสร้างค่าตั้งเปลี่ยน (เช่น v1.8.0)
+Opta จะไม่รับค่าที่เก็บไว้และกลับไปใช้ค่าโรงงาน — **Ethernet ปิด ไม่มีผัง hub**
+ควรอ่านหน้า Gateway เก็บไว้ก่อนแฟลช แล้วตั้งค่ากลับหลังแฟลช (ผัง hub กับหมายเลข IP
+เครื่องมือเก็บไว้ใน `data/config.json` อยู่แล้ว)
 
 ระบบกันพลาด: coil OTA (505-508) ถูกปฏิเสธเสมอ, coil อันตราย (500-504, 510) ยิงได้เฉพาะ
 แท็บ Danger, latch ติด cooldown 2.2 วินาที ตาม spec ของ firmware

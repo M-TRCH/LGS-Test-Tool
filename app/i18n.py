@@ -425,7 +425,7 @@ TEXTS: dict[str, dict[str, str]] = {
     "gw.card.health": {"en": "Health", "th": "สถานะระบบ"},
     "gw.card.rs485": {"en": "RS485 bus", "th": "บัส RS485"},
     "gw.card.usb": {"en": "USB bridge", "th": "USB bridge"},
-    "gw.card.identity": {"en": "Identity", "th": "ชื่อเรียก"},
+    "gw.card.identity": {"en": "System", "th": "ระบบ"},
     "gw.card.net": {"en": "Network", "th": "เครือข่าย"},
     "gw.card.counters": {"en": "Counters", "th": "ตัวนับ"},
     "gw.net_hint": {"en": "Address changes take effect after a reboot; the port moves "
@@ -609,6 +609,38 @@ TEXTS: dict[str, dict[str, str]] = {
               "the cabinet, not UTC.",
         "th": "อ่านแบบหน้าปัด: 300 คือ 03:00, 1430 คือ 14:30 "
               "เป็นเวลาท้องถิ่นที่ตู้ ไม่ใช่ UTC"},
+    "sch.slots": {"en": "times", "th": "ช่วงเวลา"},
+    "sch.slot_n": {"en": "slot {n}", "th": "ช่วงที่ {n}"},
+    "sch.slot_hint": {
+        "en": "Up to four resets a day. Tick only the ones you want — an "
+              "unticked slot keeps its time and never fires, so turning it "
+              "back on later does not mean typing the hour again.",
+        "th": "รีเซตได้สูงสุดวันละ 4 ครั้ง ติ๊กเฉพาะช่วงที่ต้องการ "
+              "ช่วงที่ไม่ติ๊กจะเก็บเวลาไว้และไม่ทำงาน "
+              "เปิดใช้ทีหลังจึงไม่ต้องพิมพ์เวลาใหม่"},
+    "sch.no_slots": {"en": "Scheduling is on but no time is ticked — nothing will "
+                           "run.",
+                     "th": "เปิดใช้ตารางแล้วแต่ยังไม่ได้ติ๊กช่วงเวลาใด จะไม่มีอะไรทำงาน"},
+    "sch.off_note": {"en": "Turn the switch on to set these.",
+                     "th": "เปิดสวิตช์ด้านบนก่อนจึงจะตั้งค่าส่วนนี้ได้"},
+    "gwf.sys.wdt_ms": {"en": "Watchdog (ms)", "th": "Watchdog (มิลลิวินาที)"},
+    "gwf.sys.wdt_ms.hint": {
+        "en": "The board resets itself if the firmware stops running for this "
+              "long — the cure for a hang nobody is there to see. 8000 is well "
+              "clear of the longest normal stall (a cross-channel RS485 hold, "
+              "about 2.2 s). Too short and a slow boot restarts forever, so it "
+              "must also outlast the wait for an Ethernet link. Takes effect on "
+              "the next restart.",
+        "th": "บอร์ดจะรีเซตตัวเองถ้าเฟิร์มแวร์หยุดทำงานนานเท่านี้ "
+              "เป็นทางแก้อาการค้างตอนที่ไม่มีใครอยู่ 8000 ห่างจากการหน่วงปกติที่นานที่สุด "
+              "(การรอ hub ข้ามช่อง ~2.2 วิ) พอสมควร ถ้าสั้นเกินไปบอร์ดที่บูตช้าจะรีสตาร์ทวนไม่จบ "
+              "จึงต้องนานกว่าเวลารอลิงก์ Ethernet ด้วย มีผลเมื่อรีสตาร์ทครั้งถัดไป"},
+    "gw.wdt_running": {"en": "watchdog {ms} ms", "th": "watchdog {ms} มิลลิวินาที"},
+    "gw.wdt_off": {"en": "watchdog not running", "th": "watchdog ไม่ทำงาน"},
+    "gw.reset_by_wdt": {
+        "en": "The last restart was the watchdog — the firmware had stopped "
+              "running and the board recovered itself.",
+        "th": "การรีสตาร์ทครั้งล่าสุดมาจาก watchdog เฟิร์มแวร์หยุดทำงานและบอร์ดกู้ตัวเองกลับมา"},
     "pnl.card": {"en": "Front-panel buttons", "th": "ปุ่มหน้าตู้"},
     "pnl.hint": {"en": "Five buttons wired to the Opta's inputs 1-5, so the cabinet "
                        "can be exercised at the cabinet with no PC and no network. "
@@ -632,16 +664,17 @@ TEXTS: dict[str, dict[str, str]] = {
     "pnl.act.reset": {"en": "Power-cycle the shelf (relays)",
                       "th": "สับรีเลย์ตัดไฟชั้นวาง (hardware reset)"},
 
-    "pnl.lamp_card": {"en": "Relay outputs (1-4)", "th": "เอาต์พุตรีเลย์ (1-4)"},
-    "pnl.lamp_hint": {"en": "One lamp at a time, worst news first. The meanings are "
-                            "fixed — green ready, amber talking to the cabinet, red "
-                            "not usable — and what you set here is when each one "
-                            "applies. The dot beside a colour is lit for whichever "
-                            "the gateway was showing when this page was read.",
-                      "th": "ไฟติดทีละดวง เรียงตามความร้ายแรง ความหมายตายตัว — "
-                            "เขียวคือพร้อม เหลืองคือกำลังสื่อสารกับตู้ แดงคือใช้งานไม่ได้ "
-                            "ส่วนที่ตั้งได้คือเงื่อนไขว่าเมื่อไหร่ถึงจะขึ้นสีนั้น "
-                            "จุดสีข้างชื่อจะสว่างตามสีที่เกตเวย์แสดงอยู่ตอนอ่านค่า"},
+    "pnl.lamp_card": {"en": "Relay outputs", "th": "เอาต์พุตรีเลย์"},
+    "pnl.lamp_hint": {"en": "Each relay follows one thing. Ready, busy and fault are "
+                            "three faces of one state, so putting those on three "
+                            "outputs gives a traffic light — exactly one lit, worst "
+                            "news first. The colour is your note about which lamp is "
+                            "wired there; the gateway neither knows nor needs it.",
+                      "th": "รีเลย์แต่ละตัวตามสถานะที่เลือกไว้หนึ่งอย่าง "
+                            "โดย ready/busy/fault เป็นสามหน้าของสถานะเดียวกัน "
+                            "จับสามอย่างนี้ลงสามเอาต์พุตจึงได้ไฟจราจร — ติดทีละดวง "
+                            "เรียงตามความร้ายแรง ส่วนสีคือบันทึกของเราเองว่าเอาต์พุตนั้น "
+                            "ต่อหลอดสีอะไร เกตเวย์ไม่รู้และไม่จำเป็นต้องรู้"},
     "pnl.colour.green": {"en": "green", "th": "เขียว"},
     "pnl.colour.amber": {"en": "amber", "th": "เหลือง"},
     "pnl.colour.red": {"en": "red", "th": "แดง"},
