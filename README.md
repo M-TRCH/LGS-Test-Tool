@@ -29,10 +29,13 @@ with the release notes. Language and theme are remembered in `data/config.json`.
 identifiers — coil and register numbers, function codes, the transaction log — stay in
 English in both languages so they always match `LGS-Control-Table.md`.
 
-The **cabinet type** (LGS 80 / 64 / 40, SMT) is picked once, in the header, and
-remembered. Every whole-cabinet action follows it — the installation check's and the
-firmware survey's "Whole cabinet" buttons, the gateway hub map's default row count, and
-the check against the gateway's own `panel.cabinet`.
+The **cabinet type** (LGS 80 / 64 / 40, SMT, or **Custom**) is picked once, in the
+header, and remembered. Every whole-cabinet action follows it — the installation
+check's and the firmware survey's "Whole cabinet" buttons, the gateway hub map's
+default row count, and the check against the gateway's own `panel.cabinet`. Custom
+describes a shape of your own — how many rows, and how many slots on each row
+(rows differ; LGS 64's middle rows are half width) — edited in a small dialog and
+kept across restarts.
 
 Safety is enforced in the worker, not just the UI: OTA coils 505-508 are always refused
 (use `ota_sender.py`), danger coils only fire through the Danger tab, latch coils are
@@ -150,9 +153,11 @@ or manually: `git remote add origin https://github.com/M-TRCH/LGS-Test-Tool.git`
 (COM port** ผ่าน dongle หรือ Opta USB-RS485 bridge**)** และ **Modbus TCP** (ผ่าน Opta
 gateway ซึ่งรับทีละ 1 client — ต่อตัวที่สองจะถูกตัดเงียบๆ ดูเหมือน gateway ตาย)
 
-**รุ่นตู้** (LGS 80 / 64 / 40, SMT) เลือกครั้งเดียวที่แถบบนสุดและจำไว้ให้ —
+**รุ่นตู้** (LGS 80 / 64 / 40, SMT หรือ **กำหนดเอง**) เลือกครั้งเดียวที่แถบบนสุดและจำไว้ให้ —
 ปุ่ม "ทั้งตู้" ทุกหน้า จำนวนชั้นของผัง hub และการตรวจเทียบ `panel.cabinet`
-ฝั่ง gateway อ้างอิงค่านี้ค่าเดียวกันหมด
+ฝั่ง gateway อ้างอิงค่านี้ค่าเดียวกันหมด แบบกำหนดเองระบุทรงตู้ได้อิสระ:
+กี่ชั้น และชั้นละกี่ช่องแยกกันทีละชั้น (ตู้จริงไม่ใช่สี่เหลี่ยมเสมอ — LGS 64
+ชั้นกลางแคบกว่า) แก้ไขในหน้าต่างเล็กๆ และจำข้ามการเปิดโปรแกรม
 
 แท็บหลัก: **Control** (ปุ่ม preset 1-8 / latch / display + อ่านเขียน register อิสระ),
 **Monitor** (สถานะเครื่อง อุณหภูมิ health กลอน UID กระแส ตัวนับปุ่มยืนยัน),

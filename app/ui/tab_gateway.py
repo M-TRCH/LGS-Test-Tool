@@ -309,8 +309,9 @@ def build(ctx: Ctx) -> None:
         copy decides which slots its button sweeps walk, so the two must
         agree. The fix button stages the matching value as an ordinary
         edit — the normal SAVE review still stands between the click and
-        the gateway. SMT has no gateway size (the firmware knows 40/64/80),
-        so a bench rig shows a note instead of a warning it cannot fix.
+        the gateway. SMT and custom shapes have no gateway size (the
+        firmware knows exactly 40/64/80), so those show a note instead of
+        a warning they cannot fix.
         """
         key = "panel.cabinet"
         value = str(snap.settings.get(key, ""))
@@ -345,7 +346,7 @@ def build(ctx: Ctx) -> None:
                           t("gw.cab.fix_tip", code=tool.panel_cabinet))
                 refresh()
             else:
-                ui.label(t("gw.cab.smt_note")) \
+                ui.label(t("gw.cab.no_code", label=tool.label)) \
                     .classes("text-xs text-grey leading-tight mt-1")
         fields[key] = el
 

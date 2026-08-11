@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from ..config_store import AppConfig
-from ..lgs_map import CabinetLayout, layout_by_key
+from ..lgs_map import CabinetLayout, resolve_cabinet
 from ..modbus_worker import ModbusWorker, MonitorSnapshot
 from ..txn_log import TxnLog
 
@@ -139,6 +139,7 @@ class Ctx:
         """The cabinet this tool is pointed at — header-picked, persisted.
 
         Read fresh every call: cfg is the one shared object, so a header
-        change reaches every tab without any wiring.
+        change reaches every tab without any wiring. A preset by key, or
+        the operator's own rows-and-widths shape when set to custom.
         """
-        return layout_by_key(self.cfg.cabinet)
+        return resolve_cabinet(self.cfg.cabinet, self.cfg.cabinet_custom)

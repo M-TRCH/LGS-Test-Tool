@@ -163,6 +163,41 @@ CABINET_LAYOUTS = (
 # would skip real modules in silence.
 DEFAULT_CABINET_KEY = "lgs80"
 
+# A shape of the operator's own: how many rows, and how many slots each row
+# carries — per row, because real cabinets are not rectangles (LGS 64's
+# middle rows are half width). Stored in AppConfig.cabinet_custom as a comma
+# list of widths, top row first: "8,8,8,4,4,4,4,8,8,8".
+CUSTOM_CABINET_KEY = "custom"
+
+
+def parse_custom_widths(text: str) -> list:
+    """`"8,8,4"` -> [8, 8, 4]. Raises ValueError with a reason on anything
+    that is not 1-10 rows of 0-8 slots with at least one slot somewhere."""
+    parts = [p.strip() for p in str(text or "").replace(";", ",").split(",")
+             if p.strip() != ""]
+    if not parts or len(parts) > GRID_ROWS:
+        raise ValueError(f"1-{GRID_ROWS} rows")
+    if not all(p.isdigit() and 0 <= int(p) <= GRID_COLS for p in parts):
+        raise ValueError(f"0-{GRID_COLS} slots per row")
+    widths = [int(p) for p in parts]
+    if not any(widths):
+        raise ValueError("at least one slot")
+    return widths
+
+
+def format_custom_widths(widths) -> str:
+    return ",".join(str(int(w)) for w in widths)
+
+
+def custom_layout(widths) -> CabinetLayout:
+    """A CabinetLayout for per-row widths. A width of 0 keeps the row's IDs
+    out entirely — the row exists in the wall, not on the bus."""
+    ids = tuple(r * 10 + c
+                for r, w in enumerate(widths, 1)
+                for c in range(1, int(w) + 1))
+    return CabinetLayout(CUSTOM_CABINET_KEY, f"Custom ({len(ids)})", 0, 0,
+                         ids_override=ids)
+
 
 def layout_by_key(key: str) -> CabinetLayout:
     """The layout for a stored key, falling back to the default so a stale
@@ -171,6 +206,18 @@ def layout_by_key(key: str) -> CabinetLayout:
         if layout.key == key:
             return layout
     return layout_by_key(DEFAULT_CABINET_KEY)
+
+
+def resolve_cabinet(key: str, custom_text: str) -> CabinetLayout:
+    """The cabinet the tool is pointed at: a preset by key, or the custom
+    shape. An unusable custom string falls back to the default preset —
+    never to nothing."""
+    if key == CUSTOM_CABINET_KEY:
+        try:
+            return custom_layout(parse_custom_widths(custom_text))
+        except ValueError:
+            return layout_by_key(DEFAULT_CABINET_KEY)
+    return layout_by_key(key)
 
 HEALTH_BITS = ("AT24 EEPROM", "OLED", "Room sensor", "Board sensor")     # bit0..3, set = OK
 HEALTH_LATCH_BIT = 4                                                     # bit4 = latch locked (state, not health)
@@ -416,6 +463,13 @@ for _layout in CABINET_LAYOUTS:                 # every variant fits inside the 
     assert not _layout.panel_cabinet or int(_layout.panel_cabinet) == _layout.count
 assert layout_by_key(DEFAULT_CABINET_KEY).key == DEFAULT_CABINET_KEY
 assert layout_by_key("nonsense").key == DEFAULT_CABINET_KEY   # stale config falls back
+# The custom shape: LGS 64 spelled as widths must reproduce the real layout,
+# and a broken custom string must fall back to the default, never to nothing.
+assert custom_layout(parse_custom_widths("8,8,8,4,4,4,4,8,8,8")).ids == _LGS64_IDS
+assert resolve_cabinet(CUSTOM_CABINET_KEY, "3,0,5").ids == (11, 12, 13, 31, 32, 33, 34, 35)
+assert resolve_cabinet(CUSTOM_CABINET_KEY, "garbage").key == DEFAULT_CABINET_KEY
+assert resolve_cabinet("lgs40", "").count == 40
+assert not custom_layout([4] * 3).panel_cabinet          # custom never maps to the gateway
 assert valid_target_id(SETID_TEMP_ID) and not valid_assignable_id(SETID_TEMP_ID)
 assert not valid_target_id(0) and valid_target_id(247)
 assert classify_coil(505) is CoilClass.FORBIDDEN

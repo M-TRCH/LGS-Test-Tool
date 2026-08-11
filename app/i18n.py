@@ -49,10 +49,25 @@ TEXTS: dict[str, dict[str, str]] = {
     "hdr.cabinet_tip": {"en": "Which cabinet this tool is working on. Every "
                               "whole-cabinet action — installation check, "
                               "firmware survey, the gateway's sweep size — "
-                              "follows this one choice, and it is remembered.",
+                              "follows this one choice, and it is remembered. "
+                              "Custom lets you describe your own shape: how "
+                              "many rows, and how many slots on each.",
                         "th": "เครื่องมือกำลังทำงานกับตู้รุ่นไหน ปุ่ม \"ทั้งตู้\" ทุกหน้า "
                               "และขนาดตู้ฝั่ง gateway อ้างอิงค่านี้ค่าเดียว "
-                              "และจำไว้ให้ข้ามการเปิดโปรแกรม"},
+                              "และจำไว้ให้ข้ามการเปิดโปรแกรม เลือก \"กำหนดเอง\" "
+                              "เพื่อระบุทรงตู้เอง: กี่ชั้น และชั้นละกี่ช่อง"},
+    "hdr.cabinet_custom": {"en": "Custom…", "th": "กำหนดเอง…"},
+    "hdr.custom_title": {"en": "Custom cabinet shape", "th": "ทรงตู้กำหนดเอง"},
+    "hdr.custom_body": {"en": "Slots per row, top row first. A dash means the "
+                              "row has no modules on the bus.",
+                        "th": "จำนวนช่องของแต่ละชั้น เริ่มจากชั้นบนสุด "
+                              "ขีดหมายถึงชั้นนั้นไม่มีโมดูลบนบัส"},
+    "hdr.custom_count": {"en": "{n} modules", "th": "{n} โมดูล"},
+    "hdr.custom_empty": {"en": "At least one row needs at least one slot.",
+                         "th": "ต้องมีอย่างน้อยหนึ่งช่องในสักชั้นหนึ่ง"},
+    "hdr.custom_ok": {"en": "Use this shape", "th": "ใช้ทรงนี้"},
+    "hdr.custom_edit_tip": {"en": "Edit the custom cabinet's shape.",
+                            "th": "แก้ไขทรงตู้ที่กำหนดเอง"},
     # Short labels for the header controls, which carry no icons.
     "hdr.rescan": {"en": "Rescan", "th": "ค้นพอร์ต"},
     "hdr.grid": {"en": "Grid", "th": "ผัง"},
@@ -784,10 +799,10 @@ TEXTS: dict[str, dict[str, str]] = {
                              "review and Save to apply.",
                        "th": "ใส่ค่า panel.cabinet = {code} เป็นรายการแก้ไขปกติ "
                              "ตรวจแล้วกดบันทึกเพื่อให้มีผล"},
-    "gw.cab.smt_note": {"en": "Tool is set to SMT (bench rig) — the gateway knows "
-                              "only 40, 64 and 80, so nothing is checked here.",
-                        "th": "เครื่องมือเลือก SMT (ชุดทดสอบบนโต๊ะ) — เกตเวย์รู้จัก"
-                              "เฉพาะ 40, 64, 80 จึงไม่ตรวจเทียบ"},
+    "gw.cab.no_code": {"en": "Tool is set to {label} — the gateway knows only "
+                             "40, 64 and 80, so nothing is checked here.",
+                       "th": "เครื่องมือเลือก {label} — เกตเวย์รู้จักเฉพาะ 40, 64, 80 "
+                             "จึงไม่ตรวจเทียบ"},
     "gwf.panel.step_ms": {"en": "Pause between slots (ms)", "th": "หน่วงระหว่างช่อง (ms)"},
     "gwf.panel.step_ms.hint": {"en": "Extra breathing room on top of the bus, which "
                                      "already costs about 100 ms a slot. 0 runs as "

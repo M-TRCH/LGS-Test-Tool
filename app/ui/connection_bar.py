@@ -5,9 +5,11 @@ from nicegui import ui
 
 from .. import config_store, i18n
 from ..i18n import t
-from ..lgs_map import (BAUD_WHITELIST, CABINET_LAYOUTS, DEFAULT_CABINET_KEY,
-                       FACTORY_DEFAULT_ID, GRID_COLS, GRID_IDS, GRID_ROWS,
-                       SETID_TEMP_ID)
+from ..lgs_map import (BAUD_WHITELIST, CABINET_LAYOUTS, CUSTOM_CABINET_KEY,
+                       DEFAULT_CABINET_KEY, FACTORY_DEFAULT_ID, GRID_COLS,
+                       GRID_IDS, GRID_ROWS, SETID_TEMP_ID,
+                       format_custom_widths, parse_custom_widths,
+                       resolve_cabinet)
 from ..transports import RtuSettings, TcpSettings, list_com_ports
 from ..version import APP_VERSION
 from . import (Ctx, about, helps, reference_dialog as reference_mod,
@@ -77,7 +79,10 @@ def build(ctx: Ctx) -> None:
         # Which cabinet the tool is pointed at — the one fact every
         # whole-cabinet action follows, so it lives here with the other
         # "what am I talking to" facts and is saved the moment it changes.
-        cabinet_opts = {l.key: l.label for l in CABINET_LAYOUTS}
+        # "Custom" is the operator's own shape: rows and slots per row,
+        # edited in a small dialog and kept in cfg.cabinet_custom.
+        cabinet_opts = {l.key: l.label for l in CABINET_LAYOUTS} \
+            | {CUSTOM_CABINET_KEY: t("hdr.cabinet_custom")}
         cabinet_select = helps(
             ui.select(cabinet_opts,
                       value=cfg.cabinet if cfg.cabinet in cabinet_opts
@@ -86,9 +91,87 @@ def build(ctx: Ctx) -> None:
             .props("dense outlined").classes("w-36"),
             t("hdr.cabinet_tip"))
 
+        # ── the custom shape's editor ──────────────────────────────────────
+        # One width picker per row, the hub-map editor's idiom: a shape is
+        # set by describing it, not by typing a comma list. The dialog owns
+        # nothing — OK writes cfg and closes.
+        def edit_custom() -> None:
+            try:
+                widths = parse_custom_widths(cfg.cabinet_custom)
+            except ValueError:
+                widths = [GRID_COLS] * GRID_ROWS      # start from the full grid
+            pickers: list = []
+
+            d = ui.dialog()
+            with d, ui.card().classes("p-4"):
+                ui.label(t("hdr.custom_title")).classes("font-bold")
+                ui.label(t("hdr.custom_body")).classes("text-xs text-grey")
+                count_label = ui.label("").classes("text-sm")
+
+                def update_count() -> None:
+                    n = sum(int(p.value or 0) for p in pickers)
+                    count_label.set_text(t("hdr.custom_count", n=n))
+
+                rows_input = ui.number(t("gw.hub_rows"), value=len(widths),
+                                       min=1, max=GRID_ROWS, format="%d") \
+                    .props("dense outlined").classes("w-32")
+                row_box = ui.row().classes("gap-1 q-mt-sm flex-wrap items-end")
+
+                def build_rows(n: int) -> None:
+                    row_box.clear()
+                    pickers.clear()
+                    options = {w: str(w) if w else "—"
+                               for w in range(0, GRID_COLS + 1)}
+                    with row_box:
+                        for r in range(1, int(n) + 1):
+                            with ui.column().classes("gap-0 items-center"):
+                                ui.label(f"R{r}").classes("text-xs text-grey")
+                                sel = ui.select(
+                                    options,
+                                    value=widths[r - 1] if r <= len(widths)
+                                    else GRID_COLS,
+                                    on_change=lambda _: update_count()) \
+                                    .props("dense outlined").classes("w-16")
+                                pickers.append(sel)
+                    update_count()
+
+                rows_input.on_value_change(
+                    lambda e: build_rows(max(1, int(e.value or 1))))
+                build_rows(len(widths))
+
+                def apply() -> None:
+                    chosen = [int(p.value or 0) for p in pickers]
+                    if not any(chosen):
+                        ui.notify(t("hdr.custom_empty"), type="warning")
+                        return
+                    cfg.cabinet_custom = format_custom_widths(chosen)
+                    cfg.cabinet = CUSTOM_CABINET_KEY
+                    config_store.save(cfg)
+                    layout = resolve_cabinet(cfg.cabinet, cfg.cabinet_custom)
+                    ui.notify(t("ins.cabinet_ok", label=layout.label,
+                                n=layout.count), type="positive", timeout=2000)
+                    d.close()
+
+                with ui.row().classes("q-mt-sm"):
+                    ui.button(t("btn.cancel"), on_click=d.close).props("flat")
+                    ui.button(t("hdr.custom_ok"), color="primary",
+                              on_click=apply)
+            d.open()
+
+        edit_btn = ui.button(icon="edit", on_click=edit_custom) \
+            .props("flat dense round") \
+            .tooltip(t("hdr.custom_edit_tip"))
+        edit_btn.set_visibility(cfg.cabinet == CUSTOM_CABINET_KEY)
+
         def cabinet_changed(e) -> None:
             cfg.cabinet = str(e.value)
             config_store.save(cfg)
+            is_custom = cfg.cabinet == CUSTOM_CABINET_KEY
+            edit_btn.set_visibility(is_custom)
+            # A custom cabinet with no shape yet means the dialog, now — a
+            # "Custom" that silently meant the full grid would be a lie.
+            if is_custom and not cfg.cabinet_custom:
+                edit_custom()
 
         cabinet_select.on_value_change(cabinet_changed)
 
