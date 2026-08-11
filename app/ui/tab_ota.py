@@ -10,7 +10,7 @@ from nicegui import ui
 from .. import firmware_bundle as fb
 from ..fw_survey import SurveyDone, SurveyProgress, SurveyRead
 from ..i18n import t
-from ..lgs_map import CABINET_LAYOUTS, GRID_COLS, GRID_ROWS
+from ..lgs_map import GRID_COLS, GRID_ROWS
 from ..ota import Done, Line, MAX_IMAGE_SIZE, OtaConfig, Progress
 from . import Ctx, bundled_picker, helps, inline_warning, warning_banner
 
@@ -103,11 +103,12 @@ def build(ctx: Ctx) -> None:
     with ui.card().classes("p-3 w-full"):
         with ui.row().classes("items-center gap-2 flex-wrap"):
             helps(ui.label(t("fws.card")).classes("font-bold"), t("fws.hint"))
-            for layout in CABINET_LAYOUTS:
-                ui.button(layout.label,
-                          on_click=lambda layout=layout: survey_start(layout.ids)) \
-                    .props("outline dense no-caps") \
-                    .tooltip(t("fws.cabinet_tip", n=layout.count))
+            # Read at click time so a header change needs no rebuild;
+            # survey_start reports how many slots it is walking.
+            ui.button(t("fws.whole_cabinet"),
+                      on_click=lambda: survey_start(ctx.cabinet().ids)) \
+                .props("outline dense no-caps") \
+                .tooltip(t("fws.whole_cabinet_tip"))
             ui.button(t("fws.selected"),
                       on_click=lambda: survey_start(parse_ids())) \
                 .props("flat dense no-caps").tooltip(t("fws.selected_tip"))

@@ -26,6 +26,13 @@ class AppConfig:
     cubeprog_path: str = ""              # "" = look in the usual install dirs
     dfu_util_path: str = ""              # "" = beside the exe, then PlatformIO
     advanced_mode: bool = False          # False = everyday pages only
+    # Which cabinet variant the tool is pointed at — a key of
+    # lgs_map.CABINET_LAYOUTS, picked in the header. Every whole-cabinet
+    # action (installation check, firmware survey, gateway sweep size)
+    # follows it. A literal rather than an import: this module deliberately
+    # imports nothing from the app, and lgs_map falls back to its default
+    # for a key it does not know.
+    cabinet: str = "lgs80"
     # Row -> RS485 hub channel as the gateway reports it ("1,1,1,1,1,2,3,4,5,6").
     # "" = the built-in default. Stored so a re-cabled cabinet stays correct
     # across restarts; the Gateway tab refreshes it whenever it reads the

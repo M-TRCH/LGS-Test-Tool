@@ -11,10 +11,10 @@ Tabs:
 |---|---|
 | **Control** | Preset 1-8 buttons (light / light+display / unlock / unlock+display), OLED number + display power, Identify / All Off / latch triggers with a live 2.2 s cooldown chip, generic register & coil read/write |
 | **Monitor** | 0.5-2 s poll of device info, uptime, boot counter, health bits, reset cause (sticky — the register is clear-on-read), temperatures (0x8000 → SENSOR FAULT), latch state, UID, input current, confirm-button counter, statistics |
-| **Installation Check** | **Many modules, few commands.** Pick a cabinet type (LGS 80 / 64 / 40, SMT), cells on the 10×8 map, or the last scan result, then send one command per module — light, or light + the slot's number, optionally upgraded to throw the latch. Every cell turns green or red. Also holds the **Pick walkthrough**: a batch of slots lights together, someone picks them in any order, and each light goes out as its button is pressed — optionally not until the drawer is closed again. CSV export |
+| **Installation Check** | **Many modules, few commands.** One click selects the whole cabinet (the type picked in the header), or pick cells on the 10×8 map or the last scan result, then send one command per module — light, or light + the slot's number, optionally upgraded to throw the latch. Every cell turns green or red. Also holds the **Pick walkthrough**: a batch of slots lights together, someone picks them in any order, and each light goes out as its button is pressed — optionally not until the drawer is closed again. CSV export |
 | **Firmware (OTA)** | Streams a module image over the bus, and surveys the **whole cabinet's firmware versions** — every slot coloured by the version it reports, with each version group clickable to become the update targets |
 | **New Module** | Flashes a blank module over ST-Link and gives it its Modbus ID in one step, single or continuous |
-| **Gateway** | The Opta's own settings over its `$LGS` console: network, RS485 hub map, front-panel buttons, relay outputs, the watchdog, and the clock with up to four scheduled resets a day — plus DFU firmware update and first-time QSPI provisioning |
+| **Gateway** | The Opta's own settings over its `$LGS` console: network, RS485 hub map, front-panel buttons, relay outputs, the watchdog, and the clock with up to four scheduled resets a day — plus DFU firmware update and first-time QSPI provisioning. Warns when the gateway's cabinet size disagrees with the header's cabinet, with a one-click fix |
 | **Module Test** | **One module, everything.** The full R5.0 sweep (read → write → value limits → presets → display → light ring → optional unlock) with a live PASS/FAIL table and CSV export |
 | **Danger** | Factory reset (type-the-ID + double confirm), save-to-EEPROM, software reset, clear statistics, set slave ID — with post-reboot probes |
 
@@ -28,6 +28,11 @@ The header has a **language button** (English / ไทย), a theme picker and a
 with the release notes. Language and theme are remembered in `data/config.json`. Protocol
 identifiers — coil and register numbers, function codes, the transaction log — stay in
 English in both languages so they always match `LGS-Control-Table.md`.
+
+The **cabinet type** (LGS 80 / 64 / 40, SMT) is picked once, in the header, and
+remembered. Every whole-cabinet action follows it — the installation check's and the
+firmware survey's "Whole cabinet" buttons, the gateway hub map's default row count, and
+the check against the gateway's own `panel.cabinet`.
 
 Safety is enforced in the worker, not just the UI: OTA coils 505-508 are always refused
 (use `ota_sender.py`), danger coils only fire through the Danger tab, latch coils are
@@ -144,6 +149,10 @@ or manually: `git remote add origin https://github.com/M-TRCH/LGS-Test-Tool.git`
 เครื่องมือทดสอบโมดูล LGS R5.0 ผ่านเว็บเบราว์เซอร์ — ยิงคำสั่ง Modbus ได้ทั้งทาง **RTU
 (COM port** ผ่าน dongle หรือ Opta USB-RS485 bridge**)** และ **Modbus TCP** (ผ่าน Opta
 gateway ซึ่งรับทีละ 1 client — ต่อตัวที่สองจะถูกตัดเงียบๆ ดูเหมือน gateway ตาย)
+
+**รุ่นตู้** (LGS 80 / 64 / 40, SMT) เลือกครั้งเดียวที่แถบบนสุดและจำไว้ให้ —
+ปุ่ม "ทั้งตู้" ทุกหน้า จำนวนชั้นของผัง hub และการตรวจเทียบ `panel.cabinet`
+ฝั่ง gateway อ้างอิงค่านี้ค่าเดียวกันหมด
 
 แท็บหลัก: **Control** (ปุ่ม preset 1-8 / latch / display + อ่านเขียน register อิสระ),
 **Monitor** (สถานะเครื่อง อุณหภูมิ health กลอน UID กระแส ตัวนับปุ่มยืนยัน),

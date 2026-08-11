@@ -45,6 +45,14 @@ TEXTS: dict[str, dict[str, str]] = {
     "hdr.single_client": {"en": "gateway: single client",
                           "th": "gateway: ต่อได้ทีละเครื่อง"},
     "hdr.slave_id": {"en": "Slave ID", "th": "Slave ID"},
+    "hdr.cabinet": {"en": "Cabinet", "th": "รุ่นตู้"},
+    "hdr.cabinet_tip": {"en": "Which cabinet this tool is working on. Every "
+                              "whole-cabinet action — installation check, "
+                              "firmware survey, the gateway's sweep size — "
+                              "follows this one choice, and it is remembered.",
+                        "th": "เครื่องมือกำลังทำงานกับตู้รุ่นไหน ปุ่ม \"ทั้งตู้\" ทุกหน้า "
+                              "และขนาดตู้ฝั่ง gateway อ้างอิงค่านี้ค่าเดียว "
+                              "และจำไว้ให้ข้ามการเปิดโปรแกรม"},
     # Short labels for the header controls, which carry no icons.
     "hdr.rescan": {"en": "Rescan", "th": "ค้นพอร์ต"},
     "hdr.grid": {"en": "Grid", "th": "ผัง"},
@@ -265,13 +273,16 @@ TEXTS: dict[str, dict[str, str]] = {
     "ins.select_all": {"en": "Select all", "th": "เลือกทั้งหมด"},
     "ins.from_scan": {"en": "From last scan", "th": "จากผลสแกนล่าสุด"},
     "ins.selected": {"en": "{n} selected", "th": "เลือกแล้ว {n}"},
-    "ins.cabinet": {"en": "Cabinet:", "th": "รุ่นตู้:"},
-    "ins.cabinet_detail": {"en": "{rows} rows x {cols} columns — {n} modules ({first}-{last})",
-                           "th": "{rows} แถว x {cols} ช่อง — {n} โมดูล ({first}-{last})"},
-    "ins.hint": {"en": "Pick a cabinet type, or click cells to include them one by one "
+    "ins.whole_cabinet": {"en": "Whole cabinet", "th": "ทั้งตู้"},
+    "ins.whole_cabinet_tip": {"en": "Select every slot of the cabinet type picked "
+                                    "in the header.",
+                              "th": "เลือกทุกช่องของตู้รุ่นที่เลือกไว้ที่แถบด้านบน"},
+    "ins.hint": {"en": "'Whole cabinet' selects every slot of the type picked in the "
+                       "header, or click cells to include them one by one "
                        "(the row button toggles a whole row). Cells turn green when the "
                        "module passes, red when it does not answer.",
-                 "th": "เลือกรุ่นตู้ หรือคลิกทีละช่อง (ปุ่มหน้าแถวเลือกทั้งแถว) "
+                 "th": "\"ทั้งตู้\" เลือกทุกช่องของรุ่นที่ตั้งไว้ที่แถบด้านบน "
+                       "หรือคลิกทีละช่อง (ปุ่มหน้าแถวเลือกทั้งแถว) "
                        "ช่องจะเป็นสีเขียวเมื่อผ่าน และสีแดงเมื่อไม่ตอบสนอง"},
     "ins.no_scan": {"en": "no scan result yet — run Scan in the header first",
                     "th": "ยังไม่มีผลสแกน — กดสแกนที่แถบด้านบนก่อน"},
@@ -522,8 +533,10 @@ TEXTS: dict[str, dict[str, str]] = {
                        "one to confirm they all took it.",
                  "th": "อ่านเวอร์ชันเฟิร์มแวร์ของทุกโมดูล ไม่มีการเขียนใดๆ ใช้ก่อนอัปเดต"
                        "เพื่อดูว่าเหลือตัวไหน และใช้หลังอัปเดตเพื่อยืนยันว่าขึ้นครบทุกตัว"},
-    "fws.cabinet_tip": {"en": "Survey this cabinet ({n} modules)",
-                        "th": "สำรวจตู้นี้ ({n} โมดูล)"},
+    "fws.whole_cabinet": {"en": "Whole cabinet", "th": "ทั้งตู้"},
+    "fws.whole_cabinet_tip": {"en": "Survey every slot of the cabinet type picked "
+                                    "in the header.",
+                              "th": "สำรวจทุกช่องของตู้รุ่นที่เลือกไว้ที่แถบด้านบน"},
     "fws.selected": {"en": "the targets above", "th": "ตามรายการเป้าหมายด้านบน"},
     "fws.selected_tip": {"en": "Survey exactly the IDs in the target box",
                          "th": "สำรวจเฉพาะไอดีในช่องเป้าหมาย"},
@@ -650,11 +663,13 @@ TEXTS: dict[str, dict[str, str]] = {
                        "ไม่ต้องมีคอมพิวเตอร์และไม่ต้องมีเครือข่าย แต่ละปุ่มจะทำงานไล่ทั้งตู้"
                        "ทีละช่อง กดปุ่มอื่นระหว่างทำงานจะแทนที่งานเดิม"},
     "pnl.input": {"en": "Opta input {n} ({name})", "th": "อินพุต {n} ของ Opta ({name})"},
-    "pnl.color.red": {"en": "Red", "th": "แดง"},
-    "pnl.color.green": {"en": "Green", "th": "เขียว"},
-    "pnl.color.blue": {"en": "Blue", "th": "น้ำเงิน"},
-    "pnl.color.yellow": {"en": "Yellow", "th": "เหลือง"},
-    "pnl.color.white": {"en": "White", "th": "ขาว"},
+    # Button caps (fixed wiring): a different word set from the lamp colours
+    # below — yellow here, amber there — so the two families stay separate.
+    "pnl.btn_colour.red": {"en": "Red", "th": "แดง"},
+    "pnl.btn_colour.green": {"en": "Green", "th": "เขียว"},
+    "pnl.btn_colour.blue": {"en": "Blue", "th": "น้ำเงิน"},
+    "pnl.btn_colour.yellow": {"en": "Yellow", "th": "เหลือง"},
+    "pnl.btn_colour.white": {"en": "White", "th": "ขาว"},
     "pnl.act.none": {"en": "— unassigned", "th": "— ยังไม่กำหนด"},
     "pnl.act.all_on": {"en": "Light + number, whole cabinet",
                        "th": "เปิดไฟ+จอ ทั้งตู้"},
@@ -675,13 +690,13 @@ TEXTS: dict[str, dict[str, str]] = {
                             "จับสามอย่างนี้ลงสามเอาต์พุตจึงได้ไฟจราจร — ติดทีละดวง "
                             "เรียงตามความร้ายแรง ส่วนสีคือบันทึกของเราเองว่าเอาต์พุตนั้น "
                             "ต่อหลอดสีอะไร เกตเวย์ไม่รู้และไม่จำเป็นต้องรู้"},
-    "pnl.colour.green": {"en": "green", "th": "เขียว"},
-    "pnl.colour.amber": {"en": "amber", "th": "เหลือง"},
-    "pnl.colour.red": {"en": "red", "th": "แดง"},
-    "pnl.colour.blue": {"en": "blue", "th": "น้ำเงิน"},
-    "pnl.colour.white": {"en": "white", "th": "ขาว"},
-    "pnl.colour.none": {"en": "no lamp", "th": "ไม่มีไฟ"},
-    "pnl.colour_hint": {"en": "Which lamp is actually fitted to this output. The gateway "
+    "pnl.lamp_colour.green": {"en": "green", "th": "เขียว"},
+    "pnl.lamp_colour.amber": {"en": "amber", "th": "เหลือง"},
+    "pnl.lamp_colour.red": {"en": "red", "th": "แดง"},
+    "pnl.lamp_colour.blue": {"en": "blue", "th": "น้ำเงิน"},
+    "pnl.lamp_colour.white": {"en": "white", "th": "ขาว"},
+    "pnl.lamp_colour.none": {"en": "no lamp", "th": "ไม่มีไฟ"},
+    "pnl.lamp_colour_hint": {"en": "Which lamp is actually fitted to this output. The gateway "
                               "drives outputs, not colours, so this is only how this "
                               "page draws the panel — it is saved here and never sent "
                               "to the gateway. Set it to match the panel in front of "
@@ -755,9 +770,24 @@ TEXTS: dict[str, dict[str, str]] = {
                                      "และไฟรั่วเข้ามาต้องไม่ทำให้ตู้ทำงานเอง"},
     "gwf.panel.cabinet": {"en": "Cabinet size", "th": "ขนาดตู้"},
     "gwf.panel.cabinet.hint": {"en": "40, 64 or 80 — decides which slots a sweep "
-                                     "walks and in what order.",
+                                     "walks and in what order. Checked against "
+                                     "the header's cabinet picker.",
                                "th": "40, 64 หรือ 80 — กำหนดว่าจะไล่ช่องไหนบ้างและ"
-                                     "เรียงลำดับอย่างไร"},
+                                     "เรียงลำดับอย่างไร ตรวจเทียบกับรุ่นตู้"
+                                     "ที่เลือกไว้ที่แถบด้านบน"},
+    "gw.cab.mismatch": {"en": "Cabinet mismatch — the gateway is set for a "
+                              "type {gw} cabinet, but this tool is set to {tool}.",
+                        "th": "ขนาดตู้ไม่ตรงกัน — เกตเวย์ตั้งเป็นตู้ {gw} "
+                              "แต่เครื่องมือเลือก {tool} ไว้"},
+    "gw.cab.fix": {"en": "Set {code}", "th": "ตั้งเป็น {code}"},
+    "gw.cab.fix_tip": {"en": "Stages panel.cabinet = {code} as an ordinary edit — "
+                             "review and Save to apply.",
+                       "th": "ใส่ค่า panel.cabinet = {code} เป็นรายการแก้ไขปกติ "
+                             "ตรวจแล้วกดบันทึกเพื่อให้มีผล"},
+    "gw.cab.smt_note": {"en": "Tool is set to SMT (bench rig) — the gateway knows "
+                              "only 40, 64 and 80, so nothing is checked here.",
+                        "th": "เครื่องมือเลือก SMT (ชุดทดสอบบนโต๊ะ) — เกตเวย์รู้จัก"
+                              "เฉพาะ 40, 64, 80 จึงไม่ตรวจเทียบ"},
     "gwf.panel.step_ms": {"en": "Pause between slots (ms)", "th": "หน่วงระหว่างช่อง (ms)"},
     "gwf.panel.step_ms.hint": {"en": "Extra breathing room on top of the bus, which "
                                      "already costs about 100 ms a slot. 0 runs as "
@@ -774,10 +804,11 @@ TEXTS: dict[str, dict[str, str]] = {
     "gw.hub_rows": {"en": "Rows", "th": "จำนวนชั้น"},
     "gw.hub_rows_tip": {"en": "How many rows this cabinet has. Not every LGS is "
                               "ten rows tall, and rows it does not have should "
-                              "not appear in the wiring.",
+                              "not appear in the wiring. When the map is empty "
+                              "this follows the header's cabinet.",
                         "th": "ตู้นี้มีกี่ชั้น ตู้ LGS ไม่ได้มี 10 ชั้นทุกรุ่น "
-                              "ชั้นที่ไม่มีอยู่จริงไม่ควรโผล่ในผังสาย"},
-    "gw.hub_rows_from": {"en": "{label} has {n} rows", "th": "{label} มี {n} ชั้น"},
+                              "ชั้นที่ไม่มีอยู่จริงไม่ควรโผล่ในผังสาย "
+                              "ถ้าผังยังว่างจะตั้งต้นตามรุ่นตู้ที่แถบด้านบน"},
     "gw.hub.per_row": {"en": "one channel per row", "th": "ช่องละชั้น"},
     "gw.hub.per_row_tip": {"en": "Row 1 to channel 1, row 2 to channel 2, and so "
                                  "on — the straightforward wiring.",

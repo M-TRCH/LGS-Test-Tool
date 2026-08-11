@@ -10,7 +10,7 @@ from ..config_store import data_dir
 from ..i18n import t
 from ..fieldcheck import (CheckConfig, CheckDone, DeviceDone, DeviceStart,
                           PickConfig, PickLit, PickPressed, check_csv_bytes)
-from ..lgs_map import CABINET_LAYOUTS, GRID_COLS, GRID_ROWS
+from ..lgs_map import GRID_COLS, GRID_ROWS
 from . import Ctx, helps, inline_warning
 
 COLOR_UNSELECTED = "grey-5"
@@ -64,7 +64,19 @@ def build(ctx: Ctx) -> None:
     # ── target picker ──────────────────────────────────────────────────────
     with ui.card().classes("p-3 w-full"):
         with ui.row().classes("items-center gap-2 flex-wrap"):
-            ui.label(t("ins.modules")).classes("font-bold")
+            helps(ui.label(t("ins.modules")).classes("font-bold"), t("ins.hint"))
+
+            def whole_cabinet() -> None:
+                # Read at click time, so a header change needs no rebuild.
+                # The notify names the layout — the correction for a stale
+                # mental model of what the header is set to.
+                layout = ctx.cabinet()
+                set_selection(layout.ids)
+                ui.notify(t("ins.cabinet_ok", label=layout.label, n=layout.count),
+                          type="positive", timeout=1500)
+
+            ui.button(t("ins.whole_cabinet"), on_click=whole_cabinet) \
+                .props("outline dense no-caps").tooltip(t("ins.whole_cabinet_tip"))
             ui.button(t("ins.select_all"), on_click=lambda: set_selection(cells.keys())) \
                 .props("flat dense no-caps")
             ui.button(t("btn.clear"), on_click=lambda: set_selection(())) \
@@ -80,18 +92,6 @@ def build(ctx: Ctx) -> None:
 
             ui.button(t("ins.from_scan"), on_click=from_scan).props("flat dense no-caps")
             count_label = ui.label("").classes("text-sm text-grey")
-
-        with ui.row().classes("items-center gap-2 flex-wrap"):
-            helps(ui.label(t("ins.cabinet")).classes("text-sm text-grey"), t("ins.hint"))
-            for layout in CABINET_LAYOUTS:
-                def pick(layout=layout) -> None:
-                    set_selection(layout.ids)
-                    ui.notify(t("ins.cabinet_ok", label=layout.label, n=layout.count),
-                              type="positive", timeout=1500)
-
-                ui.button(layout.label, on_click=pick).props("outline dense no-caps") \
-                    .tooltip(t("ins.cabinet_detail", rows=layout.rows, cols=layout.cols,
-                               n=layout.count, first=layout.ids[0], last=layout.ids[-1]))
 
         with ui.column().classes("gap-1 q-mt-sm"):
             for r in range(1, GRID_ROWS + 1):

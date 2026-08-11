@@ -5,8 +5,9 @@ from nicegui import ui
 
 from .. import config_store, i18n
 from ..i18n import t
-from ..lgs_map import (BAUD_WHITELIST, FACTORY_DEFAULT_ID, GRID_COLS, GRID_IDS,
-                       GRID_ROWS, SETID_TEMP_ID)
+from ..lgs_map import (BAUD_WHITELIST, CABINET_LAYOUTS, DEFAULT_CABINET_KEY,
+                       FACTORY_DEFAULT_ID, GRID_COLS, GRID_IDS, GRID_ROWS,
+                       SETID_TEMP_ID)
 from ..transports import RtuSettings, TcpSettings, list_com_ports
 from ..version import APP_VERSION
 from . import (Ctx, about, helps, reference_dialog as reference_mod,
@@ -72,6 +73,24 @@ def build(ctx: Ctx) -> None:
 
         transport.on_value_change(sync_rows)
         sync_rows()
+
+        # Which cabinet the tool is pointed at — the one fact every
+        # whole-cabinet action follows, so it lives here with the other
+        # "what am I talking to" facts and is saved the moment it changes.
+        cabinet_opts = {l.key: l.label for l in CABINET_LAYOUTS}
+        cabinet_select = helps(
+            ui.select(cabinet_opts,
+                      value=cfg.cabinet if cfg.cabinet in cabinet_opts
+                      else DEFAULT_CABINET_KEY,
+                      label=t("hdr.cabinet"))
+            .props("dense outlined").classes("w-36"),
+            t("hdr.cabinet_tip"))
+
+        def cabinet_changed(e) -> None:
+            cfg.cabinet = str(e.value)
+            config_store.save(cfg)
+
+        cabinet_select.on_value_change(cabinet_changed)
 
         id_input = ui.number(t("hdr.slave_id"), value=cfg.device_id, min=1, max=247,
                              format="%d").props("dense outlined").classes("w-28")

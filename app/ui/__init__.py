@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from ..config_store import AppConfig
+from ..lgs_map import CabinetLayout, layout_by_key
 from ..modbus_worker import ModbusWorker, MonitorSnapshot
 from ..txn_log import TxnLog
 
@@ -50,6 +51,29 @@ def helps(element, text: str):
         element.tooltip(text)
         element.classes("cursor-help")
     return element
+
+
+async def confirm(title: str, body: str, ok_label: str, *,
+                  color: str = "red", danger_border: bool = False) -> bool:
+    """One question, Cancel or OK — the shape every destructive action uses.
+
+    Deliberately dumb: no callbacks, no extra widgets. A dialog whose body
+    needs to be built (like SAVE's change list) stays bespoke at its caller.
+    """
+    from nicegui import ui
+
+    from ..i18n import t
+
+    d = ui.dialog()
+    card_classes = "border border-red-500" if danger_border else ""
+    with d, ui.card().classes(card_classes):
+        title_classes = "font-bold" + (" text-red" if color == "red" else "")
+        ui.label(title).classes(title_classes)
+        ui.label(body)
+        with ui.row():
+            ui.button(t("btn.cancel"), on_click=lambda: d.submit(False)).props("flat")
+            ui.button(ok_label, color=color, on_click=lambda: d.submit(True))
+    return bool(await d)
 
 
 def bundled_picker(kind: str, on_pick) -> None:
@@ -110,3 +134,11 @@ class Ctx:
 
     def transport(self) -> str:
         return str(self.transport_getter()) if self.transport_getter else self.cfg.transport
+
+    def cabinet(self) -> CabinetLayout:
+        """The cabinet this tool is pointed at — header-picked, persisted.
+
+        Read fresh every call: cfg is the one shared object, so a header
+        change reaches every tab without any wiring.
+        """
+        return layout_by_key(self.cfg.cabinet)

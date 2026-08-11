@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from nicegui import ui
 
+from .. import config_store
 from ..i18n import t
 from ..lgs_map import (SENSOR_FAULT, dec_baud, dec_current, dec_device_type,
                        dec_fw, dec_hw, dec_mode, dec_preset, dec_temp,
@@ -131,5 +132,8 @@ def build(ctx: Ctx) -> None:
     def set_interval() -> None:
         timer.interval = float(interval.value)
         ctx.cfg.monitor_interval_s = float(interval.value)
+        # Saved now, like every other setting — surviving only via the
+        # shutdown hook means a hard kill forgets it.
+        config_store.save(ctx.cfg)
 
     interval.on_value_change(set_interval)

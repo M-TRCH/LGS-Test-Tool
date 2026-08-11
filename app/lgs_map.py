@@ -112,6 +112,9 @@ class CabinetLayout:
     rows: int
     cols: int
     ids_override: tuple = ()
+    # The gateway's `panel.cabinet` value for this variant, "" when the
+    # gateway has no such size (SMT is a bench rig, not a cabinet).
+    panel_cabinet: str = ""
 
     @property
     def ids(self) -> tuple:
@@ -133,11 +136,6 @@ class CabinetLayout:
         """
         return max(i // 10 for i in self.ids) if self.ids else 0
 
-    @property
-    def detail(self) -> str:
-        return (f"{self.rows} rows x {self.cols} columns — {self.count} modules "
-                f"({self.ids[0]}-{self.ids[self.cols - 1]} … {self.ids[-self.cols]}-{self.ids[-1]})")
-
 
 # LGS 64: not a rectangle. Rows 1-3 and 8-10 are full width, rows 4-7 carry
 # only the first four columns. This was defined as a 7x8 block (11-78) under
@@ -152,11 +150,27 @@ _LGS64_IDS = tuple(
 )
 
 CABINET_LAYOUTS = (
-    CabinetLayout("lgs80", "LGS type 80", 10, 8),
-    CabinetLayout("lgs64", "LGS type 64", 0, 0, ids_override=_LGS64_IDS),
-    CabinetLayout("lgs40", "LGS type 40", 10, 4),
+    CabinetLayout("lgs80", "LGS type 80", 10, 8, panel_cabinet="80"),
+    CabinetLayout("lgs64", "LGS type 64", 0, 0, ids_override=_LGS64_IDS,
+                  panel_cabinet="64"),
+    CabinetLayout("lgs40", "LGS type 40", 10, 4, panel_cabinet="40"),
     CabinetLayout("smt", "SMT", 3, 4),
 )
+
+# The cabinet the tool assumes until somebody picks one (header, persisted in
+# AppConfig.cabinet). The full grid: on a smaller cabinet an over-wide
+# selection fails loudly — red unanswered slots — where a smaller default
+# would skip real modules in silence.
+DEFAULT_CABINET_KEY = "lgs80"
+
+
+def layout_by_key(key: str) -> CabinetLayout:
+    """The layout for a stored key, falling back to the default so a stale
+    or hand-edited config can never leave the tool without a cabinet."""
+    for layout in CABINET_LAYOUTS:
+        if layout.key == key:
+            return layout
+    return layout_by_key(DEFAULT_CABINET_KEY)
 
 HEALTH_BITS = ("AT24 EEPROM", "OLED", "Room sensor", "Board sensor")     # bit0..3, set = OK
 HEALTH_LATCH_BIT = 4                                                     # bit4 = latch locked (state, not health)
@@ -397,6 +411,11 @@ assert GRID_IDS[0] == 11 and GRID_IDS[-1] == 108 and len(GRID_IDS) == 80
 assert all(valid_assignable_id(i) for i in GRID_IDS)
 for _layout in CABINET_LAYOUTS:                 # every variant fits inside the full grid
     assert set(_layout.ids) <= set(GRID_IDS) and len(_layout.ids) == _layout.count
+    # The gateway code, when a variant has one, IS the slot count — the LGS
+    # name and panel.cabinet share their meaning by definition.
+    assert not _layout.panel_cabinet or int(_layout.panel_cabinet) == _layout.count
+assert layout_by_key(DEFAULT_CABINET_KEY).key == DEFAULT_CABINET_KEY
+assert layout_by_key("nonsense").key == DEFAULT_CABINET_KEY   # stale config falls back
 assert valid_target_id(SETID_TEMP_ID) and not valid_assignable_id(SETID_TEMP_ID)
 assert not valid_target_id(0) and valid_target_id(247)
 assert classify_coil(505) is CoilClass.FORBIDDEN

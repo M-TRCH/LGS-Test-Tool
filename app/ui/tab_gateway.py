@@ -10,12 +10,10 @@ from datetime import datetime, timedelta
 
 from nicegui import ui
 
-from .. import config_store, firmware_bundle as fb, lgs_map
+from .. import config_store, lgs_map
 from ..i18n import t
-from ..lgs_map import BAUD_WHITELIST, CABINET_LAYOUTS
-from ..opta_update import OptaConfig
-from ..ota import Done, Line, Progress
-from . import Ctx, bundled_picker, helps
+from ..lgs_map import BAUD_WHITELIST
+from . import Ctx, confirm, helps, tab_gateway_fw
 
 # Which settings each card shows, in display order.
 # sys.wdt_ms only exists on gateway >= 1.8.0; field_row skips what the
@@ -144,40 +142,6 @@ def build(ctx: Ctx) -> None:
         ui.button(t("gw.reboot"), color="red",
                   on_click=lambda: confirm_reboot()).props("outline")
 
-    # ── firmware update ────────────────────────────────────────────────────
-    # Below the settings and behind its own confirm: this is the one action
-    # on this page that can leave the whole bus without a bridge.
-    fw_state: dict = {"seq": 0, "image": b"", "name": ""}
-    with ui.card().classes("p-3 w-full border border-orange-400 q-mt-sm"):
-        helps(ui.label(t("gw.fw_card")).classes("font-bold text-orange"),
-              t("gw.fw_hint"))
-
-        def arm(data: bytes, name: str) -> None:
-            fw_state["image"], fw_state["name"] = data, name
-            fw_label.set_text(t("gw.fw_chosen", name=name, size=f"{len(data):,}"))
-
-        def on_fw_upload(e) -> None:
-            arm(e.content.read(), e.name)
-
-        bundled_picker(fb.KIND_GATEWAY, lambda data, name, img: arm(data, name))
-        ui.label(t("fw.or_upload")).classes("text-xs text-grey")
-        ui.upload(on_upload=on_fw_upload, auto_upload=True, max_files=1) \
-            .props('accept=".bin" flat dense').classes("w-full")
-        fw_label = ui.label(t("gw.fw_none")).classes("text-sm")
-        with ui.row().classes("items-center gap-3 q-mt-sm"):
-            fw_btn = ui.button(t("gw.fw_run"), color="red").props("outline")
-            prov_btn = helps(
-                ui.button(t("gw.prov_run"), color="red").props("outline"),
-                t("gw.prov_hint"))
-            ui.button(t("btn.cancel"),
-                      on_click=lambda: worker.cancel_commission()).props("flat")
-            fw_progress = ui.linear_progress(value=0.0, show_value=False) \
-                .classes("w-48")
-            fw_badge = ui.badge("—").props("color=grey")
-
-    log_box = ui.log(max_lines=40).classes("w-full h-32 font-mono text-xs")
-
-    # ── helpers ────────────────────────────────────────────────────────────
     def usable() -> tuple:
         """(ok, message) — the console is USB-only and needs a port."""
         if ctx.transport() != "rtu":
@@ -185,6 +149,13 @@ def build(ctx: Ctx) -> None:
         if not ctx.port():
             return False, t("gw.no_port")
         return True, ""
+
+    # Firmware update / QSPI provisioning: its own module — it shares only
+    # the port check and the log pane with the settings machinery here.
+    # get_log is late-bound because log_box is created just below.
+    tab_gateway_fw.build(ctx, usable, lambda: log_box)
+
+    log_box = ui.log(max_lines=40).classes("w-full h-32 font-mono text-xs")
 
     def update_dirty() -> None:
         n = len(state["edits"])
@@ -262,10 +233,11 @@ def build(ctx: Ctx) -> None:
             channels = lgs_map.parse_hub_map(current)
         except ValueError:
             channels = [0] * lgs_map.HUB_ROWS
-        # Default the cabinet size to the last row that is actually wired, so
-        # a five-row map opens as a five-row cabinet rather than ten.
+        # Default the row count to the last row that is actually wired — the
+        # map is the truth about this cabinet. Only an empty map falls back
+        # to the header's cabinet type.
         wired = [r for r, ch in enumerate(channels, 1) if ch]
-        rows_default = max(wired) if wired else lgs_map.HUB_ROWS
+        rows_default = max(wired) if wired else ctx.cabinet().row_count
 
         # The staged value. Kept visible: it is exactly what the console
         # stores, and it can still be pasted from another cabinet's notes.
@@ -281,7 +253,10 @@ def build(ctx: Ctx) -> None:
             """Rebuild the console value from the pickers."""
             text.set_value(",".join(str(int(p.value or 0)) for p in pickers))
 
-        def build_rows(n: int) -> None:
+        def build_rows(n: int, *, push_after: bool = True) -> None:
+            """push_after=False for the initial render: pushing rewrites the
+            text field, whose on_change would stage a normalisation-diff of
+            the gateway's own value — a dirty flag with no edit behind it."""
             row_box.clear()
             pickers.clear()
             options = {0: "—"} | {c: str(c) for c in range(1, lgs_map.HUB_CHANNELS + 1)}
@@ -294,19 +269,14 @@ def build(ctx: Ctx) -> None:
                                         on_change=lambda _: push()) \
                             .props("dense outlined").classes("w-16")
                         pickers.append(sel)
-            push()
+            if push_after:
+                push()
 
         with ui.row().classes("items-center gap-2 q-mt-sm flex-wrap"):
             rows_input = ui.number(t("gw.hub_rows"), value=rows_default,
                                    min=1, max=lgs_map.HUB_ROWS, format="%d") \
                 .props("dense outlined").classes("w-32")
             helps(rows_input, t("gw.hub_rows_tip"))
-            for layout in CABINET_LAYOUTS:
-                ui.button(layout.label,
-                          on_click=lambda l=layout: rows_input.set_value(l.row_count)) \
-                    .props("flat dense no-caps") \
-                    .tooltip(t("gw.hub_rows_from", label=layout.label,
-                               n=layout.row_count))
 
         row_box = ui.row().classes("gap-1 q-mt-sm flex-wrap items-end")
 
@@ -328,10 +298,56 @@ def build(ctx: Ctx) -> None:
 
         rows_input.on_value_change(
             lambda e: build_rows(max(1, int(e.value or 1))))
-        build_rows(rows_default)
-        # build_rows() staged a value simply by rendering; the card opens
-        # clean unless the operator actually changes something.
-        stage("bus.hub_map", current)
+        # The initial render must not push: the card opens showing the
+        # gateway's value verbatim, with zero staged edits.
+        build_rows(rows_default, push_after=False)
+
+    def cabinet_field(snap) -> None:
+        """panel.cabinet as a select, checked against the header's cabinet.
+
+        The header is the authority on what cabinet this is; the gateway's
+        copy decides which slots its button sweeps walk, so the two must
+        agree. The fix button stages the matching value as an ordinary
+        edit — the normal SAVE review still stands between the click and
+        the gateway. SMT has no gateway size (the firmware knows 40/64/80),
+        so a bench rig shows a note instead of a warning it cannot fix.
+        """
+        key = "panel.cabinet"
+        value = str(snap.settings.get(key, ""))
+        tool = ctx.cabinet()                       # read at render time
+        options = {"40": "40", "64": "64", "80": "80"}
+
+        def effective() -> str:                    # a staged edit wins
+            return state["edits"].get(key, value)
+
+        def refresh() -> None:
+            if tool.panel_cabinet:
+                warn_row.set_visibility(effective() != tool.panel_cabinet)
+
+        with ui.column().classes("gap-0 w-72 mb-2"):
+            el = ui.select(options, value=value if value in options else None,
+                           label=label_of(key),
+                           on_change=lambda e: (stage(key, e.value), refresh())) \
+                .props("dense outlined").classes("w-full")
+            hint = hint_of(key)
+            helps(el, f"{hint} ({key})" if hint else key)
+            pending = snap.staged.get(key)
+            if pending is not None:
+                ui.label(t("gw.pending_on_gateway", v=shown(key, pending))) \
+                    .classes("text-xs text-orange leading-tight mt-1")
+            if tool.panel_cabinet:
+                with ui.row().classes("items-center gap-2 no-wrap mt-1") as warn_row:
+                    ui.label(t("gw.cab.mismatch", gw=effective() or "?",
+                               tool=tool.label)).classes("text-xs text-orange")
+                    helps(ui.button(t("gw.cab.fix", code=tool.panel_cabinet),
+                                    on_click=lambda: el.set_value(tool.panel_cabinet))
+                          .props("dense outline no-caps color=orange"),
+                          t("gw.cab.fix_tip", code=tool.panel_cabinet))
+                refresh()
+            else:
+                ui.label(t("gw.cab.smt_note")) \
+                    .classes("text-xs text-grey leading-tight mt-1")
+        fields[key] = el
 
     def panel_editor(snap) -> None:
         """One row per button, in the colours they are wired in.
@@ -351,16 +367,17 @@ def build(ctx: Ctx) -> None:
             with ui.row().classes("items-center gap-2 no-wrap q-mb-xs"):
                 ui.element("div").classes("rounded-full border") \
                     .style(f"width:14px;height:14px;background:{PANEL_SWATCH[colour]}")
-                ui.label(t(f"pnl.color.{colour}")).classes("text-sm w-20")
+                ui.label(t(f"pnl.btn_colour.{colour}")).classes("text-sm w-20")
                 el = ui.select(options, value=value,
                                on_change=lambda e, k=key: stage(k, int(e.value))) \
                     .props("dense outlined").classes("grow")
                 helps(el, t("pnl.input", n=i + 1, name=key))
                 fields[key] = el
-        for key in ("panel.enabled", "panel.cabinet", "panel.step_ms",
-                    "panel.reset_ms"):
+        for key in ("panel.enabled", "panel.step_ms", "panel.reset_ms"):
             if key in snap.settings:
                 field_row(key, snap)
+        if "panel.cabinet" in snap.settings:
+            cabinet_field(snap)
 
         # ── status lamps ──────────────────────────────────────────────────
         if "panel.lamps" in snap.settings:
@@ -379,8 +396,8 @@ def build(ctx: Ctx) -> None:
                 src_options = {v: t(k) for v, k in LAMP_SOURCES.items()}
                 colour_options = {c: LAMP_COLOUR_SYMBOL[c] for c in LAMP_COLOURS}
                 # The symbols carry no words, so the hint carries the key.
-                colour_hint = t("pnl.colour_hint") + " — " + " · ".join(
-                    f"{LAMP_COLOUR_SYMBOL[c]} {t(f'pnl.colour.{c}')}"
+                colour_hint = t("pnl.lamp_colour_hint") + " — " + " · ".join(
+                    f"{LAMP_COLOUR_SYMBOL[c]} {t(f'pnl.lamp_colour.{c}')}"
                     for c in LAMP_COLOURS)
                 fitted = lamp_colours()
                 for i, key in enumerate(LAMP_OUT_KEYS):
@@ -529,6 +546,9 @@ def build(ctx: Ctx) -> None:
 
     def render(snap) -> None:
         cards.clear()
+        # The elements just went with the cards; a stale reference here would
+        # let apply_pending() address the dead render instead of this one.
+        fields.clear()
         state["edits"].clear()
         update_dirty()
         if snap is None or not snap.ok:
@@ -660,11 +680,13 @@ def build(ctx: Ctx) -> None:
         return out
 
     def set_lamp_colour(index: int, colour: str) -> None:
+        # No re-render: the select already shows the new symbol, and a
+        # re-render would clear state["edits"] — a cosmetic click must never
+        # cost the operator their unsaved changes.
         current = lamp_colours()
         current[index] = colour
         ctx.cfg.lamp_colours = ",".join(current)
         config_store.save(ctx.cfg)
-        render(state["snapshot"])       # redraw the dots in the new colour
 
     def wall_epoch() -> int:
         """This PC's wall clock as seconds since 1970, local — not UTC.
@@ -808,115 +830,16 @@ def build(ctx: Ctx) -> None:
         await do_reload()
 
     async def confirm_defaults() -> None:
-        d = ui.dialog()
-        with d, ui.card():
-            ui.label(t("gw.defaults_title")).classes("font-bold")
-            ui.label(t("gw.defaults_body"))
-            with ui.row():
-                ui.button(t("btn.cancel"), on_click=lambda: d.submit(False)).props("flat")
-                ui.button(t("gw.defaults"), color="red", on_click=lambda: d.submit(True))
-        if await d:
+        if await confirm(t("gw.defaults_title"), t("gw.defaults_body"),
+                         t("gw.defaults")):
             await run_action("defaults")
 
     async def confirm_reboot() -> None:
-        d = ui.dialog()
-        with d, ui.card().classes("border border-red-500"):
-            ui.label(t("gw.reboot_title")).classes("font-bold text-red")
-            ui.label(t("gw.reboot_body"))
-            with ui.row():
-                ui.button(t("btn.cancel"), on_click=lambda: d.submit(False)).props("flat")
-                ui.button(t("gw.reboot"), color="red", on_click=lambda: d.submit(True))
-        if await d:
+        if await confirm(t("gw.reboot_title"), t("gw.reboot_body"),
+                         t("gw.reboot"), danger_border=True):
             await run_action("reboot")
 
     detect_btn.on_click(do_detect)
     reload_btn.on_click(do_reload)
     save_btn.on_click(do_save)
     save_btn.set_visibility(False)
-
-    # ── firmware update: confirm, run, drain ───────────────────────────────
-    async def do_fw_update() -> None:
-        ok, why = usable()
-        if not ok:
-            ui.notify(why, type="negative")
-            return
-        if not fw_state["image"]:
-            ui.notify(t("gw.fw_need_image"), type="warning")
-            return
-
-        d = ui.dialog()
-        with d, ui.card().classes("border border-red-500"):
-            ui.label(t("gw.fw_confirm_title")).classes("font-bold text-red")
-            ui.label(t("gw.fw_confirm_body", name=fw_state["name"],
-                       port=ctx.port()))
-            with ui.row():
-                ui.button(t("btn.cancel"),
-                          on_click=lambda: d.submit(False)).props("flat")
-                ui.button(t("gw.fw_run"), color="red",
-                          on_click=lambda: d.submit(True))
-        if not await d:
-            return
-
-        log_box.clear()
-        fw_progress.set_value(0.0)
-        fw_badge.set_text(t("res.running"))
-        fw_badge.props("color=blue")
-        cfg = OptaConfig(image=fw_state["image"], filename=fw_state["name"],
-                         port=ctx.port())
-        if not worker.start_opta_update(cfg):
-            ui.notify(t("msg.worker_busy"), type="negative")
-            fw_badge.set_text("—")
-            fw_badge.props("color=grey")
-
-    fw_btn.on_click(do_fw_update)
-
-    async def do_provision() -> None:
-        ok, why = usable()
-        if not ok:
-            ui.notify(why, type="negative")
-            return
-        if not fw_state["image"]:
-            ui.notify(t("gw.fw_need_image"), type="warning")
-            return
-
-        d = ui.dialog()
-        with d, ui.card().classes("border border-red-500"):
-            ui.label(t("gw.prov_confirm_title")).classes("font-bold text-red")
-            ui.label(t("gw.prov_confirm_body", port=ctx.port(),
-                       name=fw_state["name"]))
-            with ui.row():
-                ui.button(t("btn.cancel"),
-                          on_click=lambda: d.submit(False)).props("flat")
-                ui.button(t("gw.prov_run"), color="red",
-                          on_click=lambda: d.submit(True))
-        if not await d:
-            return
-
-        log_box.clear()
-        fw_progress.set_value(0.0)
-        fw_badge.set_text(t("res.running"))
-        fw_badge.props("color=blue")
-        cfg = OptaConfig(image=fw_state["image"], filename=fw_state["name"],
-                         port=ctx.port())
-        if not worker.start_opta_provision(cfg):
-            ui.notify(t("msg.worker_busy"), type="negative")
-            fw_badge.set_text("—")
-            fw_badge.props("color=grey")
-
-    prov_btn.on_click(do_provision)
-
-    def drain_fw() -> None:
-        fw_state["seq"], events = worker.drain_commission_events(fw_state["seq"])
-        for ev in events:
-            if isinstance(ev, Line):
-                log_box.push(ev.text)
-            elif isinstance(ev, Progress):
-                fw_progress.set_value(ev.done / max(1, ev.total))
-            elif isinstance(ev, Done):
-                fw_progress.set_value(1.0)
-                fw_badge.set_text(t("res.pass") if ev.ok else t("res.fail"))
-                fw_badge.props("color=green" if ev.ok else "color=red")
-                ui.notify(ev.summary,
-                          type="positive" if ev.ok else "negative", timeout=9000)
-
-    ui.timer(0.2, drain_fw)
