@@ -753,29 +753,38 @@ TEXTS: dict[str, dict[str, str]] = {
                              "th": "ปิดแล้วเอาต์พุต 2-4 จะถูกปล่อยไว้เฉยๆ "
                                    "สำหรับตู้ที่ไม่ได้ติดไฟสถานะ หรือตอนที่เอาต์พุตนั้น"
                                    "ถูกใช้ทำอย่างอื่นอยู่"},
-    "gwf.panel.lamp_hold_ms": {"en": "Amber holds for (ms)", "th": "เหลืองค้างนาน (ms)"},
+    "gwf.panel.lamp_hold_ms": {"en": "Busy holds for (ms)",
+                               "th": "สถานะ busy ค้างนาน (ms)"},
     "gwf.panel.lamp_hold_ms.hint": {
-        "en": "How long one Modbus transaction keeps the amber lamp on. These are "
-              "mechanical relays, so traffic holds the lamp rather than flashing "
-              "it — under steady polling the amber simply stays on. Shorter makes "
+        "en": "How long one Modbus transaction keeps the gateway counting as "
+              "busy — whichever output follows busy holds for that window. "
+              "These are mechanical relays, so traffic holds the lamp rather "
+              "than flashing it; under steady polling it simply stays on. "
+              "Shorter makes "
               "the lamp twitchier and works the relay harder.",
-        "th": "ทรานแซกชัน Modbus หนึ่งครั้งทำให้ไฟเหลืองค้างนานเท่าไร เอาต์พุตเป็นรีเลย์"
-              "กลไก จึงใช้วิธีค้างไฟแทนการกระพริบ — ถ้า poll ต่อเนื่องไฟเหลืองจะติดนิ่ง "
+        "th": "ทรานแซกชัน Modbus หนึ่งครั้งทำให้เกตเวย์นับเป็น busy นานเท่าไร — "
+              "เอาต์พุตที่ตามสถานะ busy จะติดค้างตามช่วงนี้ รีเลย์เป็นกลไก "
+              "จึงใช้วิธีค้างไฟแทนการกระพริบ ถ้า poll ต่อเนื่องไฟจะติดนิ่ง "
               "ตั้งสั้นไปไฟจะกระตุกและรีเลย์ทำงานหนักขึ้น"},
-    "gwf.panel.lamp_dwell_ms": {"en": "Minimum time on a colour (ms)",
-                                "th": "อยู่สีเดิมอย่างน้อย (ms)"},
+    "gwf.panel.lamp_dwell_ms": {"en": "Minimum time on a lamp (ms)",
+                                "th": "ไฟค้างสถานะเดิมอย่างน้อย (ms)"},
     "gwf.panel.lamp_dwell_ms.hint": {
-        "en": "No lamp may change faster than this. It is what keeps the relays "
-              "from chattering when the gateway flips between busy and idle.",
-        "th": "ห้ามเปลี่ยนสีเร็วกว่านี้ เป็นตัวกันรีเลย์สับรัวเวลาเกตเวย์สลับไปมา"
-              "ระหว่างว่างกับไม่ว่าง"},
-    "gwf.panel.lamp_dead": {"en": "Timeouts before red", "th": "เงียบกี่ครั้งจึงขึ้นแดง"},
+        "en": "No lamp output may switch faster than this, whatever it is "
+              "mapped to. It is what keeps the relays from chattering when "
+              "the gateway flips between states. The shelf's power is exempt.",
+        "th": "เอาต์พุตไฟห้ามสับเร็วกว่านี้ไม่ว่าจะ map กับสถานะไหน "
+              "เป็นตัวกันรีเลย์สับรัวเวลาเกตเวย์สลับสถานะไปมา "
+              "ไฟเลี้ยงชั้นวางไม่ติดข้อจำกัดนี้"},
+    "gwf.panel.lamp_dead": {"en": "Timeouts before fault",
+                            "th": "เงียบกี่ครั้งจึงนับเป็น fault"},
     "gwf.panel.lamp_dead.hint": {
-        "en": "Consecutive RS485 timeouts before the bus counts as dead. A hub "
-              "channel change costs one timeout and then answers, so keep this "
-              "well above the noise of normal operation.",
-        "th": "จำนวนครั้งที่บัส RS485 เงียบติดกันก่อนจะถือว่าบัสตาย การสลับช่องฮับ"
-              "เสียหนึ่งครั้งแล้วตอบได้ ดังนั้นควรตั้งสูงกว่าค่าปกติของการใช้งานพอสมควร"},
+        "en": "Consecutive RS485 timeouts before the gateway counts as fault "
+              "— whichever output follows fault then lights. A hub channel "
+              "change costs one timeout and then answers, so keep this well "
+              "above the noise of normal operation.",
+        "th": "จำนวนครั้งที่บัส RS485 เงียบติดกันก่อนเกตเวย์นับเป็น fault — "
+              "เอาต์พุตที่ตามสถานะ fault จะติดขึ้น การสลับช่องฮับเสียหนึ่งครั้ง"
+              "แล้วตอบได้ ดังนั้นควรตั้งสูงกว่าค่าปกติของการใช้งานพอสมควร"},
 
     "gwf.panel.enabled": {"en": "Use the panel buttons", "th": "เปิดใช้ปุ่มหน้าตู้"},
     "gwf.panel.enabled.hint": {"en": "Off on a bench, where nothing is wired to the "
@@ -792,6 +801,18 @@ TEXTS: dict[str, dict[str, str]] = {
         "th": "ปุ่มหน้าตู้จุดไฟด้วยพรีเซ็ตไหน (1-8) ความสว่างและสีเป็นค่าของ"
               "พรีเซ็ตนั้นในตัวโมดูลแต่ละตัว — ตู้สว่างเกินไปตอนกลางคืน "
               "แก้โดยชี้ไปพรีเซ็ตที่หรี่กว่า"},
+    "gwf.panel.bright": {"en": "Test brightness (%)",
+                         "th": "ความสว่างทดสอบ (%)"},
+    "gwf.panel.bright.hint": {
+        "en": "0 = each module's own preset brightness. 1-100 forces this "
+              "brightness while a button sweep lights the cabinet — written "
+              "to the modules' volatile global brightness, so a power cycle "
+              "restores the configured look and nothing is stored. Adds one "
+              "write per slot, so the sweep is a little slower while set.",
+        "th": "0 = ใช้ความสว่างตามพรีเซ็ตของแต่ละโมดูล 1-100 = บังคับความสว่างนี้"
+              "ตอนปุ่มหน้าตู้จุดไฟ เขียนลงค่าความสว่างชั่วคราวของโมดูล "
+              "ดับไฟแล้วกลับเป็นค่าที่ตั้งไว้เดิม ไม่มีอะไรถูกบันทึกถาวร "
+              "มีผลให้กวาดช้าลงเล็กน้อยเพราะเขียนเพิ่มช่องละหนึ่งครั้ง"},
     "gwf.panel.cabinet": {"en": "Cabinet size", "th": "ขนาดตู้"},
     "gwf.panel.cabinet.hint": {"en": "40, 64 or 80 — decides which slots a sweep "
                                      "walks and in what order. Checked against "

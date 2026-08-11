@@ -489,6 +489,12 @@ def build(ctx: Ctx) -> None:
                 helps(el, f"{hint} (panel.preset)" if hint else "panel.preset")
             fields["panel.preset"] = el
             gated.append(el)
+        # Temporary test brightness (gateway >= 1.10.0): writes each module's
+        # VOLATILE global brightness before lighting it, so a bench test can
+        # be dim or blinding without touching what the site configured.
+        if "panel.bright" in snap.settings:
+            field_row("panel.bright", snap)
+            gated.append(fields["panel.bright"])
         if "panel.step_ms" in snap.settings:
             field_row("panel.step_ms", snap)
             gated.append(fields["panel.step_ms"])
@@ -508,6 +514,13 @@ def build(ctx: Ctx) -> None:
             ui.separator().classes("q-my-sm")
             helps(ui.label(t("pnl.lamp_card")).classes("font-bold"),
                   t("pnl.lamp_hint"))
+            # The master first, like every other section: while the lamps are
+            # off their mapping and timings are disabled. One nuance the hint
+            # carries: an output mapped to the shelf's power keeps running
+            # regardless — that switch is about lamps, not about the cabinet.
+            field_row("panel.lamps", snap)
+            lamps_master = fields["panel.lamps"]
+            lamp_gated: list = []
             # What each output follows. Which colour sits on which output is
             # wiring, and what a colour should mean is a site's call — so both
             # are answered here rather than assumed by the firmware.
@@ -533,7 +546,7 @@ def build(ctx: Ctx) -> None:
                         # The lamp's colour is the tool's note about the panel
                         # in front of it — the gateway has no idea, and should
                         # not, so this is saved here and not sent anywhere.
-                        helps(ui.select(
+                        cel = helps(ui.select(
                             colour_options, value=colour,
                             on_change=lambda e, n=i: set_lamp_colour(n, e.value)) \
                             .props("dense outlined borderless").classes("w-16"),
@@ -545,10 +558,17 @@ def build(ctx: Ctx) -> None:
                             .props("dense outlined").classes("grow")
                         helps(el, t("pnl.out_hint", name=key))
                         fields[key] = el
-            for key in ("panel.lamps", "panel.lamp_hold_ms",
-                        "panel.lamp_dwell_ms", "panel.lamp_dead"):
+                        lamp_gated.extend((cel, el))
+            for key in ("panel.lamp_hold_ms", "panel.lamp_dwell_ms",
+                        "panel.lamp_dead"):
                 if key in snap.settings:
                     field_row(key, snap)
+                    lamp_gated.append(fields[key])
+            for widget in lamp_gated:
+                widget.bind_enabled_from(lamps_master, "value")
+            ui.label(t("sch.off_note")).classes("text-xs text-grey") \
+                .bind_visibility_from(lamps_master, "value",
+                                      backward=lambda v: not v)
 
     def sched_editor(snap) -> None:
         """The gateway's clock, and the nightly power cycle it drives."""
