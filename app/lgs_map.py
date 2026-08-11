@@ -138,11 +138,15 @@ class CabinetLayout:
 
 
 # LGS 64: not a rectangle. Rows 1-3 and 8-10 are full width, rows 4-7 carry
-# only the first four columns. This was defined as a 7x8 block (11-78) under
-# the name "LGS 56", which selected sixteen slots that do not exist and
-# missed rows 8-10 entirely — so "select LGS 56" on the Installation Check
-# page checked the wrong cabinet. Spelled out per row: the shape cannot be
-# derived from a count.
+# only the first four columns. Early on this cabinet was misdescribed as a
+# 7x8 block (11-78) under the name "LGS 56", which selected sixteen slots
+# that do not exist on it and missed rows 8-10 entirely — so "select LGS 56"
+# on the Installation Check page checked the wrong cabinet. Spelled out per
+# row: the shape cannot be derived from a count.
+#
+# (Today's REAL LGS type 56 below is a different thing: a product that
+# genuinely is the plain 7x8 block. The bug was the name on the wrong
+# cabinet, not the shape itself.)
 _LGS64_IDS = tuple(
     [r * 10 + c for r in (1, 2, 3) for c in range(1, 9)]
     + [r * 10 + c for r in (4, 5, 6, 7) for c in range(1, 5)]
@@ -153,6 +157,10 @@ CABINET_LAYOUTS = (
     CabinetLayout("lgs80", "LGS type 80", 10, 8, panel_cabinet="80"),
     CabinetLayout("lgs64", "LGS type 64", 0, 0, ids_override=_LGS64_IDS,
                   panel_cabinet="64"),
+    # No gateway code on purpose: the firmware hard-codes only 40/64/80, and
+    # panel.shape (gateway >= 1.9.0) exists precisely so a newer variant
+    # does not force a firmware release — the tool offers "8,8,8,8,8,8,8".
+    CabinetLayout("lgs56", "LGS type 56", 7, 8),
     CabinetLayout("lgs40", "LGS type 40", 10, 4, panel_cabinet="40"),
     # The key stays "smt" — it is what saved configs hold.
     CabinetLayout("smt", "SMT type 12", 3, 4),
@@ -506,6 +514,11 @@ for _layout in CABINET_LAYOUTS:
     assert custom_layout(layout_widths(_layout)).ids == _layout.ids
 assert same_shape("8,8,4,0,0", "8,8,4") and not same_shape("8,8", "8,8,1")
 assert same_shape("0", "") and same_shape("garbage", "0")
+# LGS 56 is the plain 7x8 block 11-78 — the shape the old misnamed "LGS 56"
+# wrongly claimed for the 64 cabinet. Pin it so the two are never confused.
+_l56 = layout_by_key("lgs56")
+assert _l56.count == 56 and _l56.ids[0] == 11 and _l56.ids[-1] == 78
+assert not _l56.panel_cabinet and layout_widths(_l56) == [8] * 7
 assert valid_target_id(SETID_TEMP_ID) and not valid_assignable_id(SETID_TEMP_ID)
 assert not valid_target_id(0) and valid_target_id(247)
 assert classify_coil(505) is CoilClass.FORBIDDEN
