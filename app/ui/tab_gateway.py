@@ -563,12 +563,36 @@ def build(ctx: Ctx) -> None:
                         "panel.lamp_dead"):
                 if key in snap.settings:
                     field_row(key, snap)
-                    lamp_gated.append(fields[key])
             for widget in lamp_gated:
                 widget.bind_enabled_from(lamps_master, "value")
             ui.label(t("sch.off_note")).classes("text-xs text-grey") \
                 .bind_visibility_from(lamps_master, "value",
                                       backward=lambda v: not v)
+
+            # The timing fields parametrize things no output may be using.
+            # Hold and dead tune the ready/busy/fault state machine — dead
+            # only when an output follows one of those three; the dwell
+            # rate-limits any lamp at all (none and the shelf are exempt in
+            # the firmware). A parameter of an unmapped state must not be
+            # settable, so these follow the mapping live, not just the
+            # master switch.
+            def refresh_lamp_params() -> None:
+                on = bool(lamps_master.value)
+                outs = [int(fields[k].value or 0)
+                        for k in LAMP_OUT_KEYS if k in fields]
+                trio = any(v in (1, 2, 3) for v in outs)
+                any_lamp = any(1 <= v <= 7 for v in outs)
+                for k, need in (("panel.lamp_hold_ms", trio),
+                                ("panel.lamp_dead", trio),
+                                ("panel.lamp_dwell_ms", any_lamp)):
+                    if k in fields:
+                        fields[k].set_enabled(on and need)
+
+            for k in LAMP_OUT_KEYS:
+                if k in fields:
+                    fields[k].on_value_change(lambda _: refresh_lamp_params())
+            lamps_master.on_value_change(lambda _: refresh_lamp_params())
+            refresh_lamp_params()
 
     def sched_editor(snap) -> None:
         """The gateway's clock, and the nightly power cycle it drives."""
