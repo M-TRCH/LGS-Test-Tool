@@ -445,6 +445,16 @@ def build(ctx: Ctx) -> None:
         caps, not at input numbers — so the colour leads and `panel.btnN` is
         the hover text.
         """
+        # The master first. Everything that only matters while the button
+        # inputs are read is disabled when they are not — an action that can
+        # be set but can never fire reads as a broken cabinet. What stays
+        # live: panel.reset_ms (the scheduled reset uses it too), the
+        # cabinet identity (a record, and its mismatch fix must stay
+        # reachable), and the lamps (their own switch below).
+        field_row("panel.enabled", snap)
+        master = fields["panel.enabled"]
+        gated: list = []
+
         options = {v: t(k) for v, k in PANEL_ACTIONS.items()}
         for i, key in enumerate(PANEL_KEYS):
             if key not in snap.settings:
@@ -461,6 +471,7 @@ def build(ctx: Ctx) -> None:
                     .props("dense outlined").classes("grow")
                 helps(el, t("pnl.input", n=i + 1, name=key))
                 fields[key] = el
+                gated.append(el)
         # Which module preset the sweeps fire (gateway >= 1.10.0). A select,
         # because 1-8 typed as text invites a 9; the look itself — brightness,
         # colour — is that preset's per-module config, which the hint says.
@@ -477,11 +488,20 @@ def build(ctx: Ctx) -> None:
                 hint = hint_of("panel.preset")
                 helps(el, f"{hint} (panel.preset)" if hint else "panel.preset")
             fields["panel.preset"] = el
-        for key in ("panel.enabled", "panel.step_ms", "panel.reset_ms"):
-            if key in snap.settings:
-                field_row(key, snap)
+            gated.append(el)
+        if "panel.step_ms" in snap.settings:
+            field_row("panel.step_ms", snap)
+            gated.append(fields["panel.step_ms"])
+        if "panel.reset_ms" in snap.settings:
+            field_row("panel.reset_ms", snap)
         if "panel.cabinet" in snap.settings:
             cabinet_field(snap)
+
+        for widget in gated:
+            widget.bind_enabled_from(master, "value")
+        # Reuses the schedule card's wording — the same rule, said once.
+        ui.label(t("sch.off_note")).classes("text-xs text-grey") \
+            .bind_visibility_from(master, "value", backward=lambda v: not v)
 
         # ── status lamps ──────────────────────────────────────────────────
         if "panel.lamps" in snap.settings:
