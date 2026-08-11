@@ -878,6 +878,27 @@ TEXTS: dict[str, dict[str, str]] = {
                         "th": "เตรียมไว้ {n} รายการ — ตรวจแล้วกดบันทึกเพื่อให้มีผล"},
     "gw.cfg_skipped": {"en": "{n} key(s) this firmware does not have were skipped.",
                        "th": "ข้าม {n} คีย์ที่เฟิร์มแวร์รุ่นนี้ไม่มี"},
+    "rpt.card": {"en": "Site report (PDF)", "th": "รายงานประจำตู้ (PDF)"},
+    "rpt.hint": {"en": "One document that says what is installed: the gateway's "
+                       "identity and settings, the cabinet's shape, and every "
+                       "module's chip UID, type and firmware — read from the "
+                       "modules themselves, one read each. Needs a Detect first "
+                       "and a connected bus. A copy is kept in data/exports.",
+                 "th": "เอกสารเดียวที่บอกว่าติดตั้งอะไรไว้: ข้อมูลและค่าตั้งของ gateway "
+                       "ทรงตู้ และ UID / รุ่น / เฟิร์มแวร์ของทุกโมดูล อ่านจากโมดูลจริง"
+                       "ตัวละหนึ่งครั้ง ต้องกดค้นหา gateway ก่อนและต่อบัสอยู่ "
+                       "สำเนาเก็บไว้ใน data/exports"},
+    "rpt.run": {"en": "Create PDF report", "th": "สร้างรายงาน PDF"},
+    "rpt.need_connect": {"en": "Connect to the bus first — the module sweep "
+                               "runs over Modbus.",
+                         "th": "กดเชื่อมต่อบัสก่อน — การไล่อ่านโมดูลวิ่งผ่าน Modbus"},
+    "rpt.running": {"en": "reading {n} modules…", "th": "กำลังอ่าน {n} โมดูล…"},
+    "rpt.cancelled": {"en": "cancelled", "th": "ยกเลิกแล้ว"},
+    "rpt.done": {"en": "{a}/{n} modules answered", "th": "โมดูลตอบ {a}/{n}"},
+    "rpt.saved": {"en": "Report saved: {name} (also in data/exports)",
+                  "th": "บันทึกรายงานแล้ว: {name} (สำเนาใน data/exports)"},
+    "rpt.no_lib": {"en": "PDF library missing — run: pip install fpdf2",
+                   "th": "ไม่มีไลบรารี PDF — สั่ง: pip install fpdf2"},
     "gwf.panel.shape": {"en": "Sweep shape (slots per row)",
                         "th": "ทรงกวาด (ช่องต่อชั้น)"},
     "gwf.panel.shape.hint": {"en": "Slots per row from the top, e.g. 8,8,4,4,2. "

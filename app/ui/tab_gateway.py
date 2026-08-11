@@ -12,8 +12,10 @@ from datetime import datetime, timedelta
 from nicegui import ui
 
 from .. import config_store, lgs_map
+from ..fw_survey import ReportSurveyDone, SurveyProgress
 from ..i18n import t
 from ..lgs_map import BAUD_WHITELIST
+from ..version import APP_VERSION
 from . import Ctx, confirm, helps, tab_gateway_fw
 
 # Which settings each card shows, in display order.
@@ -160,6 +162,22 @@ def build(ctx: Ctx) -> None:
                       on_upload=lambda e: do_import(e),
                       auto_upload=True, max_files=1) \
                 .props('accept=".json" flat dense')
+
+    # ── site report ────────────────────────────────────────────────────────
+    # The record a cabinet leaves commissioning with: gateway identity and
+    # settings, the cabinet's shape, and every module's chip UID — on paper,
+    # for the day someone asks what is installed in slot 45.
+    with ui.card().classes("p-3 w-full q-mt-sm"):
+        helps(ui.label(t("rpt.card")).classes("font-bold"), t("rpt.hint"))
+        with ui.row().classes("items-center gap-3 flex-wrap"):
+            report_btn = ui.button(t("rpt.run"),
+                                   on_click=lambda: do_report()) \
+                .props("outline dense no-caps")
+            ui.button(t("btn.cancel"),
+                      on_click=lambda: worker.cancel_fw_survey()).props("flat")
+            report_progress = ui.linear_progress(value=0.0, show_value=False) \
+                .classes("w-48")
+            report_label = ui.label("").classes("text-sm text-grey")
 
     def usable() -> tuple:
         """(ok, message) — the console is USB-only and needs a port."""
@@ -644,6 +662,80 @@ def build(ctx: Ctx) -> None:
         tag = payload["name"] or payload["gateway_id"] or "gateway"
         fname = f"gateway-config-{tag}-{datetime.now():%Y%m%d-%H%M}.json"
         ui.download(json.dumps(payload, indent=2).encode("utf-8"), fname)
+
+    def do_report() -> None:
+        """Sweep the cabinet's modules and render the PDF.
+
+        Needs both faces of the tool at once: the console snapshot for the
+        gateway half (Detect first) and a connected Modbus link for the
+        module half — the sweep is the same read-only kind a firmware
+        survey does, one FC03 per module.
+        """
+        snap = state["snapshot"]
+        if snap is None or not snap.ok:
+            ui.notify(t("gw.cfg_need_read"), type="warning")
+            return
+        layout = ctx.cabinet()
+        if not worker.start_report_survey(layout.ids):
+            ui.notify(t("rpt.need_connect"), type="warning")
+            return
+        report_state.update(snapshot=snap, layout=layout, waiting=True)
+        report_btn.set_enabled(False)
+        report_progress.set_value(0.0)
+        report_label.set_text(t("rpt.running", n=layout.count))
+
+    def finish_report(records: list, cancelled: bool) -> None:
+        report_btn.set_enabled(True)
+        report_state["waiting"] = False
+        if cancelled:
+            report_label.set_text(t("rpt.cancelled"))
+            return
+        snap = report_state["snapshot"]
+        layout = report_state["layout"]
+        # Imported here, not at module top: fpdf2 is the one dependency a
+        # bare interpreter may lack, and a missing PDF library must cost
+        # the report button, never the whole Gateway tab.
+        try:
+            from .. import report_pdf
+        except ImportError:
+            ui.notify(t("rpt.no_lib"), type="negative", timeout=9000)
+            report_label.set_text("")
+            return
+        pdf = report_pdf.build_report_pdf(
+            app_version=APP_VERSION, generated=datetime.now(),
+            info=snap.info, settings=snap.settings,
+            cabinet_label=layout.label, cabinet_count=layout.count,
+            widths=lgs_map.layout_widths(layout), records=records,
+            hub_channel=lgs_map.hub_channel)
+        name = snap.settings.get("sys.name", "") or snap.info.get("id", "gw")
+        fname = f"lgs-report-{name}-{datetime.now():%Y%m%d-%H%M}.pdf"
+        # A copy stays in data/exports — a record someone can find later is
+        # the point; the download is merely today's convenience.
+        out = config_store.data_dir() / "exports" / fname
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_bytes(pdf)
+        ui.download(pdf, fname)
+        answered = sum(1 for r in records if r.responded)
+        report_label.set_text(t("rpt.done", a=answered, n=len(records)))
+        ui.notify(t("rpt.saved", name=fname), type="positive", timeout=8000)
+        say(f"report: {fname} ({answered}/{len(records)} answered)")
+
+    def drain_report() -> None:
+        if not report_state["waiting"]:
+            return
+        report_state["seq"], events = \
+            worker.drain_fw_survey_events(report_state["seq"])
+        for ev in events:
+            if isinstance(ev, SurveyProgress):
+                report_progress.set_value(ev.index / max(1, ev.total))
+                report_label.set_text(f"{ev.index}/{ev.total} · id {ev.device_id}")
+            elif isinstance(ev, ReportSurveyDone):
+                report_progress.set_value(1.0)
+                finish_report(ev.records, ev.cancelled)
+
+    report_state: dict = {"seq": 0, "waiting": False,
+                          "snapshot": None, "layout": None}
+    ui.timer(0.3, drain_report)
 
     def do_import(e) -> None:
         """Stage a config file's values — never write them. The SAVE review

@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Callable, Optional, Protocol, Sequence
 
-from .lgs_map import DEVICE_TYPES, INTER_TXN_S, fw_short
+from .lgs_map import DEVICE_TYPES, INTER_TXN_S, fw_short, join_uid
 
 REG_DEVICE_TYPE = 0
 REG_FIRMWARE = 1
@@ -117,6 +117,85 @@ class SurveyRead:
 class SurveyDone:
     report: SurveyReport
     seq: int = 0
+
+
+@dataclass
+class ReportSurveyDone:
+    """End of a site-report sweep — carries the records themselves."""
+    records: list
+    cancelled: bool = False
+    seq: int = 0
+
+
+@dataclass
+class ModuleRecord:
+    """One module's identity, as the site report prints it.
+
+    Everything comes from ONE FC03 of registers 0-17 — device type, firmware,
+    hardware, baud, slave id, boot counter, health, and the chip UID — so a
+    64-module cabinet costs 64 transactions, hub crossings included.
+    """
+    device_id: int
+    responded: bool = False
+    device_type: int = -1
+    fw_raw: int = 0
+    hw_raw: int = 0
+    baud_raw: int = 0
+    reported_id: int = -1
+    boots: int = 0
+    health: int = 0
+    uid: str = ""
+    note: str = ""
+
+    @property
+    def fw(self) -> str:
+        return fw_short(self.fw_raw) if self.responded else ""
+
+    @property
+    def type_name(self) -> str:
+        return DEVICE_TYPES.get(self.device_type, "?") if self.responded else ""
+
+
+def read_module_record(ops: SurveyOps, device_id: int) -> ModuleRecord:
+    """Registers 0-17 in one transaction; silence leaves a not-responded row."""
+    rec = ModuleRecord(device_id=device_id)
+    res = ops.read_regs(device_id, 0, 18)
+    values = res.value if isinstance(res.value, (list, tuple)) else None
+    if res.ok and values and len(values) >= 18:
+        rec.responded = True
+        rec.device_type = int(values[0])
+        rec.fw_raw = int(values[1])
+        rec.hw_raw = int(values[2])
+        rec.baud_raw = int(values[3])
+        rec.reported_id = int(values[4])
+        rec.boots = int(values[7])
+        rec.health = int(values[9])
+        rec.uid = join_uid(values[12:18])
+    else:
+        rec.note = res.note or "no reply"
+    return rec
+
+
+def run_report_survey(ops: SurveyOps, ids: Sequence[int], emit: Callable,
+                      cancel: threading.Event) -> list:
+    """The site report's sweep: one ModuleRecord per slot, in slot order.
+
+    Reuses the survey event stream so the page shows the same progress a
+    firmware survey does; SurveyRead is not emitted (the records carry more
+    than ModuleFirmware and go back as the return value instead).
+    """
+    records: list = []
+    total = len(ids)
+    cancelled = False
+    for index, device_id in enumerate(ids, 1):
+        if cancel.is_set():
+            cancelled = True
+            break
+        emit(SurveyProgress(device_id, index, total))
+        records.append(read_module_record(ops, device_id))
+        ops.sleep(INTER_TXN_S)
+    emit(ReportSurveyDone(records=records, cancelled=cancelled))
+    return records
 
 
 def run_survey(ops: SurveyOps, ids: Sequence[int], emit: Callable,

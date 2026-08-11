@@ -1037,6 +1037,38 @@ class ModbusWorker:
         finally:
             self._check_running = False
 
+    # ── site-report sweep (read-only; the survey stream carries it) ────────
+    def start_report_survey(self, ids: Sequence[int]) -> bool:
+        """Registers 0-17 of every module — the site report's raw material.
+
+        Same slot and same event queue as the firmware survey; pages keep
+        their own drain cursor, so the streams do not steal each other's
+        events.
+        """
+        if self._check_running or self._sweep_running or self._scan_running \
+                or self._ota_running or not self._connected or not ids:
+            return False
+        self._survey_cancel.clear()
+        with self._survey_lock:
+            self._survey_events.clear()
+        self._check_running = True
+        self._submit(_PRIO_LONG, lambda: self._do_report_survey(list(ids)))
+        return True
+
+    def _do_report_survey(self, ids: list) -> None:
+        def emit(ev) -> None:
+            with self._survey_lock:
+                self._event_seq += 1
+                ev.seq = self._event_seq
+                self._survey_events.append(ev)
+
+        try:
+            self._check_cancel.clear()
+            fw_survey.run_report_survey(_SurveyOps(self), ids, emit,
+                                        self._survey_cancel)
+        finally:
+            self._check_running = False
+
     # ── danger actions ─────────────────────────────────────────────────────
     async def danger_action(self, action: DangerAction, device_id: int) -> DangerResult:
         guard = self._guard(device_id)
