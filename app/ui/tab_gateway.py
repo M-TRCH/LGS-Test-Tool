@@ -488,16 +488,18 @@ def build(ctx: Ctx) -> None:
                 hint = hint_of("panel.preset")
                 helps(el, f"{hint} (panel.preset)" if hint else "panel.preset")
             fields["panel.preset"] = el
-            gated.append(el)
+            # Not in `gated`: refresh_panel_params() below owns its enabled
+            # state (master AND some sweep action assigned).
         # Temporary test brightness (gateway >= 1.10.0): writes each module's
         # VOLATILE global brightness before lighting it, so a bench test can
         # be dim or blinding without touching what the site configured.
         if "panel.bright" in snap.settings:
             field_row("panel.bright", snap)
-            gated.append(fields["panel.bright"])
-        if "panel.step_ms" in snap.settings:
-            field_row("panel.step_ms", snap)
-            gated.append(fields["panel.step_ms"])
+        # Per-sweep paces (gateway >= 1.10.0), or the single legacy pace.
+        for key in ("panel.step_on_ms", "panel.step_off_ms",
+                    "panel.step_unlock_ms", "panel.step_ms"):
+            if key in snap.settings:
+                field_row(key, snap)
         if "panel.reset_ms" in snap.settings:
             field_row("panel.reset_ms", snap)
         if "panel.cabinet" in snap.settings:
@@ -508,6 +510,31 @@ def build(ctx: Ctx) -> None:
         # Reuses the schedule card's wording — the same rule, said once.
         ui.label(t("sch.off_note")).classes("text-xs text-grey") \
             .bind_visibility_from(master, "value", backward=lambda v: not v)
+
+        # A sweep parameter whose action sits on no button must not be
+        # settable — the same rule the lamp timings follow. Preset serves
+        # every sweep kind, the test brightness only the lighting ones, and
+        # each pace exactly its own action. panel.reset_ms stays live: the
+        # scheduled reset uses it whether or not a button does.
+        def refresh_panel_params() -> None:
+            on = bool(master.value)
+            acts = {int(fields[k].value or 0)
+                    for k in PANEL_KEYS if k in fields}
+            rules = {"panel.preset": bool(acts & {1, 2, 3}),
+                     "panel.bright": bool(acts & {1, 3}),
+                     "panel.step_on_ms": 1 in acts,
+                     "panel.step_off_ms": 2 in acts,
+                     "panel.step_unlock_ms": 3 in acts,
+                     "panel.step_ms": bool(acts & {1, 2, 3})}
+            for k, need in rules.items():
+                if k in fields:
+                    fields[k].set_enabled(on and need)
+
+        for k in PANEL_KEYS:
+            if k in fields:
+                fields[k].on_value_change(lambda _: refresh_panel_params())
+        master.on_value_change(lambda _: refresh_panel_params())
+        refresh_panel_params()
 
         # ── status lamps ──────────────────────────────────────────────────
         if "panel.lamps" in snap.settings:

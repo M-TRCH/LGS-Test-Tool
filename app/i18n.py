@@ -45,6 +45,12 @@ TEXTS: dict[str, dict[str, str]] = {
     "hdr.single_client": {"en": "gateway: single client",
                           "th": "gateway: ต่อได้ทีละเครื่อง"},
     "hdr.slave_id": {"en": "Slave ID", "th": "Slave ID"},
+    "hdr.quit": {"en": "Quit the app", "th": "ปิดโปรแกรม"},
+    "hdr.quit_title": {"en": "Quit LGS Test Tool?", "th": "ปิด LGS Test Tool?"},
+    "hdr.quit_body": {"en": "Stops the server for every open tab and closes "
+                            "the terminal window. Settings are saved first.",
+                      "th": "หยุดเซิร์ฟเวอร์ของทุกแท็บที่เปิดอยู่และปิดหน้าต่าง"
+                            "เทอร์มินัลให้เอง ค่าตั้งถูกบันทึกก่อนปิด"},
     "hdr.cabinet": {"en": "Cabinet", "th": "รุ่นตู้"},
     "hdr.cabinet_tip": {"en": "Which cabinet this tool is working on. Every "
                               "whole-cabinet action — installation check, "
@@ -801,6 +807,30 @@ TEXTS: dict[str, dict[str, str]] = {
         "th": "ปุ่มหน้าตู้จุดไฟด้วยพรีเซ็ตไหน (1-8) ความสว่างและสีเป็นค่าของ"
               "พรีเซ็ตนั้นในตัวโมดูลแต่ละตัว — ตู้สว่างเกินไปตอนกลางคืน "
               "แก้โดยชี้ไปพรีเซ็ตที่หรี่กว่า"},
+    "gwf.panel.step_on_ms": {"en": "Pause per slot — light (ms)",
+                             "th": "หน่วงต่อช่อง — เปิดไฟ (ms)"},
+    "gwf.panel.step_on_ms.hint": {
+        "en": "How long the all-on sweep waits between slots. 0 walks as fast "
+              "as the bus allows; a few hundred ms turns it into a visible "
+              "wave.",
+        "th": "การกวาดเปิดไฟรอระหว่างช่องนานเท่าไร 0 = เร็วสุดเท่าที่บัสไหว "
+              "ตั้งสักสองสามร้อย ms จะเห็นไฟไล่เป็นคลื่น"},
+    "gwf.panel.step_off_ms": {"en": "Pause per slot — clear (ms)",
+                              "th": "หน่วงต่อช่อง — ปิดไฟ (ms)"},
+    "gwf.panel.step_off_ms.hint": {
+        "en": "How long the all-off sweep waits between slots. Usually 0 — "
+              "clearing has nothing to show off.",
+        "th": "การกวาดปิดไฟรอระหว่างช่องนานเท่าไร ปกติ 0 — การดับไฟไม่มีอะไรต้องโชว์"},
+    "gwf.panel.step_unlock_ms": {"en": "Pause per slot — light + latch (ms)",
+                                 "th": "หน่วงต่อช่อง — เปิดไฟ+กลอน (ms)"},
+    "gwf.panel.step_unlock_ms.hint": {
+        "en": "How long the unlock sweep waits between slots. This one is a "
+              "power budget: each slot fires a solenoid, and the pause keeps "
+              "a whole-cabinet unlock from asking the supply for many latches "
+              "at once.",
+        "th": "การกวาดเปิดไฟ+กลอนรอระหว่างช่องนานเท่าไร ตัวนี้คืองบไฟ: "
+              "แต่ละช่องยิงโซลินอยด์ การหน่วงช่วยไม่ให้ปลดล็อกทั้งตู้"
+              "กระชากไฟหลายกลอนพร้อมกัน"},
     "gwf.panel.bright": {"en": "Test brightness (%)",
                          "th": "ความสว่างทดสอบ (%)"},
     "gwf.panel.bright.hint": {

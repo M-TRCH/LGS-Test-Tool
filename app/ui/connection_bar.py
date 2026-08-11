@@ -1,7 +1,7 @@
 """Persistent header: transport selection, slave ID, scan, connect, status chip."""
 from __future__ import annotations
 
-from nicegui import ui
+from nicegui import app, ui
 
 from .. import config_store, i18n
 from ..i18n import t
@@ -12,8 +12,8 @@ from ..lgs_map import (BAUD_WHITELIST, CABINET_LAYOUTS, CUSTOM_CABINET_KEY,
                        resolve_cabinet)
 from ..transports import RtuSettings, TcpSettings, list_com_ports
 from ..version import APP_VERSION
-from . import (Ctx, about, helps, reference_dialog as reference_mod,
-               theme as theme_mod)
+from . import (Ctx, about, confirm, helps,
+               reference_dialog as reference_mod, theme as theme_mod)
 
 
 def _port_options() -> dict:
@@ -378,6 +378,19 @@ def build(ctx: Ctx) -> None:
                     ui.separator()
                     ui.menu_item(t("hdr.reference"), on_click=reference_dialog.open)
                     ui.menu_item(t("hdr.about"), on_click=about_dialog.open)
+                    ui.separator()
+
+                    async def quit_app() -> None:
+                        # The clean exit: the shutdown hook saves the config
+                        # and stops the worker, uvicorn returns, and the
+                        # console window (or the packaged exe's) closes
+                        # itself — no hunting for a terminal to kill.
+                        if await confirm(t("hdr.quit_title"), t("hdr.quit_body"),
+                                         t("hdr.quit")):
+                            app.shutdown()
+
+                    ui.menu_item(t("hdr.quit"), on_click=quit_app) \
+                        .classes("text-red")
 
         def refresh_status() -> None:
             st = worker.get_state()
