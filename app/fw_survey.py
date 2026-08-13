@@ -168,6 +168,8 @@ class ModuleRecord:
     health: int = 0
     uid: str = ""
     note: str = ""
+    room_raw: int = -1          # reg 20, deg C x100; -1 = not read
+    current_ma: int = -1        # reg 22 (fw >= v3.2.0 reads real mA)
     stats: Optional[ModuleStats] = None
 
     @property
@@ -180,9 +182,13 @@ class ModuleRecord:
 
 
 def read_module_record(ops: SurveyOps, device_id: int) -> ModuleRecord:
-    """Registers 0-17 in one transaction; silence leaves a not-responded row."""
+    """Registers 0-23 in one transaction; silence leaves a not-responded row.
+
+    0-17 are the identity the report is really for; 20/22 ride along for
+    free (same FC03) as a temperature/current snapshot — every fielded
+    firmware maps those addresses, so widening the read costs nothing."""
     rec = ModuleRecord(device_id=device_id)
-    res = ops.read_regs(device_id, 0, 18)
+    res = ops.read_regs(device_id, 0, 24)
     values = res.value if isinstance(res.value, (list, tuple)) else None
     if res.ok and values and len(values) >= 18:
         rec.responded = True
@@ -194,6 +200,9 @@ def read_module_record(ops: SurveyOps, device_id: int) -> ModuleRecord:
         rec.boots = int(values[7])
         rec.health = int(values[9])
         rec.uid = join_uid(values[12:18])
+        if len(values) >= 24:
+            rec.room_raw = int(values[20])
+            rec.current_ma = int(values[22])
     else:
         rec.note = res.note or "no reply"
     return rec

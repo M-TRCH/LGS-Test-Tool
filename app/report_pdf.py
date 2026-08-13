@@ -3,26 +3,39 @@
 A cabinet leaves commissioning with a gateway full of settings and dozens
 of modules whose identity (chip UID above all) exists nowhere on paper.
 This renders the record: gateway identity and configuration, the cabinet's
-shape, and one row per slot — ID, hub channel, UID, type, firmware,
-hardware, boot count, health — so "which board sits in slot 45 of the
-cabinet at ward 7" has an answer years later.
+shape, one row per slot — ID, hub channel, UID, type, firmware, hardware,
+boot count, health — the lifetime statistics each module keeps, and the
+gateway's own recent event log.
 
 Pure: (meta, settings, layout facts, module records) -> PDF bytes. The
 sweep that produces the records lives in fw_survey.run_report_survey.
 
-Labels are English on purpose — they match the console keys and the
-control table, the same rule the rest of the tool follows — but the font
-carries Thai for free-text values such as the gateway's name.
+Language: English throughout, by house rule. Since 2026-08-13 the settings
+table borrows the tool's curated English field labels (i18n `gwf.*`, which
+carry the units) instead of raw console keys — the export file still holds
+the raw keys for machine use, and the label lookup falls back to the raw
+key for anything unnamed.
 """
 from __future__ import annotations
 
 import os
+import re
 from datetime import datetime
 from typing import Optional, Sequence
 
 from fpdf import FPDF
+from fpdf.enums import TableCellFillMode
+from fpdf.fonts import FontFace
 
-from .lgs_map import HEALTH_BITS, dec_baud, dec_hw, fmt_dur
+from .i18n import TEXTS
+from .lgs_map import HEALTH_BITS, SENSOR_FAULT, dec_baud, dec_hw, fmt_dur
+
+# ── palette ────────────────────────────────────────────────────────────────
+ACCENT = (38, 84, 124)          # deep blue: section marks + table headers
+GROUP_FILL = (222, 232, 241)    # settings group bands
+ZEBRA = (240, 244, 249)         # every-other-row fill
+FAIL_RED = (180, 40, 40)
+MUTED = (130, 130, 130)
 
 # Windows ships these; the first pair that exists wins. Fallback to the
 # built-in Helvetica loses Thai glyphs but never loses the report.
@@ -66,24 +79,207 @@ class _Report(FPDF):
         self.set_text_color(0)
 
 
-def _kv_rows(pdf: _Report, pairs: list) -> None:
-    """Two key=value pairs per line, the whole settings dump in ~1 column."""
-    half = (len(pairs) + 1) // 2
-    left, right = pairs[:half], pairs[half:]
-    with pdf.table(col_widths=(34, 59, 34, 59), first_row_as_headings=False,
-                   line_height=4.6, borders_layout="NONE", padding=0.4) as table:
-        for i in range(half):
+def _section(pdf: _Report, title: str) -> None:
+    """A heading with the accent mark — one look for every section."""
+    pdf.ln(1.5)
+    y = pdf.get_y()
+    pdf.set_fill_color(*ACCENT)
+    pdf.rect(pdf.l_margin, y + 0.9, 1.8, 4.6, style="F")
+    # Hand the document's fill colour back to white before anything else
+    # draws: a table takes its UNFILLED cells' style from the current
+    # document state, so a leftover accent here paints every non-zebra row
+    # navy — the zebra reads inverted and the report looks broken.
+    pdf.set_fill_color(255)
+    pdf.set_x(pdf.l_margin + 3.6)
+    pdf.font(11, bold=True)
+    pdf.set_text_color(*ACCENT)
+    pdf.cell(0, 6, title, new_x="LMARGIN", new_y="NEXT")
+    pdf.set_text_color(0)
+
+
+def _table_kw(**extra) -> dict:
+    """The shared table look: filled header, zebra rows, light borders."""
+    kw = dict(
+        headings_style=FontFace(emphasis="BOLD", color=255, fill_color=ACCENT),
+        cell_fill_color=ZEBRA,
+        cell_fill_mode=TableCellFillMode.ROWS,
+        borders_layout="MINIMAL",
+        line_height=4.4, padding=0.4)
+    kw.update(extra)
+    return kw
+
+
+def _legend(pdf: _Report, text: str) -> None:
+    """Small print under a table. multi_cell, not cell: these run long and a
+    legend that leaves the page carries its meaning off with it."""
+    pdf.font(6.5)
+    pdf.set_text_color(*MUTED)
+    pdf.multi_cell(0, 3.6, text, new_x="LMARGIN", new_y="NEXT")
+    pdf.set_text_color(0)
+
+
+# ── gateway settings: friendly names, grouped ──────────────────────────────
+_SETTING_GROUPS = (("sys", "System"), ("time", "Clock"),
+                   ("rs485", "RS485 bus"), ("usb", "USB bridge"),
+                   ("net", "Network"), ("bus", "RS485 hub"),
+                   ("panel", "Front panel"), ("sched", "Scheduled reset"))
+_BOOL_KEYS = {"net.enabled", "net.dhcp", "panel.enabled", "panel.lamps",
+              "sched.reset_enabled"}
+_HHMM_KEYS = {"sched.reset_hhmm", "sched.reset_hhmm2", "sched.reset_hhmm3",
+              "sched.reset_hhmm4"}
+
+# Keys the tool draws with a custom widget rather than a labelled field, so
+# i18n has no `gwf.` entry for them. Named here so the report never falls
+# back to a raw console key.
+_EXTRA_LABELS = {
+    "panel.btn1": "Red button does", "panel.btn2": "Green button does",
+    "panel.btn3": "Blue button does", "panel.btn4": "Yellow button does",
+    "panel.btn5": "White button does",
+    "panel.out1": "Relay output 1 follows", "panel.out2": "Relay output 2 follows",
+    "panel.out3": "Relay output 3 follows", "panel.out4": "Relay output 4 follows",
+    "sched.reset_hhmm": "Reset time 1", "sched.reset_hhmm2": "Reset time 2",
+    "sched.reset_hhmm3": "Reset time 3", "sched.reset_hhmm4": "Reset time 4",
+    "sched.reset_slots": "Reset times armed", "sched.reset_days": "Reset days",
+}
+_PANEL_ACTIONS = {0: "nothing", 1: "light + number, whole cabinet",
+                  2: "everything off", 3: "light + number + latch",
+                  4: "power-cycle the shelf", 5: "test the status lamps"}
+_PANEL_SOURCES = {0: "nothing (off)", 1: "ready", 2: "busy", 3: "fault",
+                  4: "LAN is up", 5: "TCP client connected",
+                  6: "sweep running", 7: "shelf power dropped",
+                  8: "the shelf's power"}
+_DAY_NAMES = ("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+
+
+def _setting_label(key: str) -> str:
+    # The overrides win: the tool's own label for slot 1 ("Time of day")
+    # reads oddly beside "Reset time 2/3/4", and a set of four wants one
+    # name with four numbers.
+    entry = TEXTS.get(f"gwf.{key}")
+    label = _EXTRA_LABELS.get(key) or (
+        entry["en"] if entry and entry.get("en") else key)
+    # The UI's arrow is not in the report font; the glyph would be dropped
+    # silently, leaving "Row  hub channel".
+    return label.replace("→", "->")
+
+
+def _setting_value(key: str, value: str) -> str:
+    if key in _BOOL_KEYS:
+        return "on" if value == "1" else "off"
+    if key in _HHMM_KEYS and value.isdigit():
+        v = int(value)
+        if v <= 2359:
+            return f"{v // 100:02d}:{v % 100:02d}"
+    if value.isdigit():
+        n = int(value)
+        if key.startswith("panel.btn"):
+            return _PANEL_ACTIONS.get(n, value)
+        if key.startswith("panel.out"):
+            return _PANEL_SOURCES.get(n, value)
+        if key == "sched.reset_slots":
+            armed = [str(i + 1) for i in range(4) if n & (1 << i)]
+            return ("times " + ", ".join(armed)) if armed else "none"
+        if key == "sched.reset_days":
+            if n in (0, 0x7F):
+                return "every day"
+            days = [_DAY_NAMES[i] for i in range(7) if n & (1 << i)]
+            return ", ".join(days) if days else "never"
+    return value or "—"
+
+
+def _settings_table(pdf: _Report, settings: dict) -> None:
+    pdf.font(6.8)
+    group_style = FontFace(emphasis="BOLD", color=ACCENT,
+                           fill_color=GROUP_FILL)
+    # Values run wide once they read as words ("light + number + latch"),
+    # so the value columns get more room than a raw number would need.
+    with pdf.table(col_widths=(52, 41, 52, 41), first_row_as_headings=False,
+                   **_table_kw(line_height=4.2)) as table:
+        for prefix, group_name in _SETTING_GROUPS:
+            # Sorted by the LABEL, not the console key: the reader is
+            # scanning names, and "Reset time 1..4" belong together however
+            # their keys happen to spell themselves.
+            items = sorted(((k, v) for k, v in settings.items()
+                            if k.split(".", 1)[0] == prefix),
+                           key=lambda kv: _setting_label(kv[0]).lower())
+            if not items:
+                continue
+            head = table.row()
+            head.cell(group_name, colspan=4, style=group_style)
+            half = (len(items) + 1) // 2
+            left, right = items[:half], items[half:]
+            for i in range(half):
+                row = table.row()
+                k1, v1 = left[i]
+                row.cell(_setting_label(k1))
+                row.cell(_setting_value(k1, str(v1)))
+                if i < len(right):
+                    k2, v2 = right[i]
+                    row.cell(_setting_label(k2))
+                    row.cell(_setting_value(k2, str(v2)))
+                else:
+                    row.cell("")
+                    row.cell("")
+
+
+# ── recent events: parse the console lines into a real table ───────────────
+_EV_LINE = re.compile(r"#(\d+)\s+(\S+)\s+up=(\S+?)s?\s+(\S+)"
+                      r"(?:\s+a=(\d+)\s+p=(\d+))?$")
+_RESET_NAMES = {0: "unknown", 1: "watchdog", 2: "window-watchdog",
+                3: "software", 4: "pin", 5: "brownout", 6: "power-on"}
+_ACTION_NAMES = {1: "all on", 2: "all off", 3: "all unlock",
+                 4: "shelf reset", 5: "lamp test"}
+
+
+def _event_detail(ev: str, a: int, p: int) -> str:
+    if ev == "boot":
+        return f"cause: {_RESET_NAMES.get(a, a)}"
+    if ev == "clock_set":
+        src = "NTP" if a == 2 else "Test Tool"
+        jump = f", jumped {p} s" if p else ""
+        return f"set by {src}{jump}"
+    if ev == "link_up":
+        return f"our address ends .{p}"
+    if ev == "tcp_accept":
+        return f"slot {a}, client ends .{p}"
+    if ev == "tcp_close":
+        return f"slot {a}"
+    if ev == "tcp_refused":
+        return f"both slots taken; client ends .{p}"
+    if ev == "sched_reset":
+        return f"slot time {p // 100:02d}:{p % 100:02d}" if p else ""
+    if ev == "panel_sweep":
+        return f"{_ACTION_NAMES.get(a, a)} (button {p})"
+    if ev == "store_erased":
+        return "10 s button hold" if a == 1 else "forced defaults"
+    if a or p:
+        return f"a={a} p={p}"
+    return ""
+
+
+def _events_table(pdf: _Report, events: Sequence[str]) -> None:
+    pdf.font(7)
+    with pdf.table(col_widths=(12, 34, 18, 30, 92),
+                   text_align=("CENTER", "LEFT", "RIGHT", "LEFT", "LEFT"),
+                   **_table_kw()) as table:
+        head = table.row()
+        for title in ("#", "Time", "Uptime", "Event", "Detail"):
+            head.cell(title)
+        for line in events:
+            m = _EV_LINE.match(str(line).strip())
             row = table.row()
-            k1, v1 = left[i]
-            row.cell(k1)
-            row.cell(str(v1))
-            if i < len(right):
-                k2, v2 = right[i]
-                row.cell(k2)
-                row.cell(str(v2))
-            else:
+            if not m:
                 row.cell("")
-                row.cell("")
+                row.cell(str(line), colspan=4)
+                continue
+            seq, when, up, ev = m.group(1), m.group(2), m.group(3), m.group(4)
+            a = int(m.group(5) or 0)
+            p = int(m.group(6) or 0)
+            row.cell(seq)
+            row.cell("—" if when == "-" else when.replace("T", " "))
+            row.cell(fmt_dur(int(up)) if up.isdigit() else up)
+            row.cell(ev.replace("_", " "))
+            row.cell(_event_detail(ev, a, p))
 
 
 def build_report_pdf(*, app_version: str, generated: datetime,
@@ -93,15 +289,16 @@ def build_report_pdf(*, app_version: str, generated: datetime,
                      hub_channel, events: Sequence[str] = ()) -> bytes:
     """`records` are fw_survey.ModuleRecord; `hub_channel(id)` maps a slave
     ID to its RS485 hub channel (0 = wired straight); `events` are the
-    gateway's newest event-log lines, already formatted (may be empty —
-    older firmware has no log)."""
+    gateway's newest event-log lines (may be empty — older firmware)."""
     pdf = _Report()
     pdf.alias_nb_pages()
     pdf.add_page()
 
     # ── title ─────────────────────────────────────────────────────────────
     pdf.font(15, bold=True)
+    pdf.set_text_color(*ACCENT)
     pdf.cell(0, 8, "LGS Site Report", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_text_color(0)
     pdf.font(8)
     pdf.set_text_color(90)
     name = settings.get("sys.name", "")
@@ -111,11 +308,9 @@ def build_report_pdf(*, app_version: str, generated: datetime,
              f"LGS Test Tool v{app_version}",
              new_x="LMARGIN", new_y="NEXT")
     pdf.set_text_color(0)
-    pdf.ln(2)
 
     # ── gateway identity ──────────────────────────────────────────────────
-    pdf.font(11, bold=True)
-    pdf.cell(0, 6, "Gateway", new_x="LMARGIN", new_y="NEXT")
+    _section(pdf, "Gateway")
     pdf.font(8)
     idline = (f"fw {info.get('fw', '?')} · build {info.get('build', '?')} · "
               f"id {info.get('id', '?')} · mac {info.get('mac', '?')}")
@@ -123,14 +318,13 @@ def build_report_pdf(*, app_version: str, generated: datetime,
                f"{info.get('net.ip', '?')}:{info.get('net.port', '?')} · "
                f"watchdog {info.get('sys.wdt', '?')} ms · "
                f"clock {info.get('time.now', 'unset').replace('T', ' ')} · "
+               f"NTP {info.get('ntp.state', '-')} · "
                f"scheduled reset {info.get('sched.reset', '?')}")
     pdf.cell(0, 4.6, idline, new_x="LMARGIN", new_y="NEXT")
     pdf.cell(0, 4.6, netline, new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(2)
 
     # ── cabinet ───────────────────────────────────────────────────────────
-    pdf.font(11, bold=True)
-    pdf.cell(0, 6, "Cabinet", new_x="LMARGIN", new_y="NEXT")
+    _section(pdf, "Cabinet")
     pdf.font(8)
     rows_text = ",".join(str(w) for w in widths) if widths else "-"
     pdf.cell(0, 4.6,
@@ -138,18 +332,16 @@ def build_report_pdf(*, app_version: str, generated: datetime,
              f"slots per row (top first): {rows_text} · "
              f"hub map {settings.get('bus.hub_map', '-')}",
              new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(2)
 
     # ── modules — the reason this report exists ───────────────────────────
-    pdf.font(11, bold=True)
     answered = sum(1 for r in records if r.responded)
-    pdf.cell(0, 6, f"Modules ({answered}/{len(records)} answered)",
-             new_x="LMARGIN", new_y="NEXT")
+    _section(pdf, f"Modules ({answered}/{len(records)} answered)")
     pdf.font(7.5)
+    fail_style = FontFace(color=FAIL_RED)
     with pdf.table(col_widths=(10, 8, 47, 26, 15, 20, 12, 13, 35),
-                   line_height=4.4, padding=0.4,
                    text_align=("CENTER", "CENTER", "LEFT", "LEFT", "CENTER",
-                               "LEFT", "CENTER", "CENTER", "LEFT")) as table:
+                               "LEFT", "CENTER", "CENTER", "LEFT"),
+                   **_table_kw()) as table:
         head = table.row()
         for title in ("ID", "CH", "UID", "Type", "FW", "HW",
                       "Boots", "Health", "Note"):
@@ -169,44 +361,36 @@ def build_report_pdf(*, app_version: str, generated: datetime,
                 mismatch = (r.reported_id != r.device_id)
                 row.cell(f"reports id {r.reported_id}!" if mismatch else "")
             else:
-                pdf.set_text_color(180, 40, 40)
-                row.cell("no answer")
-                pdf.set_text_color(0)
+                row.cell("no answer", style=fail_style)
                 for _ in range(6):
                     row.cell("")
-    pdf.font(6.5)
-    pdf.set_text_color(90)
     bits = ", ".join(f"bit{i}={n}" for i, n in enumerate(HEALTH_BITS))
-    pdf.cell(0, 4, f"health: {bits} (set = OK) · bit4 = latch locked · "
-                   f"baud per module config, bus runs "
-                   f"{dec_baud(int(settings.get('rs485.baud', 9600) or 9600))}",
-             new_x="LMARGIN", new_y="NEXT")
-    pdf.set_text_color(0)
-    pdf.ln(2)
+    _legend(pdf, f"health: {bits} (set = OK; bit3 reads 0 on every R5.1 — "
+                 f"known, harmless) · bit4 = latch locked · bus runs "
+                 f"{dec_baud(int(settings.get('rs485.baud', 9600) or 9600))}")
 
     # ── module statistics — how much this cabinet has actually worked ─────
     with_stats = sum(1 for r in records if getattr(r, "stats", None))
     if with_stats:
-        pdf.font(11, bold=True)
-        pdf.cell(0, 6, f"Module statistics ({with_stats}/{len(records)})",
-                 new_x="LMARGIN", new_y="NEXT")
-        pdf.font(7.5)
-        with pdf.table(col_widths=(10, 30, 14, 14, 24, 24, 30, 40),
-                       line_height=4.4, padding=0.4,
-                       text_align=("CENTER", "LEFT", "CENTER", "CENTER",
-                                   "CENTER", "CENTER", "CENTER", "LEFT")) as table:
+        _section(pdf, f"Module statistics ({with_stats}/{len(records)})")
+        pdf.font(7)
+        muted_style = FontFace(color=MUTED)
+        with pdf.table(col_widths=(10, 24, 12, 12, 18, 18, 18, 28, 24, 22),
+                       text_align=("CENTER",) * 10,
+                       **_table_kw()) as table:
             head = table.row()
             for title in ("ID", "Op time", "Boots", "IWDG", "Presses",
-                          "Latch fires", "LED on count", "LED on time"):
+                          "Latch fires", "LED on", "LED time",
+                          "Room °C", "Supply mA"):
                 head.cell(title)
             for r in records:
                 row = table.row()
                 row.cell(str(r.device_id))
-                s = getattr(r, "stats", None)
+                s = getattr(r, "stats", None) if r.responded else None
                 if s is None:
-                    pdf.set_text_color(150)
-                    row.cell("n/a")
-                    pdf.set_text_color(0)
+                    # Seven columns belong to the statistics block; one short
+                    # and the live readings slide left into them.
+                    row.cell("n/a", style=muted_style)
                     for _ in range(6):
                         row.cell("")
                 else:
@@ -217,36 +401,30 @@ def build_report_pdf(*, app_version: str, generated: datetime,
                     row.cell(str(s.latch_fires))
                     row.cell(str(s.total_on_count))
                     row.cell(fmt_dur(s.total_on_time_s))
-        pdf.font(6.5)
-        pdf.set_text_color(90)
-        pdf.cell(0, 4, "lifetime totals, persisted on each module (fw >= "
-                       "v3.3.0; n/a = older firmware or no answer) · cleared "
-                       "by coil 510 / factory reset — boot count survives",
-                 new_x="LMARGIN", new_y="NEXT")
-        pdf.set_text_color(0)
-        pdf.ln(2)
+                room = getattr(r, "room_raw", -1)
+                if r.responded and 0 <= room != SENSOR_FAULT:
+                    row.cell(f"{room / 100:.1f}")
+                else:
+                    row.cell("—")
+                ma = getattr(r, "current_ma", -1)
+                row.cell(str(ma) if r.responded and ma >= 0 else "—")
+        _legend(pdf, "lifetime totals persisted on each module (fw >= v3.3.0; "
+                     "n/a = older firmware or no answer) · cleared by coil 510 "
+                     "/ factory reset — boot count survives · Room °C and "
+                     "Supply mA are live readings at survey time")
 
     # ── the full settings dump, for the record ────────────────────────────
-    pdf.font(11, bold=True)
-    pdf.cell(0, 6, "Gateway settings", new_x="LMARGIN", new_y="NEXT")
-    pdf.font(6.8)
-    _kv_rows(pdf, sorted(settings.items()))
+    _section(pdf, "Gateway settings")
+    _settings_table(pdf, settings)
+    _legend(pdf, "raw console keys and values travel in the config export "
+                 "file (Gateway page); labels here follow the tool's fields")
 
     # ── recent gateway events — what happened here lately ─────────────────
     if events:
-        pdf.ln(2)
-        pdf.font(11, bold=True)
-        pdf.cell(0, 6, f"Recent gateway events (newest first, {len(events)})",
-                 new_x="LMARGIN", new_y="NEXT")
-        pdf.font(7)
-        for line in events:
-            pdf.cell(0, 4.2, str(line), new_x="LMARGIN", new_y="NEXT")
-        pdf.font(6.5)
-        pdf.set_text_color(90)
-        pdf.cell(0, 4, "t=- means the clock was not yet set when the event "
-                       "was written (right after a power cut); up= orders "
-                       "those events within their boot",
-                 new_x="LMARGIN", new_y="NEXT")
-        pdf.set_text_color(0)
+        _section(pdf, f"Recent gateway events (newest first, {len(events)})")
+        _events_table(pdf, events)
+        _legend(pdf, "Time — means the clock was not yet set when the event "
+                     "was written (right after a power cut); Uptime orders "
+                     "those events within their boot")
 
     return bytes(pdf.output())
