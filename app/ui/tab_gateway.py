@@ -170,8 +170,9 @@ def build(ctx: Ctx) -> None:
     with ui.card().classes("p-3 w-full q-mt-sm"):
         helps(ui.label(t("rpt.card")).classes("font-bold"), t("rpt.hint"))
         with ui.row().classes("items-center gap-3 flex-wrap"):
-            report_btn = ui.button(t("rpt.run"), on_click=do_report) \
-                .props("outline dense no-caps")
+            # on_click is attached after do_report exists — a bare reference
+            # here would be evaluated now, before the def below.
+            report_btn = ui.button(t("rpt.run")).props("outline dense no-caps")
             ui.button(t("btn.cancel"),
                       on_click=lambda: worker.cancel_fw_survey()).props("flat")
             report_progress = ui.linear_progress(value=0.0, show_value=False) \
@@ -903,6 +904,7 @@ def build(ctx: Ctx) -> None:
 
     report_state: dict = {"seq": 0, "waiting": False,
                           "snapshot": None, "layout": None, "events": ()}
+    report_btn.on_click(do_report)
     ui.timer(0.3, drain_report)
 
     def do_import(e) -> None:
