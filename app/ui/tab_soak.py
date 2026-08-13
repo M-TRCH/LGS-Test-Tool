@@ -69,6 +69,21 @@ def build(ctx: Ctx) -> None:
     def say(text: str) -> None:
         box.push(text)
 
+    def reset_totals() -> None:
+        """Blank the panel between runs.
+
+        The first tick of a new run only lands when its first pass finishes —
+        twenty seconds during which last run's numbers would sit there
+        looking like this one's. A soak is read at a glance; stale totals are
+        worse than none.
+        """
+        for lbl in (lbl_elapsed, lbl_passes, lbl_txns, lbl_fails,
+                    lbl_reboots, lbl_wdt, lbl_worst, lbl_cross):
+            lbl.set_text("—")
+        lbl_reboots.classes(replace="text-sm font-bold")
+        lbl_wdt.classes(replace="text-sm font-bold")
+        lbl_cross.classes(replace="text-sm text-grey")
+
     def do_start() -> None:
         layout = ctx.cabinet()
         path = (config_store.data_dir() / "exports"
@@ -79,10 +94,16 @@ def build(ctx: Ctx) -> None:
                               counter_every=int(every.value or 5),
                               slow_ms=int(slow.value or 400))
         if not worker.start_soak(cfg, path):
+            # Say it in the status line as well as the toast: a refused start
+            # leaves the previous run's totals on screen, and a toast that has
+            # faded is no help to someone reading them a minute later.
             ui.notify(t("soak.busy"), type="warning")
+            status.set_text(t("soak.busy"))
+            status.classes(replace="text-sm text-orange")
             return
         state.update(running=True, path=path)
         box.clear()
+        reset_totals()
         say(f"{datetime.now():%H:%M:%S}  start · {layout.label} · "
             f"{layout.count} modules · log {path.name}")
         status.set_text(t("soak.running", n=layout.count))

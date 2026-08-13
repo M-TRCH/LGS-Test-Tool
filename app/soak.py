@@ -154,8 +154,11 @@ def run_soak(ops: SoakOps, cfg: SoakConfig, emit: Callable,
             if cancel.is_set():
                 break
             channel = hub_channel(device_id)
-            crossing = (channel != 0 and prev_channel is not None
-                        and channel != prev_channel)
+            # The very first read counts as a crossing too: nobody knows which
+            # channel the hub is parked on, and letting that one 2.2 s wait
+            # into the ordinary "worst" made the panel look alarming forever.
+            crossing = (channel != 0
+                        and (prev_channel is None or channel != prev_channel))
             prev_channel = channel
 
             t = time.monotonic()
