@@ -785,6 +785,8 @@ TEXTS: dict[str, dict[str, str]] = {
                            "th": "เปิดไฟ+จอ+กลอน ทั้งตู้"},
     "pnl.act.reset": {"en": "Power-cycle the shelf (relays)",
                       "th": "สับรีเลย์ตัดไฟชั้นวาง (hardware reset)"},
+    "pnl.act.lamp_test": {"en": "Test the status lamps (one by one)",
+                          "th": "ทดสอบหลอดสถานะ (ทีละดวง)"},
 
     "pnl.lamp_card": {"en": "Relay outputs", "th": "เอาต์พุตรีเลย์"},
     "pnl.lamp_hint": {"en": "Each relay follows one thing. Ready, busy and fault are "
