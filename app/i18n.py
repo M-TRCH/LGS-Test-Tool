@@ -156,6 +156,63 @@ TEXTS: dict[str, dict[str, str]] = {
     "tab.install": {"en": "Installation Check", "th": "ตรวจการติดตั้ง"},
     "tab.module": {"en": "Module Test", "th": "ทดสอบโมดูล"},
     "tab.danger": {"en": "Danger", "th": "คำสั่งอันตราย"},
+    "tab.soak": {"en": "Soak", "th": "ทดสอบยาว"},
+
+    # ── soak tab ───────────────────────────────────────────────────────────
+    "soak.card": {"en": "Bus soak", "th": "ทดสอบเดินยาว (soak)"},
+    "soak.hint": {"en": "Polls every module of the cabinet, hour after hour, the way "
+                        "a hospital server does — and watches each module's BOOT "
+                        "counter, because a module that hangs and reboots answers "
+                        "again within a second and no read ever fails. That is how "
+                        "the hub-crossing fault of 13 Aug hid for months. Leave it "
+                        "running overnight; anomalies also go to a CSV in "
+                        "data/exports, so nobody has to sit and watch.",
+                  "th": "ไล่อ่านทุกโมดูลในตู้ต่อเนื่องเป็นชั่วโมง เหมือนที่เซิร์ฟเวอร์"
+                        "โรงพยาบาลทำ พร้อมเฝ้าตัวนับ 'จำนวนครั้งที่บูต' ของแต่ละโมดูล "
+                        "เพราะโมดูลที่ค้างแล้วรีบูตจะกลับมาตอบภายในวินาทีเดียว — "
+                        "ไม่มี read ไหน fail เลย นั่นคือเหตุผลที่บั๊กการข้าม channel "
+                        "ซ่อนตัวได้นาน เปิดทิ้งไว้ข้ามคืนได้ ความผิดปกติจะถูกบันทึกลง "
+                        "CSV ใน data/exports ด้วย ไม่ต้องมีคนนั่งเฝ้า"},
+    "soak.gap": {"en": "Pause per pass (s)", "th": "พักต่อรอบ (วินาที)"},
+    "soak.gap_tip": {"en": "Breather between full cabinet passes. Larger is gentler on "
+                           "a bus that is also carrying real traffic.",
+                     "th": "เวลาพักระหว่างรอบกวาดทั้งตู้ ตั้งมากขึ้น = เบามือกับบัส"
+                           "ที่มีงานจริงวิ่งอยู่ด้วย"},
+    "soak.counter_every": {"en": "Check counters every N passes",
+                           "th": "ตรวจตัวนับทุก N รอบ"},
+    "soak.counter_every_tip": {"en": "How often to re-read every module's boot and "
+                                     "watchdog counters — the reboot detector. Costs "
+                                     "one extra read per module.",
+                               "th": "ความถี่ในการอ่านตัวนับบูต/watchdog ของทุกโมดูล "
+                                     "ซึ่งคือตัวจับการรีบูต เสียเวลาเพิ่มโมดูลละ 1 การอ่าน"},
+    "soak.slow": {"en": "Slow reply (ms)", "th": "ตอบช้ากว่า (ms)"},
+    "soak.slow_tip": {"en": "A reply slower than this is logged. On a healthy 9600 "
+                            "bus a read lands in well under 100 ms.",
+                      "th": "ถ้าตอบช้ากว่านี้จะถูกบันทึก บัส 9600 ที่ปกติจะตอบต่ำกว่า "
+                            "100 ms อย่างสบาย"},
+    "soak.start": {"en": "Start soak", "th": "เริ่มทดสอบ"},
+    "soak.stop": {"en": "Stop", "th": "หยุด"},
+    "soak.idle": {"en": "not running", "th": "ยังไม่ได้เริ่ม"},
+    "soak.running": {"en": "running — {n} modules per pass", "th": "กำลังวิ่ง — รอบละ {n} โมดูล"},
+    "soak.stopping": {"en": "stopping after this pass…", "th": "จะหยุดเมื่อจบรอบนี้…"},
+    "soak.busy": {"en": "The bus is busy with another sweep, or not connected.",
+                  "th": "บัสกำลังถูกใช้โดยงานอื่น หรือยังไม่ได้เชื่อมต่อ"},
+    "soak.totals": {"en": "Running totals", "th": "ยอดสะสม"},
+    "soak.elapsed": {"en": "elapsed {v}", "th": "เวลา {v}"},
+    "soak.passes": {"en": "passes {v}", "th": "รอบ {v}"},
+    "soak.txns": {"en": "reads {v}", "th": "อ่าน {v}"},
+    "soak.fails": {"en": "failed {v}", "th": "ล้มเหลว {v}"},
+    "soak.reboots": {"en": "reboots {v}", "th": "รีบูต {v}"},
+    "soak.watchdogs": {"en": "watchdog {v}", "th": "watchdog {v}"},
+    "soak.worst": {"en": "worst {v} ms", "th": "ช้าสุด {v} ms"},
+    "soak.crossings": {"en": "hub crossings {n} (worst {v} ms — expected)",
+                       "th": "ข้าม channel {n} ครั้ง (ช้าสุด {v} ms — ปกติ)"},
+    "soak.anomalies": {"en": "Anomalies", "th": "ความผิดปกติ"},
+    "soak.anomalies_tip": {"en": "Every no-reply, reboot, watchdog reset and slow "
+                                 "answer, as it happens. An empty list after a long "
+                                 "run is the result you want.",
+                           "th": "ทุกครั้งที่ไม่ตอบ รีบูต โดน watchdog หรือตอบช้า "
+                                 "จะขึ้นที่นี่ทันที ถ้าวิ่งยาวแล้วว่างเปล่า = ผลที่ต้องการ"},
 
     # ── control tab ────────────────────────────────────────────────────────
     "ctl.presets": {"en": "Presets (single shared ring — enabling one auto-clears the others)",

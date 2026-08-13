@@ -15,15 +15,26 @@ from serial.tools import list_ports
 OPTA_VID = 0x2341
 OPTA_PID = 0x0164
 
-DEFAULT_TCP_HOST = "192.168.0.178"   # Opta gateway static IP (single client only!)
+DEFAULT_TCP_HOST = "192.168.0.178"   # Opta gateway static IP
 DEFAULT_TCP_PORT = 502
+
+# A master talking to a cabinet behind the RS485 switch hub has to outlast a
+# channel change. The hub swallows the first frame on a new channel and stays
+# deaf for ~2.2 s; the gateway repairs that by HOLDING the request until the
+# channel opens (up to bus.hub_budget_ms) so the reply merely arrives late.
+# A client that gives up before the gateway does gets the worst of both — the
+# read fails AND the late answer desynchronises the reads behind it: measured
+# on the bench at a 1 s timeout, one crossing took the next three modules with
+# it. 3.5 s clears a 2600 ms budget with margin. This is exactly the rule the
+# hospital's server has to follow, so the tool had better follow it too.
+HUB_SAFE_TIMEOUT_S = 3.5
 
 
 @dataclass
 class RtuSettings:
     port: str
     baud: int = 9600
-    timeout_s: float = 1.0            # framing fixed 8N1
+    timeout_s: float = HUB_SAFE_TIMEOUT_S     # framing fixed 8N1
 
     def describe(self) -> str:
         return f"RTU {self.port} @{self.baud} 8N1"
@@ -33,7 +44,7 @@ class RtuSettings:
 class TcpSettings:
     host: str = DEFAULT_TCP_HOST
     port: int = DEFAULT_TCP_PORT
-    timeout_s: float = 1.0
+    timeout_s: float = HUB_SAFE_TIMEOUT_S
 
     def describe(self) -> str:
         return f"TCP {self.host}:{self.port}"

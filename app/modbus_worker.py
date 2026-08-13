@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Callable, Optional, Sequence
 
 from . import (commission, fieldcheck, fw_survey, gateway_config, lgs_map,
-               opta_flash, opta_update, ota, stlink, testsuite)
+               opta_flash, opta_update, ota, soak, stlink, testsuite)
 from .lgs_map import (CoilClass, HUB_WAKE_GAP_S, HUB_WAKE_TRIES,
                       INTER_CH_S, INTER_TXN_S, LATCH_COOLDOWN_S,
                       hub_channel)
@@ -156,6 +156,10 @@ class ModbusWorker:
         self._survey_cancel = threading.Event()
         self._survey_events: list = []
         self._survey_lock = threading.Lock()
+        self._soak_running = False
+        self._soak_cancel = threading.Event()
+        self._soak_events: list = []
+        self._soak_lock = threading.Lock()
         self._ota_running = False
         self._ota_cancel = threading.Event()
         self._ota_events: list = []
@@ -1017,6 +1021,73 @@ class ModbusWorker:
                                          self._check_cancel)
         finally:
             self._check_running = False
+
+    # ── bus soak (read-only, runs for hours, its own event stream) ─────────
+    def start_soak(self, cfg: "soak.SoakConfig", log_path=None) -> bool:
+        """Poll the cabinet until cancelled, watching for silent reboots.
+
+        Takes the same long-job slot as the surveys — one bus, one sweep —
+        but unlike them it does not end on its own.
+        """
+        if self._check_running or self._sweep_running or self._scan_running \
+                or self._ota_running or not self._connected or not cfg.ids:
+            return False
+        self._soak_cancel.clear()
+        with self._soak_lock:
+            self._soak_events.clear()
+        self._soak_running = True
+        self._check_running = True                # occupies the same slot
+        self._submit(_PRIO_LONG, lambda: self._do_soak(cfg, log_path))
+        return True
+
+    def cancel_soak(self) -> None:
+        self._soak_cancel.set()
+        self._check_cancel.set()                  # _SurveyOps.sleep watches this
+
+    def soak_running(self) -> bool:
+        return self._soak_running
+
+    def drain_soak_events(self, since: int) -> tuple[int, list]:
+        with self._soak_lock:
+            fresh = [e for e in self._soak_events if e.seq > since]
+            # An overnight run must not grow a list until the process dies.
+            if len(self._soak_events) > 2000:
+                del self._soak_events[:-500]
+            return (fresh[-1].seq if fresh else since), fresh
+
+    def _do_soak(self, cfg: "soak.SoakConfig", log_path) -> None:
+        def emit(ev) -> None:
+            with self._soak_lock:
+                self._event_seq += 1
+                ev.seq = self._event_seq
+                self._soak_events.append(ev)
+
+        handle = None
+        if log_path is not None:
+            try:
+                handle = open(log_path, "a", encoding="utf-8", buffering=1)
+                handle.write("time,device_id,kind,detail\n")
+            except OSError:
+                handle = None      # the run matters more than its paper trail
+
+        def log_line(text: str) -> None:
+            if handle is not None:
+                try:
+                    handle.write(text + "\n")
+                except OSError:
+                    pass
+
+        try:
+            self._check_cancel.clear()
+            soak.run_soak(_SurveyOps(self), cfg, emit, self._soak_cancel, log_line)
+        finally:
+            self._soak_running = False
+            self._check_running = False
+            if handle is not None:
+                try:
+                    handle.close()
+                except OSError:
+                    pass
 
     # ── firmware survey (read-only, its own event stream) ──────────────────
     def start_fw_survey(self, ids: Sequence[int]) -> bool:

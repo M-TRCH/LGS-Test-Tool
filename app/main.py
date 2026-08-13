@@ -20,7 +20,7 @@ except ImportError:
     pass
 from .ui import (Ctx, connection_bar, helps, log_pane, tab_autotest,
                  tab_commission, tab_control, tab_danger, tab_gateway,
-                 tab_install, tab_monitor, tab_ota, theme)
+                 tab_install, tab_monitor, tab_ota, tab_soak, theme)
 from .version import APP_VERSION
 
 # Shared across browsers: one Modbus worker, one log, one settings file — the
@@ -59,6 +59,7 @@ def index() -> None:
             t_ota = ui.tab("ota", i18n.t("tab.ota"))
             t_commission = ui.tab("commission", i18n.t("tab.commission"))
             t_gateway = ui.tab("gateway", i18n.t("tab.gateway"))
+            t_soak = ui.tab("soak", i18n.t("tab.soak"))
             t_danger = ui.tab("danger", i18n.t("tab.danger"))
 
         # Everyday pages stay; the installation / maintenance pages appear
@@ -67,7 +68,7 @@ def index() -> None:
         # ones a stray factory reset would hurt. Module Test sits here too:
         # a full R5.0 sweep (including an optional unlock) is a bench job,
         # not something to trip over during a site visit.
-        advanced_tabs = (t_module, t_ota, t_commission, t_gateway, t_danger)
+        advanced_tabs = (t_module, t_ota, t_commission, t_gateway, t_soak, t_danger)
         adv = helps(ui.switch(i18n.t("hdr.advanced"), value=cfg.advanced_mode)
                     .props("dense").classes("shrink-0 pr-2"),
                     i18n.t("hdr.advanced_tip"))
@@ -103,6 +104,8 @@ def index() -> None:
             tab_commission.build(ctx)
         with ui.tab_panel(t_gateway):
             tab_gateway.build(ctx)
+        with ui.tab_panel(t_soak):
+            tab_soak.build(ctx)
         with ui.tab_panel(t_danger):
             tab_danger.build(ctx)
 
