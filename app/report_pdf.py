@@ -22,7 +22,7 @@ from typing import Optional, Sequence
 
 from fpdf import FPDF
 
-from .lgs_map import HEALTH_BITS, dec_baud, dec_hw
+from .lgs_map import HEALTH_BITS, dec_baud, dec_hw, fmt_dur
 
 # Windows ships these; the first pair that exists wins. Fallback to the
 # built-in Helvetica loses Thai glyphs but never loses the report.
@@ -90,9 +90,11 @@ def build_report_pdf(*, app_version: str, generated: datetime,
                      info: dict, settings: dict,
                      cabinet_label: str, cabinet_count: int,
                      widths: Sequence[int], records: Sequence,
-                     hub_channel) -> bytes:
+                     hub_channel, events: Sequence[str] = ()) -> bytes:
     """`records` are fw_survey.ModuleRecord; `hub_channel(id)` maps a slave
-    ID to its RS485 hub channel (0 = wired straight)."""
+    ID to its RS485 hub channel (0 = wired straight); `events` are the
+    gateway's newest event-log lines, already formatted (may be empty —
+    older firmware has no log)."""
     pdf = _Report()
     pdf.alias_nb_pages()
     pdf.add_page()
@@ -182,10 +184,69 @@ def build_report_pdf(*, app_version: str, generated: datetime,
     pdf.set_text_color(0)
     pdf.ln(2)
 
+    # ── module statistics — how much this cabinet has actually worked ─────
+    with_stats = sum(1 for r in records if getattr(r, "stats", None))
+    if with_stats:
+        pdf.font(11, bold=True)
+        pdf.cell(0, 6, f"Module statistics ({with_stats}/{len(records)})",
+                 new_x="LMARGIN", new_y="NEXT")
+        pdf.font(7.5)
+        with pdf.table(col_widths=(10, 30, 14, 14, 24, 24, 30, 40),
+                       line_height=4.4, padding=0.4,
+                       text_align=("CENTER", "LEFT", "CENTER", "CENTER",
+                                   "CENTER", "CENTER", "CENTER", "LEFT")) as table:
+            head = table.row()
+            for title in ("ID", "Op time", "Boots", "IWDG", "Presses",
+                          "Latch fires", "LED on count", "LED on time"):
+                head.cell(title)
+            for r in records:
+                row = table.row()
+                row.cell(str(r.device_id))
+                s = getattr(r, "stats", None)
+                if s is None:
+                    pdf.set_text_color(150)
+                    row.cell("n/a")
+                    pdf.set_text_color(0)
+                    for _ in range(6):
+                        row.cell("")
+                else:
+                    row.cell(fmt_dur(s.op_seconds))
+                    row.cell(str(r.boots))
+                    row.cell(str(s.iwdg_resets))
+                    row.cell(str(s.button_presses))
+                    row.cell(str(s.latch_fires))
+                    row.cell(str(s.total_on_count))
+                    row.cell(fmt_dur(s.total_on_time_s))
+        pdf.font(6.5)
+        pdf.set_text_color(90)
+        pdf.cell(0, 4, "lifetime totals, persisted on each module (fw >= "
+                       "v3.3.0; n/a = older firmware or no answer) · cleared "
+                       "by coil 510 / factory reset — boot count survives",
+                 new_x="LMARGIN", new_y="NEXT")
+        pdf.set_text_color(0)
+        pdf.ln(2)
+
     # ── the full settings dump, for the record ────────────────────────────
     pdf.font(11, bold=True)
     pdf.cell(0, 6, "Gateway settings", new_x="LMARGIN", new_y="NEXT")
     pdf.font(6.8)
     _kv_rows(pdf, sorted(settings.items()))
+
+    # ── recent gateway events — what happened here lately ─────────────────
+    if events:
+        pdf.ln(2)
+        pdf.font(11, bold=True)
+        pdf.cell(0, 6, f"Recent gateway events (newest first, {len(events)})",
+                 new_x="LMARGIN", new_y="NEXT")
+        pdf.font(7)
+        for line in events:
+            pdf.cell(0, 4.2, str(line), new_x="LMARGIN", new_y="NEXT")
+        pdf.font(6.5)
+        pdf.set_text_color(90)
+        pdf.cell(0, 4, "t=- means the clock was not yet set when the event "
+                       "was written (right after a power cut); up= orders "
+                       "those events within their boot",
+                 new_x="LMARGIN", new_y="NEXT")
+        pdf.set_text_color(0)
 
     return bytes(pdf.output())

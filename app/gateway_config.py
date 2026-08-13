@@ -28,6 +28,10 @@ FORBIDDEN_BAUDS = {1200}
 
 DEFAULT_TIMEOUT_S = 1.0
 SAVE_TIMEOUT_S = 3.0
+# A LOG dump is up to 100 lines and the firmware feeds its watchdog per
+# line, so the wait is bounded by the console itself — but it is well past
+# the 1 s default.
+LOG_TIMEOUT_S = 3.0
 
 
 class GatewayError(Exception):
@@ -220,6 +224,11 @@ class GatewayLink:
 
     def reboot(self) -> GwResponse:
         return self.command("REBOOT")
+
+    def log(self, n: int) -> GwResponse:
+        """Newest `n` event-log records (fw >= 1.11.0; older firmware answers
+        err=unknown_verb, which arrives as an ordinary failed response)."""
+        return self.command(f"LOG {int(n)}", timeout_s=LOG_TIMEOUT_S)
 
     # ── composites ─────────────────────────────────────────────────────────
     @staticmethod

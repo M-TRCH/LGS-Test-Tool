@@ -14,13 +14,21 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Callable, Optional, Protocol, Sequence
 
-from .lgs_map import DEVICE_TYPES, INTER_TXN_S, fw_short, join_uid
+from .lgs_map import (DEVICE_TYPES, INTER_TXN_S, STATS2_BASE, STATS2_COUNT,
+                      fw_short, join_uid, stats2_count_hi, stats2_time_hi, u32)
 
 REG_DEVICE_TYPE = 0
 REG_FIRMWARE = 1
 
 # Sorts below every real version, so silent modules land last in the groups.
 SILENT = -1
+
+# First firmware carrying the Statistics-v2 block (regs 400-451). Modules
+# below this answer exception 02 there, so the report survey never even asks
+# — the same firmware-gate precedent as fieldcheck's FW_MIN_CONFIRM. A
+# legacy ddmmy date code that happens to exceed this slips the gate; the
+# read fails and the module simply shows no stats, which is also true.
+FW_MIN_STATS = 30300
 
 
 class SurveyOps(Protocol):
@@ -128,12 +136,26 @@ class ReportSurveyDone:
 
 
 @dataclass
+class ModuleStats:
+    """Lifetime counters from the Statistics-v2 block (fw >= v3.3.0)."""
+    total_on_count: int = 0
+    total_on_time_s: int = 0
+    latch_fires: int = 0
+    button_presses: int = 0
+    op_seconds: int = 0
+    iwdg_resets: int = 0
+    per_preset: tuple = ()              # 8 × (count, on_time_s)
+
+
+@dataclass
 class ModuleRecord:
     """One module's identity, as the site report prints it.
 
-    Everything comes from ONE FC03 of registers 0-17 — device type, firmware,
-    hardware, baud, slave id, boot counter, health, and the chip UID — so a
-    64-module cabinet costs 64 transactions, hub crossings included.
+    The identity comes from ONE FC03 of registers 0-17 — device type,
+    firmware, hardware, baud, slave id, boot counter, health, and the chip
+    UID. Modules whose firmware has the Statistics-v2 block get a SECOND
+    FC03 (regs 400-451) into `stats`; older or silent modules keep None and
+    the report prints an n/a row.
     """
     device_id: int
     responded: bool = False
@@ -146,6 +168,7 @@ class ModuleRecord:
     health: int = 0
     uid: str = ""
     note: str = ""
+    stats: Optional[ModuleStats] = None
 
     @property
     def fw(self) -> str:
@@ -176,13 +199,35 @@ def read_module_record(ops: SurveyOps, device_id: int) -> ModuleRecord:
     return rec
 
 
+def read_module_stats(ops: SurveyOps, device_id: int) -> Optional[ModuleStats]:
+    """The Statistics-v2 block in one transaction; None on any failure."""
+    res = ops.read_regs(device_id, STATS2_BASE, STATS2_COUNT)
+    values = res.value if isinstance(res.value, (list, tuple)) else None
+    if not (res.ok and values and len(values) >= STATS2_COUNT):
+        return None
+    at = lambda addr: values[addr - STATS2_BASE]        # noqa: E731
+    return ModuleStats(
+        total_on_count=u32(at(400), at(401)),
+        total_on_time_s=u32(at(402), at(403)),
+        latch_fires=u32(at(404), at(405)),
+        button_presses=u32(at(406), at(407)),
+        op_seconds=u32(at(408), at(409)),
+        iwdg_resets=int(at(410)),
+        per_preset=tuple((u32(at(stats2_count_hi(n)), at(stats2_count_hi(n) + 1)),
+                          u32(at(stats2_time_hi(n)), at(stats2_time_hi(n) + 1)))
+                         for n in range(1, 9)))
+
+
 def run_report_survey(ops: SurveyOps, ids: Sequence[int], emit: Callable,
                       cancel: threading.Event) -> list:
     """The site report's sweep: one ModuleRecord per slot, in slot order.
 
     Reuses the survey event stream so the page shows the same progress a
     firmware survey does; SurveyRead is not emitted (the records carry more
-    than ModuleFirmware and go back as the return value instead).
+    than ModuleFirmware and go back as the return value instead). The stats
+    read is gated on the firmware version the FIRST read reported: an old
+    module never sees the 400-451 request, so it costs neither an exception
+    round-trip nor the hub-wake retries one would burn.
     """
     records: list = []
     total = len(ids)
@@ -192,7 +237,11 @@ def run_report_survey(ops: SurveyOps, ids: Sequence[int], emit: Callable,
             cancelled = True
             break
         emit(SurveyProgress(device_id, index, total))
-        records.append(read_module_record(ops, device_id))
+        rec = read_module_record(ops, device_id)
+        if rec.responded and rec.fw_raw >= FW_MIN_STATS:
+            ops.sleep(INTER_TXN_S)
+            rec.stats = read_module_stats(ops, device_id)
+        records.append(rec)
         ops.sleep(INTER_TXN_S)
     emit(ReportSurveyDone(records=records, cancelled=cancelled))
     return records

@@ -738,6 +738,27 @@ class ModbusWorker:
             return gateway_config.GwActionResult(False, (), str(res))
         return res
 
+    async def gw_read_log(self, port: str, n: int = 30):
+        """Newest `n` gateway event-log records (fw >= 1.11.0), formatted one
+        per line in `.steps`. Read-only: no HELLO, no DISCARD."""
+        def body(link):
+            res = link.log(n)
+            self._log_gw("LOG", res)
+            lines: list[str] = []
+            for row in res.rows:
+                aux, par = row.get("a", "0"), row.get("p", "0")
+                detail = f"  a={aux} p={par}" if (aux != "0" or par != "0") else ""
+                lines.append(f"#{row.get('i', '?')}  {row.get('t', '-')}"
+                             f"  up={row.get('up', '?')}s"
+                             f"  {row.get('ev', '?')}{detail}")
+            return gateway_config.GwActionResult(
+                res.ok, tuple(lines), res.error_text if not res.ok else "")
+
+        res = await self._run_job(_PRIO_MANUAL, lambda: self._do_gw_session(port, body))
+        if isinstance(res, Exception):
+            return gateway_config.GwActionResult(False, (), str(res))
+        return res
+
     async def gw_action(self, port: str, action: str):
         """action: discard | defaults | reboot"""
         def body(link):

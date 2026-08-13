@@ -547,6 +547,92 @@ TEXTS: dict[str, dict[str, str]] = {
                                            "in later is picked up on its own.",
                                      "th": "แค่ทำให้เปิดเครื่องช้าลง ถ้าเสียบทีหลังระบบก็จับได้เอง"},
     "gwf.net.mac": {"en": "Hardware address (MAC)", "th": "ที่อยู่ฮาร์ดแวร์ (MAC)"},
+    "gwf.net.ntp": {"en": "NTP time server (IP)", "th": "เซิร์ฟเวอร์เวลา NTP (IP)"},
+    "gwf.net.ntp.hint": {"en": "After a power cut the gateway asks this server for the "
+                               "time by itself, so the schedule recovers with no visit. "
+                               "0.0.0.0 = off (the tool still sets the clock on connect). "
+                               "An IP, not a name — and the NTP server card below can "
+                               "make THIS computer the server.",
+                         "th": "หลังไฟดับ gateway จะถามเวลาจากเซิร์ฟเวอร์นี้เอง "
+                               "ตารางรีเซ็ตจึงกลับมาทำงานโดยไม่ต้องมีคนไป 0.0.0.0 = ปิด "
+                               "(เครื่องมือยังตั้งเวลาให้ตอนเชื่อมต่อเหมือนเดิม) ใส่เป็น IP เท่านั้น — "
+                               "และการ์ด NTP server ด้านล่างทำให้คอมเครื่องนี้เป็นเซิร์ฟเวอร์ได้เลย"},
+    "gwf.net.ntp_port": {"en": "NTP port", "th": "พอร์ต NTP"},
+    "gwf.net.ntp_port.hint": {"en": "123 is standard. Change it only if the server "
+                                    "serves on another port (Windows' own w32time can "
+                                    "hold 123).",
+                              "th": "มาตรฐานคือ 123 เปลี่ยนเฉพาะเมื่อเซิร์ฟเวอร์เปิดพอร์ตอื่น "
+                                    "(w32time ของ Windows อาจยึด 123 อยู่)"},
+    "gwf.time.tz_min": {"en": "Timezone (minutes east of UTC)",
+                        "th": "โซนเวลา (นาที นับจาก UTC)"},
+    "gwf.time.tz_min.hint": {"en": "Thailand = 420. Only the NTP answer is shifted by "
+                                   "this — the clock itself keeps wall time, and Sync "
+                                   "from this tool sends wall time already.",
+                             "th": "ประเทศไทย = 420 ใช้แปลงเฉพาะคำตอบจาก NTP — "
+                                   "นาฬิกาเก็บเวลาท้องถิ่นอยู่แล้ว และปุ่ม Sync ของเครื่องมือ"
+                                   "ก็ส่งเวลาท้องถิ่นตรงๆ เหมือนเดิม"},
+    "sch.ntp": {"en": "NTP: {s}", "th": "NTP: {s}"},
+
+    "ntp.card": {"en": "NTP server (this computer)", "th": "NTP server (คอมเครื่องนี้)"},
+    "ntp.hint": {"en": "Serve time to gateways from this computer's clock. Meant for "
+                       "the site's server, where this tool is left running: the "
+                       "gateway's net.ntp points here and its clock survives every "
+                       "power cut without a visit. Standard NTP — any other client "
+                       "may use it too.",
+                 "th": "แจกเวลาให้ gateway จากนาฬิกาของคอมเครื่องนี้ ตั้งใจไว้สำหรับ"
+                       "เซิร์ฟเวอร์ของไซต์ที่เปิดเครื่องมือนี้ทิ้งไว้: ชี้ net.ntp ของ gateway "
+                       "มาที่นี่ แล้วนาฬิกาจะรอดทุกครั้งที่ไฟดับโดยไม่ต้องมีคนไป "
+                       "เป็น NTP มาตรฐาน อุปกรณ์อื่นใช้ด้วยได้"},
+    "ntp.enable": {"en": "Serve NTP", "th": "เปิด NTP server"},
+    "ntp.enable_tip": {"en": "Remembered — the server comes back on when the tool "
+                             "restarts.",
+                       "th": "จำค่าไว้ — เปิดเครื่องมือใหม่เซิร์ฟเวอร์ก็กลับมาเอง"},
+    "ntp.port": {"en": "Port", "th": "พอร์ต"},
+    "ntp.port_tip": {"en": "123 is the NTP standard. If Windows' w32time holds it, "
+                           "either stop that service or serve here on another port "
+                           "and set the gateway's net.ntp_port to match.",
+                     "th": "มาตรฐาน NTP คือ 123 ถ้า w32time ของ Windows ยึดอยู่ "
+                           "ให้หยุดเซอร์วิสนั้น หรือเปิดพอร์ตอื่นแล้วตั้ง net.ntp_port "
+                           "ฝั่ง gateway ให้ตรงกัน"},
+    "ntp.serving": {"en": "serving on {ip}:{port} · answered {n} queries",
+                    "th": "กำลังแจกเวลาที่ {ip}:{port} · ตอบไปแล้ว {n} ครั้ง"},
+    "ntp.off": {"en": "off", "th": "ปิดอยู่"},
+    "ntp.err": {"en": "could not open the port: {e}",
+                "th": "เปิดพอร์ตไม่ได้: {e}"},
+    "ntp.port_busy_hint": {"en": "port taken? stop Windows Time (w32time) or pick "
+                                 "another port",
+                           "th": "พอร์ตถูกใช้อยู่? หยุด Windows Time (w32time) "
+                                 "หรือเปลี่ยนพอร์ต"},
+    "ntp.no_ip": {"en": "could not determine this computer's address",
+                  "th": "หาที่อยู่ของคอมเครื่องนี้ไม่ได้"},
+    "ntp.use_pc": {"en": "Use this computer as the gateway's NTP",
+                   "th": "ใช้เครื่องนี้เป็น NTP ของ gateway"},
+    "ntp.use_pc_tip": {"en": "Fills net.ntp above with this computer's address — the "
+                             "change still goes through the normal Save review.",
+                       "th": "เติมที่อยู่ของคอมเครื่องนี้ลงช่อง net.ntp ด้านบน — "
+                             "ยังต้องกดบันทึกผ่านหน้าตรวจทานตามปกติ"},
+    "ntp.staged": {"en": "net.ntp = {ip} staged — review and Save",
+                   "th": "ใส่ net.ntp = {ip} แล้ว — ตรวจแล้วกดบันทึก"},
+    "ntp.no_key": {"en": "read the gateway first (needs firmware 1.11.0 or newer)",
+                   "th": "อ่านค่า gateway ก่อน (ต้องเป็นเฟิร์มแวร์ 1.11.0 ขึ้นไป)"},
+
+    "evl.card": {"en": "Gateway event log", "th": "บันทึกเหตุการณ์ของ gateway"},
+    "evl.hint": {"en": "What happened at the cabinet, kept on the gateway itself: "
+                       "every boot and its cause (power cut / watchdog / commanded), "
+                       "link drops, clock sets, config saves, scheduled resets, "
+                       "panel presses, TCP clients. Read-only; the newest 30 lines "
+                       "also ride into the site report. Needs gateway firmware "
+                       "1.11.0 or newer.",
+                 "th": "เกิดอะไรขึ้นที่ตู้ เก็บไว้ในตัว gateway เอง: ทุกการบูตพร้อมสาเหตุ "
+                       "(ไฟดับ / watchdog / สั่งรีเซ็ต), ลิงก์หลุด, ตั้งเวลา, บันทึกค่า, "
+                       "รีเซ็ตตามตาราง, กดปุ่มหน้าตู้, ไคลเอนต์ TCP อ่านอย่างเดียว "
+                       "30 บรรทัดล่าสุดแนบไปกับ site report ด้วย "
+                       "ต้องเป็นเฟิร์มแวร์ 1.11.0 ขึ้นไป"},
+    "evl.read": {"en": "Read latest events", "th": "อ่านเหตุการณ์ล่าสุด"},
+    "evl.read_tip": {"en": "Fetch the newest 30 records over the USB console.",
+                     "th": "ดึง 30 รายการล่าสุดผ่านสาย USB"},
+    "evl.failed": {"en": "could not read the log: {e}", "th": "อ่านบันทึกไม่ได้: {e}"},
+    "evl.empty": {"en": "(no events recorded yet)", "th": "(ยังไม่มีเหตุการณ์บันทึกไว้)"},
 
     "fws.card": {"en": "Cabinet firmware", "th": "เฟิร์มแวร์ทั้งตู้"},
     "fws.hint": {"en": "Reads every module's firmware version — nothing is written. "
@@ -940,14 +1026,15 @@ TEXTS: dict[str, dict[str, str]] = {
                        "th": "ข้าม {n} คีย์ที่เฟิร์มแวร์รุ่นนี้ไม่มี"},
     "rpt.card": {"en": "Site report (PDF)", "th": "รายงานประจำตู้ (PDF)"},
     "rpt.hint": {"en": "One document that says what is installed: the gateway's "
-                       "identity and settings, the cabinet's shape, and every "
-                       "module's chip UID, type and firmware — read from the "
-                       "modules themselves, one read each. Needs a Detect first "
-                       "and a connected bus. A copy is kept in data/exports.",
-                 "th": "เอกสารเดียวที่บอกว่าติดตั้งอะไรไว้: ข้อมูลและค่าตั้งของ gateway "
-                       "ทรงตู้ และ UID / รุ่น / เฟิร์มแวร์ของทุกโมดูล อ่านจากโมดูลจริง"
-                       "ตัวละหนึ่งครั้ง ต้องกดค้นหา gateway ก่อนและต่อบัสอยู่ "
-                       "สำเนาเก็บไว้ใน data/exports"},
+                       "identity, settings and recent events, the cabinet's shape, "
+                       "and every module's chip UID, type, firmware and lifetime "
+                       "statistics — read from the modules themselves, one or two "
+                       "reads each. Needs a Detect first and a connected bus. A "
+                       "copy is kept in data/exports.",
+                 "th": "เอกสารเดียวที่บอกว่าติดตั้งอะไรไว้: ข้อมูล ค่าตั้ง และเหตุการณ์ล่าสุด"
+                       "ของ gateway ทรงตู้ และ UID / รุ่น / เฟิร์มแวร์ / สถิติสะสมของ"
+                       "ทุกโมดูล อ่านจากโมดูลจริงตัวละหนึ่งถึงสองครั้ง "
+                       "ต้องกดค้นหา gateway ก่อนและต่อบัสอยู่ สำเนาเก็บไว้ใน data/exports"},
     "rpt.run": {"en": "Create PDF report", "th": "สร้างรายงาน PDF"},
     "rpt.need_connect": {"en": "Connect to the bus first — the module sweep "
                                "runs over Modbus.",

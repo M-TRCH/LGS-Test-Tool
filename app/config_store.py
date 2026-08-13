@@ -48,6 +48,13 @@ class AppConfig:
     # this is the tool's own note so the Gateway tab draws the panel as it
     # looks.
     lamp_colours: str = "none,green,amber,red"
+    # Built-in SNTP server (app/ntp_server.py): serve time to gateways from
+    # this PC. Off by default — a bench laptop should not answer NTP; the
+    # site's server, where the tool is left running, turns it on once.
+    # 123 is the standard port; w32time may hold it on Windows, in which
+    # case pick another and set the gateway's net.ntp_port to match.
+    ntp_enabled: bool = False
+    ntp_port: int = 123
 
 
 def data_dir() -> Path:

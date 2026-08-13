@@ -16,7 +16,7 @@ from ..fw_survey import ReportSurveyDone, SurveyProgress
 from ..i18n import t
 from ..lgs_map import BAUD_WHITELIST
 from ..version import APP_VERSION
-from . import Ctx, confirm, helps, tab_gateway_fw
+from . import Ctx, confirm, helps, ntp_card, tab_gateway_fw
 
 # Which settings each card shows, in display order.
 # sys.wdt_ms only exists on gateway >= 1.8.0; field_row skips what the
@@ -26,7 +26,7 @@ CARD_RS485 = ("rs485.baud", "rs485.predelay_us", "rs485.postdelay_us",
               "rs485.t1_ms", "rs485.t2_ms")
 CARD_USB = ("usb.gap_ms", "usb.max_ms")
 CARD_NET = ("net.enabled", "net.dhcp", "net.ip", "net.mask", "net.gw", "net.dns",
-            "net.port", "net.link_timeout_ms")
+            "net.port", "net.link_timeout_ms", "net.ntp", "net.ntp_port")
 # Only rendered when the firmware reports these keys (gateway >= 1.2.0).
 # bus.hub_map comes first and is drawn by hub_map_editor, not as a plain field.
 CARD_HUB = ("bus.hub_map", "bus.hub_settle_ms", "bus.hub_budget_ms",
@@ -170,8 +170,7 @@ def build(ctx: Ctx) -> None:
     with ui.card().classes("p-3 w-full q-mt-sm"):
         helps(ui.label(t("rpt.card")).classes("font-bold"), t("rpt.hint"))
         with ui.row().classes("items-center gap-3 flex-wrap"):
-            report_btn = ui.button(t("rpt.run"),
-                                   on_click=lambda: do_report()) \
+            report_btn = ui.button(t("rpt.run"), on_click=do_report) \
                 .props("outline dense no-caps")
             ui.button(t("btn.cancel"),
                       on_click=lambda: worker.cancel_fw_survey()).props("flat")
@@ -191,6 +190,45 @@ def build(ctx: Ctx) -> None:
     # the port check and the log pane with the settings machinery here.
     # get_log is late-bound because log_box is created just below.
     tab_gateway_fw.build(ctx, usable, lambda: log_box)
+
+    # ── NTP server (this PC as the site's time source) ─────────────────────
+    def set_ntp_field(ip: str) -> bool:
+        el = fields.get("net.ntp")
+        if el is None:
+            return False                # old firmware / not read yet
+        el.set_value(ip)                # flows through on_change -> stage()
+        return True
+
+    ntp_card.build(ctx,
+                   gateway_ip=lambda: (state["snapshot"].info.get("net.ip", "")
+                                       if state["snapshot"] else ""),
+                   set_ntp=set_ntp_field)
+
+    # ── event log (gateway fw >= 1.11.0) ───────────────────────────────────
+    # What happened at the cabinet, months later: boots and their cause,
+    # link drops, clock sets, scheduled resets. Read-only; the same 30
+    # newest lines also ride into the site report.
+    with ui.card().classes("p-3 w-full q-mt-sm"):
+        helps(ui.label(t("evl.card")).classes("font-bold"), t("evl.hint"))
+        with ui.row().classes("items-center gap-3 flex-wrap"):
+            async def do_read_log() -> None:
+                ok, msg = usable()
+                if not ok:
+                    ui.notify(msg, type="warning")
+                    return
+                res = await worker.gw_read_log(ctx.port(), 30)
+                evl_box.clear()
+                if not res.ok:
+                    ui.notify(t("evl.failed", e=res.note), type="warning")
+                    return
+                if not res.steps:
+                    evl_box.push(t("evl.empty"))
+                for line in res.steps:
+                    evl_box.push(line)
+
+            ui.button(t("evl.read"), on_click=do_read_log) \
+                .props("outline dense no-caps").tooltip(t("evl.read_tip"))
+        evl_box = ui.log(max_lines=35).classes("w-full h-40 font-mono text-xs")
 
     log_box = ui.log(max_lines=40).classes("w-full h-32 font-mono text-xs")
 
@@ -647,6 +685,18 @@ def build(ctx: Ctx) -> None:
             when = (datetime(1970, 1, 1) + timedelta(seconds=int(last)))
             ui.label(t("sch.last", when=when.strftime("%Y-%m-%d %H:%M")))                 .classes("text-xs text-grey")
 
+        # The timezone rides with the clock, not the schedule: NTP needs it
+        # even on a site that never schedules a reset, so it sits above the
+        # master switch and is never gated by it. fw >= 1.11.0 only.
+        if "time.tz_min" in snap.settings:
+            field_row("time.tz_min", snap)
+        ntp_state = snap.info.get("ntp.state")
+        if ntp_state is not None:
+            ui.label(t("sch.ntp", s=ntp_state)).classes(
+                "text-xs " + ("text-green" if ntp_state == "ok" else
+                              "text-grey" if ntp_state == "off" else
+                              "text-orange"))
+
         field_row("sched.reset_enabled", snap)
         master = fields["sched.reset_enabled"]
         # Everything below is the schedule's detail, and detail you cannot act
@@ -770,23 +820,33 @@ def build(ctx: Ctx) -> None:
         fname = f"gateway-config-{tag}-{datetime.now():%Y%m%d-%H%M}.json"
         ui.download(json.dumps(payload, indent=2).encode("utf-8"), fname)
 
-    def do_report() -> None:
+    async def do_report() -> None:
         """Sweep the cabinet's modules and render the PDF.
 
         Needs both faces of the tool at once: the console snapshot for the
         gateway half (Detect first) and a connected Modbus link for the
         module half — the sweep is the same read-only kind a firmware
-        survey does, one FC03 per module.
+        survey does, one or two FC03s per module.
         """
         snap = state["snapshot"]
         if snap is None or not snap.ok:
             ui.notify(t("gw.cfg_need_read"), type="warning")
             return
         layout = ctx.cabinet()
+        # Recent events for the report — read BEFORE the survey starts: a
+        # console session drops and restores the Modbus client, which the
+        # running survey depends on. Old firmware / TCP transport: no
+        # events section, everything else unchanged.
+        events: tuple = ()
+        if usable()[0]:
+            res = await worker.gw_read_log(ctx.port(), 30)
+            if res.ok:
+                events = tuple(res.steps)
         if not worker.start_report_survey(layout.ids):
             ui.notify(t("rpt.need_connect"), type="warning")
             return
-        report_state.update(snapshot=snap, layout=layout, waiting=True)
+        report_state.update(snapshot=snap, layout=layout, events=events,
+                            waiting=True)
         report_btn.set_enabled(False)
         report_progress.set_value(0.0)
         report_label.set_text(t("rpt.running", n=layout.count))
@@ -813,7 +873,8 @@ def build(ctx: Ctx) -> None:
             info=snap.info, settings=snap.settings,
             cabinet_label=layout.label, cabinet_count=layout.count,
             widths=lgs_map.layout_widths(layout), records=records,
-            hub_channel=lgs_map.hub_channel)
+            hub_channel=lgs_map.hub_channel,
+            events=report_state.get("events", ()))
         name = snap.settings.get("sys.name", "") or snap.info.get("id", "gw")
         fname = f"lgs-report-{name}-{datetime.now():%Y%m%d-%H%M}.pdf"
         # A copy stays in data/exports — a record someone can find later is
@@ -841,7 +902,7 @@ def build(ctx: Ctx) -> None:
                 finish_report(ev.records, ev.cancelled)
 
     report_state: dict = {"seq": 0, "waiting": False,
-                          "snapshot": None, "layout": None}
+                          "snapshot": None, "layout": None, "events": ()}
     ui.timer(0.3, drain_report)
 
     def do_import(e) -> None:
@@ -973,7 +1034,11 @@ def build(ctx: Ctx) -> None:
                     helps(ui.label(t("gw.card.net")).classes("font-bold"),
                           t("gw.net_hint"))
                     for key in CARD_NET:
-                        field_row(key, snap)
+                        # net.ntp/net.ntp_port arrived with fw 1.11.0; an
+                        # editable "—" on older firmware would stage a SET
+                        # the console must reject.
+                        if key in snap.settings:
+                            field_row(key, snap)
                 # Older gateway firmware has no hub keys; showing empty fields
                 # would only invite a SET the console must reject.
                 if "bus.hub_map" in snap.settings:

@@ -6,7 +6,7 @@ import os
 
 from nicegui import app, ui
 
-from . import config_store, i18n, lgs_map
+from . import config_store, i18n, lgs_map, ntp_server
 from .modbus_worker import ModbusWorker
 from .txn_log import TxnLog
 
@@ -109,6 +109,17 @@ def index() -> None:
     log_pane.build(ctx)
 
 
+async def _ntp_autostart() -> None:
+    # Inside uvicorn's event loop — the only loop the app has, and the one
+    # the datagram endpoint must live on. A failed bind (w32time holding
+    # 123, no firewall rule) sets server.error for the card to show; it
+    # must never cost the app its start.
+    if cfg.ntp_enabled:
+        await ntp_server.server.start(cfg.ntp_port)
+
+
+app.on_startup(_ntp_autostart)
+app.on_shutdown(ntp_server.server.stop)
 app.on_shutdown(lambda: (config_store.save(cfg), worker.shutdown()))
 
 

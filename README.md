@@ -121,6 +121,12 @@ Notes:
   "More info" → "Run anyway".
 - Windows Firewall prompt: localhost use works either way; click "Allow" only if
   other PCs on the LAN should reach the page.
+- **NTP server** (Gateway tab): serving time to gateways needs an *inbound UDP*
+  firewall rule for the chosen port (default 123) — the first-run prompt only
+  covered the web page's TCP listener. If Windows Time (w32time) already holds
+  port 123, either stop it (`net stop w32time`, and set its startup type to
+  Manual) or serve on another port and set the gateway's `net.ntp_port` to
+  match. Needs gateway firmware 1.11.0+.
 - Rebuild after any code change; the exe is a frozen snapshot.
 
 ## Run (Docker — TCP only)
@@ -129,6 +135,8 @@ Notes:
 docker build -t lgs-test-tool .
 docker run -d -p 8080:8080 -v lgs_data:/app/data --name lgs-test-tool lgs-test-tool
 ```
+
+Add `-p 123:123/udp` when the container should also serve NTP to gateways.
 
 Windows Docker cannot pass COM ports into containers, so containerized deployments use the
 TCP transport (the RTU controls stay visible but list no ports). On a Linux host you could

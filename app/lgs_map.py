@@ -283,6 +283,36 @@ def stats_count(n: int) -> int:
 def stats_time(n: int) -> int:
     return 201 + 10 * n
 
+# ── Statistics v2 (module fw >= v3.3.0): true u32 values at 400-451 ────────
+# The legacy group above clamps at 65535 (on-time tops out at ~18 hours);
+# this block carries the real lifetime counters, hi word first per pair.
+# One FC03 covers it. Older firmware answers exception 02 here — the
+# survey gates on fw_raw instead of provoking that.
+STATS2_BASE = 400
+STATS2_COUNT = 52                       # regs 400..451 in one read
+
+def stats2_count_hi(n: int) -> int:     # preset n = 1..8, +1 = lo word
+    return 420 + 4 * (n - 1)
+
+def stats2_time_hi(n: int) -> int:
+    return 422 + 4 * (n - 1)
+
+def u32(hi: int, lo: int) -> int:
+    return ((hi & 0xFFFF) << 16) | (lo & 0xFFFF)
+
+def fmt_dur(total_s: int) -> str:
+    """Seconds as "3d 4h 05m" — lifetime totals read in days, not seconds."""
+    d, rem = divmod(int(total_s), 86400)
+    h, rem = divmod(rem, 3600)
+    m, s = divmod(rem, 60)
+    if d:
+        return f"{d}d {h}h {m:02d}m"
+    if h:
+        return f"{h}h {m:02d}m"
+    if m:
+        return f"{m}m {s:02d}s"
+    return f"{s}s"
+
 # ── Decoders (raw int -> human string) ─────────────────────────────────────
 def dec_plain(raw: int, unit: str = "") -> str:
     return f"{raw}{(' ' + unit) if unit else ''}"
@@ -421,6 +451,22 @@ for _n in range(1, 9):
                                 dec_plain, writable=True, persisted=True))
     REGISTERS.append(RegDef(stats_count(_n), f"Preset {_n} On Count", "", dec_plain))
     REGISTERS.append(RegDef(stats_time(_n), f"Preset {_n} On Time", "s", dec_plain))
+
+# Statistics v2 (fw >= v3.3.0): the same counters without the u16 clamp,
+# plus the ones the legacy group never had.
+for _addr, _sname, _sunit in ((400, "S2 Total On Count", ""),
+                              (402, "S2 Total On Time", "s"),
+                              (404, "S2 Latch Fires", ""),
+                              (406, "S2 Button Presses", ""),
+                              (408, "S2 Operating Seconds", "s")):
+    REGISTERS.append(RegDef(_addr, f"{_sname} (hi)", _sunit, dec_plain))
+    REGISTERS.append(RegDef(_addr + 1, f"{_sname} (lo)", _sunit, dec_plain))
+REGISTERS.append(RegDef(410, "S2 IWDG Reset Count", "", dec_plain))
+for _n in range(1, 9):
+    REGISTERS.append(RegDef(stats2_count_hi(_n), f"S2 Preset {_n} On Count (hi)", "", dec_plain))
+    REGISTERS.append(RegDef(stats2_count_hi(_n) + 1, f"S2 Preset {_n} On Count (lo)", "", dec_plain))
+    REGISTERS.append(RegDef(stats2_time_hi(_n), f"S2 Preset {_n} On Time (hi)", "s", dec_plain))
+    REGISTERS.append(RegDef(stats2_time_hi(_n) + 1, f"S2 Preset {_n} On Time (lo)", "s", dec_plain))
 REGISTERS.sort(key=lambda r: r.addr)
 
 COILS: list[CoilDef] = [
@@ -492,6 +538,10 @@ assert coil_display(1) == 1011 and coil_display(8) == 1018
 assert coil_latch(1) == 1021 and coil_latch(8) == 1028
 assert coil_latch_display(1) == 1031 and coil_latch_display(8) == 1038
 assert stats_count(8) == 280 and stats_time(8) == 281
+assert stats2_count_hi(1) == 420 and stats2_count_hi(8) == 448
+assert stats2_time_hi(8) == 450 and STATS2_BASE + STATS2_COUNT - 1 == 451
+assert u32(0x0001, 0x0002) == 0x10002 and u32(0xFFFF, 0xFFFF) == 0xFFFFFFFF
+assert fmt_dur(0) == "0s" and fmt_dur(3661) == "1h 01m" and fmt_dur(90000) == "1d 1h 00m"
 assert GRID_IDS[0] == 11 and GRID_IDS[-1] == 108 and len(GRID_IDS) == 80
 assert all(valid_assignable_id(i) for i in GRID_IDS)
 for _layout in CABINET_LAYOUTS:                 # every variant fits inside the full grid
