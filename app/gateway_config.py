@@ -10,6 +10,11 @@ pymodbus is deliberately not involved.
 
 Reading stops at the terminal line, so a response never bleeds into the next
 command.
+
+Since gateway fw v1.12.0 the same console also rides Modbus TCP (unit 255 /
+FC 0x41 — see gateway_tcp.GatewayTcpLink). The verbs live in GwVerbsMixin so
+both links share one protocol implementation; the only thing a link owes the
+mixin is `command(line, *, timeout_s) -> GwResponse`.
 """
 from __future__ import annotations
 
@@ -82,70 +87,37 @@ class GwActionResult:
                                                     # should now offer to write
 
 
-class GatewayLink:
-    """One short-lived console session. Open it, use it, close it."""
+def parse_response_lines(lines) -> GwResponse:
+    """Console text lines -> GwResponse. Shared by every transport: the
+    serial link feeds it as lines arrive, the TCP tunnel after reassembling
+    the paged buffer. A missing terminal line means the answer was cut."""
+    raw: list[str] = []
+    rows: list[dict] = []
+    for text in lines:
+        text = text.strip()
+        if not text:
+            continue
+        raw.append(text)
+        if text.startswith("#DATA"):
+            rows.append(_parse_pairs(text[5:]))
+        elif text.startswith("#OK") or text.startswith("#ERR"):
+            ok = text.startswith("#OK")
+            body = text[3:] if ok else text[4:]
+            parts = body.split()
+            verb = parts[0] if parts and "=" not in parts[0] else ""
+            return GwResponse(ok=ok, verb=verb, data=_parse_pairs(body),
+                              rows=tuple(rows), lines=tuple(raw))
+    return GwResponse(ok=False, err="truncated", rows=tuple(rows), lines=tuple(raw))
 
-    def __init__(self, port: str, *, baud: int = GW_BAUD,
-                 timeout_s: float = DEFAULT_TIMEOUT_S) -> None:
-        if baud in FORBIDDEN_BAUDS:
-            raise GatewayError(f"baud {baud} would put the Opta into its bootloader")
-        self._port = port
-        self._baud = baud
-        self._timeout = timeout_s
-        self._ser: Optional[serial.Serial] = None
 
-    # ── lifecycle ──────────────────────────────────────────────────────────
-    def open(self) -> None:
-        self._ser = serial.Serial(self._port, self._baud, timeout=0.05)
-        self._ser.reset_input_buffer()
+class GwVerbsMixin:
+    """Every console verb and composite, transport-blind.
 
-    def close(self) -> None:
-        if self._ser is not None:
-            try:
-                self._ser.close()
-            finally:
-                self._ser = None
+    The one contract: `self.command(line, *, timeout_s=None) -> GwResponse`.
+    """
 
-    def __enter__(self) -> "GatewayLink":
-        self.open()
-        return self
-
-    def __exit__(self, *exc) -> None:
-        self.close()
-
-    # ── transport ──────────────────────────────────────────────────────────
     def command(self, line: str, *, timeout_s: Optional[float] = None) -> GwResponse:
-        if self._ser is None:
-            raise GatewayError("link is not open")
-        deadline = time.monotonic() + (timeout_s or self._timeout)
-
-        self._ser.reset_input_buffer()
-        self._ser.write(f"{GW_PREFIX} {line}\r\n".encode("ascii", "ignore"))
-        self._ser.flush()
-
-        raw: list[str] = []
-        rows: list[dict] = []
-        buf = b""
-        while time.monotonic() < deadline:
-            chunk = self._ser.read(256)
-            if chunk:
-                buf += chunk
-            while b"\n" in buf:
-                one, _, buf = buf.partition(b"\n")
-                text = one.decode("ascii", "replace").strip()
-                if not text:
-                    continue
-                raw.append(text)
-                if text.startswith("#DATA"):
-                    rows.append(_parse_pairs(text[5:]))
-                elif text.startswith("#OK") or text.startswith("#ERR"):
-                    ok = text.startswith("#OK")
-                    body = text[3:] if ok else text[4:]
-                    parts = body.split()
-                    verb = parts[0] if parts and "=" not in parts[0] else ""
-                    return GwResponse(ok=ok, verb=verb, data=_parse_pairs(body),
-                                      rows=tuple(rows), lines=tuple(raw))
-        return GwResponse(ok=False, err="timeout", rows=tuple(rows), lines=tuple(raw))
+        raise NotImplementedError
 
     # ── verbs ──────────────────────────────────────────────────────────────
     def ping(self) -> GwResponse:
@@ -264,6 +236,72 @@ class GatewayLink:
             return GwSnapshot(False, info=merged, note=values.error_text)
         settings, staged = self._split_values(values)
         return GwSnapshot(True, info=merged, settings=settings, staged=staged)
+
+
+class GatewayLink(GwVerbsMixin):
+    """One short-lived console session over USB serial. Open, use, close."""
+
+    def __init__(self, port: str, *, baud: int = GW_BAUD,
+                 timeout_s: float = DEFAULT_TIMEOUT_S) -> None:
+        if baud in FORBIDDEN_BAUDS:
+            raise GatewayError(f"baud {baud} would put the Opta into its bootloader")
+        self._port = port
+        self._baud = baud
+        self._timeout = timeout_s
+        self._ser: Optional[serial.Serial] = None
+
+    # ── lifecycle ──────────────────────────────────────────────────────────
+    def open(self) -> None:
+        self._ser = serial.Serial(self._port, self._baud, timeout=0.05)
+        self._ser.reset_input_buffer()
+
+    def close(self) -> None:
+        if self._ser is not None:
+            try:
+                self._ser.close()
+            finally:
+                self._ser = None
+
+    def __enter__(self) -> "GatewayLink":
+        self.open()
+        return self
+
+    def __exit__(self, *exc) -> None:
+        self.close()
+
+    # ── transport ──────────────────────────────────────────────────────────
+    def command(self, line: str, *, timeout_s: Optional[float] = None) -> GwResponse:
+        if self._ser is None:
+            raise GatewayError("link is not open")
+        deadline = time.monotonic() + (timeout_s or self._timeout)
+
+        self._ser.reset_input_buffer()
+        self._ser.write(f"{GW_PREFIX} {line}\r\n".encode("ascii", "ignore"))
+        self._ser.flush()
+
+        raw: list[str] = []
+        rows: list[dict] = []
+        buf = b""
+        while time.monotonic() < deadline:
+            chunk = self._ser.read(256)
+            if chunk:
+                buf += chunk
+            while b"\n" in buf:
+                one, _, buf = buf.partition(b"\n")
+                text = one.decode("ascii", "replace").strip()
+                if not text:
+                    continue
+                raw.append(text)
+                if text.startswith("#DATA"):
+                    rows.append(_parse_pairs(text[5:]))
+                elif text.startswith("#OK") or text.startswith("#ERR"):
+                    ok = text.startswith("#OK")
+                    body = text[3:] if ok else text[4:]
+                    parts = body.split()
+                    verb = parts[0] if parts and "=" not in parts[0] else ""
+                    return GwResponse(ok=ok, verb=verb, data=_parse_pairs(body),
+                                      rows=tuple(rows), lines=tuple(raw))
+        return GwResponse(ok=False, err="timeout", rows=tuple(rows), lines=tuple(raw))
 
 
 def probe(port: str, *, timeout_s: float = 0.8) -> Optional[dict]:

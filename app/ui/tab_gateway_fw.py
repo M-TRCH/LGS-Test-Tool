@@ -16,6 +16,7 @@ from typing import Callable
 from nicegui import ui
 
 from .. import firmware_bundle as fb
+from ..gw_net_update import GwNetUpdateConfig
 from ..i18n import t
 from ..opta_update import OptaConfig
 from ..ota import Done, Line, Progress
@@ -66,9 +67,20 @@ def build(ctx: Ctx, usable: Callable[[], tuple],
             ui.notify(t("gw.fw_need_image"), type="warning")
             return
 
+        # Over TCP the update travels the network (fw >= 1.12.0): staged on
+        # the gateway's QSPI, CRC-checked there, applied by its bootloader.
+        # Provisioning stays USB-only — dfu-util IS the provisioning tool.
+        net = ctx.transport() == "tcp"
+        if net and provision:
+            ui.notify(t("gw.prov_usb_only"), type="negative")
+            return
+
         if provision:
             title, ok_label = t("gw.prov_confirm_title"), t("gw.prov_run")
             body = t("gw.prov_confirm_body", port=ctx.port(), name=state["name"])
+        elif net:
+            title, ok_label = t("gw.fw_confirm_title"), t("gw.fw_run")
+            body = t("gw.fw_net_confirm_body", name=state["name"])
         else:
             title, ok_label = t("gw.fw_confirm_title"), t("gw.fw_run")
             body = t("gw.fw_confirm_body", name=state["name"], port=ctx.port())
@@ -79,10 +91,14 @@ def build(ctx: Ctx, usable: Callable[[], tuple],
         progress.set_value(0.0)
         badge.set_text(t("res.running"))
         badge.props("color=blue")
-        cfg = OptaConfig(image=state["image"], filename=state["name"],
-                         port=ctx.port())
-        started = (worker.start_opta_provision(cfg) if provision
-                   else worker.start_opta_update(cfg))
+        if net:
+            started = worker.start_gw_net_update(
+                GwNetUpdateConfig(image=state["image"], filename=state["name"]))
+        else:
+            cfg = OptaConfig(image=state["image"], filename=state["name"],
+                             port=ctx.port())
+            started = (worker.start_opta_provision(cfg) if provision
+                       else worker.start_opta_update(cfg))
         if not started:
             ui.notify(t("msg.worker_busy"), type="negative")
             badge.set_text("—")

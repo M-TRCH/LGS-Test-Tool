@@ -27,12 +27,13 @@ from pathlib import Path
 from typing import Callable, Optional, Sequence
 
 from . import (applog, commission, fieldcheck, fw_survey, gateway_config,
-               lgs_map, opta_flash, opta_update, ota, soak, stlink, testsuite)
+               gateway_tcp, gw_net_update, lgs_map, opta_flash, opta_update,
+               ota, soak, stlink, testsuite)
 from .lgs_map import (CoilClass, HUB_WAKE_GAP_S, HUB_WAKE_TRIES,
                       INTER_CH_S, INTER_TXN_S, LATCH_COOLDOWN_S,
                       hub_channel)
-from .transports import (RtuSettings, TransportSettings, make_client,
-                         make_scan_probe_client)
+from .transports import (RtuSettings, TcpSettings, TransportSettings,
+                         make_client, make_scan_probe_client)
 from .txn_log import TxnLog
 
 _PRIO_MANUAL = 0
@@ -257,6 +258,10 @@ class ModbusWorker:
             return
         with self._state_lock:
             if ok:
+                if isinstance(settings, TcpSettings):
+                    # Teach the client the gateway-self PDU (unit 255 /
+                    # FC 0x41) so console-over-TCP replies decode.
+                    gateway_tcp.register_pdu(client)
                 self._client, self._settings = client, settings
                 self._connected, self._last_error = True, ""
             else:
@@ -623,14 +628,37 @@ class ModbusWorker:
                              self._trace["tx"], "")
         return TxnResult(ok, None, latency, note)
 
-    # ── Gateway console (borrows the COM port, like the ID scan) ───────────
+    # ── Gateway console (COM: borrows the port · TCP: rides the client) ────
     def _do_gw_session(self, port: str, body, *, reconnect_delay_s: float = 0.0):
-        """Run `body(link)` with the Modbus client stood down.
+        """Run `body(link)` against whichever transport is active.
 
-        The gateway console needs the raw port, and a COM port serves one
+        Over TCP the console is in-band (unit 255 on the same socket), so the
+        connected Modbus client IS the link and nothing is disconnected — the
+        job queue already serializes it against ordinary Modbus traffic. The
+        exception is a reboot (`reconnect_delay_s`): the socket is going to
+        die, so drop it deliberately and come back when the gateway has.
+
+        Over USB the console needs the raw port, and a COM port serves one
         program at a time — so this follows _do_scan exactly: drop the Modbus
         client, do the work, restore the previous connection in `finally`.
         """
+        if isinstance(self._settings, TcpSettings) and self._connected:
+            self._gw_running = True
+            try:
+                try:
+                    return body(gateway_tcp.GatewayTcpLink(self._client))
+                except (OSError, gateway_config.GatewayError) as exc:
+                    self._log.append("gateway", 0, 0, 0, "session", False, None,
+                                     "", 0.0, f"{type(exc).__name__}: {exc}")
+                    return exc
+            finally:
+                if reconnect_delay_s:
+                    prev_settings = self._settings
+                    self._do_disconnect()
+                    time.sleep(reconnect_delay_s)
+                    self._do_connect(prev_settings)
+                self._gw_running = False
+
         was_connected = self._connected
         prev_settings = self._settings
         self._gw_running = True
@@ -796,8 +824,11 @@ class ModbusWorker:
                                                  "" if res.ok else res.error_text,
                                                  values)
 
-        # A reboot re-enumerates the CDC; give Windows time before reconnecting.
-        delay = 4.0 if action == "reboot" else 0.0
+        # A reboot re-enumerates the CDC; give Windows time before
+        # reconnecting. Over TCP the wait is the gateway's whole boot plus
+        # link negotiation (~4.8 s measured) plus margin.
+        tcp = isinstance(self._settings, TcpSettings)
+        delay = (10.0 if tcp else 4.0) if action == "reboot" else 0.0
         res = await self._run_job(
             _PRIO_MANUAL,
             lambda: self._do_gw_session(port, body, reconnect_delay_s=delay))
@@ -919,6 +950,41 @@ class ModbusWorker:
                 self._log.append("gateway", 0, 0, 0, "reconnect", True, None,
                                  "left disconnected after a firmware update",
                                  0.0, "")
+            self._commission_running = False
+
+    def start_gw_net_update(self, cfg: "gw_net_update.GwNetUpdateConfig") -> bool:
+        """Update the gateway's firmware over TCP — the no-cable path.
+
+        Same commission slot and event stream as the USB update. Needs the
+        TCP transport connected: the tunnel rides the Modbus client. Unlike
+        the USB path it reconnects at the end and reads the version back —
+        the whole point is that nobody is standing at the gateway.
+        """
+        if self._commission_running or self._sweep_running or self._scan_running \
+                or self._check_running or self._ota_running or self._gw_running \
+                or not cfg.image or not self._connected \
+                or not isinstance(self._settings, TcpSettings):
+            return False
+        self._commission_cancel.clear()
+        with self._commission_lock:
+            self._commission_events.clear()
+        self._commission_running = True
+        self._submit(_PRIO_LONG, lambda: self._do_gw_net_update(cfg))
+        return True
+
+    def _do_gw_net_update(self, cfg: "gw_net_update.GwNetUpdateConfig") -> None:
+        def emit(ev) -> None:
+            with self._commission_lock:
+                self._event_seq += 1
+                ev.seq = self._event_seq
+                self._commission_events.append(ev)
+
+        self._gw_running = True         # blocks gw sessions and USB updates
+        try:
+            gw_net_update.run_update(_GwNetOps(self), cfg, emit,
+                                     self._commission_cancel)
+        finally:
+            self._gw_running = False
             self._commission_running = False
 
     def start_batch_commission(self, cfg: "commission.BatchConfig") -> bool:
@@ -1351,6 +1417,35 @@ class _SurveyOps:
         while time.monotonic() < end:
             if self._w._check_cancel.is_set():
                 return              # the loop checks cancel; nothing to unwind
+            time.sleep(min(0.05, max(0.0, end - time.monotonic())))
+
+
+class _GwNetOps:
+    """gw_net_update.GwNetOps bound to the worker (runs on the worker thread)."""
+
+    def __init__(self, worker: ModbusWorker) -> None:
+        self._w = worker
+
+    def link(self):
+        return gateway_tcp.GatewayTcpLink(self._w._client)
+
+    def drop_client(self) -> None:
+        self._w._do_disconnect()
+
+    def reconnect(self) -> bool:
+        # Reuses the settings the job started under; _do_connect registers
+        # the 0x41 PDU again on the fresh client.
+        settings = self._w._settings
+        if settings is None:
+            return False
+        self._w._do_connect(settings)
+        return self._w._connected
+
+    def sleep(self, seconds: float) -> None:
+        end = time.monotonic() + seconds
+        while time.monotonic() < end:
+            if self._w._commission_cancel.is_set():
+                return
             time.sleep(min(0.05, max(0.0, end - time.monotonic())))
 
 

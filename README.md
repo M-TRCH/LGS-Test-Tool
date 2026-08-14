@@ -49,10 +49,16 @@ one Modbus client, one COM port / one TCP socket (the gateway accepts a single c
 1. **USB-RS485 dongle** → COM port, RTU 9600 8N1 (fixed framing, baud per module config).
 2. **Arduino Opta as USB-RS485 bridge**: plug the Opta's USB-C, blue USER LED on = bridge
    active. The COM port is auto-detected and labeled. PC-side baud is ignored (USB CDC);
-   the RS485 side always runs at 9600. The **Gateway tab is USB-only** — it talks the
-   `$LGS` text console on this same port.
-3. **Opta as Modbus TCP gateway** (`net.enabled=1` + LAN cable): **one client at a time** —
-   a second connection is silently closed, which looks exactly like a dead gateway.
+   the RS485 side always runs at 9600. The Gateway tab talks the `$LGS` text console on
+   this same port.
+3. **Opta as Modbus TCP gateway** (`net.enabled=1` + LAN cable): two clients since gateway
+   fw v1.11.0 (a third is refused). Since gateway fw **v1.12.0 the Gateway tab works over
+   TCP too** — the console tunnels through the same connection as Modbus (unit 255 /
+   FC 0x41), so a site's server can read the config, change it, pull the event log, run
+   the site report *with* its events section, and **update the gateway's firmware over
+   the network**: the image is staged on the Opta's QSPI, CRC-verified there, and only
+   then applied by its bootloader — a power cut or dropped link mid-upload changes
+   nothing. Preparing a factory-fresh Opta (QSPI partitioning) still needs USB/DFU.
 
 If the cabinet's RS485 runs through a **channel-switching hub**, the hub needs about two
 seconds of silence to change channel. The gateway repairs that itself, but it shapes what

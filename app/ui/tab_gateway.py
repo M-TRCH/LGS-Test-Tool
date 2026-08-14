@@ -181,9 +181,16 @@ def build(ctx: Ctx) -> None:
             report_label = ui.label("").classes("text-sm text-grey")
 
     def usable() -> tuple:
-        """(ok, message) — the console is USB-only and needs a port."""
-        if ctx.transport() != "rtu":
-            return False, t("gw.usb_only")
+        """(ok, message) — what the console needs from the current transport.
+
+        USB: a COM port picked in the header. TCP: a live connection — the
+        console tunnels through the connected Modbus client (fw >= 1.12.0),
+        so there is nothing to talk to until Connect has been pressed.
+        """
+        if ctx.transport() == "tcp":
+            if not worker.get_state().connected:
+                return False, t("gw.tcp_not_connected")
+            return True, ""
         if not ctx.port():
             return False, t("gw.no_port")
         return True, ""

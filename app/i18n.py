@@ -510,6 +510,10 @@ TEXTS: dict[str, dict[str, str]] = {
                           "header to RTU (COM) and pick the Opta's port.",
                     "th": "ตั้งค่า gateway ได้เฉพาะทาง USB — สลับแถบบนเป็น RTU (COM) "
                           "แล้วเลือกพอร์ตของ Opta"},
+    "gw.tcp_not_connected": {"en": "Connect over TCP first — the console rides the "
+                                   "same connection (gateway fw >= 1.12.0).",
+                             "th": "กด Connect ผ่าน TCP ก่อน — console วิ่งบนการเชื่อมต่อ"
+                                   "เดียวกัน (gateway fw >= 1.12.0)"},
     "gw.detect": {"en": "Detect", "th": "ค้นหา"},
     "gw.reload": {"en": "Reload", "th": "อ่านใหม่"},
     "gw.detected": {"en": "gateway fw {fw} · up {up} s", "th": "พบ gateway fw {fw} · เปิดมา {up} วิ"},
@@ -1205,6 +1209,19 @@ TEXTS: dict[str, dict[str, str]] = {
               "no bridge until it restarts. Do not unplug it while this runs.",
         "th": "จะเขียน {name} ลง gateway ที่ {port} · บัสจะไม่มีสะพานจนกว่ามัน"
               "จะเริ่มใหม่ · ห้ามถอดสายระหว่างทำงาน"},
+    "gw.fw_net_confirm_body": {
+        "en": "{name} will be sent to the gateway over the network, verified "
+              "on its flash, and applied by its bootloader. The gateway will "
+              "reboot; this connection will drop and be restored "
+              "automatically. A power cut or lost link mid-upload changes "
+              "nothing — the image is only applied after it verifies.",
+        "th": "จะส่ง {name} ไปที่ gateway ผ่านเครือข่าย ตรวจสอบบนแฟลชของมัน "
+              "แล้วให้ bootloader ติดตั้ง · gateway จะรีบูต การเชื่อมต่อจะหลุด"
+              "แล้วต่อกลับอัตโนมัติ · ไฟดับหรือเน็ตหลุดกลางทางไม่มีผล — "
+              "จะติดตั้งก็ต่อเมื่อตรวจสอบผ่านแล้วเท่านั้น"},
+    "gw.prov_usb_only": {
+        "en": "Preparing a new Opta needs the USB cable (DFU) — switch to RTU.",
+        "th": "การเตรียม Opta ใหม่ต้องใช้สาย USB (DFU) — สลับไปโหมด RTU"},
     "gw.prov_run": {"en": "Prepare a new Opta", "th": "เตรียม Opta ใหม่"},
     "gw.prov_hint": {
         "en": "A factory-fresh Opta has no partitions on its QSPI flash, so "
