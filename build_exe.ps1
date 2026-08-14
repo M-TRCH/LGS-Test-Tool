@@ -59,6 +59,9 @@ if (-not (Test-Path "app\docs\LGS-Control-Table.md")) {
 # cabinet. app\firmware_bundle.py holds the same hashes and re-checks at load.
 $blobs = @{
     "qspiformat_opta.bin"            = "62003812"
+    "gateway_opta_v1.12.0.bin"       = "1db6cc4d"
+    "module_g070_v3.3.0_factory.bin" = "7510b4f8"
+    "module_g070_v3.3.0_ota.bin"     = "77993210"
     "gateway_opta_v1.10.0.bin"       = "4d93cd92"
     "module_g070_v3.2.0_factory.bin" = "7972a50a"
     "module_g070_v3.2.0_ota.bin"     = "d0a27512"
