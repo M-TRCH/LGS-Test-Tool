@@ -28,7 +28,14 @@ from fpdf.enums import TableCellFillMode
 from fpdf.fonts import FontFace
 
 from .i18n import TEXTS
-from .lgs_map import HEALTH_BITS, SENSOR_FAULT, dec_baud, dec_hw, fmt_dur
+from .lgs_map import HEALTH_BITS, SENSOR_FAULT, dec_baud, fmt_dur
+
+
+def _hw_name(raw: int) -> str:
+    """510 -> "R5.1". The board revision is what a reader recognises; the
+    raw register value belongs in the CSV export, not in a column someone
+    has to translate in their head."""
+    return f"R{raw // 100}.{(raw // 10) % 10}" if raw > 0 else "—"
 
 # ── palette ────────────────────────────────────────────────────────────────
 ACCENT = (38, 84, 124)          # deep blue: section marks + table headers
@@ -118,6 +125,32 @@ def _legend(pdf: _Report, text: str) -> None:
     pdf.set_text_color(0)
 
 
+def _ensure_room(pdf: _Report, needed_mm: float) -> None:
+    """Start the next page rather than cut a block in two — but only when
+    the block would actually fit on a fresh one, or the break buys nothing
+    and costs half a page.
+
+    It matters for the settings: a group that straddles the break leaves
+    its second half under no heading at all, and "Cabinet size / Drive the
+    status lamps" at the top of a page belongs to nothing the reader can see.
+    """
+    limit = pdf.h - pdf.b_margin
+    if needed_mm <= limit - pdf.t_margin and pdf.get_y() + needed_mm > limit:
+        pdf.add_page()
+
+
+def _headings(table, titles: Sequence[str]) -> None:
+    """Column titles, always centred over their column.
+
+    A heading inherits its column's alignment unless told otherwise, so a
+    left-aligned column of long text ("UID", "Note") dragged its title out
+    to the edge while the narrow numeric ones sat centred — the row read as
+    if it had been typeset twice."""
+    row = table.row()
+    for title in titles:
+        row.cell(title, align="CENTER")
+
+
 # ── gateway settings: friendly names, grouped ──────────────────────────────
 _SETTING_GROUPS = (("sys", "System"), ("time", "Clock"),
                    ("rs485", "RS485 bus"), ("usb", "USB bridge"),
@@ -125,8 +158,9 @@ _SETTING_GROUPS = (("sys", "System"), ("time", "Clock"),
                    ("panel", "Front panel"), ("sched", "Scheduled reset"))
 _BOOL_KEYS = {"net.enabled", "net.dhcp", "panel.enabled", "panel.lamps",
               "sched.reset_enabled"}
-_HHMM_KEYS = {"sched.reset_hhmm", "sched.reset_hhmm2", "sched.reset_hhmm3",
-              "sched.reset_hhmm4"}
+# hh:mm keys -> which bit of `sched.reset_slots` arms them
+_HHMM_KEYS = {"sched.reset_hhmm": 0, "sched.reset_hhmm2": 1,
+              "sched.reset_hhmm3": 2, "sched.reset_hhmm4": 3}
 
 # Keys the tool draws with a custom widget rather than a labelled field, so
 # i18n has no `gwf.` entry for them. Named here so the report never falls
@@ -163,6 +197,58 @@ def _setting_label(key: str) -> str:
     return label.replace("→", "->")
 
 
+def _is_off(settings: dict, key: str, default: str = "1") -> bool:
+    return str(settings.get(key, default)).strip() != "1"
+
+
+def _no_hub(settings: dict) -> bool:
+    text = str(settings.get("bus.hub_map", "") or "").strip()
+    return bool(text) and set(text.replace(",", "")) <= {"0"}
+
+
+def _inert_note(key: str, settings: dict) -> str:
+    """Why this setting is not currently doing anything. "" = it is live.
+
+    A stored value is not the same as a value in force, and the report was
+    printing the two identically: `sched.reset_hhmm2` reads 09:00 whether
+    or not slot 2 is armed, so a disarmed time looked exactly like a
+    cabinet that power-cycles itself every morning. Every switch that
+    parks another setting is listed here, strongest first.
+    """
+    def num(k: str, default: int = 0) -> int:
+        try:
+            return int(str(settings.get(k, default)).strip())
+        except (TypeError, ValueError):
+            return default
+
+    if key.startswith("sched.") and key != "sched.reset_enabled":
+        if _is_off(settings, "sched.reset_enabled"):
+            return "scheduler off"
+        if key in _HHMM_KEYS:
+            slot = _HHMM_KEYS[key]
+            if not num("sched.reset_slots", 1) & (1 << slot):
+                return "not armed"
+    if key.startswith("panel.btn") and _is_off(settings, "panel.enabled"):
+        return "buttons off"
+    if (key.startswith("panel.out") and _is_off(settings, "panel.lamps")
+            and num(key) not in (0, 8)):        # 8 = shelf power, not a lamp
+        return "lamps off"
+    if key == "panel.cabinet" and str(settings.get("panel.shape", "0")).strip() \
+            not in ("", "0"):
+        return "the sweep shape wins"
+    if key.startswith("net.") and key != "net.enabled" \
+            and _is_off(settings, "net.enabled"):
+        return "LAN off"
+    if key in {"net.ip", "net.mask", "net.gw", "net.dns"} and num("net.dhcp") == 1:
+        return "DHCP is on"
+    if key == "net.ntp_port" and str(settings.get("net.ntp", "")).strip() \
+            in ("", "0.0.0.0"):
+        return "no NTP server set"
+    if key.startswith("bus.hub_") and key != "bus.hub_map" and _no_hub(settings):
+        return "no hub"
+    return ""
+
+
 def _setting_value(key: str, value: str) -> str:
     if key in _BOOL_KEYS:
         return "on" if value == "1" else "off"
@@ -187,39 +273,76 @@ def _setting_value(key: str, value: str) -> str:
     return value or "—"
 
 
+def _settings_column(settings: dict) -> list:
+    """Every group as a flat list of slots: ("group", name) / ("kv", k, v)."""
+    slots = []
+    for prefix, group_name in _SETTING_GROUPS:
+        # Sorted by the LABEL, not the console key: the reader is scanning
+        # names, and "Reset time 1..4" belong together however their keys
+        # happen to spell themselves.
+        items = sorted(((k, v) for k, v in settings.items()
+                        if k.split(".", 1)[0] == prefix),
+                       key=lambda kv: _setting_label(kv[0]).lower())
+        if not items:
+            continue
+        slots.append(("group", group_name))
+        slots.extend(("kv", k, v) for k, v in items)
+    return slots
+
+
+def _split_by_group(slots: list) -> tuple:
+    """Two columns, cut on a group boundary near the halfway mark.
+
+    The page has room for two pairs of columns and this table wants them —
+    but splitting ONE topic down the middle is what made it hard to read:
+    "Red button does" ended up bottom left and "Yellow button does" bottom
+    right, and the eye had to zigzag through a group to collect it. Each
+    side now carries WHOLE topics, so a group is read straight down.
+    """
+    starts = [i for i, s in enumerate(slots) if s[0] == "group"] + [len(slots)]
+    half = len(slots) / 2
+    cut = min(starts[1:], key=lambda i: abs(i - half))
+    return slots[:cut], slots[cut:]
+
+
+_SETTINGS_ROW_MM = 5.0          # line_height + padding, near enough to plan with
+
+
+def _settings_height(settings: dict) -> float:
+    left, right = _split_by_group(_settings_column(settings))
+    return max(len(left), len(right)) * _SETTINGS_ROW_MM + 12
+
+
 def _settings_table(pdf: _Report, settings: dict) -> None:
     pdf.font(6.8)
     group_style = FontFace(emphasis="BOLD", color=ACCENT,
                            fill_color=GROUP_FILL)
+    inert_style = FontFace(color=MUTED)
+    left, right = _split_by_group(_settings_column(settings))
+
+    def put(row, slot) -> None:
+        if slot is None:
+            row.cell("")
+            row.cell("")
+        elif slot[0] == "group":
+            row.cell(slot[1], colspan=2, style=group_style)
+        else:
+            key, value = slot[1], str(slot[2])
+            note = _inert_note(key, settings)
+            row.cell(_setting_label(key))
+            # Greyed AND spelled out: the report gets printed in black and
+            # white as often as not, and colour alone would carry nothing.
+            row.cell(_setting_value(key, value) + (f"  ({note})" if note else ""),
+                     style=inert_style if note else None)
+
     # Values run wide once they read as words ("light + number + latch"),
     # so the value columns get more room than a raw number would need.
     with pdf.table(col_widths=(52, 41, 52, 41), first_row_as_headings=False,
                    **_table_kw(line_height=4.2)) as table:
-        for prefix, group_name in _SETTING_GROUPS:
-            # Sorted by the LABEL, not the console key: the reader is
-            # scanning names, and "Reset time 1..4" belong together however
-            # their keys happen to spell themselves.
-            items = sorted(((k, v) for k, v in settings.items()
-                            if k.split(".", 1)[0] == prefix),
-                           key=lambda kv: _setting_label(kv[0]).lower())
-            if not items:
-                continue
-            head = table.row()
-            head.cell(group_name, colspan=4, style=group_style)
-            half = (len(items) + 1) // 2
-            left, right = items[:half], items[half:]
-            for i in range(half):
-                row = table.row()
-                k1, v1 = left[i]
-                row.cell(_setting_label(k1))
-                row.cell(_setting_value(k1, str(v1)))
-                if i < len(right):
-                    k2, v2 = right[i]
-                    row.cell(_setting_label(k2))
-                    row.cell(_setting_value(k2, str(v2)))
-                else:
-                    row.cell("")
-                    row.cell("")
+        for i in range(max(len(left), len(right))):
+            row = table.row()
+            put(row, left[i] if i < len(left) else None)
+            put(row, right[i] if i < len(right) else None)
 
 
 # ── recent events: parse the console lines into a real table ───────────────
@@ -262,9 +385,7 @@ def _events_table(pdf: _Report, events: Sequence[str]) -> None:
     with pdf.table(col_widths=(12, 34, 18, 30, 92),
                    text_align=("CENTER", "LEFT", "RIGHT", "LEFT", "LEFT"),
                    **_table_kw()) as table:
-        head = table.row()
-        for title in ("#", "Time", "Uptime", "Event", "Detail"):
-            head.cell(title)
+        _headings(table, ("#", "Time", "Uptime", "Event", "Detail"))
         for line in events:
             m = _EV_LINE.match(str(line).strip())
             row = table.row()
@@ -338,14 +459,12 @@ def build_report_pdf(*, app_version: str, generated: datetime,
     _section(pdf, f"Modules ({answered}/{len(records)} answered)")
     pdf.font(7.5)
     fail_style = FontFace(color=FAIL_RED)
-    with pdf.table(col_widths=(10, 8, 47, 26, 15, 20, 12, 13, 35),
+    with pdf.table(col_widths=(10, 8, 47, 26, 15, 14, 12, 13, 41),
                    text_align=("CENTER", "CENTER", "LEFT", "LEFT", "CENTER",
-                               "LEFT", "CENTER", "CENTER", "LEFT"),
+                               "CENTER", "CENTER", "CENTER", "LEFT"),
                    **_table_kw()) as table:
-        head = table.row()
-        for title in ("ID", "CH", "UID", "Type", "FW", "HW",
-                      "Boots", "Health", "Note"):
-            head.cell(title)
+        _headings(table, ("ID", "CH", "UID", "Type", "FW", "HW",
+                          "Boots", "Health", "Note"))
         for r in records:
             row = table.row()
             row.cell(str(r.device_id))
@@ -355,7 +474,7 @@ def build_report_pdf(*, app_version: str, generated: datetime,
                 row.cell(r.uid)
                 row.cell(r.type_name)
                 row.cell(r.fw)
-                row.cell(dec_hw(r.hw_raw))
+                row.cell(_hw_name(r.hw_raw))
                 row.cell(str(r.boots))
                 row.cell(f"0x{r.health:02X}")
                 mismatch = (r.reported_id != r.device_id)
@@ -378,11 +497,9 @@ def build_report_pdf(*, app_version: str, generated: datetime,
         with pdf.table(col_widths=(10, 24, 12, 12, 18, 18, 18, 28, 24, 22),
                        text_align=("CENTER",) * 10,
                        **_table_kw()) as table:
-            head = table.row()
-            for title in ("ID", "Op time", "Boots", "IWDG", "Presses",
-                          "Latch fires", "LED on", "LED time",
-                          "Room °C", "Supply mA"):
-                head.cell(title)
+            _headings(table, ("ID", "Op time", "Boots", "IWDG", "Presses",
+                              "Latch fires", "LED on", "LED time",
+                              "Room °C", "Supply mA"))
             for r in records:
                 row = table.row()
                 row.cell(str(r.device_id))
@@ -414,6 +531,7 @@ def build_report_pdf(*, app_version: str, generated: datetime,
                      "Supply mA are live readings at survey time")
 
     # ── the full settings dump, for the record ────────────────────────────
+    _ensure_room(pdf, _settings_height(settings))
     _section(pdf, "Gateway settings")
     _settings_table(pdf, settings)
     _legend(pdf, "raw console keys and values travel in the config export "
@@ -421,6 +539,7 @@ def build_report_pdf(*, app_version: str, generated: datetime,
 
     # ── recent gateway events — what happened here lately ─────────────────
     if events:
+        _ensure_room(pdf, len(events) * _SETTINGS_ROW_MM + 20)
         _section(pdf, f"Recent gateway events (newest first, {len(events)})")
         _events_table(pdf, events)
         _legend(pdf, "Time — means the clock was not yet set when the event "
