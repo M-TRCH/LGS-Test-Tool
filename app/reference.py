@@ -4,9 +4,10 @@ Commissioning happens on site, often with no network, so the register and coil
 reference has to travel inside the exe rather than sit behind a GitHub link.
 
 The file under app/docs is a **copy**. Its source of truth is
-LGS-Standard-Module/doc/LGS-Control-Table.md (taken 2026-08-06, complete
-v3.2.0 rows: UID 12-17, button 18/19, input current 22); refresh it with
-tools/sync_reference.py when the module firmware changes what a register means.
+LGS-Standard-Module/doc/LGS-Control-Table.md (taken 2026-08-14 at module
+commit b297ec9: adds the Statistics v2 block, regs 400-451 + coil 510);
+refresh it with tools/sync_reference.py when the module firmware changes
+what a register means.
 """
 from __future__ import annotations
 
