@@ -2,13 +2,19 @@
 
 Run with:  .venv\\Scripts\\python -m app.main   then open http://localhost:8080
 """
+import asyncio
 import os
 
 from nicegui import app, ui
 
-from . import config_store, i18n, lgs_map, ntp_server
+from . import applog, config_store, i18n, keep_awake, lgs_map, ntp_server
 from .modbus_worker import ModbusWorker
 from .txn_log import TxnLog
+
+# Before anything else can print: this launch's black box. A frozen exe left
+# running overnight has no console anyone will ever read, and the night the
+# first soak died the only evidence of it was a gateway log line.
+applog.begin()
 
 # The Gateway tab imports the PDF report lazily so a bare interpreter without
 # fpdf2 loses only the report button — but PyInstaller follows STATIC imports,
@@ -112,18 +118,59 @@ def index() -> None:
     log_pane.build(ctx)
 
 
-async def _ntp_autostart() -> None:
+_wake_guard: asyncio.Task | None = None
+
+
+async def _hold_awake() -> None:
+    """Keep Windows out of sleep while an unattended job is running.
+
+    Runs forever on the loop's thread, which is the point: the sleep block
+    is per-thread and dies with the thread that took it, so it cannot be
+    taken by the worker running the soak (see keep_awake). Polling beats
+    acquire/release calls scattered through the UI — whatever the reason a
+    job ended, crash included, the block follows within a few seconds.
+    """
+    # Starts matching the idle state, so a quiet app logs nothing; a REFUSED
+    # block is the line worth having, and it only shows up by comparing what
+    # was asked for against what was granted.
+    was_want, was_held = False, False
+    while True:
+        want = worker.soak_running() or ntp_server.server.running
+        held = keep_awake.apply(want)
+        if (want, held) != (was_want, was_held):
+            was_want, was_held = want, held
+            if want and not held:
+                applog.note("sleep block REFUSED — "
+                            + (keep_awake.note() or "not supported here"))
+            else:
+                applog.note(f"sleep block {'held' if held else 'released'}")
+        await asyncio.sleep(5)
+
+
+async def _on_startup() -> None:
     # Inside uvicorn's event loop — the only loop the app has, and the one
     # the datagram endpoint must live on. A failed bind (w32time holding
     # 123, no firewall rule) sets server.error for the card to show; it
     # must never cost the app its start.
+    global _wake_guard
+    asyncio.get_running_loop().set_exception_handler(applog.asyncio_handler)
+    _wake_guard = asyncio.create_task(_hold_awake())
     if cfg.ntp_enabled:
         await ntp_server.server.start(cfg.ntp_port)
 
 
-app.on_startup(_ntp_autostart)
+def _on_shutdown() -> None:
+    if _wake_guard is not None:
+        _wake_guard.cancel()
+    keep_awake.apply(False)
+    config_store.save(cfg)
+    worker.shutdown()
+    applog.note("shutdown complete")
+
+
+app.on_startup(_on_startup)
 app.on_shutdown(ntp_server.server.stop)
-app.on_shutdown(lambda: (config_store.save(cfg), worker.shutdown()))
+app.on_shutdown(_on_shutdown)
 
 
 def run() -> None:

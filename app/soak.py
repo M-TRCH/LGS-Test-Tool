@@ -20,6 +20,12 @@ does, which is the condition the fault needed.
 
 Anomalies stream to the UI as they happen AND to a CSV, because the whole
 point of an overnight run is that nobody is watching it.
+
+The CSV also carries `start`, `heartbeat` (one per pass) and `stop` rows on
+device 0. They are not anomalies; they are the answer to "when did this
+stop, and was it finished?". The first overnight run ended at 00:17 when
+Windows put the machine to sleep, and a file of nothing but anomalies could
+not tell that from a cabinet that had simply behaved itself until morning.
 """
 from __future__ import annotations
 
@@ -103,6 +109,17 @@ class SoakReport:
     tick: SoakTick = field(default_factory=SoakTick)
 
 
+def _totals(tick: SoakTick) -> str:
+    """Running totals as key=value pairs. No commas — the CSV has four
+    columns and a detail field that quietly grew a fifth would be worse
+    than useless when someone opens it a month later."""
+    return (f"pass={tick.passes} reads={tick.txns} fails={tick.fails} "
+            f"reboots={tick.reboots} wdt={tick.watchdogs} "
+            f"worst_ms={tick.worst_ms:.0f} cross={tick.crossings} "
+            f"worst_cross_ms={tick.worst_crossing_ms:.0f} "
+            f"elapsed_s={tick.elapsed_s:.0f}")
+
+
 def _counters(ops: SoakOps, device_id: int, want_iwdg: bool):
     """(boots, iwdg) — iwdg is None on firmware without the v2 stats block."""
     res = ops.read_regs(device_id, REG_IDENTITY, 12)
@@ -121,7 +138,8 @@ def _counters(ops: SoakOps, device_id: int, want_iwdg: bool):
 
 def run_soak(ops: SoakOps, cfg: SoakConfig, emit: Callable,
              cancel: threading.Event, log_line: Optional[Callable] = None) -> SoakReport:
-    """Poll until cancelled. `log_line(str)` appends one CSV row per anomaly."""
+    """Poll until cancelled. `log_line(str)` appends CSV rows: one per
+    anomaly, plus start / heartbeat / stop rows on device 0."""
     report = SoakReport(started=datetime.now())
     ids = list(cfg.ids)
     t0 = time.monotonic()
@@ -134,12 +152,58 @@ def run_soak(ops: SoakOps, cfg: SoakConfig, emit: Callable,
         if log_line:
             log_line(f"{item.when:%Y-%m-%d %H:%M:%S},{device_id},{kind},{detail}")
 
+    def csv(kind: str, detail: str) -> None:
+        """A row for the file only — the anomaly list on screen stays a list
+        of things that went wrong."""
+        if log_line:
+            log_line(f"{datetime.now():%Y-%m-%d %H:%M:%S},0,{kind},{detail}")
+
+    csv("start", f"ids={len(ids)} gap_s={cfg.pass_gap_s} "
+                 f"counter_every={cfg.counter_every} slow_ms={cfg.slow_ms} "
+                 f"crossing_slow_ms={cfg.crossing_slow_ms}")
+    reason = "unknown"
+    polled = False
+    try:
+        polled = _poll(ops, cfg, emit, cancel, report, note, csv, t0)
+        reason = "cancelled" if polled else "cancelled_before_baseline"
+    except BaseException as exc:                                # noqa: BLE001
+        reason = f"error:{type(exc).__name__}"
+        raise
+    finally:
+        # Whatever happened — cancelled, crashed, or the machine pulled the
+        # rug — the file ends with a line saying so and what had been seen
+        # up to that point.
+        tick.elapsed_s = time.monotonic() - t0
+        csv("stop", f"reason={reason} " + _totals(tick))
+
+    if not polled:                  # _poll has already said why it gave up
+        return report
+
+    hours = tick.elapsed_s / 3600.0
+    emit(SoakDone(cancelled=True,
+                  summary=(f"{hours:.1f} h · {tick.passes} passes · "
+                           f"{tick.txns} reads · {tick.fails} failed · "
+                           f"{tick.reboots} reboots · {tick.watchdogs} watchdog · "
+                           f"{tick.crossings} hub crossings "
+                           f"(worst {tick.worst_crossing_ms:.0f} ms)")))
+    return report
+
+
+def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event,
+          report: SoakReport, note: Callable, csv: Callable, t0: float) -> bool:
+    """The run itself. Split out so run_soak's start/stop bookkeeping wraps
+    every exit from it, including the early return on a cancelled baseline.
+
+    False = it never got past the baseline, and has already said so."""
+    ids = list(cfg.ids)
+    tick = report.tick
+
     # Baseline: what every module says before we start leaning on the bus.
     baseline: dict = {}
     for device_id in ids:
         if cancel.is_set():
             emit(SoakDone(cancelled=True, summary="cancelled before the baseline"))
-            return report
+            return False
         baseline[device_id] = _counters(ops, device_id, True)
         if baseline[device_id] is None:
             note(device_id, "no_reply", "missing at the baseline")
@@ -209,13 +273,10 @@ def run_soak(ops: SoakOps, cfg: SoakConfig, emit: Callable,
                       worst_ms=tick.worst_ms, crossings=tick.crossings,
                       worst_crossing_ms=tick.worst_crossing_ms,
                       elapsed_s=tick.elapsed_s))
+        # One line per pass, so the end of the file is a fact rather than an
+        # inference: the last heartbeat is the last moment the tool was
+        # certainly alive and the cabinet certainly answering.
+        csv("heartbeat", _totals(tick))
         ops.sleep(cfg.pass_gap_s)
 
-    hours = tick.elapsed_s / 3600.0
-    emit(SoakDone(cancelled=True,
-                  summary=(f"{hours:.1f} h · {tick.passes} passes · "
-                           f"{tick.txns} reads · {tick.fails} failed · "
-                           f"{tick.reboots} reboots · {tick.watchdogs} watchdog · "
-                           f"{tick.crossings} hub crossings "
-                           f"(worst {tick.worst_crossing_ms:.0f} ms)")))
-    return report
+    return True

@@ -18,6 +18,7 @@ import queue
 import tempfile
 import threading
 import time
+import traceback
 from concurrent.futures import Future
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -25,8 +26,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Callable, Optional, Sequence
 
-from . import (commission, fieldcheck, fw_survey, gateway_config, lgs_map,
-               opta_flash, opta_update, ota, soak, stlink, testsuite)
+from . import (applog, commission, fieldcheck, fw_survey, gateway_config,
+               lgs_map, opta_flash, opta_update, ota, soak, stlink, testsuite)
 from .lgs_map import (CoilClass, HUB_WAKE_GAP_S, HUB_WAKE_TRIES,
                       INTER_CH_S, INTER_TXN_S, LATCH_COOLDOWN_S,
                       hub_channel)
@@ -1080,6 +1081,17 @@ class ModbusWorker:
         try:
             self._check_cancel.clear()
             soak.run_soak(_SurveyOps(self), cfg, emit, self._soak_cancel, log_line)
+        except BaseException as exc:                            # noqa: BLE001
+            # This job is fire-and-forget: its Future is never awaited, so an
+            # exception here would land in it and be lost, leaving a window
+            # that looks fine over a run that stopped hours ago. Say it three
+            # ways — screen, CSV (run_soak's stop row), and the app log.
+            applog.note(f"soak stopped by {type(exc).__name__}: {exc}")
+            applog.note("".join(traceback.format_exception(
+                type(exc), exc, exc.__traceback__)))
+            emit(soak.SoakDone(
+                cancelled=False,
+                summary=f"stopped by {type(exc).__name__}: {exc}"))
         finally:
             self._soak_running = False
             self._check_running = False

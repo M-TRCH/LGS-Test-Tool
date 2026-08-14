@@ -207,6 +207,14 @@ TEXTS: dict[str, dict[str, str]] = {
     "soak.worst": {"en": "worst {v} ms", "th": "ช้าสุด {v} ms"},
     "soak.crossings": {"en": "hub crossings {n} (worst {v} ms — expected)",
                        "th": "ข้าม channel {n} ครั้ง (ช้าสุด {v} ms — ปกติ)"},
+    "soak.awake_on": {"en": "This PC is held awake while a run is in progress",
+                      "th": "กันเครื่องนี้หลับระหว่างที่กำลังทดสอบ"},
+    "soak.awake_off": {"en": "Sleep cannot be held off on this platform — turn "
+                             "sleep off in the power settings before leaving a "
+                             "run unattended",
+                       "th": "กันเครื่องหลับอัตโนมัติไม่ได้บนแพลตฟอร์มนี้ — "
+                             "ปิด sleep ในตั้งค่าพลังงานก่อนปล่อยทดสอบทิ้งไว้"},
+    "soak.applog": {"en": "app log: {v}", "th": "ล็อกโปรแกรม: {v}"},
     "soak.anomalies": {"en": "Anomalies", "th": "ความผิดปกติ"},
     "soak.anomalies_tip": {"en": "Every no-reply, reboot, watchdog reset and slow "
                                  "answer, as it happens. An empty list after a long "

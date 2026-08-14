@@ -94,7 +94,13 @@ Command reference: `LGS-Standard-Module/doc/LGS-Control-Table.md`.
 
 Open http://localhost:8080 (a browser window opens automatically; set `LGS_TT_NO_BROWSER=1`
 to suppress). Config (last port/IP/ID) persists in `data/config.json`; sweep and log CSVs
-land in `data/exports/`.
+land in `data/exports/`; every launch writes `data/logs/app-<date>.log` — stdout, stderr and
+any unhandled exception on any thread, newest 20 kept.
+
+Left running unattended — soaking the cabinet overnight, or serving NTP to a gateway — the
+app asks Windows not to sleep for as long as a job is running. Windows standby ended the
+first overnight soak at 00:17 and left no trace of itself anywhere but the gateway's own
+event log; `app/keep_awake.py` and `app/applog.py` are the answer to both halves of that.
 
 > OneDrive note: `.venv/` is gitignored but OneDrive still syncs it — consider excluding
 > the folder from sync ("Choose folders") if it causes churn.

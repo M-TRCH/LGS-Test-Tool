@@ -11,7 +11,7 @@ from typing import Callable
 
 from nicegui import ui
 
-from .. import config_store, ntp_server
+from .. import config_store, keep_awake, ntp_server
 from ..i18n import t
 from . import Ctx, helps
 
@@ -71,6 +71,10 @@ def build(ctx: Ctx, gateway_ip: Callable[[], str],
                 .tooltip(t("ntp.use_pc_tip"))
 
         status = ui.label("").classes("text-sm")
+        # A time source that sleeps is not a time source: the same guard that
+        # protects an overnight soak holds the machine awake for this too.
+        ui.label(t("soak.awake_on") if keep_awake.supported()
+                 else t("soak.awake_off")).classes("text-xs text-grey")
 
         def refresh() -> None:
             if srv.running:

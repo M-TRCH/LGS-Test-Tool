@@ -12,7 +12,7 @@ from datetime import datetime
 
 from nicegui import ui
 
-from .. import config_store, soak
+from .. import applog, config_store, keep_awake, soak
 from ..i18n import t
 from . import Ctx, helps
 
@@ -48,6 +48,15 @@ def build(ctx: Ctx) -> None:
             start_btn = ui.button(t("soak.start"), color="primary")
             stop_btn = ui.button(t("soak.stop"), color="red").props("outline")
             status = ui.label(t("soak.idle")).classes("text-sm")
+
+        # Both halves of "you can walk away now": the machine will not sleep
+        # under the run, and if the app dies anyway there is a file that says
+        # what happened. The first overnight run had neither.
+        marks = [t("soak.awake_on") if keep_awake.supported()
+                 else t("soak.awake_off")]
+        if applog.path() is not None:
+            marks.append(t("soak.applog", v=applog.path().name))
+        ui.label(" · ".join(marks)).classes("text-xs text-grey")
 
     # ── live totals ────────────────────────────────────────────────────────
     with ui.card().classes("p-3 w-full q-mt-sm"):
