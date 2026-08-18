@@ -45,6 +45,15 @@ from .txn_log import TxnLog
 # costs one attempt every few seconds.
 LINK_RETRY_MIN_S = 2.0
 LINK_RETRY_MAX_S = 30.0
+# What counts as "the link died" rather than "a module is silent". pymodbus
+# raises the same exception for both AND closes the port on a plain timeout,
+# so the client's own `connected` flag cannot be trusted to tell them apart —
+# taking it at face value once turned six quiet modules into a torn-down bus
+# mid-OTA. The evidence has to be that EVERYTHING stopped answering: enough
+# consecutive failures, spanning enough different devices, that no single
+# dark module could produce it.
+LINK_DEAD_AFTER = 8          # consecutive failed transactions ...
+LINK_DEAD_DEVICES = 3        # ... spanning at least this many device ids
 
 _PRIO_MANUAL = 0
 _PRIO_LONG = 5
@@ -156,6 +165,12 @@ class ModbusWorker:
         self._relink_at = 0.0        # monotonic time of the next attempt
         self._relink_delay = LINK_RETRY_MIN_S
         self._link_lost_at = 0.0
+        self._consec_fail = 0
+        self._fail_ids: set = set()
+        # False until a read has actually succeeded on this connection. A
+        # cabinet that is dark behind a healthy gateway must be reported as
+        # silent modules, not as a link to reconnect over and over.
+        self._link_verified = False
 
         # raw-frame capture (worker serializes txns, so one holder is safe)
         self._trace = {"tx": "", "rx": ""}
@@ -284,6 +299,9 @@ class ModbusWorker:
                 self._connected, self._last_error = True, ""
                 self._link_down = False
                 self._relink_delay = LINK_RETRY_MIN_S
+                self._consec_fail = 0
+                self._fail_ids.clear()
+                self._link_verified = False
             else:
                 self._last_error = (f"cannot open {settings.describe()} — port in use "
                                     f"or host unreachable")
@@ -327,31 +345,28 @@ class ModbusWorker:
         return f"EXC {name}: {text}"
 
     # ── link supervision (worker thread only) ──────────────────────────────
-    def _link_is_dead(self, note: str = "") -> bool:
-        """True when the TRANSPORT is gone, not when a module is silent.
+    def _link_is_dead(self, device_id: int, note: str = "") -> bool:
+        """Decide, from the pattern of failures, whether the LINK died.
 
-        pymodbus raises the same ModbusIOException for both, so ask the
-        client whether its socket/port is still open instead of reading
-        exception text. A dark cabinet behind a live gateway must NOT count
-        as a dead link — reconnecting would fix nothing and would hide the
-        real fault."""
-        client = self._client
-        if client is None:
-            return True
-        try:
-            if not client.connected:
-                return True
-        except Exception:                                  # noqa: BLE001
-            pass                # cannot tell from the client; fall through
-        # A pulled USB cable does not always clear pyserial's flag, so the
-        # explained text is the second witness.
-        return ("LINK LOST" in note or "SerialException" in note
-                or "PortNotOpenError" in note)
+        Not from the client's `connected` flag: pymodbus closes the port on
+        an ordinary timeout, so a single quiet module makes a perfectly
+        healthy bus look dead. What no single dark module can fake is a run
+        of failures spanning several different addresses — that is either
+        the transport or a cabinet with no power, and only the first is
+        worth reconnecting for, which is what `_link_verified` decides."""
+        self._consec_fail += 1
+        self._fail_ids.add(device_id)
+        if not self._link_verified:
+            return False        # nothing has worked yet on this connection
+        if self._consec_fail < LINK_DEAD_AFTER:
+            return False
+        return len(self._fail_ids) >= LINK_DEAD_DEVICES
 
     def _note_link_lost(self) -> None:
         if self._link_down:
             return
         self._link_down = True
+        self._link_verified = False      # do not re-trip until a read works
         self._link_lost_at = time.monotonic()
         self._relink_delay = LINK_RETRY_MIN_S
         self._relink_at = time.monotonic() + LINK_RETRY_MIN_S
@@ -444,7 +459,11 @@ class ModbusWorker:
             time.sleep(HUB_WAKE_GAP_S)
 
         dead = False
-        if not ok and self._link_is_dead(note):
+        if ok:
+            self._consec_fail = 0
+            self._fail_ids.clear()
+            self._link_verified = True
+        elif self._link_is_dead(device_id, note):
             self._note_link_lost()
             dead = True
         decoded = decoded_fn(value) if ok else ""
