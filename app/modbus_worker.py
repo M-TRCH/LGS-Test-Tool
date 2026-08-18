@@ -36,6 +36,16 @@ from .transports import (RtuSettings, TcpSettings, TransportSettings,
                          make_client, make_scan_probe_client)
 from .txn_log import TxnLog
 
+# ── link supervision ───────────────────────────────────────────────────────
+# A dead socket fails instantly, so an unattended poll loop would spin at
+# hundreds of failures a second and never come back on its own — which is
+# exactly what a site power cut did on 2026-08-17: 64,689 identical failure
+# rows in 89 minutes and a tool that had to be restarted by hand. Reconnect
+# is therefore the transport layer's job, paced so a link that stays down
+# costs one attempt every few seconds.
+LINK_RETRY_MIN_S = 2.0
+LINK_RETRY_MAX_S = 30.0
+
 _PRIO_MANUAL = 0
 _PRIO_LONG = 5
 _PRIO_MONITOR = 10
@@ -50,6 +60,10 @@ class TxnResult:
     value: object = None          # int | list[int] | bool | None
     latency_ms: float = 0.0
     note: str = ""
+    # The transport itself is gone (socket closed, COM port pulled) rather
+    # than a module being silent. Callers that poll for hours use this to
+    # say so ONCE instead of once per read — see soak.py.
+    link_down: bool = False
 
 
 @dataclass(frozen=True)
@@ -138,6 +152,10 @@ class ModbusWorker:
         self._cooldown_until: dict = {}
         self._last_txn_t = 0.0
         self._last_channel = None    # hub channel of the last transaction
+        self._link_down = False      # transport gone, reconnect in progress
+        self._relink_at = 0.0        # monotonic time of the next attempt
+        self._relink_delay = LINK_RETRY_MIN_S
+        self._link_lost_at = 0.0
 
         # raw-frame capture (worker serializes txns, so one holder is safe)
         self._trace = {"tx": "", "rx": ""}
@@ -264,6 +282,8 @@ class ModbusWorker:
                     gateway_tcp.register_pdu(client)
                 self._client, self._settings = client, settings
                 self._connected, self._last_error = True, ""
+                self._link_down = False
+                self._relink_delay = LINK_RETRY_MIN_S
             else:
                 self._last_error = (f"cannot open {settings.describe()} — port in use "
                                     f"or host unreachable")
@@ -306,11 +326,80 @@ class ModbusWorker:
                     "the bus. " + text)
         return f"EXC {name}: {text}"
 
+    # ── link supervision (worker thread only) ──────────────────────────────
+    def _link_is_dead(self, note: str = "") -> bool:
+        """True when the TRANSPORT is gone, not when a module is silent.
+
+        pymodbus raises the same ModbusIOException for both, so ask the
+        client whether its socket/port is still open instead of reading
+        exception text. A dark cabinet behind a live gateway must NOT count
+        as a dead link — reconnecting would fix nothing and would hide the
+        real fault."""
+        client = self._client
+        if client is None:
+            return True
+        try:
+            if not client.connected:
+                return True
+        except Exception:                                  # noqa: BLE001
+            pass                # cannot tell from the client; fall through
+        # A pulled USB cable does not always clear pyserial's flag, so the
+        # explained text is the second witness.
+        return ("LINK LOST" in note or "SerialException" in note
+                or "PortNotOpenError" in note)
+
+    def _note_link_lost(self) -> None:
+        if self._link_down:
+            return
+        self._link_down = True
+        self._link_lost_at = time.monotonic()
+        self._relink_delay = LINK_RETRY_MIN_S
+        self._relink_at = time.monotonic() + LINK_RETRY_MIN_S
+        with self._state_lock:
+            self._connected = False
+            self._last_error = ("link lost — reconnecting automatically")
+        applog.note(f"link lost ({self._settings.describe() if self._settings else '?'})"
+                    f" — reconnecting in the background")
+        self._log.append("link", 0, 0, 0, "lost", False, None, "", 0.0,
+                         "transport gone; auto-reconnect armed")
+
+    def _service_link(self) -> bool:
+        """Called before every transaction while the link is down. Returns
+        True once it is back. Sleeps the backoff HERE on purpose: nothing
+        else can use the bus anyway, and it turns a spin into one attempt
+        every few seconds."""
+        now = time.monotonic()
+        if now < self._relink_at:
+            # Sleep in slices so shutdown stays responsive.
+            end = min(self._relink_at, now + 1.0)
+            while time.monotonic() < end and not self._stop.is_set():
+                time.sleep(0.05)
+            return False
+        settings = self._settings
+        if settings is None:
+            return False
+        self._do_disconnect()
+        self._do_connect(settings)
+        if self._connected:
+            down_for = time.monotonic() - self._link_lost_at
+            self._link_down = False
+            self._relink_delay = LINK_RETRY_MIN_S
+            applog.note(f"link back after {down_for:.0f} s")
+            self._log.append("link", 0, 0, 0, "back", True, None,
+                             f"down {down_for:.0f} s", 0.0, "")
+            return True
+        self._relink_delay = min(self._relink_delay * 2, LINK_RETRY_MAX_S)
+        self._relink_at = time.monotonic() + self._relink_delay
+        return False
+
     # ── core transaction (worker thread only) ──────────────────────────────
     def _transact(self, source: str, fc: int, addr: int, device_id: int, op: str,
                   call: Callable, extract: Callable, decoded_fn: Callable) -> TxnResult:
+        if self._link_down and not self._service_link():
+            return TxnResult(False, note="link down — reconnecting",
+                             link_down=True)
         if self._client is None:
-            return TxnResult(False, note="not connected")
+            return TxnResult(False, note="not connected", link_down=True)
         # Every transaction in the app funnels through here, so the RS485 hub
         # is handled here too — one rule, and no page can forget it.
         #
@@ -354,10 +443,14 @@ class ModbusWorker:
                 break
             time.sleep(HUB_WAKE_GAP_S)
 
+        dead = False
+        if not ok and self._link_is_dead(note):
+            self._note_link_lost()
+            dead = True
         decoded = decoded_fn(value) if ok else ""
         self._log.append(source, fc, addr, device_id, op, ok, value, decoded,
                          latency, note, self._trace["tx"], self._trace["rx"])
-        return TxnResult(ok, value, latency, note)
+        return TxnResult(ok, value, latency, note, link_down=dead)
 
     def _do_read_registers(self, addr: int, count: int, device_id: int, source: str) -> TxnResult:
         return self._transact(

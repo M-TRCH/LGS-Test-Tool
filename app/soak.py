@@ -65,7 +65,8 @@ class SoakConfig:
 class Anomaly:
     when: datetime
     device_id: int
-    kind: str                    # no_reply | reboot | watchdog | slow
+    kind: str                    # no_reply | reboot | watchdog | slow |
+                                 # link_lost | link_back
     detail: str = ""
 
     @property
@@ -197,6 +198,7 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
     False = it never got past the baseline, and has already said so."""
     ids = list(cfg.ids)
     tick = report.tick
+    link_state = {"down": False, "since": 0.0, "missed": 0}
 
     # Baseline: what every module says before we start leaning on the bus.
     baseline: dict = {}
@@ -236,13 +238,36 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
                 tick.worst_ms = max(tick.worst_ms, took_ms)
 
             limit = cfg.crossing_slow_ms if crossing else cfg.slow_ms
-            if not res.ok:
+            if getattr(res, "link_down", False):
+                # The transport is gone, not this module. Say it ONCE and
+                # keep the file readable: a site power cut once wrote 64,689
+                # identical rows in 89 minutes and made the app unusable.
+                # The worker reconnects underneath; the run simply resumes.
+                if not link_state["down"]:
+                    link_state["down"] = True
+                    link_state["since"] = time.monotonic()
+                    link_state["missed"] = 0
+                    note(0, "link_lost", (res.note or "transport gone")[:60])
+                link_state["missed"] += 1
+                tick.fails += 1
+            elif not res.ok:
+                if link_state["down"]:
+                    link_state["down"] = False
+                    note(0, "link_back",
+                         f"after {time.monotonic() - link_state['since']:.0f} s, "
+                         f"{link_state['missed']} reads lost")
                 tick.fails += 1
                 note(device_id, "no_reply",
                      ("after a hub crossing; " if crossing else "") + (res.note or ""))
-            elif took_ms >= limit:
-                note(device_id, "slow",
-                     f"{took_ms:.0f} ms" + (" (hub crossing)" if crossing else ""))
+            else:
+                if link_state["down"]:
+                    link_state["down"] = False
+                    note(0, "link_back",
+                         f"after {time.monotonic() - link_state['since']:.0f} s, "
+                         f"{link_state['missed']} reads lost")
+                if took_ms >= limit:
+                    note(device_id, "slow",
+                         f"{took_ms:.0f} ms" + (" (hub crossing)" if crossing else ""))
             ops.sleep(INTER_TXN_S)
 
         if check_counters and not cancel.is_set():
