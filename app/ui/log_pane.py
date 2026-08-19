@@ -46,7 +46,13 @@ def build(ctx: Ctx) -> None:
 
         def drain() -> None:
             state["seq"], fresh = ctx.log.since(state["seq"])
-            if paused.value:
+            # Closing the browser tab deletes the client but leaves this timer
+            # running. Pushing into a deleted client is not an error NiceGUI
+            # raises — it warns once and then keeps the element in an outbox
+            # nothing will ever drain, so an unattended overnight run quietly
+            # accumulates one Label per transaction. Reopening the page builds
+            # a fresh pane anyway, so there is nothing to keep here.
+            if paused.value or not log_view.client.has_socket_connection:
                 return
             flt = source_filter.value
             for rec in fresh:

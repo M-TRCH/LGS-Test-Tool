@@ -131,9 +131,15 @@ def _counters(ops: SoakOps, device_id: int, want_iwdg: bool):
     iwdg = None
     if want_iwdg and int(values[1]) >= FW_MIN_STATS:
         r2 = ops.read_regs(device_id, REG_STATS2_IWDG, 1)
-        v2 = r2.value if isinstance(r2.value, (list, tuple)) else None
-        if r2.ok and v2:
-            iwdg = int(v2[0])
+        # A one-register read comes back as a bare int, not a list of one.
+        # Testing for a list here made every iwdg reading None, so the
+        # watchdog comparison below could never fire and a whole night of
+        # watchdog resets was reported as wdt=0 — the opposite conclusion
+        # (clean power cycles) from the truth. Let the count decide the
+        # shape, and compare against None: zero resets is a real answer.
+        v2 = r2.value
+        if r2.ok and v2 is not None:
+            iwdg = int(v2[0] if isinstance(v2, (list, tuple)) else v2)
     return boots, iwdg
 
 
