@@ -14,6 +14,7 @@ from typing import Callable
 
 # ── Constants ──────────────────────────────────────────────────────────────
 DEVICE_TYPES = {10: "STANDARD", 20: "NARCOTIC", 30: "LITE", 40: "DELIVERY"}
+DEVICE_TYPE_STANDARD = 10          # the 8-LED mask variant: no OLED, no ring
 FUNCTION_MODES = {0: "RUN", 1: "DEMO", 2: "SET_ID", 3: "FACTORY_RESET"}
 BAUD_WHITELIST = (9600, 19200, 38400, 57600)
 FACTORY_DEFAULT_ID = 247
@@ -376,9 +377,27 @@ def join_uid(words) -> str:
     """
     return "".join(f"{w:04X}" for w in words)
 
-def decode_health(raw: int) -> list[tuple[str, bool]]:
-    """[(subsystem, ok)] for bits 0-3. Bit 4 (latch) is a state — use is_latch_locked()."""
-    return [(name, bool(raw & (1 << i))) for i, name in enumerate(HEALTH_BITS)]
+HEALTH_OLED_BIT = 1                                                      # bit1 = an OLED answered on I2C2
+
+
+def decode_health(raw: int, device_type: int = 0) -> list[tuple[str, bool | None]]:
+    """[(subsystem, ok)] for bits 0-3, ok=None where the board is not built
+    with that part. Bit 4 (latch) is a state — use is_latch_locked().
+
+    A STANDARD cabinet (type 10) carries the 8-LED index mask in place of the
+    OLED, so bit1 reading 0 there is how the board is meant to be and must not
+    be shown as a fault — a red badge on every module in a cabinet teaches
+    people to ignore red badges. On a ring board the identical 0 means a
+    display that has died, which is worth saying loudly, so the pair
+    (device type, bit1) is what carries the meaning, never bit1 alone.
+    """
+    out: list[tuple[str, bool | None]] = []
+    for i, name in enumerate(HEALTH_BITS):
+        if i == HEALTH_OLED_BIT and device_type == DEVICE_TYPE_STANDARD:
+            out.append((name, None))
+        else:
+            out.append((name, bool(raw & (1 << i))))
+    return out
 
 def is_latch_locked(health_raw: int) -> bool:
     return bool(health_raw & (1 << HEALTH_LATCH_BIT))

@@ -485,7 +485,10 @@ def build_report_pdf(*, app_version: str, generated: datetime,
                     row.cell("")
     bits = ", ".join(f"bit{i}={n}" for i, n in enumerate(HEALTH_BITS))
     _legend(pdf, f"health: {bits} (set = OK; bit3 reads 0 on every R5.1 — "
-                 f"known, harmless) · bit4 = latch locked · bus runs "
+                 f"known, harmless; bit1 reads 0 on every type 10 STANDARD "
+                 f"module, which has the 8-LED mask instead of an OLED — on a "
+                 f"ring type it means a failed display) · bit4 = latch locked "
+                 f"· bus runs "
                  f"{dec_baud(int(settings.get('rs485.baud', 9600) or 9600))}")
 
     # ── module statistics — how much this cabinet has actually worked ─────

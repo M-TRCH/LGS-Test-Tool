@@ -96,8 +96,11 @@ def build(ctx: Ctx) -> None:
 
             health_row.clear()
             with health_row:
-                for name, ok in decode_health(r[9]):
-                    ui.badge(name).props(f"color={'green' if ok else 'red'}")
+                for name, ok in decode_health(r[9], r[0]):
+                    # None = this board is not built with that part, which is
+                    # not news; grey keeps red meaning "something is wrong".
+                    colour = "grey" if ok is None else ("green" if ok else "red")
+                    ui.badge(name if ok is not None else f"{name} n/a")                         .props(f"color={colour}")
             if r[8]:
                 names = ", ".join(decode_reset_cause(r[8])) or f"raw {r[8]}"
                 state["sticky_cause"] = names
