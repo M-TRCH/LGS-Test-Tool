@@ -36,10 +36,11 @@ from datetime import datetime
 from typing import Callable, Optional, Protocol, Sequence
 
 from .fw_survey import FW_MIN_STATS
-from .lgs_map import INTER_TXN_S, hub_channel
+from .lgs_map import INTER_TXN_S, decode_reset_cause, hub_channel
 
 REG_IDENTITY = 0        # type, fw, hw — the cheap "are you there" read
 REG_BOOTS = 7
+REG_RESET_CAUSE = 8     # bit0 IWDG, 1 SW, 2 power-on, 3 NRST, 4 WWDG, 5 LP, 6 OBL
 REG_STATS2_IWDG = 410   # fw >= v3.3.0
 
 
@@ -122,12 +123,19 @@ def _totals(tick: SoakTick) -> str:
 
 
 def _counters(ops: SoakOps, device_id: int, want_iwdg: bool):
-    """(boots, iwdg) — iwdg is None on firmware without the v2 stats block."""
+    """(boots, iwdg, reset_cause) for one module.
+
+    iwdg is None on firmware without the v2 stats block. reset_cause is the
+    module's own reg-8 flags for the boot it is currently running, which it
+    latches once and clears, so it names the cause of the boot rather than
+    being inferred from a counter moving.
+    """
     res = ops.read_regs(device_id, REG_IDENTITY, 12)
     values = res.value if isinstance(res.value, (list, tuple)) else None
     if not (res.ok and values and len(values) >= 12):
         return None
     boots = int(values[REG_BOOTS])
+    cause = int(values[REG_RESET_CAUSE])
     iwdg = None
     if want_iwdg and int(values[1]) >= FW_MIN_STATS:
         r2 = ops.read_regs(device_id, REG_STATS2_IWDG, 1)
@@ -140,7 +148,7 @@ def _counters(ops: SoakOps, device_id: int, want_iwdg: bool):
         v2 = r2.value
         if r2.ok and v2 is not None:
             iwdg = int(v2[0] if isinstance(v2, (list, tuple)) else v2)
-    return boots, iwdg
+    return boots, iwdg, cause
 
 
 def run_soak(ops: SoakOps, cfg: SoakConfig, emit: Callable,
@@ -291,7 +299,24 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
                     continue
                 if now[0] != was[0]:
                     tick.reboots += 1
-                    note(device_id, "reboot", f"boots {was[0]} -> {now[0]}")
+                    # Say on the reboot row itself what kind of reboot it was.
+                    # The absence of a watchdog row below means either "the
+                    # counter held still" or "reg 410 could not be read this
+                    # pass", and those are opposite conclusions about the
+                    # cabinet: a supply sag stops the CPU and the watchdog
+                    # rescues it, while a real interruption leaves the watchdog
+                    # untouched. Reg 8 is the module's own answer for the boot
+                    # it is running, and it costs nothing — it already rides in
+                    # the same read as the boot counter.
+                    cause = " ".join(decode_reset_cause(now[2])) or f"raw {now[2]}"
+                    if now[1] is None or was[1] is None:
+                        seen = "iwdg unread"
+                    elif now[1] != was[1]:
+                        seen = f"iwdg {was[1]} -> {now[1]}"
+                    else:
+                        seen = f"iwdg {now[1]} unchanged"
+                    note(device_id, "reboot",
+                         f"boots {was[0]} -> {now[0]} cause={cause} {seen}")
                 if now[1] is not None and was[1] is not None and now[1] != was[1]:
                     tick.watchdogs += 1
                     note(device_id, "watchdog", f"iwdg {was[1]} -> {now[1]}")
