@@ -1278,6 +1278,17 @@ TEXTS: dict[str, dict[str, str]] = {
     "cm.slave_id": {"en": "Slave ID", "th": "Slave ID"},
     "cm.grid": {"en": "Grid", "th": "ผัง"},
     "cm.lot": {"en": "Lot", "th": "ล็อตการผลิต"},
+    "cm.device_type": {"en": "Cabinet variant", "th": "ชนิดตู้"},
+    "cm.device_type_hint": {
+        "en": "Written into the image alongside the ID, so the board knows "
+              "which cabinet it is in before it ever runs. Leave unset and "
+              "the board works it out at boot from whether an OLED answers "
+              "on I2C2 — right for a plain lot, but set it explicitly when "
+              "the board's display does not match its cabinet.",
+        "th": "ถูกเขียนลง image คู่กับ ID บอร์ดจึงรู้ตั้งแต่ก่อนรัน "
+              "ถ้าไม่กำหนด บอร์ดจะหาเองตอนบูตจากการเช็คว่ามี OLED ตอบบน I2C2 หรือไม่"},
+    "cm.device_type_auto": {"en": "— let the board decide —",
+                            "th": "— ให้บอร์ดตัดสินเอง —"},
     "cm.lot_hint": {"en": "Optional. Recorded in commission_log.csv next to the "
                           "chip's own serial number.",
                     "th": "ใส่หรือไม่ใส่ก็ได้ บันทึกลง commission_log.csv "

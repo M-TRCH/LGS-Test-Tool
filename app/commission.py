@@ -22,8 +22,10 @@ from . import commission_image as ci
 from .ota import Done, Line, Progress
 
 LOG_NAME = "commission_log.csv"
+# device_type is appended, never inserted: a production log that already
+# exists keeps every column where it was, and only gains one on the right.
 LOG_HEADER = ("timestamp", "slave_id", "device_uid", "lot", "token",
-              "image", "image_bytes", "overwrite", "result")
+              "image", "image_bytes", "overwrite", "result", "device_type")
 
 
 class CommissionCancelled(Exception):
@@ -52,6 +54,7 @@ class CommissionConfig:
     lot: str = ""
     overwrite: bool = False          # sets the block's FORCE flag
     log_dir: Path | None = None      # where commission_log.csv goes
+    device_type: int | None = None   # None = leave it to the board to work out
 
 
 @dataclass
@@ -67,6 +70,7 @@ class BatchConfig:
     ids: tuple = ()                  # assignment order
     lot: str = ""
     log_dir: Path | None = None
+    device_type: int | None = None   # one cabinet variant per lot
 
 
 @dataclass
@@ -116,7 +120,8 @@ def append_log(log_dir: Path, cfg: CommissionConfig, *, uid: str, token: int,
                         cfg.identifier, uid, cfg.lot, f"0x{token:08X}",
                         cfg.filename, len(cfg.image),
                         "yes" if cfg.overwrite else "no",
-                        "ok" if ok else "failed"))
+                        "ok" if ok else "failed",
+                        cfg.device_type if cfg.device_type else ""))
         return path
     except OSError:
         return None          # a missing production log must not fail a flash
@@ -173,12 +178,16 @@ def _flash_one(ops: CommissionOps, cli, cfg: CommissionConfig,
         step(3)
         try:
             patched, written = ci.patch(cfg.image, identifier=cfg.identifier,
-                                        force=cfg.overwrite)
+                                        force=cfg.overwrite,
+                                        device_type=cfg.device_type)
         except ci.ImageError as exc:
             say(str(exc), "err")
             return False, "could not patch the image"
         report.token = written.token
-        say(f"[4/5] patched to ID {cfg.identifier}"
+        kind = (f", type {cfg.device_type} "
+                f"{ci.DEVICE_TYPES.get(cfg.device_type, '?')}"
+                if cfg.device_type else "")
+        say(f"[4/5] patched to ID {cfg.identifier}{kind}"
             f"{' with overwrite' if cfg.overwrite else ''}, "
             f"token 0x{written.token:08X}")
 
@@ -301,7 +310,8 @@ def run_batch(ops: CommissionOps, cfg: BatchConfig, emit, cancel) -> None:
 
             one = CommissionConfig(image=cfg.image, filename=cfg.filename,
                                    identifier=target, lot=cfg.lot,
-                                   overwrite=False, log_dir=cfg.log_dir)
+                                   overwrite=False, log_dir=cfg.log_dir,
+                                   device_type=cfg.device_type)
             report = CommissionReport(identifier=target)
             ok, why = _flash_one(ops, cli, one, report, say,
                                  lambda n: None, cancel)

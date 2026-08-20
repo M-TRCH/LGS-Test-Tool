@@ -76,6 +76,16 @@ def build(ctx: Ctx) -> None:
             lot_input = helps(
                 ui.input(t("cm.lot")).props("dense outlined").classes("w-40 q-mt-sm"),
                 t("cm.lot_hint"))
+            # 0 is the "not set" choice, not a device type: patch() writes the
+            # field only when asked, so leaving this alone produces the same
+            # image it produced before this control existed — and lets a v1
+            # block, which has nowhere to put a type, still be flashed.
+            type_select = helps(
+                ui.select({0: t("cm.device_type_auto"),
+                           **{k: f"{k} — {v}" for k, v in ci.DEVICE_TYPES.items()}},
+                          value=0, label=t("cm.device_type"))
+                  .props("dense outlined").classes("w-56 q-mt-sm"),
+                t("cm.device_type_hint"))
 
         # ── single mode: the one identity to give it ───────────────────────
         with ui.card().classes("p-3 grow") as single_card:
@@ -197,6 +207,10 @@ def build(ctx: Ctx) -> None:
     log_box = ui.column().classes("w-full gap-0 font-mono text-xs p-2 rounded "
                                   "border max-h-96 overflow-auto")
 
+    def chosen_type():
+        """The picked variant, or None for "let the board decide"."""
+        return int(type_select.value or 0) or None
+
     def say(text: str, level: str = "info") -> None:
         with log_box:
             ui.label(text).classes(LEVEL_CLASS.get(level, ""))
@@ -236,7 +250,8 @@ def build(ctx: Ctx) -> None:
         cfg = CommissionConfig(image=state["image"], filename=state["name"],
                                identifier=target, lot=str(lot_input.value or ""),
                                overwrite=bool(cb_overwrite.value),
-                               log_dir=Path(data_dir()) / "exports")
+                               log_dir=Path(data_dir()) / "exports",
+                               device_type=chosen_type())
         if not worker.start_commission(cfg):
             busy()
 
@@ -265,7 +280,8 @@ def build(ctx: Ctx) -> None:
         begin_run()
         cfg = BatchConfig(image=state["image"], filename=state["name"], ids=ids,
                           lot=str(lot_input.value or ""),
-                          log_dir=Path(data_dir()) / "exports")
+                          log_dir=Path(data_dir()) / "exports",
+                          device_type=chosen_type())
         if not worker.start_batch_commission(cfg):
             busy()
 
