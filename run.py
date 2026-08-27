@@ -47,6 +47,9 @@ def _parse_flags() -> None:
         elif args[i] == "--no-browser":
             os.environ["LGS_TT_NO_BROWSER"] = "1"
             i += 1
+        elif args[i] == "--port":
+            print("--port needs a value, e.g. --port 8090")
+            raise SystemExit(2)
         else:
             print(f"unknown option: {args[i]}  (known: --port N, --no-browser)")
             raise SystemExit(2)
@@ -58,6 +61,12 @@ def _acquire_single_instance() -> bool:
     if os.name != "nt":                       # dev convenience (Docker/CI)
         return True
     kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    # ctypes defaults restype to c_int (32-bit); a HANDLE is pointer-sized.
+    # The handle is never used again, but a truncated one could read as 0
+    # and hide a real failure — declare the widths properly.
+    kernel32.CreateMutexW.restype = ctypes.c_void_p
+    kernel32.CreateMutexW.argtypes = (ctypes.c_void_p, ctypes.c_int,
+                                      ctypes.c_wchar_p)
     _instance_mutex = kernel32.CreateMutexW(None, False, _MUTEX_NAME)
     return ctypes.get_last_error() != _ERROR_ALREADY_EXISTS
 

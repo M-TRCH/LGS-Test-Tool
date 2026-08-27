@@ -195,10 +195,38 @@ def run_ota(ops: OtaOps, cfg: OtaConfig, emit: Callable,
         say(f"  streamed in {time.monotonic() - t0:.0f} s")
 
         # 5. repair
+        #
+        # Three rules learned from a real fleet failure (2026-08-27, seven
+        # devices on one hub channel, five 470-chunk rounds burned, nothing
+        # updated):
+        #
+        #   * ALWAYS read the OTA state next to the bitmap. A device whose
+        #     30 s session timeout fired is in "failed" and ignores every
+        #     chunk — its bitmap prints as "missing N", which looks like
+        #     packet loss and is not. Chunks are only re-sent for devices
+        #     that are still RECEIVING; a dropped device gets named, with
+        #     the device's own error code, and stops costing air time.
+        #
+        #   * A device that leaves the session mid-run cannot rejoin it
+        #     (re-entering needs unicast metadata this transport does not
+        #     carry) — so it is reported for a per-device retry, not fought.
+        #
+        #   * Devices that DID complete are salvaged: the run continues to
+        #     finalize/apply for them instead of throwing their verified
+        #     image away because a neighbour dropped out.
         say("[5/8] bitmap check + repair ...")
+        complete: set = set()
+        dropped: dict = {}          # uid -> last described state
         for round_no in range(1, cfg.repair_rounds + 1):
             union_missing: set = set()
             for uid in ids:
+                if uid in complete or uid in dropped:
+                    continue
+                st = read_state(ops, uid)
+                if st is None or st["state"] != 1:
+                    dropped[uid] = describe_state(st)
+                    say(f"  id {uid}: left the session — {dropped[uid]}", "err")
+                    continue
                 res = ops.read_regs(uid, REG_BITMAP_FIRST, BITMAP_REGS)
                 if not res.ok:
                     say(f"  id {uid}: bitmap read failed", "err")
@@ -207,8 +235,12 @@ def run_ota(ops: OtaOps, cfg: OtaConfig, emit: Callable,
                 miss = [i for i in range(total) if not (regs[i // 16] >> (i % 16)) & 1]
                 if miss:
                     say(f"  id {uid}: missing {len(miss)} chunk(s)", "warn")
-                union_missing.update(miss)
+                    union_missing.update(miss)
+                else:
+                    complete.add(uid)
             if not union_missing:
+                if dropped:
+                    break           # nobody left to repair; salvage the rest
                 say("  all devices report a complete image", "ok")
                 break
             say(f"  repair round {round_no}: re-sending {len(union_missing)} chunk(s)")
@@ -218,14 +250,35 @@ def run_ota(ops: OtaOps, cfg: OtaConfig, emit: Callable,
                                log=False)
         else:
             say("  chunks still missing after all repair rounds", "err")
-            return finish(False, "image incomplete after repair rounds")
+
+        # Whoever is neither complete nor dropped after the loop is a device
+        # that stayed in the session but never converged — same retry advice.
+        for uid in ids:
+            if uid not in complete and uid not in dropped:
+                st = read_state(ops, uid)
+                if st is not None and st["state"] == 1:
+                    res = ops.read_regs(uid, REG_BITMAP_FIRST, BITMAP_REGS)
+                    if res.ok:
+                        regs = res.value
+                        if not [i for i in range(total)
+                                if not (regs[i // 16] >> (i % 16)) & 1]:
+                            complete.add(uid)
+                            continue
+                dropped.setdefault(uid, describe_state(st))
+        if dropped:
+            names = ", ".join(str(u) for u in sorted(dropped))
+            say(f"  NOT updated this run: {names} — re-run the OTA for these "
+                f"ids once it finishes", "err")
+            if not complete:
+                return finish(False, "no device completed the image; "
+                                     f"dropped: {names}")
 
         # 6. finalize
         say("[6/8] finalize (device-side CRC32) ...")
         ops.bcast_coil(COIL_FINALIZE)
         ops.sleep(1.0)
         verified = []
-        for uid in ids:
+        for uid in (u for u in ids if u in complete):
             st = read_state(ops, uid)
             say(f"  id {uid}: {describe_state(st)}",
                 "ok" if st and st["state"] == 2 else "err")

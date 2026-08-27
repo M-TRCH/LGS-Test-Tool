@@ -73,6 +73,27 @@ if ($isOneDrive -and -not $Force) {
     exit 1
 }
 
+# -- privilege-escalation check ----------------------------------------------
+# The task runs this exe as SYSTEM at every boot. If ordinary users can write
+# to the exe's folder, any local user can swap the binary and own the machine
+# on the next reboot. Warn loudly; -Force proceeds (a bench PC may not care).
+$exeDir = Split-Path $ExePath -Parent
+$writable = (Get-Acl $exeDir).Access | Where-Object {
+    $_.AccessControlType -eq "Allow" -and
+    ($_.FileSystemRights -match "Write|Modify|FullControl") -and
+    ($_.IdentityReference.Value -match '\\Users$|^Everyone$|Authenticated Users$|INTERACTIVE$')
+}
+if ($writable) {
+    $who = ($writable | ForEach-Object { $_.IdentityReference.Value } | Select-Object -Unique) -join ", "
+    Write-Warning "The exe's folder is writable by non-admin users ($who)."
+    Write-Warning "A local user could replace the exe and run as SYSTEM at boot. Fix:"
+    Write-Warning "  icacls `"$exeDir`" /inheritance:r /grant:r `"Administrators:(OI)(CI)F`" `"SYSTEM:(OI)(CI)F`" `"Users:(OI)(CI)RX`""
+    if (-not $Force) {
+        Write-Error "Refusing to register a SYSTEM task on a user-writable folder. Harden the ACL (command above) or pass -Force."
+        exit 1
+    }
+}
+
 # -- register the task --------------------------------------------------------
 $exeDir = Split-Path $ExePath -Parent
 $action = New-ScheduledTaskAction -Execute $ExePath `

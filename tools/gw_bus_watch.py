@@ -94,8 +94,11 @@ def main() -> int:
                 except Exception as exc:                     # noqa: BLE001
                     # A soak is a long night; one refused INFO must not end the
                     # watch. Say so in the file and keep going.
+                    # Pad to the full column count: a short row makes CSV
+                    # readers (pandas included) reshuffle the whole file.
                     fh.write(f"{datetime.now():%Y-%m-%d %H:%M:%S},"
-                             f"ERROR {str(exc)[:60].replace(',', ' ')}\n")
+                             f"ERROR {str(exc)[:60].replace(',', ' ')}"
+                             + "," * (len(head) - 2) + "\n")
                     fh.flush()
                     time.sleep(args.every)
                     continue
