@@ -81,7 +81,10 @@ def _config_path() -> Path:
 
 def load() -> AppConfig:
     try:
-        raw = json.loads(_config_path().read_text(encoding="utf-8"))
+        # utf-8-sig: Notepad saves UTF-8 WITH a BOM, and the port-in-use
+        # message sends people to edit this very file by hand — a BOM must
+        # not silently discard their whole config.
+        raw = json.loads(_config_path().read_text(encoding="utf-8-sig"))
         known = {f.name for f in fields(AppConfig)}
         return AppConfig(**{k: v for k, v in raw.items() if k in known})
     except Exception:
