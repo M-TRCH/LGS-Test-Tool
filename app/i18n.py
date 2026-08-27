@@ -233,7 +233,8 @@ TEXTS: dict[str, dict[str, str]] = {
     "ctl.unlock_disp": {"en": "Unlock+Disp ({addr})", "th": "ปลดล็อก+จอ ({addr})"},
     "ctl.display": {"en": "Display (OLED)", "th": "จอแสดงผล (OLED)"},
     "ctl.number": {"en": "number", "th": "ตัวเลข"},
-    "ctl.number_hint": {"en": "(0-99; >99 clamps to 99)", "th": "(0-99; เกิน 99 จะถูกตัดเหลือ 99)"},
+    "ctl.number_hint": {"en": "(0-999 on fw >= v3.4.0, clamps at 999; older fw clamps at 99)",
+                        "th": "(0-999 ตั้งแต่ fw v3.4.0 เกินถูกตัดเหลือ 999; รุ่นก่อน clamp ที่ 99)"},
     "ctl.write_reg60": {"en": "Write reg 60", "th": "เขียน reg 60"},
     "ctl.display_power": {"en": "Display power (1010)", "th": "เปิดจอ (1010)"},
     "ctl.quick_ops": {"en": "Quick ops", "th": "คำสั่งลัด"},
@@ -1107,6 +1108,18 @@ TEXTS: dict[str, dict[str, str]] = {
                        "ทุกโมดูล อ่านจากโมดูลจริงตัวละหนึ่งถึงสองครั้ง "
                        "ต้องกดค้นหา gateway ก่อนและต่อบัสอยู่ สำเนาเก็บไว้ใน data/exports"},
     "rpt.run": {"en": "Create PDF report", "th": "สร้างรายงาน PDF"},
+    "rpt.soak_attach": {"en": "Attach soak CSV", "th": "แนบไฟล์ผล soak (.csv)"},
+    "rpt.soak_hint": {"en": "Optional: a soak run's CSV becomes a 'Soak test' "
+                            "section in the PDF, with the reboot verdict "
+                            "(scheduled reset vs fault) worked out for you.",
+                      "th": "ไม่บังคับ: ไฟล์ CSV จากการรัน soak จะกลายเป็นหัวข้อ "
+                            "'Soak test' ในรายงาน พร้อมสรุปว่ารีบูตที่เจอเป็น "
+                            "scheduled reset หรือความผิดปกติ"},
+    "rpt.soak_loaded": {"en": "Soak attached — it will appear in the next report",
+                        "th": "แนบผล soak แล้ว — จะปรากฏในรายงานฉบับถัดไป"},
+    "rpt.soak_clear": {"en": "Detach", "th": "เอาออก"},
+    "rpt.soak_bad": {"en": "Not a soak CSV: {err}",
+                     "th": "ไม่ใช่ไฟล์ soak CSV: {err}"},
     "rpt.need_connect": {"en": "Connect to the bus first — the module sweep "
                                "runs over Modbus.",
                          "th": "กดเชื่อมต่อบัสก่อน — การไล่อ่านโมดูลวิ่งผ่าน Modbus"},

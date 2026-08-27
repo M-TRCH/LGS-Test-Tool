@@ -179,6 +179,19 @@ def build(ctx: Ctx) -> None:
             report_progress = ui.linear_progress(value=0.0, show_value=False) \
                 .classes("w-48")
             report_label = ui.label("").classes("text-sm text-grey")
+        with ui.row().classes("items-center gap-3 flex-wrap"):
+            # A soak CSV attached here becomes a "Soak test" section in the
+            # PDF — the overnight evidence next to the inventory, with the
+            # reboot verdict spelled out (a scheduled-reset night footers as
+            # reboots=64, which reads as a fault without its explanation).
+            helps(ui.upload(label=t("rpt.soak_attach"),
+                            on_upload=lambda e: attach_soak(e),
+                            auto_upload=True, max_files=1)
+                  .props('accept=".csv" flat dense'),
+                  t("rpt.soak_hint"))
+            soak_label = ui.label("").classes("text-sm text-grey")
+            ui.button(t("rpt.soak_clear"),
+                      on_click=lambda: clear_soak()).props("flat dense no-caps")
 
     def usable() -> tuple:
         """(ok, message) — what the console needs from the current transport.
@@ -883,7 +896,8 @@ def build(ctx: Ctx) -> None:
             cabinet_label=layout.label, cabinet_count=layout.count,
             widths=lgs_map.layout_widths(layout), records=records,
             hub_channel=lgs_map.hub_channel,
-            events=report_state.get("events", ()))
+            events=report_state.get("events", ()),
+            soak=report_state.get("soak"))
         name = snap.settings.get("sys.name", "") or snap.info.get("id", "gw")
         fname = f"lgs-report-{name}-{datetime.now():%Y%m%d-%H%M}.pdf"
         # A copy stays in data/exports — a record someone can find later is
@@ -910,10 +924,36 @@ def build(ctx: Ctx) -> None:
                 report_progress.set_value(1.0)
                 finish_report(ev.records, ev.cancelled)
 
-    report_state: dict = {"seq": 0, "waiting": False,
-                          "snapshot": None, "layout": None, "events": ()}
+    report_state: dict = {"seq": 0, "waiting": False, "snapshot": None,
+                          "layout": None, "events": (), "soak": None}
     report_btn.on_click(do_report)
     ui.timer(0.3, drain_report)
+
+    def attach_soak(e) -> None:
+        """Parse a soak CSV into the report state. Parsing now (not at PDF
+        time) means a wrong file is refused while the operator is looking
+        at the upload control, not after a 64-module sweep."""
+        from .. import soak_csv
+        try:
+            text = e.content.read().decode("utf-8-sig")
+            summary = soak_csv.parse_soak_csv(text, e.name)
+        except soak_csv.SoakCsvError as exc:
+            report_state["soak"] = None
+            soak_label.text = ""
+            ui.notify(t("rpt.soak_bad", err=str(exc)), type="negative")
+            return
+        except Exception:
+            report_state["soak"] = None
+            soak_label.text = ""
+            ui.notify(t("rpt.soak_bad", err="unreadable file"), type="negative")
+            return
+        report_state["soak"] = summary
+        soak_label.text = f"{e.name}: {summary.headline()}"
+        ui.notify(t("rpt.soak_loaded"), type="positive")
+
+    def clear_soak() -> None:
+        report_state["soak"] = None
+        soak_label.text = ""
 
     def do_import(e) -> None:
         """Stage a config file's values — never write them. The SAVE review

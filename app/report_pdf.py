@@ -403,14 +403,99 @@ def _events_table(pdf: _Report, events: Sequence[str]) -> None:
             row.cell(_event_detail(ev, a, p))
 
 
+def _soak_section(pdf: _Report, soak) -> None:
+    """Print a soak_csv.SoakSummary. The one thing this section must get
+    right is the reboot verdict: a scheduled-reset night footers as
+    "reboots=64", and printing that number without its explanation reads as
+    a cabinet fault to anyone who was not watching the run."""
+    n_trouble = min(len(soak.trouble), 15)
+    _ensure_room(pdf, 30 + n_trouble * 4.4)
+    _section(pdf, "Soak test")
+    pdf.font(8)
+    dur_h = soak.duration_s / 3600.0
+    span = "?"
+    if soak.started and soak.ended:
+        span = f"{soak.started:%Y-%m-%d %H:%M} - {soak.ended:%Y-%m-%d %H:%M}"
+    pdf.cell(0, 4.6,
+             f"{soak.filename or 'soak CSV'} · {span} ({dur_h:.1f} h) · "
+             f"{soak.module_count} modules · {soak.passes:,} passes · "
+             f"{soak.reads:,} reads",
+             new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 4.6,
+             f"fails {soak.fails} · watchdog resets {soak.watchdogs} · "
+             f"worst read {soak.worst_ms:,} ms · "
+             f"{soak.crossings:,} hub crossings (worst {soak.worst_cross_ms:,} ms) · "
+             f"link losses {soak.link_losses}",
+             new_x="LMARGIN", new_y="NEXT")
+
+    # The reboot verdict, with its colour matched to what it means.
+    if soak.reboots == 0:
+        pdf.cell(0, 4.6, "reboots 0 — no module restarted all run",
+                 new_x="LMARGIN", new_y="NEXT")
+    else:
+        causes = " · ".join(f"{c}: {n}" for c, n in
+                            sorted(soak.reboot_causes.items(),
+                                   key=lambda kv: -kv[1]))
+        if soak.unexplained_reboots == 0 and soak.mass_reboots:
+            pdf.cell(0, 4.6,
+                     f"reboots {soak.reboots} — ALL simultaneous at "
+                     f"{soak.mass_when:%H:%M} with watchdog counters "
+                     f"unchanged: the scheduled reset, not a fault "
+                     f"({causes})",
+                     new_x="LMARGIN", new_y="NEXT")
+        else:
+            pdf.set_text_color(*FAIL_RED)
+            pdf.cell(0, 4.6,
+                     f"reboots {soak.reboots} — "
+                     f"{soak.unexplained_reboots} NOT explained by a "
+                     f"scheduled reset ({causes})",
+                     new_x="LMARGIN", new_y="NEXT")
+            pdf.set_text_color(0)
+    if not soak.finished:
+        pdf.set_text_color(*FAIL_RED)
+        pdf.cell(0, 4.6,
+                 "run did not finish (no stop row — PC slept or lost power); "
+                 "totals above are the last heartbeat's and undercount the tail",
+                 new_x="LMARGIN", new_y="NEXT")
+        pdf.set_text_color(0)
+
+    if soak.trouble:
+        pdf.ln(1)
+        pdf.font(7.5)
+        fail_style = FontFace(color=FAIL_RED)
+        with pdf.table(col_widths=(12, 16, 22, 16),
+                       text_align=("CENTER", "CENTER", "CENTER", "CENTER"),
+                       width=70, **_table_kw()) as table:
+            _headings(table, ("ID", "Slow", "Worst ms", "No reply"))
+            for t in soak.trouble[:15]:
+                row = table.row()
+                row.cell(str(t.device_id))
+                row.cell(str(t.slow))
+                row.cell(f"{t.worst_slow_ms:,}" if t.slow else "—")
+                row.cell(str(t.no_reply),
+                         style=fail_style if t.no_reply else None)
+        if len(soak.trouble) > 15:
+            pdf.font(7.5)
+            pdf.cell(0, 4.2, f"… and {len(soak.trouble) - 15} more modules "
+                             f"with at least one slow row",
+                     new_x="LMARGIN", new_y="NEXT")
+        _legend(pdf, "a slow row is one read past the soak's slow_ms limit; "
+                     "the retry usually rescued it, so these cost time, not "
+                     "failures · no_reply means both attempts were lost")
+
+
+
 def build_report_pdf(*, app_version: str, generated: datetime,
                      info: dict, settings: dict,
                      cabinet_label: str, cabinet_count: int,
                      widths: Sequence[int], records: Sequence,
-                     hub_channel, events: Sequence[str] = ()) -> bytes:
+                     hub_channel, events: Sequence[str] = (),
+                     soak=None) -> bytes:
     """`records` are fw_survey.ModuleRecord; `hub_channel(id)` maps a slave
     ID to its RS485 hub channel (0 = wired straight); `events` are the
-    gateway's newest event-log lines (may be empty — older firmware)."""
+    gateway's newest event-log lines (may be empty — older firmware);
+    `soak` is a soak_csv.SoakSummary when the operator attached a soak CSV
+    to the report (None = no soak section)."""
     pdf = _Report()
     pdf.alias_nb_pages()
     pdf.add_page()
@@ -532,6 +617,10 @@ def build_report_pdf(*, app_version: str, generated: datetime,
                      "n/a = older firmware or no answer) · cleared by coil 510 "
                      "/ factory reset — boot count survives · Room °C and "
                      "Supply mA are live readings at survey time")
+
+    # ── soak — the overnight evidence, when the operator attached it ──────
+    if soak is not None:
+        _soak_section(pdf, soak)
 
     # ── the full settings dump, for the record ────────────────────────────
     _ensure_room(pdf, _settings_height(settings))

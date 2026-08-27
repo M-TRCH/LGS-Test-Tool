@@ -357,8 +357,13 @@ class _Runner:
         self.ops.write_reg(60, 1234)
         self.ops.sleep(0.1)
         rb = self._reg(60)
-        self._check(rb == 99, f"reg 60 = 1234 clamps (readback {rb}, OLED '99')",
-                    3, 60, "Display Number", rb, 99)
+        # fw >= v3.4.0 renders three digits and clamps at 999; earlier
+        # firmware clamps at 99. Ask the module which contract it carries so
+        # the same suite passes on a mixed bench.
+        fw = self._reg(1)
+        cap = 999 if (fw or 0) >= 30400 else 99
+        self._check(rb == cap, f"reg 60 = 1234 clamps (readback {rb}, OLED '{cap}')",
+                    3, 60, "Display Number", rb, cap)
         self.ops.sleep(1.2)
 
         self.ops.write_coil(1010, 0)
