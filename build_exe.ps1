@@ -84,9 +84,12 @@ foreach ($blob in $blobs.Keys) {
 if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: nicegui-pack failed"; exit 1 }
 
 if (Test-Path "dist\$name.exe") {
+    # The server-install script travels with the exe so a site visit has it.
+    Copy-Item "install-autorun.ps1" "dist\" -Force
     $size = [math]::Round((Get-Item "dist\$name.exe").Length / 1MB, 1)
     Write-Host ""
     Write-Host "OK: dist\$name.exe ($size MB)"
+    Write-Host "    dist\install-autorun.ps1 (server autorun installer)"
     Write-Host "Deploy: copy the exe anywhere and double-click. Data (config +"
     Write-Host "CSV exports) is written to a 'data' folder next to the exe."
 } else {

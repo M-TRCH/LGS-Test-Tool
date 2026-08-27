@@ -53,6 +53,10 @@ class AppConfig:
     # site's server, where the tool is left running, turns it on once.
     # 123 is the standard port; w32time may hold it on Windows, in which
     # case pick another and set the gateway's net.ntp_port to match.
+    # Web UI port. Overridden by --port / LGS_TT_PORT (see run.py) — the
+    # server install needs this because 8080 is taken there.
+    web_port: int = 8080
+
     ntp_enabled: bool = False
     ntp_port: int = 123
 

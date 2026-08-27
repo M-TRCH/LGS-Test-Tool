@@ -4,6 +4,7 @@ Run with:  .venv\\Scripts\\python -m app.main   then open http://localhost:8080
 """
 import asyncio
 import os
+import socket
 
 from nicegui import app, ui
 
@@ -177,9 +178,33 @@ def run() -> None:
     """Start the server (also the entry point for the packaged .exe)."""
     print(f"LGS Test Tool v{APP_VERSION}")
     show = os.environ.get("LGS_TT_DOCKER") != "1" and os.environ.get("LGS_TT_NO_BROWSER") != "1"
+    # Port precedence: --port / LGS_TT_PORT (run.py stashes the flag there) >
+    # config web_port > 8080. The flag exists because a config-only port is
+    # self-referential — a bad value locks you out of the UI that edits it.
+    try:
+        port = int(os.environ.get("LGS_TT_PORT", "").strip() or cfg.web_port)
+    except ValueError:
+        port = cfg.web_port
+    # Probe the port BEFORE handing it to uvicorn: uvicorn logs a bind
+    # failure itself and exits 3 without ever raising to this frame, so a
+    # try/except around ui.run() can never say anything useful. A taken
+    # port here is some OTHER program (a second copy of the tool never gets
+    # this far — run.py's mutex turns it away first). Exit nonzero so a
+    # scheduled task's restart policy retries, which also rides out a boot
+    # race where the port frees up a moment later.
+    probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        probe.bind(("0.0.0.0", port))
+    except OSError as exc:
+        applog.note(f"web port {port} unavailable: {exc}")
+        print(f"Cannot listen on port {port} — another program holds it. "
+              f"Pass --port N or edit web_port in data/config.json.")
+        raise SystemExit(2)
+    finally:
+        probe.close()
     # reload=False is mandatory: the auto-reloader spawns a second process, which
     # would mean a second Modbus worker fighting over the COM port / TCP slot.
-    ui.run(host="0.0.0.0", port=8080, title=f"LGS Test Tool v{APP_VERSION}",
+    ui.run(host="0.0.0.0", port=port, title=f"LGS Test Tool v{APP_VERSION}",
            reload=False, show=show)
 
 

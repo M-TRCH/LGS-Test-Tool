@@ -141,6 +141,46 @@ Notes:
   match. Needs gateway firmware 1.11.0+.
 - Rebuild after any code change; the exe is a frozen snapshot.
 
+## Server install (autorun at boot)
+
+For the hospital's server PC, where the tool must come up after every reboot
+with nobody logged in:
+
+1. Copy the exe **and `install-autorun.ps1`** (both in `dist\` after a build)
+   to a **local** folder, e.g. `C:\LGS-Test-Tool\` — never OneDrive or a
+   network share (Files-On-Demand can dehydrate the exe before boot; the
+   installer refuses such paths).
+2. In an **admin** PowerShell:
+
+   ```powershell
+   cd C:\LGS-Test-Tool
+   .\install-autorun.ps1 -Port 8090            # pick a free port; 8080 default
+   Start-ScheduledTask -TaskName 'LGS Test Tool'   # start now, no reboot needed
+   ```
+
+   Add `-Firewall` to open the port for other PCs on the LAN; `-Remove`
+   uninstalls the task (and the firewall rule) again.
+
+What the task does: runs the exe as SYSTEM at boot + 60 s, headless
+(`--port <N> --no-browser`), restarts it up to 3 times on failure, never
+kills it on a time limit. The UI is then at `http://localhost:<port>` (or
+`http://<server-ip>:<port>` from the LAN).
+
+Notes for IT:
+
+- The tool refuses to run twice (named mutex) — double-clicking the exe while
+  the task runs just opens the browser to the running copy.
+- If the port is taken by another program the tool exits with code 2 and the
+  task retries; pick the port with `-Port` (stored nowhere else — the task's
+  command line is the truth).
+- Network use: outbound TCP to the gateway (default `192.168.0.202:502`);
+  inbound TCP `<port>` for the web UI; inbound UDP 123 only if the built-in
+  NTP server is enabled in the tool.
+- Set the machine's power plan to never sleep. The tool holds a keep-awake
+  request while a soak or the NTP server runs, but that vanishes if the
+  process dies — the power plan is the real control.
+- Config, logs, and CSV exports live in `data\` next to the exe.
+
 ## Run (Docker — TCP only)
 
 ```bash
