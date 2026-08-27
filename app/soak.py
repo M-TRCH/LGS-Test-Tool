@@ -122,15 +122,28 @@ def _totals(tick: SoakTick) -> str:
             f"elapsed_s={tick.elapsed_s:.0f}")
 
 
-def _counters(ops: SoakOps, device_id: int, want_iwdg: bool):
+def _counters(ops: SoakOps, device_id: int, want_iwdg: bool,
+              on_read: Optional[Callable[[int, float], None]] = None):
     """(boots, iwdg, reset_cause) for one module.
 
     iwdg is None on firmware without the v2 stats block. reset_cause is the
     module's own reg-8 flags for the boot it is currently running, which it
     latches once and clears, so it names the cause of the boot rather than
     being inferred from a counter moving.
+
+    `on_read(addr, took_ms)` fires for every read this makes. The main pass
+    has always timed its own reads; these two did not, and that gap hid the
+    one fact that would have explained modules 12/13. They lose the FIRST
+    attempt of the ordinary read(0, 3) four passes out of five -- 3,578 ms
+    is the 3.5 s client timeout plus a retry that always succeeds -- and the
+    one pass they behave on is the pass right after this function ran. So
+    the read shape, not the cable, is the variable, and the reads that
+    "fix" them were the only ones nobody was measuring.
     """
+    t = time.monotonic()
     res = ops.read_regs(device_id, REG_IDENTITY, 12)
+    if on_read:
+        on_read(REG_IDENTITY, (time.monotonic() - t) * 1000.0)
     values = res.value if isinstance(res.value, (list, tuple)) else None
     if not (res.ok and values and len(values) >= 12):
         return None
@@ -138,7 +151,10 @@ def _counters(ops: SoakOps, device_id: int, want_iwdg: bool):
     cause = int(values[REG_RESET_CAUSE])
     iwdg = None
     if want_iwdg and int(values[1]) >= FW_MIN_STATS:
+        t = time.monotonic()
         r2 = ops.read_regs(device_id, REG_STATS2_IWDG, 1)
+        if on_read:
+            on_read(REG_STATS2_IWDG, (time.monotonic() - t) * 1000.0)
         # A one-register read comes back as a bare int, not a list of one.
         # Testing for a list here made every iwdg reading None, so the
         # watchdog comparison below could never fire and a whole night of
@@ -288,7 +304,29 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
             for device_id in ids:
                 if cancel.is_set():
                     break
-                now = _counters(ops, device_id, True)
+                # This loop walks the same ids in the same order, so it
+                # crosses the hub exactly as the main pass does and needs the
+                # same allowance -- prev_channel carries over deliberately.
+                channel = hub_channel(device_id)
+                counter_crossing = (channel != 0
+                                    and (prev_channel is None
+                                         or channel != prev_channel))
+                prev_channel = channel
+
+                # Only the FIRST read of the pair pays the channel settle;
+                # the second one is already on a woken channel, so it is held
+                # to the ordinary limit. A one-slot list because a plain flag
+                # rebound inside the closure would reset on every call.
+                cross_left = [counter_crossing]
+
+                def timed(addr: int, took_ms: float, _dev=device_id) -> None:
+                    crossed, cross_left[0] = cross_left[0], False
+                    limit = cfg.crossing_slow_ms if crossed else cfg.slow_ms
+                    if took_ms >= limit:
+                        note(_dev, "slow", f"{took_ms:.0f} ms (counter reg {addr}"
+                                           + (" hub crossing" if crossed else "") + ")")
+
+                now = _counters(ops, device_id, True, timed)
                 was = baseline.get(device_id)
                 if now is None:
                     ops.sleep(INTER_TXN_S)
