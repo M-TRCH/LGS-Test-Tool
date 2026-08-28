@@ -358,7 +358,11 @@ def _event_detail(ev: str, a: int, p: int) -> str:
     if ev == "boot":
         return f"cause: {_RESET_NAMES.get(a, a)}"
     if ev == "clock_set":
-        src = "NTP" if a == 2 else "Test Tool"
+        # aux mirrors the gateway's TimeSource: 1 tool, 2 NTP, 3 restored
+        # from the RTC after a reset (gw fw >= 1.12.2). The restore is the
+        # forensic case — "who set the clock at 03:12?" must not answer
+        # "Test Tool" when nobody was there.
+        src = {2: "NTP", 3: "restored from RTC after a reset"}.get(a, "Test Tool")
         jump = f", jumped {p} s" if p else ""
         return f"set by {src}{jump}"
     if ev == "link_up":
