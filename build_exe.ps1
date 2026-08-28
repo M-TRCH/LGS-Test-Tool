@@ -85,7 +85,10 @@ if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: nicegui-pack failed"; exit 1 }
 
 if (Test-Path "dist\$name.exe") {
     # The server-install script travels with the exe so a site visit has it.
+    # The .cmd wrapper exists because stock Windows refuses .ps1 files
+    # (ExecutionPolicy=Restricted) -- it bypasses per-invocation only.
     Copy-Item "install-autorun.ps1" "dist\" -Force
+    Copy-Item "install-autorun.cmd" "dist\" -Force
     $size = [math]::Round((Get-Item "dist\$name.exe").Length / 1MB, 1)
     Write-Host ""
     Write-Host "OK: dist\$name.exe ($size MB)"

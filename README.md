@@ -154,9 +154,15 @@ with nobody logged in:
 
    ```powershell
    cd C:\LGS-Test-Tool
-   .\install-autorun.ps1 -Port 8090            # pick a free port; 8080 default
+   .\install-autorun.cmd -Port 8090            # pick a free port; 8080 default
    Start-ScheduledTask -TaskName 'LGS Test Tool'   # start now, no reboot needed
    ```
+
+   Use the **`.cmd`**, not the `.ps1` directly: stock Windows ships with
+   `ExecutionPolicy=Restricted` and refuses every `.ps1` ("running scripts is
+   disabled on this system"). The wrapper bypasses the policy for that one
+   invocation without changing any system setting; equivalently,
+   `powershell -NoProfile -ExecutionPolicy Bypass -File .\install-autorun.ps1 -Port 8090`.
 
    Add `-Firewall` to open the port for other PCs on the LAN; `-Remove`
    uninstalls the task (and the firewall rule) again. The installer also
