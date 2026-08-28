@@ -16,6 +16,44 @@ class Release:
 
 
 RELEASES: tuple = (
+    Release("1.7.0", "2026-08-28", (
+        "Firmware updates over the bus stopped losing chunks: broadcasts now "
+        "leave a 100 ms quiet gap for the gateway's forwarding jitter, and a "
+        "whole 64-module cabinet updates in about 19 minutes with no repair "
+        "rounds. The Firmware tab walks the RS485 hub one channel at a time "
+        "by itself, using the wiring map read from the gateway, and a module "
+        "that drops out of a session is named with its own error code while "
+        "everyone who finished is still updated.",
+        "The site report can now carry a soak run: attach the soak's CSV on "
+        "the Gateway page and the PDF gains a Soak section with the verdict "
+        "worked out — a whole-cabinet reboot at the scheduled reset time is "
+        "labelled as such (only when the watchdog counters held still), and "
+        "a run that did not finish says so.",
+        "Server install: install-autorun.ps1 registers the tool as a "
+        "scheduled task that starts at boot with nobody logged in, hardens "
+        "the folder's permissions, and the tool itself now refuses to run "
+        "twice and takes --port for machines where 8080 is taken.",
+        "Bundled firmware refreshed: module v3.4.0 (display shows 0-999) and "
+        "gateway v1.12.2 (clock survives a restart), each with the previous "
+        "release kept for rollback.",
+    )),
+    Release("1.6.1", "2026-08-18", (
+        "The link no longer dies quietly: if the gateway connection drops "
+        "mid-session the tool reconnects by itself and says so, instead of "
+        "reporting every module as absent until someone notices.",
+    )),
+    Release("1.6.0", "2026-08-14", (
+        "The Gateway tab works over the network: read and change the "
+        "gateway's settings, pull its event log, and update its firmware "
+        "through the same TCP connection as everything else — no USB cable "
+        "needed at the cabinet.",
+        "A Soak tab: leave the whole cabinet polling for hours or days, "
+        "with every anomaly streamed to a CSV, heartbeats that prove the "
+        "run was alive, and the PC kept awake while it matters.",
+        "A built-in NTP server, so the gateway's clock can sync from the "
+        "site PC without internet access.",
+        "The site report gained the gateway's recent events and a restyle.",
+    )),
     Release("1.5.0", "2026-08-11", (
         "The cabinet type is picked once, in the header, and remembered — "
         "LGS 80 / 64 / 56 / 40, SMT type 12, or a Custom shape you describe "

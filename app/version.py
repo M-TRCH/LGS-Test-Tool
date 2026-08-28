@@ -6,4 +6,4 @@ packaged exe filename, so users can tell at a glance which build they run.
 Bump once per actual release (when an exe is built and handed over) — not per
 commit, and not while iterating during development.
 """
-APP_VERSION = "1.6.1"
+APP_VERSION = "1.7.0"

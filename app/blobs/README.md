@@ -13,48 +13,37 @@ To add a newer release: copy the asset in, add an entry to
 `app/firmware_bundle.py` (newest first — the first entry of a kind is the one
 its tab offers), and add the hash to `build_exe.ps1`.
 
-## gateway_opta_v1.10.0.bin
+## gateway_opta_v1.12.2.bin
 
-`LGS-Gateway-Opta-v1.10.0.bin` from LGS-Gateway-Arduino-Opta release v1.10.0.
-Offered by the Gateway tab for UPDATE FIRMWARE, and as the firmware restored
-at the end of PREPARE A NEW OPTA. Upgrading from ANY earlier version wipes
-the stored settings (schema change) — export the config first, flash, import.
+`gateway_opta_v1.12.2.bin` from LGS-Gateway-Arduino-Opta release v1.12.2.
+Offered by the Gateway tab for UPDATE FIRMWARE and restored at the end of
+PREPARE A NEW OPTA. Schema unchanged from v1.12.0 — updating from v1.12.0
+or v1.12.1 keeps the stored settings.
 
-## module_g070_v3.2.0_factory.bin
+## module_g070_v3.4.0_factory.bin
 
-`firmware_stm32g070_v3.2.0_factory_2026-08-06.bin` from LGS-Standard-Module
-release v3.2.0 — bootloader + application, written over ST-Link. This is the
-one that carries the commissioning block the New Module tab patches an ID
-into; the OTA image has no such block and the tab rejects it on sight.
+`firmware_stm32g070_v3.4.0_factory_2026-08-28.bin` from LGS-Standard-Module
+release v3.4.0 — bootloader + application, written over ST-Link. Carries the
+commissioning block the New Module tab patches an ID into; the OTA image has
+no such block and the tab rejects it on sight.
 
-## module_g070_v3.2.0_ota.bin
+## module_g070_v3.4.0_ota.bin
 
-`firmware_stm32g070_v3.2.0_2026-08-06.bin` from the same release —
-application only, linked at 0x1000, for the Firmware (OTA) tab. Sending a
-factory image over the air would write a bootloader into the application
-slot, so the two are separate kinds and each tab only ever sees its own.
+`firmware_stm32g070_v3.4.0_2026-08-28.bin` from LGS-Standard-Module release
+v3.4.0 — the application alone, streamed over the bus by the Firmware tab.
+Display renders 0-999 (reg 60); folds in the v3.3.1/v3.3.2 hardening.
+
+## gateway_opta_v1.12.0.bin
+
+Previous gateway release, kept for rollback. Upgrading from any version
+BEFORE v1.12.0 wipes the stored settings (schema change) — export first.
+
+## module_g070_v3.3.0_factory.bin / module_g070_v3.3.0_ota.bin
+
+Previous module release, kept for rollback. OTA between v3.3.0 and v3.4.0
+is safe in both directions (no schema change).
 
 ## qspiformat_opta.bin
 
-Arduino's `QSPIFormat` example (mbed core, `libraries/STM32H747_System/
-examples/QSPIFormat`), built for `board = opta`, unmodified.
-
-A factory-fresh Opta has no partition table on its QSPI flash, so the gateway
-firmware finds no KVStore and reports `cfg.store=unavailable` /
-`cfg.why=kvstore partition 3 missing` — settings cannot be saved at all. This
-image creates the partitions once: WiFi 1 MB, OTA 5 MB, **KVStore 1 MB**
-(the one the gateway needs), user data 7 MB.
-
-The gateway firmware deliberately never creates them itself: the same QSPI
-holds the WiFi firmware and the OTA area, and a partition table this tool
-wrote by guessing would be a good way to destroy a working board.
-
-Rebuild it the same way if the core is ever updated:
-
-    pio project init --board opta            # in an empty directory
-    cp <core>/libraries/STM32H747_System/examples/QSPIFormat/*.ino src/main.ino
-    cp <core>/libraries/STM32H747_System/examples/QSPIFormat/*.h  src/
-    pio run
-
-Keep the build path short — the mbed core's object paths overflow Windows'
-260-character limit from anywhere deep.
+Arduino's QSPIFormat sketch, needed once when preparing a factory-fresh
+Opta whose QSPI has never been partitioned.
