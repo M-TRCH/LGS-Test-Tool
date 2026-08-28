@@ -45,7 +45,7 @@ class Device:
 class StubBus:
     """OtaOps over a handful of scripted devices on one 'channel'."""
 
-    def __init__(self, devices, hub=False):
+    def __init__(self, devices, hub=False, gateway_map=None):
         self.devs = {d.uid: d for d in devices}
         self.meta = [0] * 5
         self.resent: list = []               # chunk idx re-sent after the stream
@@ -56,6 +56,7 @@ class StubBus:
         # passed a whole-cabinet OTA that cannot work on the bench.
         self.hub = hub
         self.parked = None
+        self.gateway_map = gateway_map       # what the gateway would report
 
     def _reachable(self):
         if not self.hub:
@@ -121,23 +122,30 @@ class StubBus:
             d.fw, d.state = 30400, 0
         return Reply()
 
+    def hub_map(self):
+        return self.gateway_map              # None = "cannot ask", as over RTU
+
     def sleep(self, seconds):
         pass
 
 
-def run(devices, hub=False):
-    bus = StubBus(devices, hub=hub)
+def run(devices, hub=False, gateway_map=None):
+    bus = StubBus(devices, hub=hub, gateway_map=gateway_map)
     lines: list = []
+
+    dones: list = []
 
     def emit(ev):
         if isinstance(ev, ota.Line):
             lines.append(ev.text)
+        elif isinstance(ev, ota.Done):
+            dones.append(ev)
 
     image = bytes(range(256)) * 8            # 2,048 B -> 16 chunks
     rep = ota.run_ota(bus, ota.OtaConfig(ids=tuple(d.uid for d in devices),
                                          image=image),
                       emit, threading.Event())
-    return bus, rep, lines
+    return bus, rep, lines, dones
 
 
 def main() -> int:
@@ -149,12 +157,12 @@ def main() -> int:
         failures += not cond
 
     # 1. clean run: everyone updates
-    bus, rep, _ = run([Device(11), Device(12)])
+    bus, rep, _, _d = run([Device(11), Device(12)])
     check("clean: both updated", rep.ok and sorted(rep.updated) == [11, 12])
 
     # 2. one device drops after the stream; the other missed 3 chunks
     a, b = Device(11, miss_first=3), Device(12, drop_after_stream=True)
-    bus, rep, lines = run([a, b])
+    bus, rep, lines, dones = run([a, b])
     check("drop: survivor updated", rep.ok and rep.updated == [11],
           f"ok={rep.ok} updated={rep.updated}")
     check("drop: survivor really runs new fw", a.fw == 30400 and b.fw == 30302)
@@ -168,7 +176,7 @@ def main() -> int:
           f"resent={sorted(set(bus.resent))}")
 
     # 3. everyone drops: the run says so and fails
-    bus, rep, lines = run([Device(11, drop_after_stream=True),
+    bus, rep, lines, dones = run([Device(11, drop_after_stream=True),
                            Device(12, drop_after_stream=True)])
     check("all-drop: run fails", not rep.ok)
     check("all-drop: no chunks wasted on the deaf", bus.resent == [],
@@ -177,7 +185,7 @@ def main() -> int:
     # 4. two hub channels: one session per channel, or nobody on the far
     #    channel ever hears the ENTER broadcast
     devs = [Device(11), Device(12), Device(21), Device(22)]
-    bus, rep, lines = run(devs, hub=True)
+    bus, rep, lines, dones = run(devs, hub=True)
     check("hub: every device on both channels updated",
           rep.ok and sorted(rep.updated) == [11, 12, 21, 22],
           f"ok={rep.ok} updated={sorted(rep.updated)}")
@@ -186,6 +194,27 @@ def main() -> int:
           str({d.uid: d.fw for d in devs}))
     check("hub: the run names each channel it visits",
           sum("hub channel" in l for l in lines) == 2)
+    # Exactly one Done for the whole run. A Done per channel would end the
+    # Firmware tab's job after the first one and silently skip the rest of
+    # the cabinet -- which is what happened on the bench before this.
+    check("hub: exactly one Done for the whole run",
+          len(dones) == 1 and dones[0].ok,
+          f"{len(dones)} Done event(s)")
+
+    # 5. the gateway's map outranks the tool's. lgs_map's default puts rows
+    #    1 and 2 on different channels; make the gateway say they SHARE
+    #    channel 1. The device set is identical either way, so only the
+    #    session count can tell which map was actually used.
+    devs = [Device(11), Device(21)]
+    bus, rep, lines_out, dones = run(devs, hub=False, gateway_map="1,1,3,4,5,6,7,8,1,2")
+    check("gateway map wins: one shared channel, so one session",
+          rep.ok and sum("hub channel" in l for l in lines_out) == 0,
+          str([l for l in lines_out if 'channel' in l]))
+    check("gateway map wins: both devices updated",
+          all(d.fw == 30400 for d in devs))
+    check("a map disagreement is announced",
+          any("hub map from the gateway" in l for l in lines_out),
+          str([l for l in lines_out if 'hub map' in l]))
 
     print(f"\n{'ALL PASS' if not failures else f'{failures} FAILURES'}")
     return 1 if failures else 0

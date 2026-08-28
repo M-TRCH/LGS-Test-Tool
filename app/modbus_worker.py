@@ -1493,6 +1493,27 @@ class _OtaOps:
     def write_coil(self, device_id: int, addr: int, value: int) -> TxnResult:
         return self._w._do_write_coil(addr, bool(value), device_id, "ota", allow_ota=True)
 
+    def hub_map(self) -> Optional[str]:
+        """The gateway's own `bus.hub_map`, or None when it cannot be asked.
+
+        The gateway is the authority on which row hangs off which channel;
+        the tool's copy is only as fresh as the last visit to the Gateway
+        tab. Grouping an OTA by a stale map aims the ENTER broadcast at the
+        wrong channel and throws the run away, so ask the authority first.
+
+        Only over TCP, where the console is in-band and costs one round
+        trip. Over RTU the console has to drop the Modbus client and reopen
+        the COM port, which is not a thing to do in the middle of an OTA
+        job — there the caller keeps its own map and is told so.
+        """
+        w = self._w
+        if not isinstance(w._settings, TcpSettings) or not w._connected:
+            return None
+        res = w._do_gw_session("", lambda link: link.snapshot())
+        if isinstance(res, Exception) or not getattr(res, "ok", False):
+            return None
+        return res.settings.get("bus.hub_map") or None
+
     def sleep(self, seconds: float) -> None:
         end = time.monotonic() + seconds
         while time.monotonic() < end:

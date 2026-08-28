@@ -152,12 +152,39 @@ def run_ota(ops: OtaOps, cfg: OtaConfig, emit: Callable,
     opened by a unicast read that parks the hub there. Callers keep passing
     the full list; the shape of the wiring stays in here.
     """
-    from .lgs_map import hub_channel
+    from .lgs_map import format_hub_map, hub_channel, parse_hub_map
 
     ids = list(cfg.ids)
+
+    # Which map to group by. `ops.hub_map()` is optional (scripts and the
+    # self-test do not implement it); when it answers, it is the gateway's
+    # own value and outranks the tool's copy, which goes stale until someone
+    # opens the Gateway tab.
+    channel_of = hub_channel
+    ask = getattr(ops, "hub_map", None)
+    if ask is not None:
+        try:
+            text = ask()
+        except Exception:                                  # noqa: BLE001
+            text = None
+        if text:
+            try:
+                gw = parse_hub_map(text)
+            except ValueError:
+                gw = None
+            if gw:
+                if text != format_hub_map():
+                    emit(Line(f"hub map from the gateway: {text} — the tool "
+                              f"had {format_hub_map()}; grouping by the "
+                              f"gateway", "warn"))
+
+                def channel_of(uid: int, _m=gw) -> int:    # noqa: F811
+                    row = uid // 10
+                    return _m[row - 1] if 1 <= row <= len(_m) else 0
+
     groups: dict = {}
     for uid in ids:
-        groups.setdefault(hub_channel(uid), []).append(uid)
+        groups.setdefault(channel_of(uid), []).append(uid)
     if len(groups) <= 1:
         return _run_one_channel(ops, cfg, emit, cancel)
 
@@ -169,11 +196,25 @@ def run_ota(ops: OtaOps, cfg: OtaConfig, emit: Callable,
         merged.lines.append(text)
         emit(Line(text))
         ops.read_regs(group[0], 0, 3)          # park the hub on this channel
+
+        # A sub-session's Done must NOT reach the caller: Done means "the run
+        # is over", and the Firmware tab (and any script) stops listening at
+        # the first one — which would end the job after channel 1 and leave
+        # the rest of the cabinet untouched. Fold it into a line instead; the
+        # run emits exactly one Done, at the end, below.
+        def sub_emit(ev, _sink=merged) -> None:
+            if isinstance(ev, Done):
+                line = f"  channel {ch}: {ev.summary}"
+                _sink.lines.append(line)
+                emit(Line(line, "ok" if ev.ok else "err"))
+                return
+            emit(ev)
+
         sub = _run_one_channel(ops, OtaConfig(ids=tuple(group), image=cfg.image,
                                               filename=cfg.filename,
                                               repair_rounds=cfg.repair_rounds,
                                               broadcast_apply=cfg.broadcast_apply),
-                               emit, cancel)
+                               sub_emit, cancel)
         merged.lines.extend(sub.lines)
         merged.updated.extend(sub.updated)
         ok_all = ok_all and sub.ok
