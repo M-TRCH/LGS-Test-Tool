@@ -139,6 +139,56 @@ def describe_state(st: Optional[dict]) -> str:
 
 def run_ota(ops: OtaOps, cfg: OtaConfig, emit: Callable,
             cancel: threading.Event) -> OtaReport:
+    """Update every id in cfg.ids, one RS485 hub channel at a time.
+
+    A broadcast carries slave id 0, which the gateway maps to row 0 and
+    treats as "not behind the hub" — so it goes out on whichever channel the
+    hub is currently parked on and reaches nobody else. Handing a whole
+    cabinet to one session therefore fails at step 3 with "device 21 did not
+    enter OTA mode", which says nothing about the hub and sent us hunting
+    the wrong fault for a day (2026-08-27).
+
+    So the ids are grouped by channel and each group gets its own session,
+    opened by a unicast read that parks the hub there. Callers keep passing
+    the full list; the shape of the wiring stays in here.
+    """
+    from .lgs_map import hub_channel
+
+    ids = list(cfg.ids)
+    groups: dict = {}
+    for uid in ids:
+        groups.setdefault(hub_channel(uid), []).append(uid)
+    if len(groups) <= 1:
+        return _run_one_channel(ops, cfg, emit, cancel)
+
+    merged = OtaReport()
+    ok_all = True
+    for ch in sorted(groups):
+        group = groups[ch]
+        text = f"── hub channel {ch}: {len(group)} device(s) {group} ──"
+        merged.lines.append(text)
+        emit(Line(text))
+        ops.read_regs(group[0], 0, 3)          # park the hub on this channel
+        sub = _run_one_channel(ops, OtaConfig(ids=tuple(group), image=cfg.image,
+                                              filename=cfg.filename,
+                                              repair_rounds=cfg.repair_rounds,
+                                              broadcast_apply=cfg.broadcast_apply),
+                               emit, cancel)
+        merged.lines.extend(sub.lines)
+        merged.updated.extend(sub.updated)
+        ok_all = ok_all and sub.ok
+        if cancel.is_set():
+            break
+    merged.ok = ok_all
+    merged.summary = (f"{len(merged.updated)}/{len(ids)} device(s) updated "
+                      f"across {len(groups)} hub channel(s)")
+    emit(Done(merged.ok, merged.summary))
+    return merged
+
+
+
+def _run_one_channel(ops: OtaOps, cfg: OtaConfig, emit: Callable,
+                     cancel: threading.Event) -> OtaReport:
     report = OtaReport()
 
     def say(text: str, level: str = "info") -> None:

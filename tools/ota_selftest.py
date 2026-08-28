@@ -45,15 +45,27 @@ class Device:
 class StubBus:
     """OtaOps over a handful of scripted devices on one 'channel'."""
 
-    def __init__(self, devices):
+    def __init__(self, devices, hub=False):
         self.devs = {d.uid: d for d in devices}
         self.meta = [0] * 5
         self.resent: list = []               # chunk idx re-sent after the stream
         self.streaming_done = False
+        # hub=True behaves like the real gateway: a broadcast (slave id 0) is
+        # NOT a channel switch, so it only reaches whichever channel a unicast
+        # last parked the hub on. Without modelling that, the stub cheerfully
+        # passed a whole-cabinet OTA that cannot work on the bench.
+        self.hub = hub
+        self.parked = None
+
+    def _reachable(self):
+        if not self.hub:
+            return list(self.devs.values())
+        return [d for d in self.devs.values() if d.uid // 10 == self.parked]
 
     # ── OtaOps ─────────────────────────────────────────────────────────
     def read_regs(self, device_id, addr, count):
         d = self.devs[device_id]
+        self.parked = device_id // 10        # a unicast parks the hub
         if addr == 0:
             return Reply([20, d.fw, 510][:count])
         if addr == 1:
@@ -74,7 +86,7 @@ class StubBus:
             idx = values[0]
             if self.streaming_done:
                 self.resent.append(idx)
-            for d in self.devs.values():
+            for d in self._reachable():
                 if d.state != 1:
                     continue                  # dropped devices hear nothing
                 d.streamed += 1
@@ -85,13 +97,13 @@ class StubBus:
             # end of the first stream = the frame carrying the last index
             if not self.streaming_done and idx == self.meta[4] - 1:
                 self.streaming_done = True
-                for d in self.devs.values():
+                for d in self._reachable():
                     if d.drop_after_stream and d.state == 1:
                         d.state, d.err = 3, 4         # failed: session timeout
         return Reply()
 
     def bcast_coil(self, addr):
-        for d in self.devs.values():
+        for d in self._reachable():
             if addr == ota.COIL_ENTER:
                 d.state, d.err = 1, 0
                 d.chunks.clear()
@@ -113,8 +125,8 @@ class StubBus:
         pass
 
 
-def run(devices):
-    bus = StubBus(devices)
+def run(devices, hub=False):
+    bus = StubBus(devices, hub=hub)
     lines: list = []
 
     def emit(ev):
@@ -161,6 +173,19 @@ def main() -> int:
     check("all-drop: run fails", not rep.ok)
     check("all-drop: no chunks wasted on the deaf", bus.resent == [],
           f"resent={bus.resent}")
+
+    # 4. two hub channels: one session per channel, or nobody on the far
+    #    channel ever hears the ENTER broadcast
+    devs = [Device(11), Device(12), Device(21), Device(22)]
+    bus, rep, lines = run(devs, hub=True)
+    check("hub: every device on both channels updated",
+          rep.ok and sorted(rep.updated) == [11, 12, 21, 22],
+          f"ok={rep.ok} updated={sorted(rep.updated)}")
+    check("hub: all four really run the new fw",
+          all(d.fw == 30400 for d in devs),
+          str({d.uid: d.fw for d in devs}))
+    check("hub: the run names each channel it visits",
+          sum("hub channel" in l for l in lines) == 2)
 
     print(f"\n{'ALL PASS' if not failures else f'{failures} FAILURES'}")
     return 1 if failures else 0

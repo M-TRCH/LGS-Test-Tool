@@ -696,19 +696,28 @@ class ModbusWorker:
             self._sweep_running = False
 
     # ── broadcast (device id 0, no reply expected) ─────────────────────────
-    def _broadcast_wire_time(self, kind: str, payload) -> float:
-        """How long the frame occupies the RS485 line, in seconds.
+    # Idle window held open AFTER the frame's own wire time. Modbus RTU only
+    # asks for 3.5 character times (3.6 ms at 9600), and that is not what this
+    # is for: the gateway forwards TCP to RS485 on its own loop, so its start
+    # of transmission jitters by tens of milliseconds. Pace by wire time alone
+    # and the next frame lands while the bridge is still busy, gets appended
+    # with no delimiting gap, and both frames die on CRC.
+    #
+    # Measured on the 64-module cabinet, 470-chunk OTA streams to three
+    # modules at once, chunks lost out of 470:
+    #     ~60 ms idle -> 6/107/70, then 5/27/29   (and two devices hit their
+    #                                              30 s session timeout, which
+    #                                              is what "deaf" looked like)
+    #     ~85 ms idle -> 0/0/0
+    # 100 ms is that working figure with margin. It costs ~15% on a stream and
+    # buys back far more by removing repair rounds entirely.
+    BROADCAST_IDLE_S = 0.100
 
-        A broadcast gets no reply, so nothing paces the sender: over USB the
-        write returns immediately while the bus (or the Opta bridge's queue)
-        is still busy. Without this wait the next frame is appended to the
-        previous one in the bridge's buffer, the 10 ms gap that delimits a
-        frame never appears, and the merged bytes fail CRC and are dropped —
-        which is exactly how an OTA session starves and times out.
-        """
+    def _broadcast_wire_time(self, kind: str, payload) -> float:
+        """Seconds to hold the line quiet after a broadcast frame."""
         nbytes = (9 + len(payload) * 2) if kind == "regs" else 8
         baud = self._settings.baud if isinstance(self._settings, RtuSettings) else RS485_BUS_BAUD
-        return nbytes * 10.0 / max(1, baud)
+        return nbytes * 10.0 / max(1, baud) + self.BROADCAST_IDLE_S
 
     def _do_broadcast(self, kind: str, addr: int, payload, source: str = "ota",
                       log: bool = True) -> TxnResult:
