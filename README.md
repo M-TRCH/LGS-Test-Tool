@@ -159,7 +159,11 @@ with nobody logged in:
    ```
 
    Add `-Firewall` to open the port for other PCs on the LAN; `-Remove`
-   uninstalls the task (and the firewall rule) again.
+   uninstalls the task (and the firewall rule) again. The installer also
+   hardens the folder's ACL (admins+SYSTEM write, users read) — on a stock
+   Windows install anything under `C:\` inherits Modify for Authenticated
+   Users, and a SYSTEM task must not run a user-replaceable exe. Pass
+   `-SkipAclFix` to keep the ACL as-is (then `-Force` to accept the risk).
 
 What the task does: runs the exe as SYSTEM at boot + 60 s, headless
 (`--port <N> --no-browser`), restarts it up to 3 times on failure, never

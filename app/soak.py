@@ -131,7 +131,7 @@ def _counters(ops: SoakOps, device_id: int, want_iwdg: bool,
     latches once and clears, so it names the cause of the boot rather than
     being inferred from a counter moving.
 
-    `on_read(addr, took_ms)` fires for every read this makes. The main pass
+    `on_read(addr, took_ms, ok)` fires for every read this makes. The main pass
     has always timed its own reads; these two did not, and that gap hid the
     one fact that would have explained modules 12/13. They lose the FIRST
     attempt of the ordinary read(0, 3) four passes out of five -- 3,578 ms
@@ -143,7 +143,7 @@ def _counters(ops: SoakOps, device_id: int, want_iwdg: bool,
     t = time.monotonic()
     res = ops.read_regs(device_id, REG_IDENTITY, 12)
     if on_read:
-        on_read(REG_IDENTITY, (time.monotonic() - t) * 1000.0)
+        on_read(REG_IDENTITY, (time.monotonic() - t) * 1000.0, res.ok)
     values = res.value if isinstance(res.value, (list, tuple)) else None
     if not (res.ok and values and len(values) >= 12):
         return None
@@ -154,7 +154,7 @@ def _counters(ops: SoakOps, device_id: int, want_iwdg: bool,
         t = time.monotonic()
         r2 = ops.read_regs(device_id, REG_STATS2_IWDG, 1)
         if on_read:
-            on_read(REG_STATS2_IWDG, (time.monotonic() - t) * 1000.0)
+            on_read(REG_STATS2_IWDG, (time.monotonic() - t) * 1000.0, r2.ok)
         # A one-register read comes back as a bare int, not a list of one.
         # Testing for a list here made every iwdg reading None, so the
         # watchdog comparison below could never fire and a whole night of
@@ -319,8 +319,23 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
                 # rebound inside the closure would reset on every call.
                 cross_left = [counter_crossing]
 
-                def timed(addr: int, took_ms: float, _dev=device_id) -> None:
+                def timed(addr: int, took_ms: float, ok: bool,
+                          _dev=device_id) -> None:
                     crossed, cross_left[0] = cross_left[0], False
+                    tick.txns += 1
+                    if crossed:
+                        tick.crossings += 1
+                        tick.worst_crossing_ms = max(tick.worst_crossing_ms,
+                                                     took_ms)
+                    if not ok:
+                        # A dead module's counter read burns the whole client
+                        # timeout; calling that "slow" would inflate the very
+                        # column this investigation reads. Lost is lost.
+                        tick.fails += 1
+                        note(_dev, "no_reply", f"counter reg {addr}"
+                                               + (" after a hub crossing"
+                                                  if crossed else ""))
+                        return
                     limit = cfg.crossing_slow_ms if crossed else cfg.slow_ms
                     if took_ms >= limit:
                         note(_dev, "slow", f"{took_ms:.0f} ms (counter reg {addr}"

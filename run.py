@@ -27,6 +27,7 @@ import sys
 
 _MUTEX_NAME = "Global\\LGS-Test-Tool"
 _ERROR_ALREADY_EXISTS = 183
+_ERROR_ACCESS_DENIED = 5
 
 # Held for the life of the process, released by the OS at exit. The
 # reference must survive run() or the mutex would be garbage-collected away.
@@ -68,7 +69,14 @@ def _acquire_single_instance() -> bool:
     kernel32.CreateMutexW.argtypes = (ctypes.c_void_p, ctypes.c_int,
                                       ctypes.c_wchar_p)
     _instance_mutex = kernel32.CreateMutexW(None, False, _MUTEX_NAME)
-    return ctypes.get_last_error() != _ERROR_ALREADY_EXISTS
+    err = ctypes.get_last_error()
+    # ACCESS_DENIED is ALSO "already running": when the scheduled task holds
+    # the mutex as SYSTEM, a standard user's CreateMutexW fails with error 5
+    # instead of 183 (the mutex exists but its DACL refuses this caller).
+    # Treating that as "not running" would boot a second full copy -- two
+    # Modbus workers, and one Connect press steals the Opta's single TCP
+    # slot from the server copy. Exactly the scenario the mutex exists for.
+    return err not in (_ERROR_ALREADY_EXISTS, _ERROR_ACCESS_DENIED)
 
 
 if __name__ == "__main__":
@@ -79,9 +87,23 @@ if __name__ == "__main__":
         # running" is success — point them at it and leave quietly. A second
         # Modbus worker fighting over the COM port / TCP slot is the thing
         # this exit prevents.
-        port = os.environ.get("LGS_TT_PORT", "").strip() or "8080"
-        url = f"http://localhost:{port}"
-        print(f"LGS Test Tool is already running — {url}")
+        # Best-effort guess at the running copy's port: our flag/env first,
+        # then the config file. A scheduled task's --port is stored nowhere
+        # we can read, so this can be wrong -- say "probably", not certainty.
+        port = os.environ.get("LGS_TT_PORT", "").strip()
+        if not port:
+            try:
+                import json
+                base = (os.path.dirname(sys.executable)
+                        if getattr(sys, "frozen", False)
+                        else os.path.dirname(os.path.abspath(__file__)))
+                with open(os.path.join(base, "data", "config.json"),
+                          encoding="utf-8-sig") as fh:
+                    port = str(json.load(fh).get("web_port", "") or "")
+            except Exception:
+                port = ""
+        url = f"http://localhost:{port or 8080}"
+        print(f"LGS Test Tool is already running — probably at {url}")
         if os.environ.get("LGS_TT_NO_BROWSER") != "1":
             import webbrowser
             webbrowser.open(url)

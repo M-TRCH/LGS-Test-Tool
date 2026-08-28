@@ -58,15 +58,27 @@ class StubBus:
         self.parked = None
         self.gateway_map = gateway_map       # what the gateway would report
 
+    def _chan(self, uid):
+        # Row -> CHANNEL via the map, exactly like the real gateway. The
+        # first cut compared rows, which quietly made rows sharing a channel
+        # unreachable from each other and forced the gateway-map test to run
+        # hubless -- a stub bug shaped just right to hide a grouping bug.
+        row = uid // 10
+        if self.gateway_map:
+            m = [int(x) for x in self.gateway_map.split(",")]
+            return m[row - 1] if 1 <= row <= len(m) else 0
+        return row
+
     def _reachable(self):
         if not self.hub:
             return list(self.devs.values())
-        return [d for d in self.devs.values() if d.uid // 10 == self.parked]
+        return [d for d in self.devs.values()
+                if self._chan(d.uid) == self.parked]
 
     # ── OtaOps ─────────────────────────────────────────────────────────
     def read_regs(self, device_id, addr, count):
         d = self.devs[device_id]
-        self.parked = device_id // 10        # a unicast parks the hub
+        self.parked = self._chan(device_id)  # a unicast parks the hub
         if addr == 0:
             return Reply([20, d.fw, 510][:count])
         if addr == 1:
@@ -206,7 +218,7 @@ def main() -> int:
     #    channel 1. The device set is identical either way, so only the
     #    session count can tell which map was actually used.
     devs = [Device(11), Device(21)]
-    bus, rep, lines_out, dones = run(devs, hub=False, gateway_map="1,1,3,4,5,6,7,8,1,2")
+    bus, rep, lines_out, dones = run(devs, hub=True, gateway_map="1,1,3,4,5,6,7,8,1,2")
     check("gateway map wins: one shared channel, so one session",
           rep.ok and sum("hub channel" in l for l in lines_out) == 0,
           str([l for l in lines_out if 'channel' in l]))

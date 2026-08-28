@@ -1,4 +1,4 @@
-# Install (or remove) LGS Test Tool as a Windows scheduled task that starts
+﻿# Install (or remove) LGS Test Tool as a Windows scheduled task that starts
 # at boot -- for the hospital's server PC, where nobody logs in to start it.
 #
 #     .\install-autorun.ps1                     # newest exe here, port 8080
@@ -24,6 +24,7 @@ param(
     [int]$DelaySeconds = 60,
     [switch]$Firewall,
     [switch]$Remove,
+    [switch]$SkipAclFix,
     [switch]$Force
 )
 
@@ -48,8 +49,10 @@ if ($Remove) {
 
 # -- find the exe -------------------------------------------------------------
 if (-not $ExePath) {
+    # Sort by the actual version, not the name: lexically v1.9.2 > v1.10.0.
     $candidate = Get-ChildItem -Path $PSScriptRoot -Filter "LGS-Test-Tool-v*.exe" |
-        Sort-Object Name -Descending | Select-Object -First 1
+        Sort-Object { [version]($_.BaseName -replace '^LGS-Test-Tool-v', '') } -Descending |
+        Select-Object -First 1
     if (-not $candidate) {
         Write-Error "No LGS-Test-Tool-v*.exe next to this script. Pass -ExePath."
         exit 1
@@ -85,12 +88,24 @@ $writable = (Get-Acl $exeDir).Access | Where-Object {
 }
 if ($writable) {
     $who = ($writable | ForEach-Object { $_.IdentityReference.Value } | Select-Object -Unique) -join ", "
-    Write-Warning "The exe's folder is writable by non-admin users ($who)."
-    Write-Warning "A local user could replace the exe and run as SYSTEM at boot. Fix:"
-    Write-Warning "  icacls `"$exeDir`" /inheritance:r /grant:r `"Administrators:(OI)(CI)F`" `"SYSTEM:(OI)(CI)F`" `"Users:(OI)(CI)RX`""
-    if (-not $Force) {
-        Write-Error "Refusing to register a SYSTEM task on a user-writable folder. Harden the ACL (command above) or pass -Force."
-        exit 1
+    Write-Warning "The exe's folder is writable by non-admin users ($who) - on a stock"
+    Write-Warning "Windows install even C:\LGS-Test-Tool inherits Modify for Authenticated"
+    Write-Warning "Users from C:\. A local user could swap the exe and run as SYSTEM at boot."
+    if ($SkipAclFix) {
+        if (-not $Force) {
+            Write-Error "Refusing a SYSTEM task on a user-writable folder (-SkipAclFix was given). Pass -Force to accept the risk."
+            exit 1
+        }
+    } else {
+        # We are already elevated and this is a dedicated folder: harden it.
+        Write-Host "Hardening the folder ACL (admins+SYSTEM write, users read)..."
+        icacls "$exeDir" /inheritance:r `
+            /grant:r "Administrators:(OI)(CI)F" "SYSTEM:(OI)(CI)F" "Users:(OI)(CI)RX" | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "icacls failed ($LASTEXITCODE) - harden manually or pass -SkipAclFix -Force."
+            exit 1
+        }
+        Write-Host "  done: $exeDir is no longer writable by ordinary users"
     }
 }
 

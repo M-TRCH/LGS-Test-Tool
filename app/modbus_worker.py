@@ -1147,8 +1147,12 @@ class ModbusWorker:
     async def ota_abort(self) -> TxnResult:
         if not self._connected:
             return TxnResult(False, note="not connected")
+        # payload [1] = the coil value; _do_broadcast has no default for it,
+        # so this call raised TypeError inside the job since the day it was
+        # written and the Abort button had never actually transmitted.
         return await self._run_job(
-            _PRIO_MANUAL, lambda: self._do_broadcast("coil", ota.COIL_ABORT))
+            _PRIO_MANUAL,
+            lambda: self._do_broadcast("coil", ota.COIL_ABORT, [1], "ota"))
 
     # ── installation check (long job, many devices) ────────────────────────
     def start_field_check(self, cfg: "fieldcheck.CheckConfig",

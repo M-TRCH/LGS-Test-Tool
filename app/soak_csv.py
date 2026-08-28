@@ -81,7 +81,9 @@ class SoakSummary:
 
     @property
     def unexplained_reboots(self) -> int:
-        return self.reboots - self.mass_reboots
+        # Never negative: a mass event after the last heartbeat of an
+        # unfinished run makes the footer's reboot count lag the rows.
+        return max(0, self.reboots - self.mass_reboots)
 
     def headline(self) -> str:
         """One line for the UI label and the report subtitle."""
@@ -156,7 +158,12 @@ def parse_soak_csv(text: str, filename: str = "") -> SoakSummary:
         elif kind == "no_reply":
             trouble.setdefault(dev, SoakDeviceTrouble(dev)).no_reply += 1
         elif kind == "reboot":
-            reboot_times.append(when)
+            # Only a reboot whose own row says the watchdog counter held
+            # still may join a "scheduled reset" cluster. The soak writes
+            # "iwdg N unchanged" / "iwdg N -> M" onto every reboot row for
+            # exactly this distinction; a brown-out that IWDG-resets half
+            # the cabinet inside two minutes must NOT get the green verdict.
+            reboot_times.append((when, "unchanged" in detail))
             m = re.search(r"cause=(.*?)\s+iwdg", detail)
             cause = m.group(1) if m else "unknown"
             out.reboot_causes[cause] = out.reboot_causes.get(cause, 0) + 1
@@ -184,17 +191,16 @@ def parse_soak_csv(text: str, filename: str = "") -> SoakSummary:
         out.crossings = num("cross")
         out.worst_cross_ms = num("worst_cross_ms")
 
-    # Mass-reboot detection: slide a window over the reboot rows and take the
-    # largest cluster. One cluster is enough — a nightly reset fires once.
-    if reboot_times and out.module_count:
-        reboot_times.sort()
-        best, best_at, j = 0, None, 0
-        for i, t0 in enumerate(reboot_times):
-            while (reboot_times[j] - t0).total_seconds() > MASS_WINDOW_S:
-                j += 1          # unreachable while j <= i; kept for clarity
+    # Mass-reboot detection: slide a window over the reboot rows whose own
+    # iwdg counter held still and take the largest cluster. One cluster is
+    # enough — a nightly reset fires once. Watchdog reboots never qualify.
+    clean_times = sorted(t for t, unchanged in reboot_times if unchanged)
+    if clean_times and out.module_count:
+        best, best_at = 0, None
+        for i, t0 in enumerate(clean_times):
             k = i
-            while (k + 1 < len(reboot_times)
-                   and (reboot_times[k + 1] - t0).total_seconds() <= MASS_WINDOW_S):
+            while (k + 1 < len(clean_times)
+                   and (clean_times[k + 1] - t0).total_seconds() <= MASS_WINDOW_S):
                 k += 1
             size = k - i + 1
             if size > best:
@@ -202,6 +208,8 @@ def parse_soak_csv(text: str, filename: str = "") -> SoakSummary:
         if best >= max(2, out.module_count // 2):
             out.mass_reboots = best
             out.mass_when = best_at
+    # The footer can lag the rows (unfinished run): trust whichever saw more.
+    out.reboots = max(out.reboots, len(reboot_times))
 
     out.trouble = sorted(trouble.values(),
                          key=lambda t: (t.slow + t.no_reply), reverse=True)
