@@ -52,7 +52,18 @@ class SoakOps(Protocol):
 @dataclass
 class SoakConfig:
     ids: tuple = ()
-    pass_gap_s: float = 0.5      # breather between cabinet passes
+    # Breather between cabinet passes. NOT a free parameter: measured on the
+    # 64-module cabinet 2026-08-31, a pause in the 0.5-0.75 s band makes the
+    # first two reads of the next channel lose their first attempt (~3.6 s
+    # each), while 0-0.3 s and >=1.0 s are clean. The hub falls back to its
+    # home channel after about a second of silence, and a pause inside that
+    # band catches it mid-transition while the gateway still believes it is
+    # elsewhere. The old default was 0.5 -- dead centre of the bad band --
+    # which is why every soak for weeks reported modules 12/13 as "slow on
+    # 80% of passes": the tool was manufacturing the fault it was measuring.
+    # 2.0 s is clear of the band with margin, and passes are actually FASTER
+    # (24.4 s vs 30.9 s) because the re-entry crossing costs 94 ms, not 2.3 s.
+    pass_gap_s: float = 2.0
     counter_every: int = 5       # re-read boot/watchdog counters every N passes
     slow_ms: int = 400           # a reply this slow is worth a line
     # The first read after a hub channel change is SUPPOSED to be slow: the

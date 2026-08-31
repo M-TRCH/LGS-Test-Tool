@@ -174,10 +174,8 @@ TEXTS: dict[str, dict[str, str]] = {
                         "ซ่อนตัวได้นาน เปิดทิ้งไว้ข้ามคืนได้ ความผิดปกติจะถูกบันทึกลง "
                         "CSV ใน data/exports ด้วย ไม่ต้องมีคนนั่งเฝ้า"},
     "soak.gap": {"en": "Pause per pass (s)", "th": "พักต่อรอบ (วินาที)"},
-    "soak.gap_tip": {"en": "Breather between full cabinet passes. Larger is gentler on "
-                           "a bus that is also carrying real traffic.",
-                     "th": "เวลาพักระหว่างรอบกวาดทั้งตู้ ตั้งมากขึ้น = เบามือกับบัส"
-                           "ที่มีงานจริงวิ่งอยู่ด้วย"},
+    "soak.gap_tip": {"en": "Breather between passes. Keep it OUT of 0.4-0.9 s: measured on the cabinet, a pause in that band catches the RS485 hub falling back to its home channel, and the first two reads of the next channel then lose their first attempt (~3.6 s each). 0-0.3 s and 1 s upward are both clean; 2 s is the default because the re-entry crossing costs 94 ms instead of 2.3 s, so passes are faster too.",
+                     "th": "ช่วงพักระหว่างรอบ — อย่าตั้งในช่วง 0.4-0.9 วินาที: วัดบนตู้จริงแล้วพบว่าการพักในช่วงนี้ไปตรงจังหวะที่ฮับ RS485 ถอยกลับช่องบ้าน ทำให้สองการอ่านแรกของช่องถัดไปเสียคำขอแรก (~3.6 วิ/ครั้ง) ช่วง 0-0.3 และตั้งแต่ 1 วินาทีขึ้นไปสะอาดทั้งคู่ · ค่าเริ่มต้น 2 วินาที เพราะการกลับเข้าช่องจะเหลือ 94 ms แทน 2.3 วิ รอบจึงเร็วขึ้นด้วย"},
     "soak.counter_every": {"en": "Check counters every N passes",
                            "th": "ตรวจตัวนับทุก N รอบ"},
     "soak.counter_every_tip": {"en": "How often to re-read every module's boot and "

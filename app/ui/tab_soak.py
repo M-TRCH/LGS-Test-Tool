@@ -34,7 +34,7 @@ def build(ctx: Ctx) -> None:
         helps(ui.label(t("soak.card")).classes("font-bold text-lg"), t("soak.hint"))
 
         with ui.row().classes("items-center gap-3 flex-wrap"):
-            gap = ui.number(t("soak.gap"), value=0.5, min=0, max=60, step=0.5,
+            gap = ui.number(t("soak.gap"), value=2.0, min=0, max=60, step=0.5,
                             format="%.1f").props("dense outlined").classes("w-32")
             helps(gap, t("soak.gap_tip"))
             every = ui.number(t("soak.counter_every"), value=5, min=1, max=100,
@@ -99,7 +99,7 @@ def build(ctx: Ctx) -> None:
                 / f"soak-{datetime.now():%Y%m%d-%H%M}.csv")
         path.parent.mkdir(parents=True, exist_ok=True)
         cfg = soak.SoakConfig(ids=tuple(layout.ids),
-                              pass_gap_s=float(gap.value or 0.5),
+                              pass_gap_s=float(gap.value or 2.0),
                               counter_every=int(every.value or 5),
                               slow_ms=int(slow.value or 400))
         if not worker.start_soak(cfg, path):
