@@ -16,6 +16,20 @@ class Release:
 
 
 RELEASES: tuple = (
+    Release("1.7.1", "2026-08-31", (
+        "The Soak tab's pause between passes now defaults to 2 seconds "
+        "instead of 0.5. That half-second was not a harmless default: on a "
+        "cabinet wired through the RS485 hub it lands exactly where the hub "
+        "is falling back to its home channel, and the first two modules read "
+        "after the pause then lose their first request and answer in about "
+        "3.6 seconds instead of 80 milliseconds. Every soak run was reporting "
+        "those two slots as chronically slow, and the hardware was fine all "
+        "along. Anything from 0 to 0.3 s, or 1 s upward, is clear of it; "
+        "2 s also makes each pass finish sooner, because re-entering the "
+        "channel no longer costs a settle.",
+        "The field tip on that setting now carries the measured numbers, so "
+        "the band to avoid travels with the tool.",
+    )),
     Release("1.7.0", "2026-08-28", (
         "Firmware updates over the bus stopped losing chunks: broadcasts now "
         "leave a 100 ms quiet gap for the gateway's forwarding jitter, and a "
