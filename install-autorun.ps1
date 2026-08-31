@@ -1,10 +1,14 @@
-﻿# Install (or remove) LGS Test Tool as a Windows scheduled task that starts
-# at boot -- for the hospital's server PC, where nobody logs in to start it.
+# Install, update or remove the LGS Test Tool as a Windows scheduled task that
+# starts at boot -- for the hospital's server PC, where nobody logs in.
 #
-#     .\install-autorun.ps1                     # newest exe here, port 8080
-#     .\install-autorun.ps1 -Port 8090
-#     .\install-autorun.ps1 -Firewall           # also open the port inbound
-#     .\install-autorun.ps1 -Remove             # take it all out again
+# You normally do not call this directly: double-click install-autorun.cmd. It
+# asks for administrator rights, runs this, and keeps the window open so the
+# whole report can be read.
+#
+#     install-autorun.cmd                 # newest exe here, port 8080
+#     install-autorun.cmd -Port 8090
+#     install-autorun.cmd -Firewall       # also open the port inbound
+#     install-autorun.cmd -Remove         # take it all out again
 #
 # Why a scheduled task and not the Startup folder: the Startup folder needs a
 # login, and this PC reboots after patches with nobody there. Why SYSTEM: no
@@ -12,8 +16,13 @@
 # NTP server's privileged UDP port. The task starts the exe headless
 # (--no-browser) with an explicit --port, 60 s after boot so the NIC is up.
 #
-# The tool itself refuses to run twice (named mutex), so IgnoreNew here is a
-# second belt, not the mechanism.
+# Updating to a new build is the SAME command: drop the new exe in this folder
+# and run it again. The task is re-pointed at the newest version and the data
+# folder beside the exe -- settings, logs, CSV exports -- is left untouched.
+#
+# NOTE: keep this file ASCII-only. It has no BOM, so PowerShell 5.1 reads it as
+# ANSI, where a UTF-8 dash or curly quote becomes bytes that end a string early
+# and break the parse in a way that points at the wrong line.
 
 #Requires -RunAsAdministrator
 [CmdletBinding()]
@@ -25,130 +34,277 @@ param(
     [switch]$Firewall,
     [switch]$Remove,
     [switch]$SkipAclFix,
+    [switch]$NoStart,
     [switch]$Force
 )
 
+$ErrorActionPreference = "Continue"
 $fwRuleName = "LGS Test Tool web ($TaskName)"
+$here = $PSScriptRoot
 
-if ($Remove) {
+function Step($n, $text) { Write-Host ""; Write-Host "[$n] $text" -ForegroundColor Cyan }
+function Ok($text)       { Write-Host "    OK    $text" -ForegroundColor Green }
+function Info($text)     { Write-Host "          $text" -ForegroundColor Gray }
+function Note($text)     { Write-Host "    WARN  $text" -ForegroundColor Yellow }
+function Bad($text)      { Write-Host "    FAIL  $text" -ForegroundColor Red }
+
+function Get-ToolVersion($url) {
+    try {
+        $r = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 4
+        if ($r.Content -match '<title>\s*(.*?)\s*</title>') { return $Matches[1] }
+        return "running (page has no title)"
+    } catch { return $null }
+}
+
+function Stop-Everything {
     $t = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
-    if ($t) {
+    if ($t -and $t.State -eq "Running") {
         Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
-        Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false
-        Write-Host "Removed scheduled task '$TaskName'."
+        Ok "scheduled task stopped"
+    } elseif ($t) {
+        Info "scheduled task was not running"
+    }
+    # A copy someone started by hand is not the task's child, so stopping the
+    # task does not close it. It would keep the exe file locked and hold the
+    # single-instance mutex, which makes the new copy exit at once saying
+    # "already running" -- looking exactly like nothing happened.
+    $procs = @(Get-Process "LGS-Test-Tool*" -ErrorAction SilentlyContinue)
+    if ($procs.Count -gt 0) {
+        $procs | Stop-Process -Force -ErrorAction SilentlyContinue
+        Start-Sleep -Milliseconds 800
+        Ok "closed $($procs.Count) hand-started copy/copies"
     } else {
-        Write-Host "No scheduled task '$TaskName' found."
+        Info "no copies running by hand"
     }
-    $r = Get-NetFirewallRule -DisplayName $fwRuleName -ErrorAction SilentlyContinue
-    if ($r) {
-        Remove-NetFirewallRule -DisplayName $fwRuleName
-        Write-Host "Removed firewall rule '$fwRuleName'."
-    }
-    exit 0
-}
-
-# -- find the exe -------------------------------------------------------------
-if (-not $ExePath) {
-    # Sort by the actual version, not the name: lexically v1.9.2 > v1.10.0.
-    $candidate = Get-ChildItem -Path $PSScriptRoot -Filter "LGS-Test-Tool-v*.exe" |
-        Sort-Object { [version]($_.BaseName -replace '^LGS-Test-Tool-v', '') } -Descending |
-        Select-Object -First 1
-    if (-not $candidate) {
-        Write-Error "No LGS-Test-Tool-v*.exe next to this script. Pass -ExePath."
-        exit 1
-    }
-    $ExePath = $candidate.FullName
-}
-$ExePath = (Resolve-Path $ExePath).Path
-if (-not (Test-Path $ExePath)) { Write-Error "Not found: $ExePath"; exit 1 }
-
-# -- refuse OneDrive ----------------------------------------------------------
-# Files-On-Demand can dehydrate the exe before the task fires at boot, and the
-# sync client fights the open log and data files. This is a hard stop, not a
-# warning, because the failure only shows up at the NEXT reboot -- long after
-# anyone is watching. -Force exists for dev boxes that know what they risk.
-$isOneDrive = ($env:OneDrive -and $ExePath.StartsWith($env:OneDrive)) -or
-              ($ExePath -like "*\OneDrive*")
-if ($isOneDrive -and -not $Force) {
-    Write-Error ("Refusing to autorun from a OneDrive folder:`n  $ExePath`n" +
-                 "Copy the exe (and this script) to a local folder such as " +
-                 "C:\LGS-Test-Tool\ and run again. Use -Force to override.")
-    exit 1
-}
-
-# -- privilege-escalation check ----------------------------------------------
-# The task runs this exe as SYSTEM at every boot. If ordinary users can write
-# to the exe's folder, any local user can swap the binary and own the machine
-# on the next reboot. Warn loudly; -Force proceeds (a bench PC may not care).
-$exeDir = Split-Path $ExePath -Parent
-$writable = (Get-Acl $exeDir).Access | Where-Object {
-    $_.AccessControlType -eq "Allow" -and
-    ($_.FileSystemRights -match "Write|Modify|FullControl") -and
-    ($_.IdentityReference.Value -match '\\Users$|^Everyone$|Authenticated Users$|INTERACTIVE$')
-}
-if ($writable) {
-    $who = ($writable | ForEach-Object { $_.IdentityReference.Value } | Select-Object -Unique) -join ", "
-    Write-Warning "The exe's folder is writable by non-admin users ($who) - on a stock"
-    Write-Warning "Windows install even C:\LGS-Test-Tool inherits Modify for Authenticated"
-    Write-Warning "Users from C:\. A local user could swap the exe and run as SYSTEM at boot."
-    if ($SkipAclFix) {
-        if (-not $Force) {
-            Write-Error "Refusing a SYSTEM task on a user-writable folder (-SkipAclFix was given). Pass -Force to accept the risk."
-            exit 1
-        }
-    } else {
-        # We are already elevated and this is a dedicated folder: harden it.
-        Write-Host "Hardening the folder ACL (admins+SYSTEM write, users read)..."
-        icacls "$exeDir" /inheritance:r `
-            /grant:r "Administrators:(OI)(CI)F" "SYSTEM:(OI)(CI)F" "Users:(OI)(CI)RX" | Out-Null
-        if ($LASTEXITCODE -ne 0) {
-            Write-Error "icacls failed ($LASTEXITCODE) - harden manually or pass -SkipAclFix -Force."
-            exit 1
-        }
-        Write-Host "  done: $exeDir is no longer writable by ordinary users"
-    }
-}
-
-# -- register the task --------------------------------------------------------
-$exeDir = Split-Path $ExePath -Parent
-$action = New-ScheduledTaskAction -Execute $ExePath `
-    -Argument "--port $Port --no-browser" -WorkingDirectory $exeDir
-$trigger = New-ScheduledTaskTrigger -AtStartup
-$trigger.Delay = "PT$($DelaySeconds)S"
-$principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" `
-    -LogonType ServiceAccount -RunLevel Highest
-$settings = New-ScheduledTaskSettingsSet `
-    -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
-    -StartWhenAvailable `
-    -MultipleInstances IgnoreNew `
-    -ExecutionTimeLimit ([TimeSpan]::Zero) `
-    -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 5)
-
-$existing = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
-if ($existing) {
-    Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
-    Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false
-    Write-Host "Replacing existing task '$TaskName'."
-}
-Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger `
-    -Principal $principal -Settings $settings | Out-Null
-
-Write-Host "Installed '$TaskName':"
-Write-Host "  exe      $ExePath"
-Write-Host "  starts   at boot + $DelaySeconds s, as SYSTEM, headless"
-Write-Host "  web UI   http://localhost:$Port  (and from the LAN)"
-Write-Host "  restarts 3x every 5 min on failure; no run-time limit"
-
-# -- firewall (opt-in: the hospital's IT owns firewall policy) ----------------
-if ($Firewall) {
-    $r = Get-NetFirewallRule -DisplayName $fwRuleName -ErrorAction SilentlyContinue
-    if ($r) { Remove-NetFirewallRule -DisplayName $fwRuleName }
-    New-NetFirewallRule -DisplayName $fwRuleName -Direction Inbound `
-        -Action Allow -Protocol TCP -LocalPort $Port | Out-Null
-    Write-Host "  firewall inbound TCP $Port opened ('$fwRuleName')"
-} else {
-    Write-Host "  firewall untouched (pass -Firewall to open TCP $Port inbound)"
 }
 
 Write-Host ""
-Write-Host "Start it now without rebooting:  Start-ScheduledTask -TaskName '$TaskName'"
+Write-Host "==============================================================" -ForegroundColor White
+Write-Host " LGS Test Tool - server install" -ForegroundColor White
+Write-Host " folder: $here" -ForegroundColor Gray
+Write-Host "==============================================================" -ForegroundColor White
+
+# ----------------------------------------------------------------- 1 survey
+Step 1 "What is here now"
+
+$exes = @(Get-ChildItem -Path $here -Filter "LGS-Test-Tool-v*.exe" -ErrorAction SilentlyContinue |
+    Sort-Object { try { [version]($_.BaseName -replace '^LGS-Test-Tool-v','') } catch { [version]"0.0.0" } } -Descending)
+if ($exes.Count -eq 0) {
+    Info "executables    : none found"
+} else {
+    Info "executables    :"
+    foreach ($e in $exes) {
+        $mark = "  "
+        if ($e.FullName -eq $exes[0].FullName) { $mark = "->" }
+        Info ("   {0} {1}   {2:N0} MB   {3:yyyy-MM-dd HH:mm}" -f $mark, $e.Name, ($e.Length/1MB), $e.LastWriteTime)
+    }
+    Info "   (-> newest, this is the one that gets installed)"
+}
+
+$task = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
+if ($task) {
+    $act = @($task.Actions)[0]
+    Info "scheduled task : present, state $($task.State)"
+    Info "   points at   : $(Split-Path $act.Execute -Leaf)"
+    Info "   arguments   : $($act.Arguments)"
+} else {
+    Info "scheduled task : not installed yet"
+}
+
+$running = @(Get-Process "LGS-Test-Tool*" -ErrorAction SilentlyContinue)
+if ($running.Count -gt 0) {
+    foreach ($p in $running) { Info "running now    : PID $($p.Id)  $($p.Path)" }
+} else {
+    Info "running now    : nothing"
+}
+
+$live = Get-ToolVersion "http://localhost:$Port"
+if ($live) { Info "port $Port      : answering - $live" }
+else        { Info "port $Port      : no answer" }
+
+$dataDir = Join-Path $here "data"
+if (Test-Path $dataDir) {
+    $n = @(Get-ChildItem $dataDir -Recurse -File -ErrorAction SilentlyContinue).Count
+    Info "data folder    : present, $n files - settings and logs will be kept"
+} else {
+    Info "data folder    : none yet, created on first run"
+}
+
+# ----------------------------------------------------------------- remove
+if ($Remove) {
+    Step 2 "Removing"
+    Stop-Everything
+    if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
+        Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false
+        Ok "scheduled task '$TaskName' unregistered"
+    } else { Info "no scheduled task to remove" }
+    if (Get-NetFirewallRule -DisplayName $fwRuleName -ErrorAction SilentlyContinue) {
+        Remove-NetFirewallRule -DisplayName $fwRuleName
+        Ok "firewall rule removed"
+    } else { Info "no firewall rule to remove" }
+    Info "the exe and the data folder were left where they are"
+    Write-Host ""
+    Write-Host " Removed. It will not start at boot any more." -ForegroundColor Green
+    exit 0
+}
+
+# ----------------------------------------------------------------- 2 pick
+Step 2 "Choosing the executable"
+if (-not $ExePath) {
+    if ($exes.Count -eq 0) {
+        Bad "no LGS-Test-Tool-v*.exe in this folder"
+        Info "copy the exe next to this script and run again, or pass -ExePath"
+        exit 1
+    }
+    $ExePath = $exes[0].FullName
+}
+$resolved = Resolve-Path $ExePath -ErrorAction SilentlyContinue
+if (-not $resolved) { Bad "not found: $ExePath"; exit 1 }
+$ExePath = $resolved.Path
+Ok "installing $(Split-Path $ExePath -Leaf)"
+if ($task) {
+    $old = @($task.Actions)[0].Execute
+    if ($old -ne $ExePath) { Info "replacing  $(Split-Path $old -Leaf)" }
+    else                   { Info "same file the task already used - re-registering anyway" }
+}
+$exeDir = Split-Path $ExePath -Parent
+
+# ----------------------------------------------------------------- 3 checks
+Step 3 "Safety checks"
+
+$isOneDrive = ($env:OneDrive -and $ExePath.StartsWith($env:OneDrive)) -or ($ExePath -like "*\OneDrive*")
+if ($isOneDrive -and -not $Force) {
+    Bad "this folder is inside OneDrive"
+    Info "Files-On-Demand can leave the exe unavailable at boot and the sync"
+    Info "client fights the open log files. The failure only appears at the"
+    Info "NEXT reboot, long after anyone is watching."
+    Info "Copy the exe and this script to a local folder such as"
+    Info "C:\LGS-Test-Tool\ and run again, or pass -Force to override."
+    exit 1
+} elseif ($isOneDrive) {
+    Note "inside OneDrive - continuing because -Force was given"
+} else {
+    Ok "not a OneDrive folder"
+}
+
+$writable = @((Get-Acl $exeDir).Access | Where-Object {
+    $_.AccessControlType -eq "Allow" -and
+    ($_.FileSystemRights -match "Write|Modify|FullControl") -and
+    ($_.IdentityReference.Value -match '\\Users$|^Everyone$|Authenticated Users$|INTERACTIVE$')
+})
+if ($writable.Count -gt 0) {
+    $who = ($writable | ForEach-Object { $_.IdentityReference.Value } | Select-Object -Unique) -join ", "
+    Note "folder is writable by non-admin users ($who)"
+    Info "the task runs this exe as SYSTEM at every boot, so a local user could"
+    Info "swap the file and gain SYSTEM. On a stock Windows install even"
+    Info "C:\LGS-Test-Tool inherits Modify for Authenticated Users from C:\."
+    if ($SkipAclFix) {
+        if (-not $Force) {
+            Bad "refusing because -SkipAclFix was given; harden the ACL or add -Force"
+            exit 1
+        }
+        Note "left as it is because -Force was given"
+    } else {
+        icacls "$exeDir" /inheritance:r /grant:r "Administrators:(OI)(CI)F" "SYSTEM:(OI)(CI)F" "Users:(OI)(CI)RX" | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            Bad "icacls failed ($LASTEXITCODE) - harden manually or use -SkipAclFix -Force"
+            exit 1
+        }
+        Ok "folder ACL hardened - admins and SYSTEM write, users read only"
+    }
+} else {
+    Ok "folder is not writable by ordinary users"
+}
+
+# ----------------------------------------------------------------- 4 stop
+Step 4 "Stopping what is running"
+Stop-Everything
+
+# ----------------------------------------------------------------- 5 task
+Step 5 "Registering the scheduled task"
+$action = New-ScheduledTaskAction -Execute $ExePath -Argument "--port $Port --no-browser" -WorkingDirectory $exeDir
+$trigger = New-ScheduledTaskTrigger -AtStartup
+$trigger.Delay = "PT$($DelaySeconds)S"
+$principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
+$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
+    -StartWhenAvailable -MultipleInstances IgnoreNew -ExecutionTimeLimit ([TimeSpan]::Zero) `
+    -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 5)
+
+if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
+    Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false
+    Info "previous task unregistered"
+}
+$reg = Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger `
+        -Principal $principal -Settings $settings -ErrorAction SilentlyContinue
+# Check it, do not assume. ErrorActionPreference is Continue so a failure here
+# only prints a red block and carries on -- and an unconditional "OK" line
+# underneath would then be a lie in the one report someone relies on.
+if (-not $reg -or -not (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue)) {
+    Bad "could not register the task"
+    Info "the usual cause is that this window is not elevated - close it and"
+    Info "double-click install-autorun.cmd, which asks for admin rights itself"
+    exit 1
+}
+Ok "task '$TaskName' registered"
+Info "runs as SYSTEM, at boot + $DelaySeconds s, headless, port $Port"
+Info "restarts up to 3 times, 5 min apart, on failure; no run-time limit"
+
+# ----------------------------------------------------------------- 6 firewall
+Step 6 "Firewall"
+if ($Firewall) {
+    if (Get-NetFirewallRule -DisplayName $fwRuleName -ErrorAction SilentlyContinue) {
+        Remove-NetFirewallRule -DisplayName $fwRuleName
+    }
+    $rule = New-NetFirewallRule -DisplayName $fwRuleName -Direction Inbound `
+            -Action Allow -Protocol TCP -LocalPort $Port -ErrorAction SilentlyContinue
+    if ($rule) { Ok "inbound TCP $Port opened for other PCs on the LAN" }
+    else       { Note "could not add the firewall rule - open TCP $Port by hand" }
+} else {
+    if (Get-NetFirewallRule -DisplayName $fwRuleName -ErrorAction SilentlyContinue) {
+        Info "an earlier rule for this tool is still in place"
+    } else {
+        Info "untouched - pass -Firewall to open TCP $Port for other PCs"
+    }
+}
+
+# ----------------------------------------------------------------- 7 verify
+Step 7 "Starting and verifying"
+$seen = $null
+if ($NoStart) {
+    Info "-NoStart given; start it with: Start-ScheduledTask -TaskName '$TaskName'"
+} else {
+    Start-ScheduledTask -TaskName $TaskName
+    Info "waiting for it to answer on http://localhost:$Port ..."
+    for ($i = 0; $i -lt 40; $i++) {
+        Start-Sleep -Seconds 2
+        $seen = Get-ToolVersion "http://localhost:$Port"
+        if ($seen) { break }
+    }
+    if ($seen) {
+        Ok "answering: $seen"
+    } else {
+        Bad "no answer after 80 seconds"
+        Info "look at Task Scheduler history, and the newest file in"
+        Info "$exeDir\data\logs"
+        Info "if the port is taken by another program the tool exits with code 2"
+        Info "- run this again with a different -Port"
+    }
+}
+
+# ----------------------------------------------------------------- summary
+$ip = (Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+       Where-Object { $_.IPAddress -notlike "127.*" -and $_.IPAddress -notlike "169.254.*" } |
+       Select-Object -First 1).IPAddress
+Write-Host ""
+Write-Host "==============================================================" -ForegroundColor White
+if ($NoStart -or $seen) { Write-Host " Done." -ForegroundColor Green }
+else                    { Write-Host " Installed, but it did not come up - see above." -ForegroundColor Yellow }
+Write-Host "   installed : $(Split-Path $ExePath -Leaf)"
+Write-Host "   open      : http://localhost:$Port"
+if ($ip) { Write-Host "   from LAN  : http://${ip}:$Port" }
+Write-Host "   settings  : kept in $exeDir\data"
+Write-Host "   at boot   : yes, as SYSTEM, $DelaySeconds s after startup"
+Write-Host ""
+Write-Host "   update later : put the new exe here and run this again"
+Write-Host "   uninstall    : install-autorun.cmd -Remove"
+Write-Host "==============================================================" -ForegroundColor White
