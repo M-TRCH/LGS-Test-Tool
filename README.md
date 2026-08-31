@@ -152,17 +152,27 @@ with nobody logged in:
    installer refuses such paths).
 2. In an **admin** PowerShell:
 
-   ```powershell
-   cd C:\LGS-Test-Tool
-   .\install-autorun.cmd -Port 8090            # pick a free port; 8080 default
-   Start-ScheduledTask -TaskName 'LGS Test Tool'   # start now, no reboot needed
-   ```
+   **Double-click `install-autorun.cmd`** and approve the Windows prompt.
+   It asks which port to serve the web UI on (offering the port the installed
+   task already uses, and checking nothing else holds it), then does the rest
+   and leaves the window open so you can read the report. Pass `-Port 8090` on
+   the command line to answer that in advance.
 
-   Use the **`.cmd`**, not the `.ps1` directly: stock Windows ships with
+   Use the **`.cmd`**, not the `.ps1` directly. Stock Windows ships with
    `ExecutionPolicy=Restricted` and refuses every `.ps1` ("running scripts is
-   disabled on this system"). The wrapper bypasses the policy for that one
-   invocation without changing any system setting; equivalently,
-   `powershell -NoProfile -ExecutionPolicy Bypass -File .\install-autorun.ps1 -Port 8090`.
+   disabled on this system"), and registering a task that runs as SYSTEM needs
+   administrator rights that a double-click does not have. The wrapper solves
+   both: it re-launches itself through the UAC prompt and bypasses the policy
+   for that one invocation, changing no system setting.
+
+   **Updating to a new build is the same command.** Put the new exe in the same
+   folder and double-click `install-autorun.cmd` again: it reports what is
+   installed now, stops the running copy (including one someone started by
+   hand, which otherwise keeps the file locked and makes the new copy exit
+   saying "already running"), re-points the task at the newest version, starts
+   it, and confirms the version actually answering. The `data` folder beside
+   the exe -- settings, logs, CSV exports -- is left alone, which is why the
+   new exe must go in the **same folder**.
 
    Add `-Firewall` to open the port for other PCs on the LAN; `-Remove`
    uninstalls the task (and the firewall rule) again. The installer also

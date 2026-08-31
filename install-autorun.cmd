@@ -15,7 +15,9 @@ rem   2. Registering a task that runs as SYSTEM needs administrator rights,
 rem      and a double-click does not have them. If we are not elevated we
 rem      relaunch ourselves through the UAC prompt and let that copy work.
 rem
-rem Arguments are passed straight through, e.g.
+rem Run with no arguments and it ASKS which port to serve the web UI on,
+rem offering the port the installed task already uses (or 8080) and checking
+rem that nothing else holds it. Pass -Port to answer that in advance:
 rem      install-autorun.cmd -Port 8090
 rem      install-autorun.cmd -Firewall
 rem      install-autorun.cmd -Remove

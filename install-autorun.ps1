@@ -56,6 +56,24 @@ function Get-ToolVersion($url) {
     } catch { return $null }
 }
 
+function Test-PortFree($p) {
+    # Bind it ourselves for a moment. Cheaper and more honest than parsing
+    # netstat, and it answers the question that matters: can the tool have it.
+    try {
+        $l = New-Object System.Net.Sockets.TcpListener([System.Net.IPAddress]::Any, $p)
+        $l.Start(); $l.Stop(); return $true
+    } catch { return $false }
+}
+
+function Get-PortOwner($p) {
+    try {
+        $c = Get-NetTCPConnection -LocalPort $p -State Listen -ErrorAction Stop | Select-Object -First 1
+        $pr = Get-Process -Id $c.OwningProcess -ErrorAction SilentlyContinue
+        if ($pr) { return "$($pr.ProcessName) (PID $($pr.Id))" }
+        return "PID $($c.OwningProcess)"
+    } catch { return "another program" }
+}
+
 function Stop-Everything {
     $t = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
     if ($t -and $t.State -eq "Running") {
@@ -102,14 +120,21 @@ if ($exes.Count -eq 0) {
 }
 
 $task = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
+$taskPort = $null
 if ($task) {
     $act = @($task.Actions)[0]
+    if ($act.Arguments -match '--port\s+(\d+)') { $taskPort = [int]$Matches[1] }
     Info "scheduled task : present, state $($task.State)"
     Info "   points at   : $(Split-Path $act.Execute -Leaf)"
     Info "   arguments   : $($act.Arguments)"
 } else {
     Info "scheduled task : not installed yet"
 }
+# Probe whatever the installed task actually serves, not the parameter
+# default -- otherwise an update on port 8090 reports "no answer" on 8080
+# and reads as if the tool were down.
+$probePort = $Port
+if ($taskPort) { $probePort = $taskPort }
 
 $running = @(Get-Process "LGS-Test-Tool*" -ErrorAction SilentlyContinue)
 if ($running.Count -gt 0) {
@@ -118,9 +143,9 @@ if ($running.Count -gt 0) {
     Info "running now    : nothing"
 }
 
-$live = Get-ToolVersion "http://localhost:$Port"
-if ($live) { Info "port $Port      : answering - $live" }
-else        { Info "port $Port      : no answer" }
+$live = Get-ToolVersion "http://localhost:$probePort"
+if ($live) { Info "port $probePort      : answering - $live" }
+else        { Info "port $probePort      : no answer" }
 
 $dataDir = Join-Path $here "data"
 if (Test-Path $dataDir) {
@@ -220,8 +245,38 @@ if ($writable.Count -gt 0) {
 Step 4 "Stopping what is running"
 Stop-Everything
 
-# ----------------------------------------------------------------- 5 task
-Step 5 "Registering the scheduled task"
+# ----------------------------------------------------------------- 5 port
+Step 5 "Web UI port"
+if ($PSBoundParameters.ContainsKey('Port')) {
+    Info "using -Port $Port from the command line"
+} else {
+    # Asked here rather than at the top because everything of ours is now
+    # stopped: a port that still looks busy is genuinely somebody else's.
+    $suggest = $Port
+    if ($taskPort) { $suggest = $taskPort }
+    while ($true) {
+        Write-Host ""
+        if ($taskPort) { Info "the installed task serves port $taskPort" }
+        Info "8080 is the usual choice; pick another if it is already taken"
+        $ans = Read-Host "    Port to use [$suggest]"
+        if ([string]::IsNullOrWhiteSpace($ans)) {
+            $Port = $suggest
+        } elseif ($ans -match '^\d+$' -and [int]$ans -ge 1 -and [int]$ans -le 65535) {
+            $Port = [int]$ans
+        } else {
+            Bad "'$ans' is not a port number (1-65535)"
+            continue
+        }
+        if (Test-PortFree $Port) { Ok "port $Port is free"; break }
+        Note "port $Port is already held by $(Get-PortOwner $Port)"
+        Info "the tool would exit with code 2 at boot and never come up"
+        $again = Read-Host "    Choose a different port? [Y/n]"
+        if ($again -match '^[Nn]') { Note "keeping $Port anyway"; break }
+    }
+}
+
+# ----------------------------------------------------------------- 6 task
+Step 6 "Registering the scheduled task"
 $action = New-ScheduledTaskAction -Execute $ExePath -Argument "--port $Port --no-browser" -WorkingDirectory $exeDir
 $trigger = New-ScheduledTaskTrigger -AtStartup
 $trigger.Delay = "PT$($DelaySeconds)S"
@@ -250,7 +305,7 @@ Info "runs as SYSTEM, at boot + $DelaySeconds s, headless, port $Port"
 Info "restarts up to 3 times, 5 min apart, on failure; no run-time limit"
 
 # ----------------------------------------------------------------- 6 firewall
-Step 6 "Firewall"
+Step 7 "Firewall"
 if ($Firewall) {
     if (Get-NetFirewallRule -DisplayName $fwRuleName -ErrorAction SilentlyContinue) {
         Remove-NetFirewallRule -DisplayName $fwRuleName
@@ -268,7 +323,7 @@ if ($Firewall) {
 }
 
 # ----------------------------------------------------------------- 7 verify
-Step 7 "Starting and verifying"
+Step 8 "Starting and verifying"
 $seen = $null
 if ($NoStart) {
     Info "-NoStart given; start it with: Start-ScheduledTask -TaskName '$TaskName'"
