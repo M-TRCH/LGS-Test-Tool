@@ -57,6 +57,39 @@ These need answering before anyone writes code.
    commanded light that did not light, a latch that did not fire, an activation
    whose round trip exceeded the server contract's 4 s.
 
+## Prior art — this has been done once already, on the R4.x fleet
+
+Found 2026-09-04 on the `Above-R4.0` branch of `M-TRCH/LGS-Standard-Module`:
+`tools/test_random_single_coil.py`, with four result logs from February 2026.
+It is the same idea, already run against the live 33-cabinet site, and it
+should be read before anything is written here.
+
+What it does: pick a random cabinet (10 of them by IP — nine type 80, one
+type 68), a random unit ID, and a random coil in 1001-1008; write the coil
+True, wait 3 s, read register 40, write it False. It pauses itself daily from
+01:45 to 02:15 and opens a fresh log at 02:15.
+
+The 2026-02-22 log is the one to look at: **11,770 cycles, 23,540 writes,
+23,540 reads, and every single one SUCCESS** — no failures at all in about
+23 hours across ten real cabinets. That is a meaningful reliability data
+point for the R4.x fleet, and a rate of roughly one activation every 7 s,
+about six times more aggressive than the ~2,000/day proposed here.
+
+Three things it does NOT do, which is exactly where this design adds value:
+
+1. **It never fires a latch.** It drives 1001-1008 (light only), not
+   1021-1028 (light + latch). Latch endurance stays unmeasured — see the
+   commissioning record's §5.5.
+2. **It is uniform random**, so per-module exposure is Poisson-spread. This
+   is precisely the confound the shuffled deck above removes, and it is why
+   Teerachot's "equal average per module" requirement is a real improvement
+   rather than a detail.
+3. It logs its own event schema, not the soak CSV format, so none of the
+   existing analysis (`soak_csv.py`, the site report) can read it.
+
+Worth stealing outright: the daily maintenance pause, and the cabinet list
+shape (many cabinets by IP rather than one).
+
 ## What to reuse
 
 Almost all of it. The existing soak already owns the run loop, the CSV format,
