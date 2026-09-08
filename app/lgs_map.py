@@ -357,6 +357,19 @@ def dec_mode(raw: int, unit: str = "") -> str:
 def dec_preset(raw: int, unit: str = "") -> str:
     return "0 = off" if raw == 0 else f"preset {raw}"
 
+def dec_lit_windows(raw: int, unit: str = "") -> str:
+    """reg 61: which of the eight windows are lit right now (fw >= 3.5.0).
+
+    A type-10 mask board can light several at once -- window n is person n --
+    and reg 11 carries a single number that cannot say so. On a ring board
+    this mirrors the active preset, so it reads as one window or none.
+    """
+    if raw == 0:
+        return "none lit"
+    on = [str(n) for n in range(1, 9) if raw & (1 << (n - 1))]
+    return f"{','.join(on)}  (0x{raw:02X})"
+
+
 def dec_uptime(hi: int, lo: int) -> str:
     total = (hi << 16) | lo
     h, rem = divmod(total, 3600)
@@ -456,6 +469,7 @@ REGISTERS: list[RegDef] = [
     RegDef(40,  "Time After Unlock",  "s",   dec_plain),
     RegDef(41,  "Latch Locked",       "",    dec_plain),
     RegDef(60,  "Display Number",     "",    dec_plain, writable=True),
+    RegDef(61,  "Lit Windows",       "",    dec_lit_windows),
     RegDef(80,  "Unlock Delay",       "ms",  dec_plain, writable=True, persisted=True),
     RegDef(190, "Global Brightness",  "%",   dec_plain, writable=True),   # fans out to all presets
     RegDef(194, "Global Max On-Time", "s",   dec_plain, writable=True),   # fans out to all presets

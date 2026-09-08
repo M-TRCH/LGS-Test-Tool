@@ -221,8 +221,14 @@ TEXTS: dict[str, dict[str, str]] = {
                                  "จะขึ้นที่นี่ทันที ถ้าวิ่งยาวแล้วว่างเปล่า = ผลที่ต้องการ"},
 
     # ── control tab ────────────────────────────────────────────────────────
-    "ctl.presets": {"en": "Presets (single shared ring — enabling one auto-clears the others)",
-                    "th": "พรีเซ็ตสี (ไฟวงเดียวกัน — เปิดอันใหม่ อันเก่าจะดับเอง)"},
+    # What these eight coils do depends on the board, and the header used to
+    # state the ring's behaviour as if it were the only one: a type-10 mask
+    # board (fw >= 3.5.0) lights its eight windows independently, because one
+    # slot can be carrying several people's medications at once.
+    "ctl.presets": {"en": "Presets — ring board: one at a time, enabling one clears the rest · "
+                          "type-10 mask board: eight independent windows",
+                    "th": "พรีเซ็ตสี — บอร์ดวงแหวน: ติดทีละอัน เปิดอันใหม่อันเก่าดับ · "
+                          "บอร์ด mask (type 10): แปดหน้าต่างอิสระต่อกัน"},
     "ctl.preset_n": {"en": "Preset {n}", "th": "พรีเซ็ต {n}"},
     "ctl.active": {"en": "ACTIVE", "th": "ทำงานอยู่"},
     "ctl.light": {"en": "Light ({addr})", "th": "เปิดไฟ ({addr})"},

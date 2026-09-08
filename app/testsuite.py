@@ -301,20 +301,49 @@ class _Runner:
         self._check(c509 == 0, "coil 509 Identify accepted + self-cleared (blinks white ~5s)",
                     1, 509, "Identify", c509, 0)
 
+    def _is_mask_board(self) -> bool:
+        """True for a STANDARD (type 10) board: 8-LED index mask, no ring.
+
+        Its eight windows are independent -- window n is person n, and one
+        slot can carry several people's medications at once -- so enabling a
+        second window must NOT clear the first. A ring board has one ring and
+        keeps radio behaviour. The same firmware serves both and decides at
+        boot, so the suite has to ask the board instead of assuming.
+        """
+        return self._reg(0) == 10
+
     def phase_preset(self) -> None:
+        mask = self._is_mask_board()
+        self._pace()
+        first = "window 1" if mask else "ring red"
+        second = "window 3" if mask else "ring blue"
+
         self.ops.write_coil(1001, 1)
         self._pace()
         c1 = self.ops.read_coil(1001).value
-        self._check(c1 == 1, "enable 1001 -> ring red", 1, 1001, "Enable Preset 1", c1, 1)
+        self._check(c1 == 1, f"enable 1001 -> {first}", 1, 1001, "Enable Preset 1", c1, 1)
         self.ops.sleep(0.8)
 
         self.ops.write_coil(1003, 1)
         self._pace()
         c3 = self.ops.read_coil(1003).value
         c1 = self.ops.read_coil(1001).value
-        self._check(c3 == 1, "enable 1003 -> ring blue", 1, 1003, "Enable Preset 3", c3, 1)
-        self._check(c1 == 0, "radio: coil 1001 auto-cleared after enabling 1003",
-                    1, 1001, "Enable Preset 1", c1, 0)
+        self._check(c3 == 1, f"enable 1003 -> {second}", 1, 1003, "Enable Preset 3", c3, 1)
+        if mask:
+            # The assertion that tells a window board from a ring one. It was
+            # written the other way round until 2026-09-08, which made every
+            # correctly working type-10 module report a failure right here.
+            self._check(c1 == 1,
+                        "independent windows: coil 1001 still lit alongside 1003",
+                        1, 1001, "Enable Preset 1", c1, 1)
+            self.ops.sleep(1.2)          # reg 61 is republished once a second
+            lit = self._reg(61)
+            self._check(lit == 0x05,
+                        "reg 61 bitmask reports windows 1 and 3 lit together",
+                        3, 61, "Lit Windows", lit, 0x05)
+        else:
+            self._check(c1 == 0, "radio: coil 1001 auto-cleared after enabling 1003",
+                        1, 1001, "Enable Preset 1", c1, 0)
         self.ops.sleep(0.8)
 
         for gaddr, gname, offset, test_val in ((190, "Global Brightness", 0, 37),
@@ -322,6 +351,19 @@ class _Runner:
             orig = {}
             for n in range(1, 9):
                 orig[n] = self._reg(preset_cfg_base(n) + offset)
+                self._pace()
+            # The global is a CHANGE watch: re-writing the value it already
+            # holds is not a change, so the handler never runs and nothing
+            # fans out. This check used to restore the eight per-preset
+            # registers but leave the global sitting at the test value, so it
+            # passed once and then failed on every later run against the same
+            # board -- exactly the shape of commissioning a lot of modules.
+            # Capture it, and if it already reads the test value, move it away
+            # first so the write is genuinely a change.
+            orig_global = self._reg(gaddr)
+            self._pace()
+            if orig_global == test_val:
+                self.ops.write_reg(gaddr, test_val - 1 if test_val > 1 else 2)
                 self._pace()
             self.ops.write_reg(gaddr, test_val)
             self._pace()
@@ -332,6 +374,9 @@ class _Runner:
                 self._pace()
             self._check(fanout_ok, f"reg {gaddr} = {test_val} fanned out to all 8 presets",
                         3, gaddr, gname, test_val if fanout_ok else -1, test_val)
+            if orig_global is not None:
+                self.ops.write_reg(gaddr, orig_global)   # leave no trace behind
+                self._pace()
             for n in range(1, 9):
                 if orig[n] is not None:
                     self.ops.write_reg(preset_cfg_base(n) + offset, orig[n])
@@ -340,7 +385,8 @@ class _Runner:
         self.ops.write_coil(1003, 0)
         self._pace()
         c3 = self.ops.read_coil(1003).value
-        self._check(c3 == 0, "disable 1003 -> ring off", 1, 1003, "Enable Preset 3", c3, 0)
+        self._check(c3 == 0, f"disable 1003 -> {'window 3' if mask else 'ring'} off",
+                    1, 1003, "Enable Preset 3", c3, 0)
 
     def phase_display(self) -> None:
         self.ops.write_reg(60, 45)
@@ -348,7 +394,14 @@ class _Runner:
         self.ops.write_coil(1010, 1)
         self._pace()
         c = self.ops.read_coil(1010).value
-        self._check(c == 1, "coil 1010 on -> OLED shows '45'", 1, 1010, "Display Enable", c, 1)
+        # A type-10 board has no OLED. The coil and reg 60 still behave (the
+        # clamp lives in the register handler, not the display driver), so
+        # the assertions hold either way -- but a label promising a number
+        # on a screen that is not fitted reads as a failed test to whoever
+        # is looking at the board.
+        self._check(c == 1,
+                    "coil 1010 on" + ("" if self._is_mask_board() else " -> OLED shows '45'"),
+                    1, 1010, "Display Enable", c, 1)
         self.ops.sleep(1.5)
 
         self.ops.write_reg(60, 7)
@@ -369,7 +422,9 @@ class _Runner:
         self.ops.write_coil(1010, 0)
         self._pace()
         c = self.ops.read_coil(1010).value
-        self._check(c == 0, "coil 1010 off -> OLED blank", 1, 1010, "Display Enable", c, 0)
+        self._check(c == 0,
+                    "coil 1010 off" + ("" if self._is_mask_board() else " -> OLED blank"),
+                    1, 1010, "Display Enable", c, 0)
         self.ops.write_reg(60, 0)
         self._pace()
 
