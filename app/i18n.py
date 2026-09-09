@@ -865,6 +865,8 @@ TEXTS: dict[str, dict[str, str]] = {
     # checks one window in eight. This one walks every window of every slot.
     "pnl.act.all_8": {"en": "All 8 windows, whole cabinet (mask cabinets)",
                       "th": "เปิดครบทั้ง 8 หน้าต่าง ทั้งตู้ (ตู้ mask 8 สี)"},
+    "pnl.act.unknown": {"en": "action {n} — newer than this Test Tool",
+                        "th": "การกระทำ {n} — ใหม่กว่าเครื่องมือเวอร์ชันนี้"},
 
     "pnl.lamp_card": {"en": "Relay outputs", "th": "เอาต์พุตรีเลย์"},
     "pnl.lamp_hint": {"en": "Each relay follows one thing. Ready, busy and fault are "
