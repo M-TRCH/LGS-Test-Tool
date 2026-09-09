@@ -861,6 +861,10 @@ TEXTS: dict[str, dict[str, str]] = {
                       "th": "สับรีเลย์ตัดไฟชั้นวาง (hardware reset)"},
     "pnl.act.lamp_test": {"en": "Test the status lamps (one by one)",
                           "th": "ทดสอบหลอดสถานะ (ทีละดวง)"},
+    # all_on lights ONE preset per slot, which on an 8-colour mask board
+    # checks one window in eight. This one walks every window of every slot.
+    "pnl.act.all_8": {"en": "All 8 windows, whole cabinet (mask cabinets)",
+                      "th": "เปิดครบทั้ง 8 หน้าต่าง ทั้งตู้ (ตู้ mask 8 สี)"},
 
     "pnl.lamp_card": {"en": "Relay outputs", "th": "เอาต์พุตรีเลย์"},
     "pnl.lamp_hint": {"en": "Each relay follows one thing. Ready, busy and fault are "

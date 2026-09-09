@@ -41,7 +41,9 @@ PANEL_SWATCH = {"red": "#e53935", "green": "#43a047", "blue": "#1e88e5",
                 "yellow": "#fdd835", "white": "#fafafa"}
 PANEL_ACTIONS = {0: "pnl.act.none", 1: "pnl.act.all_on", 2: "pnl.act.all_off",
                  3: "pnl.act.all_unlock", 4: "pnl.act.reset",
-                 5: "pnl.act.lamp_test"}
+                 5: "pnl.act.lamp_test",
+                 # gateway >= 1.12.3; an older gateway rejects 6 on SAVE
+                 6: "pnl.act.all_8"}
 # What each of the gateway's four relay outputs does. Output 1 normally
 # carries the shelf's power — which is what a hardware reset drops — but even
 # that is a mapping now, so a re-wired panel is a setting, not a build.
