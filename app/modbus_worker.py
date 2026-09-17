@@ -1618,13 +1618,32 @@ class _FieldOps:
 
 
 class _SurveyOps:
-    """fw_survey.SurveyOps — read-only, one transaction per module."""
+    """fw_survey.SurveyOps and soak.SoakOps, bound to the worker.
+
+    Read-only for the survey, which is all it ever was -- and that is exactly
+    how pharmacy mode shipped broken. `soak.run_soak` grew a `write_coil`
+    call for the simulation, `soak_fleet._ClientOps` has one, and this binder
+    (the one the SOAK TAB uses) did not. A pharmacy run started from the UI
+    died with AttributeError at the first pick, about forty seconds in, and
+    nothing in the selftests could see it because their stub bus has the
+    method. Protocols in Python are a promise between a writer and a reader;
+    nothing checks them at the seam.
+    """
 
     def __init__(self, worker: ModbusWorker) -> None:
         self._w = worker
 
     def read_regs(self, device_id: int, addr: int, count: int) -> TxnResult:
         return self._w._do_read_registers(addr, count, device_id, "survey")
+
+    def write_coil(self, device_id: int, addr: int, value: bool) -> TxnResult:
+        """Only the pharmacy simulation calls this, and only for 1001-1008.
+
+        It goes through `_do_write_coil`, so the danger and OTA coil classes
+        are refused here exactly as they are everywhere else -- the simulation
+        gets no privilege the manual controls do not have.
+        """
+        return self._w._do_write_coil(addr, bool(value), device_id, "soak")
 
     def sleep(self, seconds: float) -> None:
         end = time.monotonic() + seconds

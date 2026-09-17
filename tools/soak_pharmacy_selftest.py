@@ -56,12 +56,14 @@ class StubBus:
     time, so the timing path can be checked without waiting for a real hub.
     """
 
-    def __init__(self, ids, slow_windows=(), slow_s=0.0, read_s=0.004):
+    def __init__(self, ids, slow_windows=(), slow_s=0.0, read_s=0.004,
+                 drop_clears=0):
         self.ids = list(ids)
         self.writes: list = []          # (device_id, coil, value)
         self.slow_windows = set(slow_windows)
         self.slow_s = slow_s
         self.read_s = read_s
+        self.drop_clears = drop_clears
         self.channel_seen: list = []    # channel of each bus touch, in order
 
     def read_regs(self, device_id: int, addr: int, count: int):
@@ -79,8 +81,20 @@ class StubBus:
         self.channel_seen.append(hub_channel(device_id))
         if (addr - 1000) in self.slow_windows and value:
             time.sleep(self.slow_s)
+        if self.drop_clears and not value:
+            self.drop_clears -= 1
+            # A plain RS485 timeout: pymodbus answers a silent slave with an
+            # error object, it does not raise. The window is still LIT.
+            return Reply(None, ok=False, note="timeout")
         self.writes.append((device_id, addr, bool(value)))
         return Reply(True)
+
+    def lit_now(self):
+        """What the cabinet is actually showing, from the writes it accepted."""
+        lit = set()
+        for dev, coil, on in self.writes:
+            lit.add((dev, coil)) if on else lit.discard((dev, coil))
+        return lit
 
     def sleep(self, seconds: float) -> None:
         pass
@@ -187,9 +201,10 @@ def case_shared_channel_tracker():
     # of the run is exactly the first `txns` touches. What comes after is the
     # all-off teardown, which runs once the totals are already final and is
     # deliberately not counted -- it is housekeeping, not measurement.
-    counted = bus.channel_seen[:report.tick.txns]
-    if len(counted) != report.tick.txns:
-        return (f"{report.tick.txns} transactions counted but only "
+    n = report.tick.txns + report.tick.writes      # reads AND coil writes
+    counted = bus.channel_seen[:n]
+    if len(counted) != n:
+        return (f"{n} transactions counted but only "
                 f"{len(bus.channel_seen)} touches reached the bus")
     actual, prev = 0, None
     for ch in counted:
@@ -218,6 +233,7 @@ def case_deck_survives_long_dwell():
         if action is None:
             break
         dev, coil, on = action
+        ph.applied(dev, coil, on, True)  # the cabinet confirms; only then lit
         if on:
             got.add((dev, coil - 1000))
         now += 1.0
@@ -382,6 +398,107 @@ def case_far_behind_resyncs_without_bursting():
     return None
 
 
+# ── [9] the binders that SHIP satisfy the protocol ─────────────────────────
+def case_real_binders_implement_soakops():
+    """Every object handed to run_soak must have every method it calls.
+
+    This is the one case that does not use the stub, because the stub is what
+    hid the bug: `_SurveyOps` -- the binder the SOAK TAB uses -- had no
+    `write_coil`, so pharmacy mode died with AttributeError at the first pick
+    roughly forty seconds into every run started from the UI, while the
+    selftests passed and a hardware run through the FLEET binder worked
+    perfectly. A Protocol in Python is a promise nothing checks at the seam.
+
+    Checked by introspection rather than by calling: binding a real worker
+    would need a transport.
+    """
+    import inspect
+    from app import modbus_worker, soak_fleet
+
+    required = [n for n in dir(soak.SoakOps)
+                if not n.startswith("_") and callable(getattr(soak.SoakOps, n, None))]
+    if "write_coil" not in required:
+        return "SoakOps no longer declares write_coil -- this test is stale"
+
+    problems = []
+    for cls in (modbus_worker._SurveyOps, soak_fleet._ClientOps):
+        for name in required:
+            fn = getattr(cls, name, None)
+            if fn is None or not callable(fn):
+                problems.append(f"{cls.__name__} has no {name}()")
+                continue
+            # the call sites pass positionally; arity must accommodate them
+            try:
+                sig = inspect.signature(fn)
+            except (TypeError, ValueError):
+                continue
+            takes = [p for p in sig.parameters.values()
+                     if p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD)]
+            want = {"read_regs": 4, "write_coil": 4, "sleep": 2}[name]
+            if len(takes) < want and not any(p.kind == p.VAR_POSITIONAL
+                                             for p in sig.parameters.values()):
+                problems.append(
+                    f"{cls.__name__}.{name}() takes {len(takes)} positional "
+                    f"args, the call site passes {want}")
+    return "; ".join(problems) if problems else None
+
+
+# ── [10] a clear that does not land must not be forgotten ──────────────────
+def case_lost_clear_is_not_orphaned():
+    """One dropped clear frame used to strand a window until max-on-time.
+
+    `step()` deleted the pair from the lit set BEFORE the write was attempted,
+    so a clear that timed out on the wire left the window on while the tool
+    believed it off -- all_off() no longer knew about it, the run reported a
+    clean stop, and on a type-80 (no latch, no button) that window stayed lit
+    for the hour until its max-on timer. A single RS485 timeout was enough,
+    and the 86 h baseline recorded nine of those in 980k transactions.
+    """
+    bus = StubBus((11, 12, 21, 22), drop_clears=1)
+    bus, rows, report = drive({"mode": "pharmacy", "picks_per_day": 345600,
+                               "dwell_s": 1.0, "windows": 8},
+                              seconds=4.0, bus=bus)
+    if bus.drop_clears:
+        return "the run never attempted a clear, so nothing was proved"
+    still = bus.lit_now()
+    if still:
+        return (f"{len(still)} window(s) left lit on the wire after a dropped "
+                f"clear: {sorted(still)}")
+    return None
+
+
+# ── [11] a crash mid-run still puts the cabinet out ────────────────────────
+def case_exception_still_clears_the_cabinet():
+    """The teardown used to sit at the end of the poll loop, so it ran on a
+    clean cancel and on nothing else. A full disk inside the CSV write -- the
+    fleet's log_line had no try/except -- ended the run with every lit window
+    still lit."""
+    bus = StubBus((11, 12, 21, 22))
+    boom = {"n": 0}
+
+    def log(row):
+        if ",pick," in row:
+            boom["n"] += 1
+            if boom["n"] >= 2:
+                raise OSError(28, "No space left on device")
+
+    cancel = threading.Event()
+    cfg = soak.SoakConfig(ids=(11, 12, 21, 22), pass_gap_s=0, counter_every=1,
+                          mode="pharmacy", picks_per_day=345600, dwell_s=600.0,
+                          windows=8)
+    try:
+        soak.run_soak(bus, cfg, lambda ev: None, cancel, log)
+    except OSError:
+        pass
+    else:
+        return "the injected OSError never reached run_soak"
+    still = bus.lit_now()
+    if still:
+        return (f"the run died and left {len(still)} window(s) lit: "
+                f"{sorted(still)}")
+    return None
+
+
 # ── the arithmetic the UI shows ────────────────────────────────────────────
 def case_estimate_matches_reality():
     ids = list(range(11, 19))            # 8 modules
@@ -407,6 +524,9 @@ CASES = (
     ("saturation reported once", case_saturation_reported_once),
     ("picks are not anomalies", case_picks_are_not_anomalies),
     ("tick carries every field", case_tick_carries_every_field),
+    ("real binders fit SoakOps", case_real_binders_implement_soakops),
+    ("lost clear not orphaned", case_lost_clear_is_not_orphaned),
+    ("crash still clears cabinet", case_exception_still_clears_the_cabinet),
     ("rate does not drift", case_rate_does_not_drift),
     ("far behind resyncs", case_far_behind_resyncs_without_bursting),
     ("estimate matches reality", case_estimate_matches_reality),

@@ -120,6 +120,8 @@ class SoakTick:
     worst_ms: float = 0.0        # worst ORDINARY read (crossings excluded)
     crossings: int = 0
     worst_crossing_ms: float = 0.0
+    writes: int = 0              # pharmacy coil writes (NOT reads)
+    write_fails: int = 0         # of those, the ones that did not land
     picks: int = 0               # pharmacy mode: windows lit so far
     dropped: int = 0             # picks with no dark window left to use
     lit: int = 0                 # windows lit at this instant
@@ -155,6 +157,7 @@ def _totals(tick: SoakTick) -> str:
             f"reboots={tick.reboots} wdt={tick.watchdogs} "
             f"worst_ms={tick.worst_ms:.0f} cross={tick.crossings} "
             f"worst_cross_ms={tick.worst_crossing_ms:.0f} "
+            f"writes={tick.writes} write_fails={tick.write_fails} "
             f"picks={tick.picks} dropped={tick.dropped} lit={tick.lit} "
             f"elapsed_s={tick.elapsed_s:.0f}")
 
@@ -238,8 +241,15 @@ class _Pharmacy:
     place.
     """
 
+    CLEAR_RETRY_S = 20.0     # how soon to re-attempt a clear that failed
+
     def __init__(self, ids: Sequence[int], windows: int,
                  picks_per_day: int, dwell_s: float, now: float) -> None:
+        # HARD CAP AT 8. `1000 + w` is the window-enable family, and
+        # 1021-1028 is the window+LATCH family right above it -- a
+        # `windows` of 21 or more would fire solenoids on a ring cabinet
+        # with none of the cooldown gating the manual controls have.
+        windows = max(1, min(8, int(windows)))
         self._pairs = [(i, w) for i in ids for w in range(1, windows + 1)]
         self._deck: list = []
         self._lit: dict = {}                 # (id, window) -> monotonic expiry
@@ -248,7 +258,8 @@ class _Pharmacy:
         self._next_at = now + self._interval
         self._rng = random.Random()
         self.picks = 0
-        self.skipped = 0            # picks the cabinet had no dark window for
+        self.skipped = 0
+        self._now = now            # picks the cabinet had no dark window for
 
     def _deal(self):
         if not self._deck:
@@ -257,15 +268,23 @@ class _Pharmacy:
         return self._deck.pop()
 
     def step(self, now: float):
-        """The next single bus action, or None when there is nothing due.
+        """PROPOSE the next single bus action, or None when nothing is due.
 
-        Returns (device_id, coil, on). Clears come first: a window that has
-        served its dwell is a promise already made, while the next pick can
-        wait for the following step a few hundred milliseconds later.
+        Returns (device_id, coil, on). Nothing is committed here -- the caller
+        must report back through applied(), because `_lit` has to describe
+        what the CABINET is showing, not what the tool meant to happen. It
+        used to be mutated here, which meant a clear that failed on the wire
+        was forgotten anyway: the pair left `_lit`, all_off() never knew about
+        it, and that window stayed on until its max-on-time an hour later,
+        with the run reporting a clean stop. One dropped RS485 frame was
+        enough, and the 86 h baseline recorded nine of those.
+
+        Clears come first: a window that has served its dwell is a promise
+        already made, while the next pick can wait a few hundred ms.
         """
+        self._now = now
         due = next((p for p, exp in self._lit.items() if now >= exp), None)
-        if due is not None:          # find first, delete after -- never
-            del self._lit[due]       # mutate a dict while iterating it
+        if due is not None:
             return due[0], 1000 + due[1], False
         if now < self._next_at:
             return None
@@ -290,8 +309,6 @@ class _Pharmacy:
             for _ in range(len(self._pairs)):
                 dev, win = self._deal()
                 if (dev, win) not in self._lit:
-                    self._lit[(dev, win)] = now + self._dwell
-                    self.picks += 1
                     return dev, 1000 + win, True
                 held.append((dev, win))
         finally:
@@ -305,6 +322,32 @@ class _Pharmacy:
             self._deck.extend(held)
         self.skipped += 1
         return None
+
+    def applied(self, dev: int, coil: int, on: bool, ok: bool) -> None:
+        """What the wire actually did with the action step() proposed.
+
+        A window only joins `_lit` once the module has acknowledged lighting
+        it, and only leaves once it has acknowledged clearing it. A failed
+        clear therefore stays owed and is retried shortly, and is still in
+        all_off()'s hands if the run ends first.
+        """
+        key = (dev, coil - 1000)
+        if on:
+            if ok:
+                self._lit[key] = self._now + self._dwell
+                self.picks += 1
+            else:
+                # The cabinet never lit it, so the pair is still owed its turn
+                # in this cycle -- back on the deck rather than silently spent.
+                self._deck.append(key)
+        else:
+            if ok:
+                self._lit.pop(key, None)
+            else:
+                # Still lit as far as anyone knows. Try again soon rather than
+                # at the next dwell, but not every step -- a module that is
+                # genuinely unreachable must not monopolise the simulation.
+                self._lit[key] = self._now + self.CLEAR_RETRY_S
 
     def lit_count(self) -> int:
         return len(self._lit)
@@ -378,13 +421,36 @@ def run_soak(ops: SoakOps, cfg: SoakConfig, emit: Callable,
     csv("start", start_detail)
     reason = "unknown"
     polled = False
+    live: list = []          # the running _Pharmacy, so the finally can reach it
     try:
-        polled = _poll(ops, cfg, emit, cancel, report, note, csv, t0)
+        polled = _poll(ops, cfg, emit, cancel, report, note, csv, t0, live)
         reason = "cancelled" if polled else "cancelled_before_baseline"
     except BaseException as exc:                                # noqa: BLE001
         reason = f"error:{type(exc).__name__}"
         raise
     finally:
+        # PUT THE CABINET OUT. This used to sit at the end of the poll loop,
+        # which meant it ran on a clean cancel and on nothing else: an
+        # exception anywhere -- a full disk inside the CSV write, a short
+        # register list, the machine losing the exports share -- ended the run
+        # with every lit window still lit. There is no latch and no button on
+        # a type-80, so the only other thing that would clear them is each
+        # window's max-on-time, an hour away, on a ward.
+        for ph in live:
+            for dev, coil in ph.all_off():
+                try:
+                    res = ops.write_coil(dev, coil, False)
+                except Exception:                               # noqa: BLE001
+                    break                # transport is gone; nothing to do
+                # Record it, and record a failure as a failure. A CSV replayed
+                # later must not end with windows apparently still on, and a
+                # clear that did not land is the one thing a reader must see.
+                if getattr(res, "ok", False):
+                    csv("clear", f"window {coil - 1000}", dev)
+                else:
+                    note(dev, "clear_failed",
+                         f"window {coil - 1000} may still be lit")
+            csv("sim_stop", f"picks={tick.picks} dropped={tick.dropped}")
         # Whatever happened — cancelled, crashed, or the machine pulled the
         # rug — the file ends with a line saying so and what had been seen
         # up to that point.
@@ -405,7 +471,8 @@ def run_soak(ops: SoakOps, cfg: SoakConfig, emit: Callable,
 
 
 def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event,
-          report: SoakReport, note: Callable, csv: Callable, t0: float) -> bool:
+          report: SoakReport, note: Callable, csv: Callable, t0: float,
+          live: Optional[list] = None) -> bool:
     """The run itself. Split out so run_soak's start/stop bookkeeping wraps
     every exit from it, including the early return on a cancelled baseline.
 
@@ -431,10 +498,13 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
     if cfg.mode == "pharmacy":
         pharmacy = _Pharmacy(ids, cfg.windows, cfg.picks_per_day,
                              cfg.dwell_s, time.monotonic())
+        if live is not None:
+            live.append(pharmacy)       # run_soak's finally clears through this
         csv("sim_start", f"picks_per_day={cfg.picks_per_day} "
                          f"dwell_s={cfg.dwell_s} windows={cfg.windows} "
                          f"pairs={len(ids) * cfg.windows}")
 
+    sim_t0 = time.monotonic()  # when picks actually became possible
     saturated: list = []       # one-shot latch for the note above
     behind: list = []          # one-shot latch for the rate shortfall below
 
@@ -455,10 +525,21 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
         """
         if pharmacy is None or behind:
             return
-        expected = tick.elapsed_s / 86400.0 * cfg.picks_per_day
+        # Measured from when the SIMULATION started, not from t0. t0 is set
+        # before the baseline sweep, which is 12-25 s of reading every module
+        # on a 64-80 slot cabinet and during which no pick can possibly go
+        # out. Charging those seconds to the simulation made the shortfall
+        # look worse the earlier it was judged -- and since the verdict is a
+        # one-shot latch, it was taken at the single moment of maximum
+        # contamination and never revisited. On a big cabinet that fired
+        # unconditionally above roughly 15,000 picks/day whatever the bus was
+        # doing. A latched false accusation about the bus is precisely the
+        # failure shape this project has been burned by before.
+        elapsed = time.monotonic() - sim_t0
+        expected = elapsed / 86400.0 * cfg.picks_per_day
         if expected < 20:
             return
-        achieved = tick.picks / max(1.0, tick.elapsed_s) * 86400.0
+        achieved = tick.picks / max(1.0, elapsed) * 86400.0
         if achieved >= cfg.picks_per_day * 0.8:
             return
         behind.append(True)
@@ -520,24 +601,30 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
         t = time.monotonic()
         res = ops.write_coil(dev, coil, on)
         took_ms = (time.monotonic() - t) * 1000.0
-        tick.txns += 1
+        ok = bool(getattr(res, "ok", False))
+        # Tell the simulation what the CABINET did, before anything else uses
+        # its state -- lit counts and saturation must describe the wire.
+        pharmacy.applied(dev, coil, on, ok)
+        # Counted as a WRITE, not folded into `reads`. A 24 h run at 2,000/day
+        # would otherwise hide ~4,000 coil writes inside the number people
+        # compare against the poll baselines (933,696 reads; 1.37M reads).
+        tick.writes += 1
         if crossed:
             tick.crossings += 1
             tick.worst_crossing_ms = max(tick.worst_crossing_ms, took_ms)
         else:
             tick.worst_ms = max(tick.worst_ms, took_ms)
         what = "pick" if on else "clear"
-        if not getattr(res, "ok", False):
-            tick.fails += 1
+        if not ok:
+            tick.write_fails += 1
             note(dev, "no_reply", f"{what} window {coil - 1000}"
                                   + (" after a hub crossing" if crossed else ""))
             return
-        if on:
-            tick.picks += 1
         limit = cfg.crossing_slow_ms if crossed else cfg.slow_ms
         if took_ms >= limit:
             note(dev, "slow", f"{took_ms:.0f} ms ({what} window {coil - 1000}"
                               + (" hub crossing" if crossed else "") + ")")
+        tick.picks = pharmacy.picks
         tick.lit = pharmacy.lit_count()
         csv(what, f"window {coil - 1000}", dev)
 
@@ -683,15 +770,5 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
         # certainly alive and the cabinet certainly answering.
         csv("heartbeat", _totals(tick))
         ops.sleep(cfg.pass_gap_s)
-
-    if pharmacy is not None:
-        # A cancelled run must not leave windows lit across the ward
-        # overnight. Best effort: the transport may already be gone.
-        for dev, coil in pharmacy.all_off():
-            try:
-                ops.write_coil(dev, coil, False)
-            except Exception:                                   # noqa: BLE001
-                break
-        csv("sim_stop", f"picks={tick.picks} dropped={tick.dropped}")
 
     return True

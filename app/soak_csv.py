@@ -58,6 +58,8 @@ class SoakSummary:
     fails: int = 0
     picks: int = 0                  # pharmacy mode: windows lit during the run
     dropped: int = 0                # picks the cabinet was too full to place
+    writes: int = 0                 # coil writes -- NOT part of `reads`
+    write_fails: int = 0            # of those, the ones that did not land
     reboots: int = 0
     watchdogs: int = 0
     worst_ms: int = 0
@@ -199,6 +201,8 @@ def parse_soak_csv(text: str, filename: str = "") -> SoakSummary:
         # summary even though every pick is there in the rows.
         out.picks = num("picks")
         out.dropped = num("dropped")
+        out.writes = num("writes")
+        out.write_fails = num("write_fails")
 
     # Mass-reboot detection: slide a window over the reboot rows whose own
     # iwdg counter held still and take the largest cluster. One cluster is

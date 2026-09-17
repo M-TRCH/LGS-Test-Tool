@@ -270,6 +270,25 @@ def build(ctx: Ctx) -> None:
         with ui.row().classes("items-center gap-2 q-mt-sm"):
             ui.button(t("fleet.add"), icon="add",
                       on_click=lambda: add_row()).props("flat dense no-caps")
+            # WHICH MODE. The fleet inherits the toggle from the
+            # single-cabinet card far above, and that card hides its pharmacy
+            # fields in poll mode -- so an operator who ran a pharmacy soak
+            # earlier, scrolled down here and pressed START would have begun
+            # writing coils to N real cabinets with nothing on this card
+            # saying so. It is red for pharmacy because that is the one that
+            # touches the hardware.
+            fleet_mode = ui.label().classes("text-sm")
+
+            def fleet_mode_text() -> None:
+                pharm = mode.value == "pharmacy"
+                fleet_mode.set_text(t("fleet.will_run_pharmacy")
+                                    if pharm else t("fleet.will_run_poll"))
+                fleet_mode.classes(replace="text-sm "
+                                   + ("text-red" if pharm else "text-grey"))
+
+            mode.on_value_change(lambda _e: fleet_mode_text())
+            ui.timer(1.0, fleet_mode_text)
+            fleet_mode_text()
             fleet_start = ui.button(t("fleet.start"), color="primary")
             fleet_stop = ui.button(t("fleet.stop"), color="red").props("outline")
             fleet_status = ui.label(t("soak.idle")).classes("text-sm")
@@ -326,7 +345,12 @@ def build(ctx: Ctx) -> None:
         fleet_start.set_enabled(not running)
         fleet_stop.set_enabled(running)
         fleet_state["seq"], events = worker.drain_fleet_events(fleet_state["seq"])
-        by_name = {e["name"].value or e["host"].value: e for e in fleet_rows}
+        # STRIPPED, to match FleetCabinet.name. Keying on the raw field value
+        # meant a name typed with a trailing space never matched its own
+        # events: that row's live column sat at "..." all night and its
+        # failures never reached it.
+        by_name = {(e["name"].value or e["host"].value).strip(): e
+                   for e in fleet_rows}
         for ev in events:
             if isinstance(ev, soak_fleet.FleetStarted):
                 fleet_log.push(f"{datetime.now():%H:%M:%S}  {ev.cabinet} · "

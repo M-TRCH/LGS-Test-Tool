@@ -39,6 +39,7 @@ from pathlib import Path
 from typing import Callable, Optional, Sequence
 
 from . import soak
+from .ntp_server import local_ip_toward
 from .transports import HUB_SAFE_TIMEOUT_S, TcpSettings, make_client
 
 
@@ -148,6 +149,10 @@ class _ClientOps:
         if r.isError():
             return _Txn(False, None, str(r)[:60])
         regs = r.registers
+        if not regs:
+            # A malformed answer is a failed transaction, not a crash:
+            # regs[0] raised IndexError straight out of the thread.
+            return _Txn(False, None, "empty register list")
         return _Txn(True, regs if count > 1 else regs[0])
 
     def write_coil(self, device_id: int, addr: int, value: bool):
@@ -271,8 +276,17 @@ def _other_master(client, our_host: Optional[str]) -> Optional[str]:
             peers = line.split("net.peer=", 1)[1].split()[0]
             if peers in ("-", ""):
                 return None
+            # `net.peer` lists the gateway's CLIENT source addresses -- this
+            # PC's IP and an ephemeral port. `our_host` was being handed the
+            # GATEWAY's address, which can never appear in that list, so every
+            # peer looked like a stranger: on a console-enabled gateway the
+            # guard refused every cabinet by mistaking this tool's own socket
+            # for a second master, and on a console-less one `res.ok` was
+            # False and it returned None -- silently off. Compare against the
+            # local address the OS actually uses to reach this gateway.
+            mine = local_ip_toward(our_host) if our_host else ""
             others = [p for p in peers.split(",")
-                      if not (our_host and p.startswith(our_host + ":"))]
+                      if not (mine and p.split(":")[0] == mine)]
             return ", ".join(others) if others else None
     except Exception:                                            # noqa: BLE001
         return None                      # never let the guard break the run
@@ -290,7 +304,21 @@ def run_fleet(cabinets: Sequence[FleetCabinet], cfg: soak.SoakConfig,
     Returns {cabinet name: soak.SoakReport} for those that ran. Cabinets that
     could not be reached are reported through FleetFailed and simply absent.
     """
-    stamp = f"{datetime.now():%Y%m%d-%H%M}"
+    # THE CARDINAL RULE, enforced where it cannot be skipped. The UI checks
+    # it too, but run_fleet documents itself as the thing that stops a night's
+    # data being wasted, and a guard only one caller performs is a guard the
+    # next caller forgets.
+    dupes = duplicate_hosts(cabinets)
+    if dupes:
+        for cab in cabinets:
+            if cab.host in dupes:
+                emit(FleetBusy(cabinet=cab.name,
+                               peers=f"another row in this run ({cab.host})"))
+        return {}
+
+    # Seconds, not minutes: stopping a fleet to fix a typo'd host and starting
+    # again inside the same minute reopened the previous run's CSVs with "w".
+    stamp = f"{datetime.now():%Y%m%d-%H%M%S}"
     log_dir.mkdir(parents=True, exist_ok=True)
     reports: dict = {}
     lock = threading.Lock()
@@ -332,15 +360,36 @@ def run_fleet(cabinets: Sequence[FleetCabinet], cfg: soak.SoakConfig,
             emit(FleetBusy(cabinet=cab.name, peers=busy))
             ops.close()
             return
-        path = paths[id(cab)]
-        handle = path.open("w", encoding="utf-8", newline="")
-        handle.write("time,device_id,kind,detail\n")
-        handle.flush()
-        emit(FleetStarted(cabinet=cab.name, path=str(path), modules=len(cab.ids)))
+        handle = None
+        try:
+            path = paths[id(cab)]
+            handle = path.open("w", encoding="utf-8", newline="")
+            handle.write("time,device_id,kind,detail\n")
+            handle.flush()
+            emit(FleetStarted(cabinet=cab.name, path=str(path),
+                              modules=len(cab.ids)))
+        except OSError as exc:
+            # A missing exports folder, or a path past MAX_PATH, used to kill
+            # this thread with no FleetFailed and -- worse -- leave the socket
+            # open, holding one of the gateway's two client slots for the life
+            # of the process while the UI row sat at "..." all night.
+            emit(FleetFailed(cabinet=cab.name,
+                             reason=f"cannot open the log: {exc}"[:80]))
+            if handle is not None:
+                handle.close()
+            ops.close()
+            return
 
         def log_line(line: str) -> None:
-            handle.write(line + "\n")
-            handle.flush()          # an overnight run is read after a crash
+            # Every row is flushed, because an overnight run gets read after a
+            # crash. But the DISK must never end the run: this used to raise
+            # out of note(), up through run_soak, and leave every lit window
+            # lit on N cabinets. A lost row is bad; a lit ward is worse.
+            try:
+                handle.write(line + "\n")
+                handle.flush()
+            except OSError:
+                pass
 
         try:
             report = soak.run_soak(
@@ -354,7 +403,11 @@ def run_fleet(cabinets: Sequence[FleetCabinet], cfg: soak.SoakConfig,
                 lambda ev, _n=cab.name: emit(FleetEvent(cabinet=_n, inner=ev)),
                 cancel, log_line)
             with lock:
-                reports[cab.name] = report
+                # Keyed so a collision cannot lose a cabinet: two rows both
+                # called "Chest" on different gateways used to overwrite
+                # each other here while both CSVs existed.
+                key = cab.name if cab.name not in reports else cab.label
+                reports[key] = report
         except BaseException as exc:                             # noqa: BLE001
             # One cabinet falling over must not take the fleet with it. Its
             # own CSV already carries a stop row saying why.

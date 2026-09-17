@@ -423,7 +423,12 @@ def _soak_section(pdf: _Report, soak) -> None:
     pdf.cell(0, 4.6,
              f"{soak.filename or 'soak CSV'} · {span} ({dur_h:.1f} h) · "
              f"{soak.module_count} modules · {soak.passes:,} passes · "
-             f"{soak.reads:,} reads",
+             f"{soak.reads:,} reads"
+             # A pharmacy run also WROTE to the cabinet, and that is the whole
+             # point of it. Saying so here is what stops the section reading
+             # exactly like a plain poll's.
+             + (f" · {soak.writes:,} coil writes ({soak.picks:,} picks)"
+                if soak.writes else ""),
              new_x="LMARGIN", new_y="NEXT")
     pdf.cell(0, 4.6,
              f"fails {soak.fails} · watchdog resets {soak.watchdogs} · "
