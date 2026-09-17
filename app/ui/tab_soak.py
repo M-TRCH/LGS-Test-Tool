@@ -77,6 +77,8 @@ def build(ctx: Ctx) -> None:
         shown: dict = {"text": None}
 
         def recalc() -> None:
+            if mode.value != "pharmacy":
+                return          # the label is hidden; poll runs pay nothing
             conc, cap = soak.estimate_concurrent(
                 ctx.cabinet().ids, int(wins.value or 8),
                 int(picks.value or 2000), float(dwell.value or 20))
@@ -97,8 +99,11 @@ def build(ctx: Ctx) -> None:
             sim_calc.classes(replace=f"text-xs {tone}")
 
         # Capacity depends on the cabinet, which is chosen on another card and
-        # gives no change event here, so poll for it — with the guard above,
-        # an unchanged figure costs a multiply and touches nothing.
+        # gives no change event here, so poll for it — with the guards above,
+        # an unchanged figure costs a multiply and touches nothing, and poll
+        # mode costs a comparison. Switching to pharmacy fills the label at
+        # once rather than up to a second later.
+        mode.on_value_change(lambda _e: recalc())
         ui.timer(1.0, recalc)
         recalc()
 
