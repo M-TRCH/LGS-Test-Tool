@@ -1,0 +1,170 @@
+"""Check the fleet run's naming and its refusal rules, without a network.
+
+    python tools/soak_fleet_selftest.py
+
+The cabinet name looks like a cosmetic field and is not one: it names the
+CSV, and a fleet run writes one file per cabinet at the same instant. Two
+cabinets that reduce to the same filename means two threads opening one path
+with "w" and interleaving their rows — a file that parses cleanly and
+describes a machine that does not exist. That is the worst shape a bug can
+take in this project, so the stem rules are pinned here.
+
+The other half is the cardinal rule: one Modbus master per RS485 bus. The
+gateway takes two TCP clients and has one bus behind them, so two fleet rows
+aimed at one gateway is the same fault the tool refuses from outsiders,
+committed by the tool itself.
+"""
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from app import soak_fleet                                        # noqa: E402
+
+
+def cab(name, host="192.168.0.204"):
+    return soak_fleet.FleetCabinet(name=name, host=host, ids=(11, 12))
+
+
+# ── the stem ───────────────────────────────────────────────────────────────
+def case_thai_survives():
+    """A Thai name must stay readable.
+
+    The old rule kept isalnum() characters, and Thai vowel/tone marks are
+    combining marks rather than alphanumerics: "ตู้ 80" became "ต---80".
+    """
+    got = soak_fleet.safe_stem("ตู้ 80")
+    if got != "ตู้ 80":
+        return f"Thai name mangled to {got!r}"
+    if soak_fleet.safe_stem("ห้องยา ชั้น 3") != "ห้องยา ชั้น 3":
+        return "Thai with a space and a digit was altered"
+    return None
+
+
+def case_illegal_chars_go():
+    for raw, want in (('a/b', 'a-b'), ('a:b', 'a-b'), ('a*b?', 'a-b-'),
+                      ('a<b>c', 'a-b-c'), ('a|b', 'a-b'), ('a\\b', 'a-b')):
+        got = soak_fleet.safe_stem(raw)
+        if got != want:
+            return f"{raw!r} -> {got!r}, expected {want!r}"
+    if soak_fleet.safe_stem("") != "cabinet":
+        return "an empty name must fall back to something"
+    if soak_fleet.safe_stem("  . ") != "cabinet":
+        return "a name of only dots and spaces must fall back"
+    return None
+
+
+def case_trailing_dot_and_space():
+    """Windows silently drops a trailing dot or space from a filename, so
+    "Chest " and "Chest" would resolve to one file on disk."""
+    if soak_fleet.safe_stem("Chest ") != "Chest":
+        return "trailing space kept"
+    if soak_fleet.safe_stem("Chest.") != "Chest":
+        return "trailing dot kept"
+    return None
+
+
+# ── the files ──────────────────────────────────────────────────────────────
+def _paths(names, hosts=None, tmp=None):
+    """Run the path allocation the way run_fleet does, without threads."""
+    import tempfile
+    from datetime import datetime
+    hosts = hosts or [f"10.0.0.{i}" for i in range(len(names))]
+    cabs = [cab(n, h) for n, h in zip(names, hosts)]
+    log_dir = Path(tmp or tempfile.mkdtemp())
+    stamp = f"{datetime.now():%Y%m%d-%H%M}"
+    # mirrors run_fleet's pre-thread allocation
+    out, used = [], set()
+    for c in cabs:
+        stem = soak_fleet.safe_stem(c.name)
+        cand = f"soak-{stem}-{stamp}.csv"
+        if cand in used:
+            stem = f"{stem}-{soak_fleet.safe_stem(c.host)}"
+            cand = f"soak-{stem}-{stamp}.csv"
+        n = 2
+        while cand in used:
+            cand = f"soak-{stem}-{n}-{stamp}.csv"
+            n += 1
+        used.add(cand)
+        out.append(cand)
+    return out
+
+
+def case_colliding_names_get_distinct_files():
+    """The names differ; the stems do not. The files still must."""
+    got = _paths(["Chest Std 02", "Chest-Std-02", "Chest/Std/02"])
+    if len(set(got)) != 3:
+        return f"three cabinets produced {len(set(got))} distinct files: {got}"
+    return None
+
+
+def case_identical_names_get_distinct_files():
+    got = _paths(["Chest", "Chest", "Chest"],
+                 ["10.0.0.1", "10.0.0.2", "10.0.0.3"])
+    if len(set(got)) != 3:
+        return f"same name three times gave {len(set(got))} files: {got}"
+    # The tie-break appends the host, which stays legible: a dot is legal in
+    # a filename (only a TRAILING one is stripped by Windows), so there is no
+    # reason to mangle an address into 10-0-0-2.
+    if not any("10.0.0.2" in g for g in got):
+        return f"the tie-break should name the host: {got}"
+    return None
+
+
+def case_empty_names_get_distinct_files():
+    got = _paths(["", "", ""], ["10.0.0.1", "10.0.0.2", "10.0.0.3"])
+    if len(set(got)) != 3:
+        return f"three blank names gave {len(set(got))} files: {got}"
+    return None
+
+
+# ── the bus ────────────────────────────────────────────────────────────────
+def case_duplicate_gateway_is_named():
+    cabs = [cab("A", "192.168.0.204"), cab("B", "192.168.0.204"),
+            cab("C", "192.168.0.205")]
+    dupes = soak_fleet.duplicate_hosts(cabs)
+    if dupes != ["192.168.0.204"]:
+        return f"duplicate_hosts returned {dupes}"
+    if soak_fleet.duplicate_hosts([cab("A", "1.1.1.1"), cab("B", "2.2.2.2")]):
+        return "two distinct gateways were reported as duplicates"
+    return None
+
+
+def case_conflict_with_main_connection():
+    cabs = [cab("A", "192.168.0.204"), cab("B", "192.168.0.205")]
+    if soak_fleet.conflicting_hosts(cabs, "192.168.0.204") != ["A"]:
+        return "the cabinet sharing the tool's own connection was not named"
+    if soak_fleet.conflicting_hosts(cabs, None):
+        return "nothing is connected, so nothing can conflict"
+    return None
+
+
+CASES = (
+    ("thai name survives", case_thai_survives),
+    ("illegal chars removed", case_illegal_chars_go),
+    ("trailing dot and space", case_trailing_dot_and_space),
+    ("colliding names -> files", case_colliding_names_get_distinct_files),
+    ("identical names -> files", case_identical_names_get_distinct_files),
+    ("blank names -> files", case_empty_names_get_distinct_files),
+    ("duplicate gateway named", case_duplicate_gateway_is_named),
+    ("conflict with main conn", case_conflict_with_main_connection),
+)
+
+
+def main() -> int:
+    failures = 0
+    for name, fn in CASES:
+        try:
+            problem = fn()
+        except Exception as exc:                                  # noqa: BLE001
+            problem = f"{type(exc).__name__}: {exc}"
+        print(f"{name:26} {'FAIL' if problem else 'ok'}")
+        if problem:
+            print(f"                           - {problem}")
+            failures += 1
+    print(f"\n{len(CASES) - failures}/{len(CASES)} cases pass")
+    return 1 if failures else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

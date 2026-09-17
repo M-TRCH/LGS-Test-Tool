@@ -277,6 +277,18 @@ def build(ctx: Ctx) -> None:
         if not cabs:
             ui.notify(t("fleet.none"), type="warning")
             return
+        # Two rows on one gateway is the two-masters fault with the tool
+        # playing both parts. Refuse here: once the threads are running each
+        # one checks the gateway for peers as it arrives, so whichever
+        # connects first finds it empty and is let through.
+        dupes = soak_fleet.duplicate_hosts(cabs)
+        if dupes:
+            ui.notify(t("fleet.dupe_host", hosts=", ".join(dupes)),
+                      type="negative", timeout=0, close_button=True)
+            for e in fleet_rows:
+                if (e["host"].value or "").strip() in dupes:
+                    e["live"].set_text(t("fleet.dupe_short"))
+            return
         log_dir = config_store.data_dir() / "exports"
         if not worker.start_fleet(cabs, _cfg(()), log_dir):
             # start_fleet refuses a host this tool is already connected to:

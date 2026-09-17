@@ -30,6 +30,7 @@ corrupts both sides' data — it cost a soak's last four rows on 2026-08-28.
 """
 from __future__ import annotations
 
+import re
 import threading
 import time
 from dataclasses import dataclass, field
@@ -188,6 +189,41 @@ class _Txn:
     latency_ms: float = 0.0
 
 
+# Only what Windows genuinely forbids in a filename, plus control codes.
+# The previous rule kept `isalnum()` characters and replaced everything
+# else, which quietly destroyed Thai names: the letters survive but the
+# vowel and tone marks above and below them are combining marks, not
+# alphanumerics, so "ตู้ 80" came out as "ต---80". A cabinet the operator
+# cannot recognise in their own language is not a label, and two names that
+# differed only in their marks landed on the SAME filename.
+_BAD_IN_FILENAME = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
+
+
+def safe_stem(name: str) -> str:
+    """The cabinet's name as a filename fragment, still readable in Thai."""
+    out = _BAD_IN_FILENAME.sub("-", name).strip(" .")
+    return out or "cabinet"
+
+
+def duplicate_hosts(cabinets: Sequence[FleetCabinet]) -> list:
+    """Hosts listed more than once in one fleet run.
+
+    THE CARDINAL RULE, applied to the tool against itself. Two rows aimed at
+    one gateway are two TCP clients on one RS485 bus -- the same two-masters
+    fault `_other_master()` refuses from outsiders, except the tool is now
+    the outsider. It cannot be caught reliably at connect time either: each
+    thread checks for peers as it arrives, so whichever connects first sees
+    an empty gateway and is waved through. It has to be refused before any
+    socket is opened.
+    """
+    seen, dupes = set(), []
+    for c in cabinets:
+        if c.host in seen and c.host not in dupes:
+            dupes.append(c.host)
+        seen.add(c.host)
+    return dupes
+
+
 def conflicting_hosts(cabinets: Sequence[FleetCabinet],
                       connected_host: Optional[str]) -> list:
     """Cabinets that share a gateway with the tool's own live connection.
@@ -259,6 +295,27 @@ def run_fleet(cabinets: Sequence[FleetCabinet], cfg: soak.SoakConfig,
     reports: dict = {}
     lock = threading.Lock()
 
+    # Filenames are settled HERE, before a single thread starts, because two
+    # cabinets can reduce to the same stem ("Chest Std 02" and "Chest-Std-02"
+    # both become soak-Chest-Std-02-<stamp>.csv) and two threads opening the
+    # same path with "w" interleave their rows into one file. Neither cabinet's
+    # night survives that, and nothing would have said so -- the file parses,
+    # it just describes a machine that does not exist.
+    paths: dict = {}
+    used: set = set()
+    for cab in cabinets:
+        stem = safe_stem(cab.name)
+        candidate = f"soak-{stem}-{stamp}.csv"
+        if candidate in used:
+            stem = f"{stem}-{safe_stem(cab.host)}"
+            candidate = f"soak-{stem}-{stamp}.csv"
+        n = 2
+        while candidate in used:                 # still colliding: number it
+            candidate = f"soak-{stem}-{n}-{stamp}.csv"
+            n += 1
+        used.add(candidate)
+        paths[id(cab)] = log_dir / candidate
+
     def one(cab: FleetCabinet) -> None:
         settings = TcpSettings(host=cab.host, port=cab.port,
                                timeout_s=timeout_s)
@@ -275,9 +332,7 @@ def run_fleet(cabinets: Sequence[FleetCabinet], cfg: soak.SoakConfig,
             emit(FleetBusy(cabinet=cab.name, peers=busy))
             ops.close()
             return
-        safe = "".join(ch if ch.isalnum() or ch in "-_" else "-"
-                       for ch in cab.name) or "cabinet"
-        path = log_dir / f"soak-{safe}-{stamp}.csv"
+        path = paths[id(cab)]
         handle = path.open("w", encoding="utf-8", newline="")
         handle.write("time,device_id,kind,detail\n")
         handle.flush()

@@ -237,6 +237,15 @@ TEXTS: dict[str, dict[str, str]] = {
         "th": "สุ่มแบบสับสำรับ ทุกช่องจึงได้จำนวนครั้งเท่ากันตลอดการรัน — "
               "ถ้าสุ่มแบบธรรมดาจะกระจายไม่เท่ากันและเทียบรายช่องทีหลังไม่ได้"},
     # ── fleet ──────────────────────────────────────────────────────────────
+    "fleet.dupe_host": {
+        "en": "Two rows point at the same gateway ({hosts}). That is two "
+              "masters on one RS485 bus — it corrupts both cabinets' "
+              "readings. Give each row its own gateway.",
+        "th": "มีสองแถวชี้ไปที่เกตเวย์ตัวเดียวกัน ({hosts}) "
+              "เท่ากับมีสอง master บนบัส RS485 เส้นเดียว "
+              "ข้อมูลจะเสียทั้งสองตู้ — ให้แต่ละแถวใช้เกตเวย์ของตัวเอง"},
+    "fleet.dupe_short": {
+        "en": "duplicate gateway", "th": "เกตเวย์ซ้ำ"},
     "fleet.card": {"en": "Several cabinets at once", "th": "หลายตู้พร้อมกัน"},
     "fleet.hint": {
         "en": "Each cabinet is a separate gateway on a separate bus, so they do "
