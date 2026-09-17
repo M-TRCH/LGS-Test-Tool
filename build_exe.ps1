@@ -1,10 +1,10 @@
 # Build a portable one-file Windows executable: dist\LGS-Test-Tool.exe
-# Copy that single file to any Windows PC and double-click — no Python needed,
+# Copy that single file to any Windows PC and double-click -- no Python needed,
 # COM ports work natively. Close its console window to stop the server.
 #
 # Usage:  powershell -ExecutionPolicy Bypass -File build_exe.ps1
 #
-# Note: no $ErrorActionPreference=Stop here — PowerShell 5.1 turns harmless
+# Note: no $ErrorActionPreference=Stop here -- PowerShell 5.1 turns harmless
 # native stderr (pip/PyInstaller log lines) into fatal errors under it.
 # Each step is checked via exit code instead.
 
@@ -54,30 +54,21 @@ if (-not (Test-Path "app\docs\LGS-Control-Table.md")) {
 }
 # Preparing a factory-fresh Opta needs Arduino's QSPIFormat image on site,
 # where there is no PlatformIO to build it from. See app\blobs\README.md.
-# The firmware images are bundled for the same reason, and are checked here by
-# content: a truncated or swapped image must stop the build, not reach a
-# cabinet. app\firmware_bundle.py holds the same hashes and re-checks at load.
-$blobs = @{
-    "qspiformat_opta.bin"            = "62003812"
-    "gateway_opta_v1.12.2.bin"       = "2d955477"
-    "module_g070_v3.4.0_factory.bin" = "17b73e04"
-    "module_g070_v3.4.0_ota.bin"     = "475fea87"
-    "gateway_opta_v1.12.0.bin"       = "1db6cc4d"
-    "module_g070_v3.3.0_factory.bin" = "7510b4f8"
-    "module_g070_v3.3.0_ota.bin"     = "77993210"
-}
-foreach ($blob in $blobs.Keys) {
-    $path = "app\blobs\$blob"
-    if (-not (Test-Path $path)) {
-        Write-Host "ERROR: $path missing - see app\blobs\README.md"
-        exit 1
-    }
-    $hash = (Get-FileHash $path -Algorithm SHA256).Hash.ToLower()
-    if (-not $hash.StartsWith($blobs[$blob])) {
-        Write-Host "ERROR: $path is not the expected image (sha256 starts $($hash.Substring(0,8)), expected $($blobs[$blob]))"
-        exit 1
-    }
-}
+#
+# The bundled firmware images are checked by CONTENT before packing: a
+# truncated or swapped image must stop the build, not reach a cabinet. The
+# check lives in tools\verify_blobs.py and reads app\firmware_bundle.py, which
+# is the single source of truth.
+#
+# This script used to keep its OWN copy of the expected hashes. The two
+# drifted: gateway v1.12.3 was never added here, so a build passed while the
+# newest bundled gateway image was still v1.12.2. The UI offers the first
+# entry of a kind as its default, so the tool would have proposed a DOWNGRADE
+# as the obvious choice and quietly removed the all_8 panel action that the
+# type-80 cabinet's front button is configured to use.
+& ".venv\Scripts\python.exe" tools\verify_blobs.py
+if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: bundled firmware images did not verify"; exit 1 }
+
 & ".venv\Scripts\nicegui-pack.exe" --onefile --name $name `
     --add-data "app\docs;app/docs" `
     --add-data "app\blobs;app/blobs" run.py
