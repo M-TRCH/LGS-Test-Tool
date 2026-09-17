@@ -121,6 +121,7 @@ class SoakTick:
     crossings: int = 0
     worst_crossing_ms: float = 0.0
     picks: int = 0               # pharmacy mode: windows lit so far
+    dropped: int = 0             # picks with no dark window left to use
     elapsed_s: float = 0.0
     seq: int = 0
 
@@ -153,7 +154,7 @@ def _totals(tick: SoakTick) -> str:
             f"reboots={tick.reboots} wdt={tick.watchdogs} "
             f"worst_ms={tick.worst_ms:.0f} cross={tick.crossings} "
             f"worst_cross_ms={tick.worst_crossing_ms:.0f} "
-            f"picks={tick.picks} "
+            f"picks={tick.picks} dropped={tick.dropped} "
             f"elapsed_s={tick.elapsed_s:.0f}")
 
 
@@ -215,6 +216,25 @@ class _Pharmacy:
     One write per step(), never a burst: a ward lights a slot every half a
     minute, and the whole value of this mode is that it is the shape of real
     use rather than the maximum the bus will take.
+
+    DWELL AND RATE ARE ONE SETTING, NOT TWO. How many windows are lit at
+    once is neither of them alone -- it settles at
+
+        concurrent = picks_per_day / 86400 * dwell_s
+
+    so the defaults (2000/day, 20 s) hold 0.46 windows lit, and the cabinet
+    is essentially never showing two at a time. That is a perfectly good
+    imitation of a ward and a poor exercise of the v3.5.0 window engine,
+    which exists precisely because eight people can share one slot. Dwell is
+    the honest knob for reaching that: leaving a window lit for five minutes
+    is exactly what happens when a pharmacist is interrupted.
+
+    Push it far enough, though, and the model stops being a model -- when
+    concurrent approaches the number of (module, window) pairs the cabinet is
+    simply all on, and the deck has nothing left to deal.
+    estimate_concurrent() below lets a caller see that coming, and the run
+    says so in the CSV rather than quietly dropping the picks it cannot
+    place.
     """
 
     def __init__(self, ids: Sequence[int], windows: int,
@@ -227,6 +247,7 @@ class _Pharmacy:
         self._next_at = now + self._interval
         self._rng = random.Random()
         self.picks = 0
+        self.skipped = 0            # picks the cabinet had no dark window for
 
     def _deal(self):
         if not self._deck:
@@ -248,12 +269,25 @@ class _Pharmacy:
         if now < self._next_at:
             return None
         self._next_at = now + self._interval
-        for _ in range(len(self._pairs)):     # skip pairs already lit
-            dev, win = self._deal()
-            if (dev, win) not in self._lit:
-                self._lit[(dev, win)] = now + self._dwell
-                self.picks += 1
-                return dev, 1000 + win, True
+        held = []
+        try:
+            for _ in range(len(self._pairs)):
+                dev, win = self._deal()
+                if (dev, win) not in self._lit:
+                    self._lit[(dev, win)] = now + self._dwell
+                    self.picks += 1
+                    return dev, 1000 + win, True
+                held.append((dev, win))
+        finally:
+            # Pairs passed over because they were already lit go BACK on the
+            # deck, at the top, still owed their turn. Dropping them was the
+            # subtle cost of a long dwell: the deck is the only reason every
+            # slot gets equal exposure, and discarding whatever happened to
+            # be lit would have biased exposure towards the windows that
+            # clear fastest -- worst exactly when dwell is long, which is
+            # when a soak leans on the deck most.
+            self._deck.extend(held)
+        self.skipped += 1
         return None
 
     def all_off(self):
@@ -262,6 +296,21 @@ class _Pharmacy:
         out = [(d, 1000 + w) for (d, w) in self._lit]
         self._lit.clear()
         return out
+
+
+def estimate_concurrent(ids, windows: int, picks_per_day: int,
+                        dwell_s: float):
+    """(concurrent, capacity) for a pharmacy run that has not started yet.
+
+    Rate and dwell are the two knobs an operator sets, and neither one says
+    what the run will actually look like -- their product does. A caller
+    showing this before the start button is pressed saves a night spent
+    proving that 0.46 windows lit at a time does not exercise an engine
+    built for eight.
+    """
+    capacity = max(1, len(list(ids)) * max(1, windows))
+    concurrent = max(1, picks_per_day) / 86400.0 * max(1.0, dwell_s)
+    return concurrent, capacity
 
 
 def run_soak(ops: SoakOps, cfg: SoakConfig, emit: Callable,
@@ -280,15 +329,34 @@ def run_soak(ops: SoakOps, cfg: SoakConfig, emit: Callable,
         if log_line:
             log_line(f"{item.when:%Y-%m-%d %H:%M:%S},{device_id},{kind},{detail}")
 
-    def csv(kind: str, detail: str) -> None:
+    def csv(kind: str, detail: str, device_id: int = 0) -> None:
         """A row for the file only — the anomaly list on screen stays a list
-        of things that went wrong."""
-        if log_line:
-            log_line(f"{datetime.now():%Y-%m-%d %H:%M:%S},0,{kind},{detail}")
+        of things that went wrong.
 
-    csv("start", f"ids={len(ids)} gap_s={cfg.pass_gap_s} "
-                 f"counter_every={cfg.counter_every} slow_ms={cfg.slow_ms} "
-                 f"crossing_slow_ms={cfg.crossing_slow_ms}")
+        Pharmacy mode is why this takes a device id. Every pick and clear is
+        worth keeping, so a file can be replayed into "what was this cabinet
+        asked to show at 03:40", but 4,000 routine writes a day are not
+        anomalies: routing them through note() would have pushed the real
+        findings out of a 400-line box within a couple of hours and left an
+        overnight run looking clean because its evidence had scrolled away.
+        """
+        if log_line:
+            log_line(f"{datetime.now():%Y-%m-%d %H:%M:%S},{device_id},{kind},{detail}")
+
+    start_detail = (f"ids={len(ids)} gap_s={cfg.pass_gap_s} "
+                    f"counter_every={cfg.counter_every} slow_ms={cfg.slow_ms} "
+                    f"crossing_slow_ms={cfg.crossing_slow_ms} mode={cfg.mode}")
+    if cfg.mode == "pharmacy":
+        # Record the derived concurrency, not just the two knobs. The whole
+        # question a reader brings to a pharmacy-mode file months later is
+        # "was the multi-window engine actually under load here", and that
+        # is the product of rate and dwell, not either number on its own.
+        conc, cap = estimate_concurrent(ids, cfg.windows,
+                                        cfg.picks_per_day, cfg.dwell_s)
+        start_detail += (f" picks_per_day={cfg.picks_per_day} "
+                         f"dwell_s={cfg.dwell_s:.0f} windows={cfg.windows} "
+                         f"concurrent={conc:.2f}/{cap}")
+    csv("start", start_detail)
     reason = "unknown"
     polled = False
     try:
@@ -348,30 +416,80 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
                          f"dwell_s={cfg.dwell_s} windows={cfg.windows} "
                          f"pairs={len(ids) * cfg.windows}")
 
+    saturated: list = []       # one-shot latch for the note above
+
+    # Where the hub is parked, shared by the poll and the simulation. It has
+    # to be shared: a pick jumps to wherever the deck sent it and MOVES the
+    # hub, so a poll that kept its own idea of the channel would mis-score
+    # every crossing after the first pick — undercounting the crossings and
+    # then blaming the module that paid for one.
+    chan = [None]
+
+    def crossing_to(channel: int) -> bool:
+        """True when reaching `channel` means the hub has to move. Updates
+        the shared tracker, so callers must only ask once per transaction."""
+        moved = channel != 0 and (chan[0] is None or channel != chan[0])
+        chan[0] = channel
+        return moved
+
     def pharmacy_step() -> None:
         """At most ONE coil write per call, slipped between module reads.
 
         Interleaving rather than bursting is the whole point: the cabinet
         has to be carrying real traffic WHILE it is watched, and a ward
         lights a slot every half a minute, not eighty in a row.
+
+        These writes are TIMED, and they are the reason to time anything.
+        The poll walks ids in order and crosses the hub about ten times a
+        pass; the deck sends a pick anywhere, so nearly every one crosses —
+        which makes this the most crossing-heavy traffic the tool produces
+        and the closest thing here to how a server actually reaches a
+        cabinet. Leaving it unmeasured would have wasted the run it exists
+        to justify.
         """
         if pharmacy is None:
             return
+        before_skips = pharmacy.skipped
         action = pharmacy.step(time.monotonic())
         if action is None:
+            tick.dropped = pharmacy.skipped
+            if pharmacy.skipped != before_skips and not saturated:
+                # Every window in the cabinet is already lit, so this pick
+                # had nowhere to go. Say it ONCE -- at this dwell it will
+                # happen for the rest of the night, and a line per dropped
+                # pick would bury the run's real findings. The summary
+                # carries the count.
+                saturated.append(True)
+                note(0, "sim_saturated",
+                     f"every window lit (dwell {cfg.dwell_s:.0f} s at "
+                     f"{cfg.picks_per_day}/day exceeds "
+                     f"{len(ids) * cfg.windows} windows) -- picks now dropped")
             return
         dev, coil, on = action
+        crossed = crossing_to(hub_channel(dev))
+        t = time.monotonic()
         res = ops.write_coil(dev, coil, on)
+        took_ms = (time.monotonic() - t) * 1000.0
+        tick.txns += 1
+        if crossed:
+            tick.crossings += 1
+            tick.worst_crossing_ms = max(tick.worst_crossing_ms, took_ms)
+        else:
+            tick.worst_ms = max(tick.worst_ms, took_ms)
+        what = "pick" if on else "clear"
         if not getattr(res, "ok", False):
             tick.fails += 1
-            note(dev, "no_reply",
-                 f"{'lighting' if on else 'clearing'} window {coil - 1000}")
+            note(dev, "no_reply", f"{what} window {coil - 1000}"
+                                  + (" after a hub crossing" if crossed else ""))
             return
         if on:
             tick.picks += 1
-        note(dev, "pick" if on else "clear", f"window {coil - 1000}")
+        limit = cfg.crossing_slow_ms if crossed else cfg.slow_ms
+        if took_ms >= limit:
+            note(dev, "slow", f"{took_ms:.0f} ms ({what} window {coil - 1000}"
+                              + (" hub crossing" if crossed else "") + ")")
+        csv(what, f"window {coil - 1000}", dev)
 
-    prev_channel = None
     while not cancel.is_set():
         tick.passes += 1
         check_counters = (tick.passes % max(1, cfg.counter_every) == 0)
@@ -379,13 +497,10 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
         for device_id in ids:
             if cancel.is_set():
                 break
-            channel = hub_channel(device_id)
             # The very first read counts as a crossing too: nobody knows which
             # channel the hub is parked on, and letting that one 2.2 s wait
             # into the ordinary "worst" made the panel look alarming forever.
-            crossing = (channel != 0
-                        and (prev_channel is None or channel != prev_channel))
-            prev_channel = channel
+            crossing = crossing_to(hub_channel(device_id))
 
             t = time.monotonic()
             res = ops.read_regs(device_id, REG_IDENTITY, 3)
@@ -437,12 +552,8 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
                     break
                 # This loop walks the same ids in the same order, so it
                 # crosses the hub exactly as the main pass does and needs the
-                # same allowance -- prev_channel carries over deliberately.
-                channel = hub_channel(device_id)
-                counter_crossing = (channel != 0
-                                    and (prev_channel is None
-                                         or channel != prev_channel))
-                prev_channel = channel
+                # same allowance -- the channel tracker carries over deliberately.
+                counter_crossing = crossing_to(hub_channel(device_id))
 
                 # Only the FIRST read of the pair pays the channel settle;
                 # the second one is already on a woken channel, so it is held
@@ -527,6 +638,6 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
                 ops.write_coil(dev, coil, False)
             except Exception:                                   # noqa: BLE001
                 break
-        csv("sim_stop", f"picks={tick.picks}")
+        csv("sim_stop", f"picks={tick.picks} dropped={tick.dropped}")
 
     return True

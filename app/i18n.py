@@ -216,6 +216,20 @@ TEXTS: dict[str, dict[str, str]] = {
               "cabinet the same coils pick a colour and only the last stays lit.",
         "th": "จะสุ่มจากกี่หน้าต่าง · 8 สำหรับตู้ mask (หน้าต่าง n = คนที่ n ติด"
               "พร้อมกันได้) · บนตู้วงแหวน coil ชุดเดียวกันเลือกสี จึงติดทีละดวง"},
+    "soak.sim_conc": {
+        "en": "~{n} of {cap} windows lit at once (picks/day ÷ 86400 × dwell)",
+        "th": "เฉลี่ยติดพร้อมกัน ~{n} จาก {cap} หน้าต่าง (ครั้ง/วัน ÷ 86400 × dwell)"},
+    "soak.sim_thin": {
+        "en": "two are almost never lit together — raise dwell to exercise "
+              "the multi-window engine",
+        "th": "แทบไม่เคยติดพร้อมกันสองดวง — เพิ่ม dwell เพื่อทดสอบหลายหน้าต่าง"},
+    "soak.sim_crowded": {
+        "en": "most of the cabinet will be lit — realistic for load, not for a ward",
+        "th": "ตู้จะติดเกือบทั้งตู้ — เหมาะทดสอบโหลด ไม่ใช่การใช้งานจริง"},
+    "soak.sim_full": {
+        "en": "dwell too long for this rate — all {cap} windows stay lit and "
+              "picks will be dropped",
+        "th": "dwell นานเกินสำหรับอัตรานี้ — ทั้ง {cap} หน้าต่างจะติดค้าง และจะมีการทิ้งครั้งหยิบ"},
     "soak.sim_note": {
         "en": "Windows are drawn from a shuffled deck, so every slot gets the "
               "same number of activations over a run — a uniform draw would "

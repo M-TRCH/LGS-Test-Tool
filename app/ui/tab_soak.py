@@ -63,8 +63,44 @@ def build(ctx: Ctx) -> None:
             wins = ui.number(t("soak.windows"), value=8, min=1, max=8,
                              format="%d").props("dense outlined").classes("w-36")
             helps(wins, t("soak.windows_tip"))
+        # Rate and dwell are not two settings — they multiply into the one
+        # number that decides whether this run exercises the multi-window
+        # engine at all. At the defaults it is 0.46, meaning the cabinet
+        # essentially never shows two windows at once, and nobody would guess
+        # that from "2000" and "20". So show the product, live, before the
+        # night is spent rather than after.
+        sim_calc = ui.label().classes("text-xs")
         ui.label(t("soak.sim_note")).classes("text-xs text-grey")
         sim_row.bind_visibility_from(mode, "value", lambda v: v == "pharmacy")
+        sim_calc.bind_visibility_from(mode, "value", lambda v: v == "pharmacy")
+
+        shown: dict = {"text": None}
+
+        def recalc() -> None:
+            conc, cap = soak.estimate_concurrent(
+                ctx.cabinet().ids, int(wins.value or 8),
+                int(picks.value or 2000), float(dwell.value or 20))
+            if conc >= cap:
+                text, tone = t("soak.sim_full", cap=cap), "text-red"
+            elif conc >= cap * 0.5:
+                text, tone = t("soak.sim_conc", n=f"{conc:.1f}",
+                               cap=cap) + " · " + t("soak.sim_crowded"), "text-orange"
+            elif conc < 1.0:
+                text, tone = t("soak.sim_conc", n=f"{conc:.2f}",
+                               cap=cap) + " · " + t("soak.sim_thin"), "text-grey"
+            else:
+                text, tone = t("soak.sim_conc", n=f"{conc:.1f}", cap=cap), "text-green"
+            if text == shown["text"]:
+                return
+            shown["text"] = text
+            sim_calc.set_text(text)
+            sim_calc.classes(replace=f"text-xs {tone}")
+
+        # Capacity depends on the cabinet, which is chosen on another card and
+        # gives no change event here, so poll for it — with the guard above,
+        # an unchanged figure costs a multiply and touches nothing.
+        ui.timer(1.0, recalc)
+        recalc()
 
         with ui.row().classes("items-center gap-3 flex-wrap q-mt-sm"):
             start_btn = ui.button(t("soak.start"), color="primary")

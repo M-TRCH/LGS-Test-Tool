@@ -56,6 +56,8 @@ class SoakSummary:
     passes: int = 0
     reads: int = 0
     fails: int = 0
+    picks: int = 0                  # pharmacy mode: windows lit during the run
+    dropped: int = 0                # picks the cabinet was too full to place
     reboots: int = 0
     watchdogs: int = 0
     worst_ms: int = 0
@@ -190,6 +192,13 @@ def parse_soak_csv(text: str, filename: str = "") -> SoakSummary:
         out.worst_ms = num("worst_ms")
         out.crossings = num("cross")
         out.worst_cross_ms = num("worst_cross_ms")
+        # Pharmacy mode only; a poll run simply reports zero. Without these
+        # a simulated run's report reads exactly like a plain poll's, and
+        # the one thing that made it worth running -- that the cabinet was
+        # being USED while it was watched -- would be invisible in the
+        # summary even though every pick is there in the rows.
+        out.picks = num("picks")
+        out.dropped = num("dropped")
 
     # Mass-reboot detection: slide a window over the reboot rows whose own
     # iwdg counter held still and take the largest cluster. One cluster is
