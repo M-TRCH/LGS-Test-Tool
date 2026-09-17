@@ -326,6 +326,62 @@ def case_tick_carries_every_field():
     return None
 
 
+# ── [8] the configured rate is actually delivered ──────────────────────────
+def case_rate_does_not_drift():
+    """Over many intervals the pick rate must not sag.
+
+    A step only happens between module reads and a clear outranks a pick in
+    the same step, so picks go out a little late. Rescheduling from the LATE
+    moment rather than the DUE moment makes each delay permanent, and the
+    losses compound: on the type-80 it produced 1,726 picks/day against
+    2,000 configured, with the median gap looking perfectly healthy at 44.0 s.
+    A median cannot show this; only the count over a long run can.
+
+    Driven here on a synthetic clock, so it is exact and instant.
+    """
+    interval = 10.0                       # 8640/day
+    # dwell 100 s over 160 pairs holds ~10 lit: far from saturation, and the
+    # clears it produces are the point -- a clear outranks a pick in the same
+    # step, and that is precisely what makes picks late.
+    ph = soak._Pharmacy(range(11, 31), 8, 8640, 100.0, 0.0)
+    now, fired = 0.0, 0
+    while now < 10000.0:
+        now += 0.7                        # a step between module reads
+        act = ph.step(now)
+        if act is not None and act[2]:    # count picks, not clears
+            fired += 1
+    expected = 10000.0 / interval
+    ratio = fired / expected
+    if ratio < 0.97:
+        return (f"delivered {fired} picks where {expected:.0f} were due "
+                f"({ratio * 100:.0f}%) -- the schedule is drifting")
+    if ratio > 1.03:
+        return f"delivered {fired} for {expected:.0f} due -- firing too fast"
+    return None
+
+
+def case_far_behind_resyncs_without_bursting():
+    """After a long stall it must not fire a catch-up burst.
+
+    Compensating for lost time is right for a few seconds and wrong for a
+    few minutes: a cabinet does not owe anyone forty picks because the bus
+    was busy. One catch-up at most, then resync.
+    """
+    ph = soak._Pharmacy(range(11, 31), 8, 8640, 100.0, 0.0)  # 10 s interval
+    ph.step(10.0)                          # first pick, on time
+    burst = 0
+    now = 600.0                            # ten minutes later
+    for _ in range(30):                    # hammer step() at the same instant
+        act = ph.step(now)
+        if act is not None and act[2]:     # picks only; the clears are due
+            burst += 1
+    if burst > 2:
+        return f"fired {burst} picks at one instant catching up -- that is a burst"
+    if burst == 0:
+        return "fired nothing at all after the stall"
+    return None
+
+
 # ── the arithmetic the UI shows ────────────────────────────────────────────
 def case_estimate_matches_reality():
     ids = list(range(11, 19))            # 8 modules
@@ -351,6 +407,8 @@ CASES = (
     ("saturation reported once", case_saturation_reported_once),
     ("picks are not anomalies", case_picks_are_not_anomalies),
     ("tick carries every field", case_tick_carries_every_field),
+    ("rate does not drift", case_rate_does_not_drift),
+    ("far behind resyncs", case_far_behind_resyncs_without_bursting),
     ("estimate matches reality", case_estimate_matches_reality),
 )
 

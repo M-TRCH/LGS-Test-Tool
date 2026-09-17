@@ -269,7 +269,22 @@ class _Pharmacy:
             return due[0], 1000 + due[1], False
         if now < self._next_at:
             return None
-        self._next_at = now + self._interval
+        # Advance from the time this pick was DUE, not from the time it
+        # actually went out. `= now + interval` looks equivalent and is not:
+        # a step only happens between module reads, and a clear takes
+        # priority over a pick in the same step, so a pick is routinely a
+        # little late -- and rescheduling from the late moment makes every
+        # one of those delays permanent. Measured on the type-80 on
+        # 2026-09-17: median gap 44.0 s against the 43.2 asked, which is
+        # fine, but the mean was 49.5 s and the run delivered 1,726/day of
+        # the 2,000 configured. A soak quietly running at 86% of its stated
+        # rate is not the experiment anyone thought they had started.
+        self._next_at += self._interval
+        if now - self._next_at > self._interval:
+            # Too far behind to catch up without bursting, which would be
+            # unrealistic and hard on the bus. Drop the lost picks and
+            # resync; this is what run_soak reports as sim_behind.
+            self._next_at = now + self._interval
         held = []
         try:
             for _ in range(len(self._pairs)):
