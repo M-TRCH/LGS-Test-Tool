@@ -133,6 +133,14 @@ def build(ctx: Ctx) -> None:
             lbl_wdt = ui.label("—").classes("text-sm font-bold")
             lbl_worst = ui.label("—").classes("text-sm")
             lbl_cross = ui.label("—").classes("text-sm text-grey")
+            # Pharmacy mode's only proof of life. Everything else on this
+            # card is poll traffic and reads identically whether or not a
+            # single window was ever lit, and the pick rows deliberately go
+            # to the file rather than the anomaly box — so without this the
+            # mode looks broken while working perfectly.
+            lbl_picks = ui.label("—").classes("text-sm")
+            lbl_picks.bind_visibility_from(mode, "value",
+                                           lambda v: v == "pharmacy")
 
     with ui.card().classes("p-3 w-full q-mt-sm"):
         helps(ui.label(t("soak.anomalies")).classes("font-bold"), t("soak.anomalies_tip"))
@@ -150,11 +158,12 @@ def build(ctx: Ctx) -> None:
         worse than none.
         """
         for lbl in (lbl_elapsed, lbl_passes, lbl_txns, lbl_fails,
-                    lbl_reboots, lbl_wdt, lbl_worst, lbl_cross):
+                    lbl_reboots, lbl_wdt, lbl_worst, lbl_cross, lbl_picks):
             lbl.set_text("—")
         lbl_reboots.classes(replace="text-sm font-bold")
         lbl_wdt.classes(replace="text-sm font-bold")
         lbl_cross.classes(replace="text-sm text-grey")
+        lbl_picks.classes(replace="text-sm")
 
     def _cfg(ids: tuple) -> soak.SoakConfig:
         return soak.SoakConfig(ids=ids,
@@ -215,6 +224,12 @@ def build(ctx: Ctx) -> None:
                 lbl_worst.set_text(t("soak.worst", v=f"{ev.worst_ms:.0f}"))
                 lbl_cross.set_text(t("soak.crossings", n=ev.crossings,
                                      v=f"{ev.worst_crossing_ms:.0f}"))
+                lbl_picks.set_text(
+                    t("soak.picks_live", n=f"{ev.picks:,}", lit=ev.lit)
+                    + (" · " + t("soak.picks_dropped", n=ev.dropped)
+                       if ev.dropped else ""))
+                lbl_picks.classes(replace="text-sm"
+                                  + (" text-red" if ev.dropped else ""))
             elif isinstance(ev, soak.SoakAnomaly):
                 say(ev.item.text)
             elif isinstance(ev, soak.SoakDone):

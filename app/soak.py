@@ -32,7 +32,7 @@ from __future__ import annotations
 import random
 import threading
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 from typing import Callable, Optional, Protocol, Sequence
 
@@ -122,6 +122,7 @@ class SoakTick:
     worst_crossing_ms: float = 0.0
     picks: int = 0               # pharmacy mode: windows lit so far
     dropped: int = 0             # picks with no dark window left to use
+    lit: int = 0                 # windows lit at this instant
     elapsed_s: float = 0.0
     seq: int = 0
 
@@ -154,7 +155,7 @@ def _totals(tick: SoakTick) -> str:
             f"reboots={tick.reboots} wdt={tick.watchdogs} "
             f"worst_ms={tick.worst_ms:.0f} cross={tick.crossings} "
             f"worst_cross_ms={tick.worst_crossing_ms:.0f} "
-            f"picks={tick.picks} dropped={tick.dropped} "
+            f"picks={tick.picks} dropped={tick.dropped} lit={tick.lit} "
             f"elapsed_s={tick.elapsed_s:.0f}")
 
 
@@ -290,6 +291,9 @@ class _Pharmacy:
         self.skipped += 1
         return None
 
+    def lit_count(self) -> int:
+        return len(self._lit)
+
     def all_off(self):
         """Every pair still lit, so a run that ends does not leave the
         cabinet decorated."""
@@ -417,6 +421,36 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
                          f"pairs={len(ids) * cfg.windows}")
 
     saturated: list = []       # one-shot latch for the note above
+    behind: list = []          # one-shot latch for the rate shortfall below
+
+    def check_rate() -> None:
+        """Say so when the bus cannot deliver the pick rate that was asked for.
+
+        `dropped` only counts picks with nowhere to go. It does NOT catch the
+        other way a run quietly stops being the run you configured: the bus
+        simply not keeping up. A pick lands on a random module, which drags
+        the hub off whatever channel the poll is walking, so the next read
+        drags it back -- every pick costs TWO channel crossings, about 4.4 s
+        of bus time on the type-80 cabinet. Measured there on 2026-09-17,
+        43,200/day asked produced 16,491/day, 38% of it, with dropped=0 and
+        nothing on screen suggesting the figure in the config was fiction.
+
+        Judged only once enough picks were due for the number to mean
+        anything, and said once, because it will stay true all night.
+        """
+        if pharmacy is None or behind:
+            return
+        expected = tick.elapsed_s / 86400.0 * cfg.picks_per_day
+        if expected < 20:
+            return
+        achieved = tick.picks / max(1.0, tick.elapsed_s) * 86400.0
+        if achieved >= cfg.picks_per_day * 0.8:
+            return
+        behind.append(True)
+        note(0, "sim_behind",
+             f"asked {cfg.picks_per_day}/day got {achieved:.0f}/day "
+             f"({achieved / cfg.picks_per_day * 100:.0f}%) -- the bus cannot "
+             f"place picks this fast; each one costs two hub crossings")
 
     # Where the hub is parked, shared by the poll and the simulation. It has
     # to be shared: a pick jumps to wherever the deck sent it and MOVES the
@@ -451,6 +485,7 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
             return
         before_skips = pharmacy.skipped
         action = pharmacy.step(time.monotonic())
+        tick.lit = pharmacy.lit_count()
         if action is None:
             tick.dropped = pharmacy.skipped
             if pharmacy.skipped != before_skips and not saturated:
@@ -488,6 +523,7 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
         if took_ms >= limit:
             note(dev, "slow", f"{took_ms:.0f} ms ({what} window {coil - 1000}"
                               + (" hub crossing" if crossed else "") + ")")
+        tick.lit = pharmacy.lit_count()
         csv(what, f"window {coil - 1000}", dev)
 
     while not cancel.is_set():
@@ -619,11 +655,14 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
                 ops.sleep(INTER_TXN_S)
 
         tick.elapsed_s = time.monotonic() - t0
-        emit(SoakTick(passes=tick.passes, txns=tick.txns, fails=tick.fails,
-                      reboots=tick.reboots, watchdogs=tick.watchdogs,
-                      worst_ms=tick.worst_ms, crossings=tick.crossings,
-                      worst_crossing_ms=tick.worst_crossing_ms,
-                      picks=tick.picks, elapsed_s=tick.elapsed_s))
+        # A COPY of every field, never a hand-written list of them. The
+        # listing here was missing `lit` and `dropped` the day they were
+        # added, so the panel showed 0 lit windows through a run that was
+        # lighting them correctly — the same silent-zero shape that once had
+        # a night of 308 watchdog resets reporting wdt=0. A new field on
+        # SoakTick must not depend on someone remembering this line.
+        check_rate()
+        emit(replace(tick))
         # One line per pass, so the end of the file is a fact rather than an
         # inference: the last heartbeat is the last moment the tool was
         # certainly alive and the cabinet certainly answering.

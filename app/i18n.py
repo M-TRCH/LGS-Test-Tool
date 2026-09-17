@@ -216,6 +216,12 @@ TEXTS: dict[str, dict[str, str]] = {
               "cabinet the same coils pick a colour and only the last stays lit.",
         "th": "จะสุ่มจากกี่หน้าต่าง · 8 สำหรับตู้ mask (หน้าต่าง n = คนที่ n ติด"
               "พร้อมกันได้) · บนตู้วงแหวน coil ชุดเดียวกันเลือกสี จึงติดทีละดวง"},
+    "soak.picks_live": {
+        "en": "picks {n} · {lit} lit now",
+        "th": "หยิบ {n} · ติดอยู่ {lit}"},
+    "soak.picks_dropped": {
+        "en": "{n} dropped (cabinet full)",
+        "th": "ทิ้ง {n} (ตู้เต็ม)"},
     "soak.sim_conc": {
         "en": "~{n} of {cap} windows lit at once (picks/day ÷ 86400 × dwell)",
         "th": "เฉลี่ยติดพร้อมกัน ~{n} จาก {cap} หน้าต่าง (ครั้ง/วัน ÷ 86400 × dwell)"},

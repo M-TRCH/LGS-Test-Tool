@@ -269,6 +269,63 @@ def case_picks_are_not_anomalies():
     return None
 
 
+# ── [7] the emitted tick carries EVERY field ───────────────────────────────
+def case_tick_carries_every_field():
+    """Whatever run_soak counts, the panel must receive.
+
+    The tick used to be rebuilt field by field at the emit site, so adding a
+    counter to SoakTick silently produced a column that read 0 forever while
+    the run counted it correctly. This project has been bitten by that exact
+    shape before -- a night of 308 watchdog resets reported wdt=0. The test
+    is deliberately generic: it compares the whole dataclass rather than any
+    named field, so the NEXT counter added is covered without anyone
+    remembering to come back here.
+    """
+    import dataclasses
+    last = {}
+
+    class Grab(dict):
+        pass
+
+    bus = StubBus((11, 12, 21, 22))
+    rows, cancel = [], __import__("threading").Event()
+    deadline = [time.monotonic() + 3.0]
+
+    def emit(ev):
+        if isinstance(ev, soak.SoakTick):
+            last["tick"] = ev
+            if time.monotonic() >= deadline[0]:
+                cancel.set()
+
+    def log(row):
+        rows.append(row)
+        if ",sim_start," in row:
+            deadline[0] = time.monotonic() + 3.0
+
+    cfg = soak.SoakConfig(ids=(11, 12, 21, 22), pass_gap_s=0, counter_every=1,
+                          mode="pharmacy", picks_per_day=345600, dwell_s=1.0,
+                          windows=8)
+    report = soak.run_soak(bus, cfg, emit, cancel, log)
+    got = last.get("tick")
+    if got is None:
+        return "no tick was ever emitted"
+    internal = dataclasses.asdict(report.tick)
+    emitted = dataclasses.asdict(got)
+    # `seq` is stamped by the event queue, and elapsed_s advances after the
+    # last tick; everything else must have arrived.
+    stale = [k for k, v in internal.items()
+             if k not in ("seq", "elapsed_s") and emitted.get(k) != v]
+    if stale:
+        return (f"the panel never received: {stale} "
+                f"(internal {[internal[k] for k in stale]}, "
+                f"emitted {[emitted.get(k) for k in stale]})")
+    if internal["picks"] < 1:
+        return "the run lit nothing, so the comparison proved nothing"
+    if internal["lit"] < 1 and internal["picks"] > 3:
+        return "lit stayed 0 through a run that lit windows"
+    return None
+
+
 # ── the arithmetic the UI shows ────────────────────────────────────────────
 def case_estimate_matches_reality():
     ids = list(range(11, 19))            # 8 modules
@@ -293,6 +350,7 @@ CASES = (
     ("deck survives long dwell", case_deck_survives_long_dwell),
     ("saturation reported once", case_saturation_reported_once),
     ("picks are not anomalies", case_picks_are_not_anomalies),
+    ("tick carries every field", case_tick_carries_every_field),
     ("estimate matches reality", case_estimate_matches_reality),
 )
 
