@@ -29,6 +29,7 @@ not tell that from a cabinet that had simply behaved itself until morning.
 """
 from __future__ import annotations
 
+import random
 import threading
 import time
 from dataclasses import dataclass, field
@@ -47,6 +48,9 @@ REG_STATS2_IWDG = 410   # fw >= v3.3.0
 class SoakOps(Protocol):
     def read_regs(self, device_id: int, addr: int, count: int): ...
     def sleep(self, seconds: float) -> None: ...
+    # Only the pharmacy simulation writes. A plain poll soak never calls it,
+    # so an ops binder that predates the mode still satisfies this.
+    def write_coil(self, device_id: int, addr: int, value: bool): ...
 
 
 @dataclass
@@ -71,6 +75,24 @@ class SoakConfig:
     # that as an anomaly would bury the real ones — so crossings are counted
     # separately and only complained about past their own, larger, threshold.
     crossing_slow_ms: int = 4000
+
+    # ── pharmacy simulation ────────────────────────────────────────────────
+    # "poll" is the read-only soak that produced every baseline this project
+    # owns; it is untouched and stays the default. "pharmacy" adds picks on
+    # top of the same poll: the cabinet is also being USED while it is
+    # watched, which is the one traffic shape no soak here has ever applied.
+    mode: str = "poll"               # poll | pharmacy
+    # Activations per cabinet per day. A ward is not a stress test -- the
+    # point is the shape of real use, not the maximum the bus can take.
+    picks_per_day: int = 2000
+    # How long a lit window stays lit before the simulation clears it, the
+    # way a server clears one when the tablet confirm arrives.
+    dwell_s: float = 20.0
+    # Windows per slot to draw from: 8 on a mask cabinet (window n = person
+    # n), and on a ring cabinet the same coils select a colour preset, which
+    # is radio -- so only the last one drawn stays lit there. Harmless, and
+    # the clear still lands on what was lit.
+    windows: int = 8
 
 
 @dataclass
@@ -98,6 +120,7 @@ class SoakTick:
     worst_ms: float = 0.0        # worst ORDINARY read (crossings excluded)
     crossings: int = 0
     worst_crossing_ms: float = 0.0
+    picks: int = 0               # pharmacy mode: windows lit so far
     elapsed_s: float = 0.0
     seq: int = 0
 
@@ -130,6 +153,7 @@ def _totals(tick: SoakTick) -> str:
             f"reboots={tick.reboots} wdt={tick.watchdogs} "
             f"worst_ms={tick.worst_ms:.0f} cross={tick.crossings} "
             f"worst_cross_ms={tick.worst_crossing_ms:.0f} "
+            f"picks={tick.picks} "
             f"elapsed_s={tick.elapsed_s:.0f}")
 
 
@@ -176,6 +200,68 @@ def _counters(ops: SoakOps, device_id: int, want_iwdg: bool,
         if r2.ok and v2 is not None:
             iwdg = int(v2[0] if isinstance(v2, (list, tuple)) else v2)
     return boots, iwdg, cause
+
+
+class _Pharmacy:
+    """Draws which window to light next, and remembers to put it out.
+
+    Windows come off a SHUFFLED DECK of every (module, window) pair rather
+    than a uniform draw. Uniform gives Poisson spread -- over a night one
+    slot collects twice the activations of another -- and then any per-slot
+    comparison afterwards is confounded by exposure instead of by health.
+    Dealing a shuffled deck and reshuffling when it runs out gives every
+    pair the same count, and still looks nothing like a sweep.
+
+    One write per step(), never a burst: a ward lights a slot every half a
+    minute, and the whole value of this mode is that it is the shape of real
+    use rather than the maximum the bus will take.
+    """
+
+    def __init__(self, ids: Sequence[int], windows: int,
+                 picks_per_day: int, dwell_s: float, now: float) -> None:
+        self._pairs = [(i, w) for i in ids for w in range(1, windows + 1)]
+        self._deck: list = []
+        self._lit: dict = {}                 # (id, window) -> monotonic expiry
+        self._dwell = max(1.0, dwell_s)
+        self._interval = 86400.0 / max(1, picks_per_day)
+        self._next_at = now + self._interval
+        self._rng = random.Random()
+        self.picks = 0
+
+    def _deal(self):
+        if not self._deck:
+            self._deck = list(self._pairs)
+            self._rng.shuffle(self._deck)
+        return self._deck.pop()
+
+    def step(self, now: float):
+        """The next single bus action, or None when there is nothing due.
+
+        Returns (device_id, coil, on). Clears come first: a window that has
+        served its dwell is a promise already made, while the next pick can
+        wait for the following step a few hundred milliseconds later.
+        """
+        due = next((p for p, exp in self._lit.items() if now >= exp), None)
+        if due is not None:          # find first, delete after -- never
+            del self._lit[due]       # mutate a dict while iterating it
+            return due[0], 1000 + due[1], False
+        if now < self._next_at:
+            return None
+        self._next_at = now + self._interval
+        for _ in range(len(self._pairs)):     # skip pairs already lit
+            dev, win = self._deal()
+            if (dev, win) not in self._lit:
+                self._lit[(dev, win)] = now + self._dwell
+                self.picks += 1
+                return dev, 1000 + win, True
+        return None
+
+    def all_off(self):
+        """Every pair still lit, so a run that ends does not leave the
+        cabinet decorated."""
+        out = [(d, 1000 + w) for (d, w) in self._lit]
+        self._lit.clear()
+        return out
 
 
 def run_soak(ops: SoakOps, cfg: SoakConfig, emit: Callable,
@@ -252,6 +338,39 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
             note(device_id, "no_reply", "missing at the baseline")
         ops.sleep(INTER_TXN_S)
 
+    # Pharmacy simulation, when asked for. Built after the baseline so its
+    # first pick lands on a cabinet whose counters are already known.
+    pharmacy = None
+    if cfg.mode == "pharmacy":
+        pharmacy = _Pharmacy(ids, cfg.windows, cfg.picks_per_day,
+                             cfg.dwell_s, time.monotonic())
+        csv("sim_start", f"picks_per_day={cfg.picks_per_day} "
+                         f"dwell_s={cfg.dwell_s} windows={cfg.windows} "
+                         f"pairs={len(ids) * cfg.windows}")
+
+    def pharmacy_step() -> None:
+        """At most ONE coil write per call, slipped between module reads.
+
+        Interleaving rather than bursting is the whole point: the cabinet
+        has to be carrying real traffic WHILE it is watched, and a ward
+        lights a slot every half a minute, not eighty in a row.
+        """
+        if pharmacy is None:
+            return
+        action = pharmacy.step(time.monotonic())
+        if action is None:
+            return
+        dev, coil, on = action
+        res = ops.write_coil(dev, coil, on)
+        if not getattr(res, "ok", False):
+            tick.fails += 1
+            note(dev, "no_reply",
+                 f"{'lighting' if on else 'clearing'} window {coil - 1000}")
+            return
+        if on:
+            tick.picks += 1
+        note(dev, "pick" if on else "clear", f"window {coil - 1000}")
+
     prev_channel = None
     while not cancel.is_set():
         tick.passes += 1
@@ -310,6 +429,7 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
                     note(device_id, "slow",
                          f"{took_ms:.0f} ms" + (" (hub crossing)" if crossing else ""))
             ops.sleep(INTER_TXN_S)
+            pharmacy_step()
 
         if check_counters and not cancel.is_set():
             for device_id in ids:
@@ -392,11 +512,21 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
                       reboots=tick.reboots, watchdogs=tick.watchdogs,
                       worst_ms=tick.worst_ms, crossings=tick.crossings,
                       worst_crossing_ms=tick.worst_crossing_ms,
-                      elapsed_s=tick.elapsed_s))
+                      picks=tick.picks, elapsed_s=tick.elapsed_s))
         # One line per pass, so the end of the file is a fact rather than an
         # inference: the last heartbeat is the last moment the tool was
         # certainly alive and the cabinet certainly answering.
         csv("heartbeat", _totals(tick))
         ops.sleep(cfg.pass_gap_s)
+
+    if pharmacy is not None:
+        # A cancelled run must not leave windows lit across the ward
+        # overnight. Best effort: the transport may already be gone.
+        for dev, coil in pharmacy.all_off():
+            try:
+                ops.write_coil(dev, coil, False)
+            except Exception:                                   # noqa: BLE001
+                break
+        csv("sim_stop", f"picks={tick.picks}")
 
     return True

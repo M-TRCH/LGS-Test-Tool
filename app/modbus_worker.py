@@ -28,7 +28,7 @@ from typing import Callable, Optional, Sequence
 
 from . import (applog, commission, fieldcheck, fw_survey, gateway_config,
                gateway_tcp, gw_net_update, lgs_map, opta_flash, opta_update,
-               ota, soak, stlink, testsuite)
+               ota, soak, soak_fleet, stlink, testsuite)
 from .lgs_map import (CoilClass, HUB_WAKE_GAP_S, HUB_WAKE_TRIES,
                       INTER_CH_S, INTER_TXN_S, LATCH_COOLDOWN_S,
                       hub_channel)
@@ -195,6 +195,10 @@ class ModbusWorker:
         self._soak_cancel = threading.Event()
         self._soak_events: list = []
         self._soak_lock = threading.Lock()
+        self._fleet_running = False
+        self._fleet_cancel = threading.Event()
+        self._fleet_events: list = []
+        self._fleet_lock = threading.Lock()
         self._ota_running = False
         self._ota_cancel = threading.Event()
         self._ota_events: list = []
@@ -1291,6 +1295,70 @@ class ModbusWorker:
                     handle.close()
                 except OSError:
                     pass
+
+    # ── fleet soak (several cabinets, several sockets, several threads) ────
+    def start_fleet(self, cabinets, cfg: "soak.SoakConfig", log_dir,
+                    allow_shared: bool = False) -> bool:
+        """Soak N cabinets at once.
+
+        Deliberately does NOT take the worker's long-job slot or its
+        transport. Every cabinet in a fleet is a different gateway on a
+        different bus, so none of them contends with this worker's own
+        connection — and a fleet must stay startable while the operator is
+        using the tool normally on a cabinet that is not in it.
+
+        The one thing that WOULD contend is pointing a fleet at the gateway
+        this worker is connected to. That is caught here rather than left to
+        the caller, because it is the mistake that costs a night's data.
+        """
+        if self._fleet_running or not cabinets:
+            return False
+        ours = None
+        st = self._settings
+        if st is not None and self._connected:
+            ours = getattr(st, "host", None)
+        if soak_fleet.conflicting_hosts(cabinets, ours):
+            return False
+        self._fleet_cancel.clear()
+        with self._fleet_lock:
+            self._fleet_events.clear()
+        self._fleet_running = True
+        threading.Thread(target=self._do_fleet, name="fleet-soak", daemon=True,
+                         args=(list(cabinets), cfg, log_dir, ours,
+                               allow_shared)).start()
+        return True
+
+    def cancel_fleet(self) -> None:
+        self._fleet_cancel.set()
+
+    def fleet_running(self) -> bool:
+        return self._fleet_running
+
+    def drain_fleet_events(self, since: int) -> tuple[int, list]:
+        with self._fleet_lock:
+            fresh = [e for e in self._fleet_events if e.seq > since]
+            if len(self._fleet_events) > 3000:
+                del self._fleet_events[:-800]
+            return (fresh[-1].seq if fresh else since), fresh
+
+    def _do_fleet(self, cabinets, cfg, log_dir, ours, allow_shared) -> None:
+        def emit(ev) -> None:
+            with self._fleet_lock:
+                self._event_seq += 1
+                ev.seq = self._event_seq
+                self._fleet_events.append(ev)
+        try:
+            soak_fleet.run_fleet(cabinets, cfg, emit, self._fleet_cancel,
+                                 log_dir, our_host=ours,
+                                 allow_shared=allow_shared)
+        except BaseException as exc:                            # noqa: BLE001
+            applog.note(f"fleet soak stopped by {type(exc).__name__}: {exc}")
+            applog.note("".join(traceback.format_exception(
+                type(exc), exc, exc.__traceback__)))
+            emit(soak_fleet.FleetFailed(cabinet="fleet",
+                                        reason=f"{type(exc).__name__}: {exc}"))
+        finally:
+            self._fleet_running = False
 
     # ── firmware survey (read-only, its own event stream) ──────────────────
     def start_fw_survey(self, ids: Sequence[int]) -> bool:

@@ -184,6 +184,67 @@ TEXTS: dict[str, dict[str, str]] = {
                                "th": "ความถี่ในการอ่านตัวนับบูต/watchdog ของทุกโมดูล "
                                      "ซึ่งคือตัวจับการรีบูต เสียเวลาเพิ่มโมดูลละ 1 การอ่าน"},
     "soak.slow": {"en": "Slow reply (ms)", "th": "ตอบช้ากว่า (ms)"},
+    # ── soak modes ─────────────────────────────────────────────────────────
+    "soak.mode.poll": {"en": "Poll only", "th": "อ่านอย่างเดียว"},
+    "soak.mode.pharmacy": {"en": "Pharmacy simulation", "th": "จำลองห้องยา"},
+    "soak.mode_tip": {
+        "en": "Poll only is the read-only soak every baseline here was measured "
+              "with. Pharmacy simulation keeps that same poll running and ALSO "
+              "lights windows the way a ward does — so the cabinet is being used "
+              "while it is watched, which is the one traffic shape no soak here "
+              "has ever applied. It never fires a latch.",
+        "th": "อ่านอย่างเดียว = soak แบบเดิมที่ใช้วัดเส้นฐานทุกชุด · จำลองห้องยา = "
+              "poll เหมือนเดิมแต่เปิดไฟตามแบบที่ห้องยาใช้จริงไปด้วย ตู้จึงถูก"
+              "ใช้งานจริงขณะถูกเฝ้าดู ซึ่งเป็นรูปแบบทราฟฟิกที่ soak ที่ผ่านมา"
+              "ไม่เคยทำเลย · ไม่ยิงกลอนเด็ดขาด"},
+    "soak.picks": {"en": "picks per day", "th": "ครั้ง/วัน"},
+    "soak.picks_tip": {
+        "en": "Activations per cabinet per day. 2,000 is about one every 43 "
+              "seconds — the shape of real use, not the most the bus will take. "
+              "Raise it only to hunt a fault faster.",
+        "th": "จำนวนการหยิบต่อตู้ต่อวัน 2,000 = ราว 1 ครั้งทุก 43 วินาที ซึ่งใกล้"
+              "เคียงการใช้งานจริง ไม่ใช่การอัดบัสให้เต็ม เพิ่มเมื่ออยากเร่งหาปัญหา"},
+    "soak.dwell": {"en": "dwell (s)", "th": "ค้างไว้ (วิ)"},
+    "soak.dwell_tip": {
+        "en": "How long a window stays lit before the simulation clears it — "
+              "standing in for the tablet confirm that ends a pick.",
+        "th": "ไฟค้างกี่วินาทีก่อนถูกสั่งดับ แทนการกดยืนยันบน Tablet ที่จบการหยิบ"},
+    "soak.windows": {"en": "windows", "th": "หน้าต่าง"},
+    "soak.windows_tip": {
+        "en": "How many of the eight to draw from. 8 on a mask cabinet, where "
+              "window n is person n and several are lit at once. On a ring "
+              "cabinet the same coils pick a colour and only the last stays lit.",
+        "th": "จะสุ่มจากกี่หน้าต่าง · 8 สำหรับตู้ mask (หน้าต่าง n = คนที่ n ติด"
+              "พร้อมกันได้) · บนตู้วงแหวน coil ชุดเดียวกันเลือกสี จึงติดทีละดวง"},
+    "soak.sim_note": {
+        "en": "Windows are drawn from a shuffled deck, so every slot gets the "
+              "same number of activations over a run — a uniform draw would "
+              "spread them unevenly and confound any per-slot comparison after.",
+        "th": "สุ่มแบบสับสำรับ ทุกช่องจึงได้จำนวนครั้งเท่ากันตลอดการรัน — "
+              "ถ้าสุ่มแบบธรรมดาจะกระจายไม่เท่ากันและเทียบรายช่องทีหลังไม่ได้"},
+    # ── fleet ──────────────────────────────────────────────────────────────
+    "fleet.card": {"en": "Several cabinets at once", "th": "หลายตู้พร้อมกัน"},
+    "fleet.hint": {
+        "en": "Each cabinet is a separate gateway on a separate bus, so they do "
+              "not contend — one socket, one thread and one CSV each, in the "
+              "same format a single-cabinet run writes. A cabinet that cannot "
+              "be reached is reported and the rest carry on. The tool refuses "
+              "any gateway that already has another master on it.",
+        "th": "แต่ละตู้คือเกตเวย์คนละตัวบนบัสคนละเส้น จึงไม่แย่งกัน — แยก socket "
+              "แยก thread และแยกไฟล์ CSV ต่อตู้ ในรูปแบบเดียวกับการรันตู้เดียว · "
+              "ตู้ที่ติดต่อไม่ได้จะถูกรายงานแล้วตัวอื่นเดินต่อ · เครื่องมือจะปฏิเสธ"
+              "เกตเวย์ที่มีมาสเตอร์ตัวอื่นครองอยู่แล้ว"},
+    "fleet.name": {"en": "name", "th": "ชื่อ"},
+    "fleet.host": {"en": "gateway IP", "th": "IP เกตเวย์"},
+    "fleet.cabinet": {"en": "shape", "th": "รูปตู้"},
+    "fleet.add": {"en": "add cabinet", "th": "เพิ่มตู้"},
+    "fleet.start": {"en": "START FLEET", "th": "เริ่มทั้งกลุ่ม"},
+    "fleet.stop": {"en": "STOP FLEET", "th": "หยุดทั้งกลุ่ม"},
+    "fleet.none": {"en": "no cabinet has an IP yet", "th": "ยังไม่ได้ใส่ IP สักตู้"},
+    "fleet.busy": {
+        "en": "refused — one of these is the gateway this tool is connected to",
+        "th": "ปฏิเสธ — มีตู้ที่เป็นเกตเวย์ตัวเดียวกับที่เครื่องมือต่ออยู่"},
+    "fleet.running": {"en": "running · {n} cabinets", "th": "กำลังรัน · {n} ตู้"},
     "soak.slow_tip": {"en": "A reply slower than this is logged. On a healthy 9600 "
                             "bus a read lands in well under 100 ms.",
                       "th": "ถ้าตอบช้ากว่านี้จะถูกบันทึก บัส 9600 ที่ปกติจะตอบต่ำกว่า "

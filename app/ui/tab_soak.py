@@ -12,8 +12,9 @@ from datetime import datetime
 
 from nicegui import ui
 
-from .. import applog, config_store, keep_awake, soak
+from .. import applog, config_store, keep_awake, soak, soak_fleet
 from ..i18n import t
+from ..lgs_map import CABINET_LAYOUTS, resolve_cabinet
 from . import Ctx, helps
 
 
@@ -43,6 +44,27 @@ def build(ctx: Ctx) -> None:
             slow = ui.number(t("soak.slow"), value=400, min=50, max=5000,
                              format="%d").props("dense outlined").classes("w-36")
             helps(slow, t("soak.slow_tip"))
+
+        # Poll stays the default and the proven path. Pharmacy adds picks on
+        # top of the same poll — the cabinet is being USED while it is
+        # watched, which no soak here has ever done.
+        with ui.row().classes("items-center gap-3 flex-wrap q-mt-sm"):
+            mode = ui.toggle({"poll": t("soak.mode.poll"),
+                              "pharmacy": t("soak.mode.pharmacy")},
+                             value="poll").props("dense no-caps")
+            helps(mode, t("soak.mode_tip"))
+        with ui.row().classes("items-center gap-3 flex-wrap") as sim_row:
+            picks = ui.number(t("soak.picks"), value=2000, min=1, max=100000,
+                              format="%d").props("dense outlined").classes("w-40")
+            helps(picks, t("soak.picks_tip"))
+            dwell = ui.number(t("soak.dwell"), value=20, min=1, max=3600,
+                              format="%d").props("dense outlined").classes("w-36")
+            helps(dwell, t("soak.dwell_tip"))
+            wins = ui.number(t("soak.windows"), value=8, min=1, max=8,
+                             format="%d").props("dense outlined").classes("w-36")
+            helps(wins, t("soak.windows_tip"))
+        ui.label(t("soak.sim_note")).classes("text-xs text-grey")
+        sim_row.bind_visibility_from(mode, "value", lambda v: v == "pharmacy")
 
         with ui.row().classes("items-center gap-3 flex-wrap q-mt-sm"):
             start_btn = ui.button(t("soak.start"), color="primary")
@@ -93,15 +115,22 @@ def build(ctx: Ctx) -> None:
         lbl_wdt.classes(replace="text-sm font-bold")
         lbl_cross.classes(replace="text-sm text-grey")
 
+    def _cfg(ids: tuple) -> soak.SoakConfig:
+        return soak.SoakConfig(ids=ids,
+                               pass_gap_s=float(gap.value or 2.0),
+                               counter_every=int(every.value or 5),
+                               slow_ms=int(slow.value or 400),
+                               mode=str(mode.value or "poll"),
+                               picks_per_day=int(picks.value or 2000),
+                               dwell_s=float(dwell.value or 20),
+                               windows=int(wins.value or 8))
+
     def do_start() -> None:
         layout = ctx.cabinet()
         path = (config_store.data_dir() / "exports"
                 / f"soak-{datetime.now():%Y%m%d-%H%M}.csv")
         path.parent.mkdir(parents=True, exist_ok=True)
-        cfg = soak.SoakConfig(ids=tuple(layout.ids),
-                              pass_gap_s=float(gap.value or 2.0),
-                              counter_every=int(every.value or 5),
-                              slow_ms=int(slow.value or 400))
+        cfg = _cfg(tuple(layout.ids))
         if not worker.start_soak(cfg, path):
             # Say it in the status line as well as the toast: a refused start
             # leaves the previous run's totals on screen, and a toast that has
@@ -152,6 +181,115 @@ def build(ctx: Ctx) -> None:
                 say(f"{datetime.now():%H:%M:%S}  stopped · {ev.summary}")
                 status.set_text(ev.summary)
                 status.classes(replace="text-sm text-grey")
+
+    # ── fleet: several cabinets at once ───────────────────────────────────
+    # Each cabinet here is a separate gateway on a separate bus, so they do
+    # not contend — the one-master rule is about a bus, not about the tool.
+    # A fleet writes one CSV per cabinet so soak_csv.py and the site report
+    # read them exactly as they read a single-cabinet run.
+    fleet_rows: list = []
+    fleet_state: dict = {"seq": 0}
+
+    with ui.card().classes("p-3 w-full q-mt-md"):
+        helps(ui.label(t("fleet.card")).classes("font-bold text-lg"), t("fleet.hint"))
+        rows_box = ui.column().classes("gap-1 w-full")
+
+        def add_row(name: str = "", host: str = "", cab_key: str = "lgs80") -> None:
+            with rows_box:
+                with ui.row().classes("items-center gap-2 no-wrap w-full") as row:
+                    n = ui.input(t("fleet.name"), value=name)                         .props("dense outlined").classes("w-44")
+                    h = ui.input(t("fleet.host"), value=host)                         .props("dense outlined").classes("w-40")
+                    c = ui.select({lay.key: lay.label for lay in CABINET_LAYOUTS},
+                                  value=cab_key, label=t("fleet.cabinet"))                         .props("dense outlined").classes("w-48")
+                    live = ui.label("—").classes("text-xs font-mono grow")
+                    entry = {"name": n, "host": h, "cab": c, "live": live,
+                             "row": row}
+
+                    def drop() -> None:
+                        rows_box.remove(row)
+                        fleet_rows.remove(entry)
+                    ui.button(icon="close", on_click=drop)                         .props("flat dense round").classes("text-grey")
+                    fleet_rows.append(entry)
+
+        with ui.row().classes("items-center gap-2 q-mt-sm"):
+            ui.button(t("fleet.add"), icon="add",
+                      on_click=lambda: add_row()).props("flat dense no-caps")
+            fleet_start = ui.button(t("fleet.start"), color="primary")
+            fleet_stop = ui.button(t("fleet.stop"), color="red").props("outline")
+            fleet_status = ui.label(t("soak.idle")).classes("text-sm")
+
+        fleet_log = ui.log(max_lines=300).classes("w-full h-40 font-mono text-xs q-mt-sm")
+
+    add_row("Chest-Std-02", "192.168.0.204", "lgs80")
+
+    def do_fleet_start() -> None:
+        cabs = []
+        for e in fleet_rows:
+            host = (e["host"].value or "").strip()
+            if not host:
+                continue
+            layout = resolve_cabinet(e["cab"].value, ctx.cfg.cabinet_custom)
+            cabs.append(soak_fleet.FleetCabinet(
+                name=(e["name"].value or host).strip(),
+                host=host, ids=tuple(layout.ids)))
+            e["live"].set_text("…")
+        if not cabs:
+            ui.notify(t("fleet.none"), type="warning")
+            return
+        log_dir = config_store.data_dir() / "exports"
+        if not worker.start_fleet(cabs, _cfg(()), log_dir):
+            # start_fleet refuses a host this tool is already connected to:
+            # two masters on one bus is the failure that looks like bad
+            # hardware for a week.
+            ui.notify(t("fleet.busy"), type="warning")
+            fleet_status.set_text(t("fleet.busy"))
+            fleet_status.classes(replace="text-sm text-orange")
+            return
+        fleet_log.clear()
+        fleet_log.push(f"{datetime.now():%H:%M:%S}  start · {len(cabs)} cabinets")
+        fleet_status.set_text(t("fleet.running", n=len(cabs)))
+        fleet_status.classes(replace="text-sm text-green")
+
+    fleet_start.on_click(do_fleet_start)
+    fleet_stop.on_click(lambda: worker.cancel_fleet())
+
+    def fleet_drain() -> None:
+        running = worker.fleet_running()
+        fleet_start.set_enabled(not running)
+        fleet_stop.set_enabled(running)
+        fleet_state["seq"], events = worker.drain_fleet_events(fleet_state["seq"])
+        by_name = {e["name"].value or e["host"].value: e for e in fleet_rows}
+        for ev in events:
+            if isinstance(ev, soak_fleet.FleetStarted):
+                fleet_log.push(f"{datetime.now():%H:%M:%S}  {ev.cabinet} · "
+                               f"{ev.modules} modules · {ev.path.split(chr(92))[-1]}")
+            elif isinstance(ev, soak_fleet.FleetBusy):
+                fleet_log.push(f"{datetime.now():%H:%M:%S}  {ev.cabinet} · "
+                               f"REFUSED — another master: {ev.peers}")
+                if ev.cabinet in by_name:
+                    by_name[ev.cabinet]["live"].set_text(f"refused · {ev.peers}")
+            elif isinstance(ev, soak_fleet.FleetFailed):
+                fleet_log.push(f"{datetime.now():%H:%M:%S}  {ev.cabinet} · {ev.reason}")
+                if ev.cabinet in by_name:
+                    by_name[ev.cabinet]["live"].set_text(ev.reason)
+            elif isinstance(ev, soak_fleet.FleetEvent):
+                inner = ev.inner
+                if isinstance(inner, soak.SoakTick) and ev.cabinet in by_name:
+                    by_name[ev.cabinet]["live"].set_text(
+                        f"{_dur(inner.elapsed_s)} · {inner.passes} passes · "
+                        f"{inner.txns:,} reads · fails {inner.fails} · "
+                        f"reboots {inner.reboots} · wdt {inner.watchdogs}"
+                        + (f" · picks {inner.picks}" if inner.picks else ""))
+                elif isinstance(inner, soak.SoakAnomaly):
+                    fleet_log.push(f"{ev.cabinet}  {inner.item.text}")
+                elif isinstance(inner, soak.SoakDone):
+                    fleet_log.push(f"{datetime.now():%H:%M:%S}  {ev.cabinet} · "
+                                   f"stopped · {inner.summary}")
+        if not running and fleet_status.text == t("fleet.running", n=len(fleet_rows)):
+            fleet_status.set_text(t("soak.idle"))
+
+    ui.timer(0.5, fleet_drain)
+    fleet_drain()
 
     ui.timer(0.5, drain)
     drain()
