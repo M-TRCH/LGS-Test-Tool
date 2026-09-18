@@ -139,6 +139,77 @@ def case_conflict_with_main_connection():
     return None
 
 
+# ── the two-masters guard ──────────────────────────────────────────────────
+class _FakeRes:
+    def __init__(self, peers, ok=True):
+        self.ok = ok
+        self.lines = [f"#DATA net.state=up net.client=1 net.peer={peers}"]
+
+
+def _guard(peers, mine="192.168.0.10", console=True):
+    """Run _other_master against a scripted INFO answer."""
+    import app.soak_fleet as F
+    import app.gateway_tcp as G
+
+    real_link, real_reg, real_ip = G.GatewayTcpLink, G.register_pdu, F.local_ip_toward
+
+    class Link:
+        def __init__(self, _c): pass
+        def command(self, _v): return _FakeRes(peers, console)
+
+    G.GatewayTcpLink = Link
+    G.register_pdu = lambda _c: None
+    F.local_ip_toward = lambda _h: mine
+    try:
+        return F._other_master(object(), "192.168.0.204")
+    finally:
+        G.GatewayTcpLink, G.register_pdu, F.local_ip_toward = real_link, real_reg, real_ip
+
+
+def case_guard_allows_our_own_socket():
+    """The connection the question is asked OVER must not be the answer.
+
+    This has been wrong twice. First it compared `net.peer` -- the gateway's
+    CLIENT source addresses -- against the GATEWAY's address, which can never
+    match. Then it compared against the MAIN connection's host, which is None
+    whenever the operator has not pressed Connect, so `mine` was empty and
+    every peer survived the filter. On 2026-09-17 that refused BOTH cabinets
+    of a fleet run: the guard was seeing its own socket.
+    """
+    v = _guard("192.168.0.10:9040")
+    if v is not None:
+        return f"refused a gateway where the only client is us: {v!r}"
+    return None
+
+
+def case_guard_still_catches_a_stranger():
+    v = _guard("192.168.0.10:9040,192.168.0.87:52189")
+    if v is None:
+        return "a second master from another PC was not reported"
+    if "192.168.0.87" not in v:
+        return f"the stranger was not named: {v!r}"
+    if "192.168.0.10" in v:
+        return f"our own socket was reported as a stranger: {v!r}"
+    return None
+
+
+def case_guard_catches_a_second_local_client():
+    """Two tool instances on one PC are still two masters on one bus, so
+    exactly ONE peer matching our address may be dropped -- not all of them."""
+    v = _guard("192.168.0.10:9040,192.168.0.10:9099")
+    if v is None:
+        return "a second client from this same PC was not reported"
+    return None
+
+
+def case_guard_is_quiet_without_a_console():
+    if _guard("192.168.0.87:1", console=False) is not None:
+        return "a gateway with no console must not produce a verdict"
+    if _guard("-") is not None:
+        return "an empty peer list must not produce a verdict"
+    return None
+
+
 CASES = (
     ("thai name survives", case_thai_survives),
     ("illegal chars removed", case_illegal_chars_go),
@@ -147,6 +218,10 @@ CASES = (
     ("identical names -> files", case_identical_names_get_distinct_files),
     ("blank names -> files", case_empty_names_get_distinct_files),
     ("duplicate gateway named", case_duplicate_gateway_is_named),
+    ("guard allows our socket", case_guard_allows_our_own_socket),
+    ("guard catches a stranger", case_guard_still_catches_a_stranger),
+    ("guard catches 2nd local", case_guard_catches_a_second_local_client),
+    ("guard quiet w/o console", case_guard_is_quiet_without_a_console),
     ("conflict with main conn", case_conflict_with_main_connection),
 )
 

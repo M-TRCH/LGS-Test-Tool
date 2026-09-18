@@ -250,19 +250,30 @@ class FleetBusy:
     seq: int = 0
 
 
-def _other_master(client, our_host: Optional[str]) -> Optional[str]:
-    """Names the peers on this gateway other than us, or None if we are alone.
+def _other_master(client, gateway_host: str) -> Optional[str]:
+    """Names any peer on this gateway that is NOT this connection.
 
-    Checking `conflicting_hosts` only catches the tool arguing with itself.
-    The costly case is somebody ELSE — a server, a colleague's laptop, last
-    week's soak nobody closed. The gateway accepts two TCP clients and has
-    one RS485 bus behind them, so a second master does not fail loudly; it
-    quietly corrupts both sides' reads. On 2026-09-17 the type-80 gateway
-    was still being polled from .87 days after that soak was cancelled, and
-    nothing on either side said so.
+    `conflicting_hosts` only catches the tool arguing with itself. The costly
+    case is somebody ELSE -- a server, a colleague's laptop, last week's soak
+    nobody closed. The gateway accepts two TCP clients and has one RS485 bus
+    behind them, so a second master does not fail loudly; it quietly corrupts
+    both sides' reads.
 
-    So ask the gateway who is on it. We are already one of the clients by
-    the time this runs, which is why it looks for a peer that is not us.
+    Two things this got wrong, both of which made it useless in opposite
+    directions:
+
+      * It compared `net.peer` -- the gateway's list of CLIENT source
+        addresses -- against the GATEWAY's own address, which can never
+        appear there, so every peer looked like a stranger.
+      * Then it compared against the main connection's host, which is None
+        whenever the operator has not pressed Connect. On 2026-09-17 that
+        refused BOTH cabinets of a fleet run: the guard was seeing the very
+        socket it was asking the question over.
+
+    So the address to exclude is derived from the gateway being asked, which
+    is always known here, and exactly ONE matching peer is dropped -- this
+    connection. A SECOND client from the same PC is still a second master and
+    is still reported.
     """
     try:
         from .gateway_tcp import GatewayTcpLink, register_pdu
@@ -276,21 +287,20 @@ def _other_master(client, our_host: Optional[str]) -> Optional[str]:
             peers = line.split("net.peer=", 1)[1].split()[0]
             if peers in ("-", ""):
                 return None
-            # `net.peer` lists the gateway's CLIENT source addresses -- this
-            # PC's IP and an ephemeral port. `our_host` was being handed the
-            # GATEWAY's address, which can never appear in that list, so every
-            # peer looked like a stranger: on a console-enabled gateway the
-            # guard refused every cabinet by mistaking this tool's own socket
-            # for a second master, and on a console-less one `res.ok` was
-            # False and it returned None -- silently off. Compare against the
-            # local address the OS actually uses to reach this gateway.
-            mine = local_ip_toward(our_host) if our_host else ""
-            others = [p for p in peers.split(",")
-                      if not (mine and p.split(":")[0] == mine)]
+            mine = local_ip_toward(gateway_host)
+            others, dropped_self = [], False
+            for peer in peers.split(","):
+                if not peer:
+                    continue
+                if not dropped_self and mine and peer.split(":")[0] == mine:
+                    dropped_self = True      # this is us; every other one is not
+                    continue
+                others.append(peer)
             return ", ".join(others) if others else None
     except Exception:                                            # noqa: BLE001
         return None                      # never let the guard break the run
     return None
+
 
 
 def run_fleet(cabinets: Sequence[FleetCabinet], cfg: soak.SoakConfig,
@@ -352,7 +362,7 @@ def run_fleet(cabinets: Sequence[FleetCabinet], cfg: soak.SoakConfig,
             emit(FleetFailed(cabinet=cab.name,
                              reason=f"cannot reach {cab.host}:{cab.port}"))
             return
-        busy = None if allow_shared else _other_master(ops._client, our_host)
+        busy = None if allow_shared else _other_master(ops._client, cab.host)
         if busy:
             # Refuse rather than produce a file that has to be distrusted
             # later. allow_shared exists for the case where the operator
