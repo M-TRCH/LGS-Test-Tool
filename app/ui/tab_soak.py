@@ -250,6 +250,19 @@ def build(ctx: Ctx) -> None:
         helps(ui.label(t("fleet.card")).classes("font-bold text-lg"), t("fleet.hint"))
         rows_box = ui.column().classes("gap-1 w-full")
 
+        def save_fleet() -> None:
+            """Remember the roster. A weekend soak is set up ONCE, and five
+            cabinets is fifteen fields typed by hand -- losing them to a
+            restart or a page reload means retyping five IP addresses, and a
+            mistyped one points the whole weekend at the wrong gateway."""
+            ctx.cfg.fleet = soak_fleet.roster_to_config(
+                ((e["name"].value or ""), (e["host"].value or ""),
+                 e["cab"].value) for e in fleet_rows)
+            try:
+                config_store.save(ctx.cfg)
+            except Exception:                                     # noqa: BLE001
+                pass            # a roster that will not save must not stop a run
+
         def add_row(name: str = "", host: str = "", cab_key: str = "lgs80") -> None:
             with rows_box:
                 with ui.row().classes("items-center gap-2 no-wrap w-full") as row:
@@ -260,10 +273,13 @@ def build(ctx: Ctx) -> None:
                     live = ui.label("—").classes("text-xs font-mono grow")
                     entry = {"name": n, "host": h, "cab": c, "live": live,
                              "row": row}
+                    for fld in (n, h, c):
+                        fld.on_value_change(lambda _e: save_fleet())
 
                     def drop() -> None:
                         rows_box.remove(row)
                         fleet_rows.remove(entry)
+                        save_fleet()
                     ui.button(icon="close", on_click=drop)                         .props("flat dense round").classes("text-grey")
                     fleet_rows.append(entry)
 
@@ -295,7 +311,14 @@ def build(ctx: Ctx) -> None:
 
         fleet_log = ui.log(max_lines=300).classes("w-full h-40 font-mono text-xs q-mt-sm")
 
-    add_row("Chest-Std-02", "192.168.0.204", "lgs80")
+    # Restore the saved roster. The single hardcoded row is only what a
+    # brand-new install starts from.
+    _saved = soak_fleet.roster_from_config(ctx.cfg.fleet,
+                                           {lay.key for lay in CABINET_LAYOUTS})
+    for _name, _host, _key in _saved:
+        add_row(_name, _host, _key)
+    if not _saved:
+        add_row("Chest-Std-02", "192.168.0.204", "lgs80")
 
     def do_fleet_start() -> None:
         cabs = []

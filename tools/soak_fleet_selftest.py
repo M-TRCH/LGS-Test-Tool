@@ -210,6 +210,50 @@ def case_guard_is_quiet_without_a_console():
     return None
 
 
+# ── the saved roster ───────────────────────────────────────────────────────
+KNOWN = {"lgs40", "lgs56", "lgs64", "lgs80", "smt"}
+
+
+def case_roster_round_trips():
+    rows = [("Chest-Std-02", "192.168.0.204", "lgs80"),
+            ("ตู้ 56", "192.168.0.203", "lgs56"),
+            ("", "192.168.0.202", "lgs64")]
+    saved = soak_fleet.roster_to_config(rows)
+    back = soak_fleet.roster_from_config(saved, KNOWN)
+    if back != rows:
+        return f"round trip changed the roster: {back}"
+    return None
+
+
+def case_roster_survives_a_mangled_config():
+    """Read at page build, so it must never raise: config.json can be
+    hand-edited, written by another version, or half-written by a machine
+    that lost power. An exception here takes the whole Soak tab with it."""
+    junk = ["", "   ", None, 42, [], {"host": "x"},
+            "no-pipes-at-all", "A|10.0.0.1", "A|10.0.0.1|lgs999",
+            "A|B|lgs80|extra", "|10.0.0.2|lgs64", "name-only||lgs80"]
+    try:
+        got = soak_fleet.roster_from_config(junk, KNOWN)
+    except Exception as exc:                                      # noqa: BLE001
+        return f"raised on a mangled config: {type(exc).__name__}: {exc}"
+    for name, host, key in got:
+        if key not in KNOWN:
+            return f"passed through an unknown cabinet key {key!r} -- "                   "ui.select cannot render a value absent from its options"
+        if not host:
+            return f"kept a row with no gateway: {(name, host, key)!r}"
+    if not any(h == "10.0.0.1" for _n, h, _k in got):
+        return f"threw away a recoverable row: {got}"
+    return None
+
+
+def case_roster_handles_none():
+    if soak_fleet.roster_from_config(None, KNOWN) != []:
+        return "a missing roster must read as empty, not raise"
+    if soak_fleet.roster_to_config([]) != []:
+        return "an empty card must save as an empty roster"
+    return None
+
+
 CASES = (
     ("thai name survives", case_thai_survives),
     ("illegal chars removed", case_illegal_chars_go),
@@ -222,6 +266,9 @@ CASES = (
     ("guard catches a stranger", case_guard_still_catches_a_stranger),
     ("guard catches 2nd local", case_guard_catches_a_second_local_client),
     ("guard quiet w/o console", case_guard_is_quiet_without_a_console),
+    ("roster round-trips", case_roster_round_trips),
+    ("roster survives junk", case_roster_survives_a_mangled_config),
+    ("roster handles None", case_roster_handles_none),
     ("conflict with main conn", case_conflict_with_main_connection),
 )
 

@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 import os
 import sys
-from dataclasses import asdict, dataclass, fields
+from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 
 
@@ -42,6 +42,14 @@ class AppConfig:
     # across restarts; the Gateway tab refreshes it whenever it reads the
     # gateway, which is the authority on the wiring.
     hub_map: str = ""
+    # The fleet soak's roster, as "name|host|cabinet_key" per cabinet.
+    # Persisted because a weekend run is set up ONCE and must survive a
+    # restart, a page reload and the operator going home: five cabinets is
+    # fifteen fields typed by hand, and a mistyped IP after a Friday-night
+    # restart points the whole weekend at the wrong gateway. A flat string
+    # list rather than nested objects, so config.json stays readable and a
+    # hand-edit cannot produce a shape the loader has to defend against.
+    fleet: list = field(default_factory=list)
     # Which colour of lamp is fitted to gateway outputs 1-4 ("none" for an
     # output carrying something other than a lamp, such as the shelf's
     # power). The gateway drives outputs and knows nothing about colours;

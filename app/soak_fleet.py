@@ -210,6 +210,42 @@ def safe_stem(name: str) -> str:
     return out or "cabinet"
 
 
+def roster_to_config(rows) -> list:
+    """The fleet card's rows as flat "name|host|cabinet" strings.
+
+    Flat strings rather than nested objects so config.json stays readable and
+    hand-editable, and so a malformed entry can only ever be a bad string --
+    never a shape the loader has to defend against.
+    """
+    return [f"{name.strip()}|{host.strip()}|{key or 'lgs80'}"
+            for name, host, key in rows]
+
+
+def roster_from_config(saved, known_keys) -> list:
+    """(name, host, cabinet_key) per saved row, defended against anything.
+
+    A weekend soak is set up once and must survive a restart, so this is read
+    at page build. It therefore has to tolerate a config.json that has been
+    hand-edited, written by a different version, or half-written by a machine
+    that lost power -- and it must never raise, because an exception here
+    takes the whole Soak tab with it.
+
+    A cabinet key this build does not know is replaced rather than passed on:
+    `ui.select` cannot render a value absent from its options, and that is the
+    exact failure that made the entire Front-panel card vanish in v1.7.2.
+    """
+    out = []
+    for row in saved or []:
+        if not isinstance(row, str) or not row.strip():
+            continue
+        name, host, key = (part.strip()
+                           for part in (row.split("|") + ["", "", ""])[:3])
+        if not host:
+            continue                     # a row with no gateway is not a row
+        out.append((name, host, key if key in known_keys else "lgs80"))
+    return out
+
+
 def duplicate_hosts(cabinets: Sequence[FleetCabinet]) -> list:
     """Hosts listed more than once in one fleet run.
 
