@@ -163,6 +163,13 @@ CABINET_LAYOUTS = (
     # does not force a firmware release — the tool offers "8,8,8,8,8,8,8".
     CabinetLayout("lgs56", "LGS type 56", 7, 8),
     CabinetLayout("lgs40", "LGS type 40", 10, 4, panel_cabinet="40"),
+    # The refrigerated cabinet: also forty slots, but FIVE rows of eight
+    # rather than ten rows of four. It therefore must NOT carry
+    # panel_cabinet="40" -- the gateway's built-in "40" means 10x4, and
+    # handing it to a 5x8 cabinet would have the front panel sweep a shape
+    # that does not exist. Like the type 56, it rides panel.shape instead,
+    # which is exactly what that setting was added for.
+    CabinetLayout("lgs40r", "LGS type 40R (fridge)", 5, 8),
     # The key stays "smt" — it is what saved configs hold.
     CabinetLayout("smt", "SMT type 12", 3, 4),
 )
