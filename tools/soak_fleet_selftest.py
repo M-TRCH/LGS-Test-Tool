@@ -130,6 +130,24 @@ def case_duplicate_gateway_is_named():
     return None
 
 
+def case_duplicate_is_host_AND_port():
+    """The bus is behind a GATEWAY, not behind an address.
+
+    Two gateways reached at one IP on different ports -- port forwarding, or
+    a test harness on loopback -- are two gateways and two buses. Refusing
+    them was wrong, and it blocked the 13-cabinet scale test outright.
+    """
+    same_ip = [soak_fleet.FleetCabinet("A", "127.0.0.1", (11,), port=5021),
+               soak_fleet.FleetCabinet("B", "127.0.0.1", (11,), port=5022)]
+    if soak_fleet.duplicate_hosts(same_ip):
+        return "refused two gateways that differ by port"
+    same_both = [soak_fleet.FleetCabinet("A", "10.0.0.1", (11,), port=502),
+                 soak_fleet.FleetCabinet("B", "10.0.0.1", (11,), port=502)]
+    if not soak_fleet.duplicate_hosts(same_both):
+        return "allowed the SAME gateway twice -- two masters on one bus"
+    return None
+
+
 def case_conflict_with_main_connection():
     cabs = [cab("A", "192.168.0.204"), cab("B", "192.168.0.205")]
     if soak_fleet.conflicting_hosts(cabs, "192.168.0.204") != ["A"]:
@@ -262,6 +280,7 @@ CASES = (
     ("identical names -> files", case_identical_names_get_distinct_files),
     ("blank names -> files", case_empty_names_get_distinct_files),
     ("duplicate gateway named", case_duplicate_gateway_is_named),
+    ("duplicate is host+port", case_duplicate_is_host_AND_port),
     ("guard allows our socket", case_guard_allows_our_own_socket),
     ("guard catches a stranger", case_guard_still_catches_a_stranger),
     ("guard catches 2nd local", case_guard_catches_a_second_local_client),

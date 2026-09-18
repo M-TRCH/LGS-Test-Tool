@@ -257,11 +257,17 @@ def duplicate_hosts(cabinets: Sequence[FleetCabinet]) -> list:
     an empty gateway and is waved through. It has to be refused before any
     socket is opened.
     """
+    # Keyed on host AND port, because the bus is behind a GATEWAY, not behind
+    # an address. Two gateways reached at one IP on different ports -- port
+    # forwarding, or a test harness on loopback -- are two gateways and two
+    # buses, and refusing them was wrong. The dangerous case, the same
+    # host:port twice, is caught exactly as before.
     seen, dupes = set(), []
     for c in cabinets:
-        if c.host in seen and c.host not in dupes:
-            dupes.append(c.host)
-        seen.add(c.host)
+        key = (c.host, c.port)
+        if key in seen and c.label not in dupes:
+            dupes.append(c.label if c.port != 502 else c.host)
+        seen.add(key)
     return dupes
 
 
