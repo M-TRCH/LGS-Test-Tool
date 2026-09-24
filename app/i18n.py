@@ -157,6 +157,68 @@ TEXTS: dict[str, dict[str, str]] = {
     "tab.module": {"en": "Module Test", "th": "ทดสอบโมดูล"},
     "tab.danger": {"en": "Danger", "th": "คำสั่งอันตราย"},
     "tab.soak": {"en": "Soak", "th": "ทดสอบยาว"},
+    "tab.labels": {"en": "Labels", "th": "สติ๊กเกอร์"},
+
+    # ── labels tab ─────────────────────────────────────────────────────────
+    "labels.card": {"en": "Cabinet sticker (.lbx)", "th": "สติ๊กเกอร์ตู้ (.lbx)"},
+    "labels.hint": {
+        "en": "Makes a Brother P-touch file for the cabinet this tool is "
+              "connected to. The name, IP, MAC and the row/channel strip are "
+              "read from the gateway when you press Read, so a sticker cannot "
+              "describe a cabinet that no longer exists — reprint and it is "
+              "current again. Save the file, open it in P-touch Editor, print "
+              "on 24 mm tape.",
+        "th": "สร้างไฟล์สำหรับเครื่องพิมพ์ Brother P-touch ของตู้ที่เครื่องมือต่ออยู่ "
+              "ชื่อ IP MAC และแถบแถว/ช่องฮับถูกอ่านสดจากเกตเวย์ตอนกดอ่าน "
+              "สติ๊กเกอร์จึงไม่มีทางบอกข้อมูลของตู้ที่ไม่มีอยู่แล้ว ปริ้นใหม่ก็ตรงอีกครั้ง "
+              "เซฟไฟล์ เปิดด้วย P-touch Editor แล้วพิมพ์บนเทป 24 มม."},
+    "labels.read": {"en": "Read the cabinet", "th": "อ่านข้อมูลจากตู้"},
+    "labels.reading": {"en": "reading ...", "th": "กำลังอ่าน ..."},
+    "labels.not_read": {"en": "Not read yet — connect in the header, then press Read.",
+                        "th": "ยังไม่ได้อ่าน — ต่อที่แถบด้านบนแล้วกดอ่าน"},
+    "labels.read_ok": {"en": "{name} · {ip} · {mac} · {rows} rows",
+                       "th": "{name} · {ip} · {mac} · {rows} แถว"},
+    "labels.read_failed": {"en": "could not read the gateway: {why}",
+                           "th": "อ่านเกตเวย์ไม่ได้: {why}"},
+    "labels.ward": {"en": "Ward name (printed, any language)",
+                    "th": "ชื่อหน่วยงาน (พิมพ์ลงสติ๊กเกอร์)"},
+    "labels.serial": {"en": "Serial number", "th": "หมายเลขเครื่อง (S/N)"},
+    "labels.serial_tip": {
+        "en": "Free text — the warehouse owns the serial database and this "
+              "tool keeps NO copy, so there is nothing here to drift out of "
+              "step with it. It is printed and it goes in the QR. How long it "
+              "may run depends on the cabinet's own name and MAC sharing the "
+              "same code, so there is no fixed limit to quote: the line above "
+              "shows the bytes to spare, and a serial that will not fit is "
+              "refused before anything is saved.",
+        "th": "พิมพ์ได้อิสระ — ฐานข้อมูลหมายเลขเครื่องอยู่ที่คลังสินค้า เครื่องมือนี้ไม่เก็บสำเนาไว้ "
+              "จึงไม่มีข้อมูลที่จะคลาดกับของคลังได้ ค่านี้ถูกพิมพ์ลงสติ๊กเกอร์และใส่ใน QR ด้วย "
+              "ความยาวที่ใส่ได้ขึ้นกับชื่อตู้และ MAC ที่อยู่ใน QR เดียวกัน จึงไม่มีตัวเลขตายตัว "
+              "ให้ดูจำนวนไบต์ที่เหลือจากบรรทัดด้านบน ถ้ายาวเกินจะถูกปฏิเสธก่อนเซฟเสมอ"},
+    "labels.layout": {"en": "Layout", "th": "รูปแบบสติ๊กเกอร์"},
+    "labels.plate": {"en": "Frame", "th": "กรอบ"},
+    "labels.plate_round": {"en": "Rounded — the Editor's own frame",
+                           "th": "มุมมน — กรอบของ P-touch เอง"},
+    "labels.plate_bold": {"en": "Bold — one heavy border",
+                          "th": "หนา — เส้นเดียว"},
+    "labels.plate_double": {"en": "Double — border and hairline",
+                            "th": "สองชั้น — เส้นหนา + เส้นบาง"},
+    "labels.payload": {"en": "What the QR carries",
+                       "th": "ข้อมูลที่อยู่ใน QR"},
+    "labels.save": {"en": "Save .lbx", "th": "เซฟไฟล์ .lbx"},
+    "labels.ready": {
+        "en": "{mm} x 24 mm · {rows} rows · QR carries {qr} bytes "
+              "({spare} to spare) · file {size} bytes",
+        "th": "{mm} x 24 มม. · {rows} แถว · QR เก็บ {qr} ไบต์ "
+              "(เหลือ {spare}) · ไฟล์ {size} ไบต์"},
+    "labels.too_big": {"en": "will not fit: {why}", "th": "ใส่ไม่พอดี: {why}"},
+    "labels.print_card": {"en": "Printing", "th": "การพิมพ์"},
+    "labels.print_hint": {
+        "en": "24 mm tape. Every label loses 8 mm of its length to the "
+              "printer's own margins, which is already accounted for. Thai "
+              "text is set in Tahoma because Arial has no Thai glyphs.",
+        "th": "ใช้เทป 24 มม. ทุกใบเสียความยาวไป 8 มม. ให้ขอบที่เครื่องพิมพ์ไม่ได้ "
+              "ซึ่งคำนวณเผื่อไว้แล้ว ข้อความไทยใช้ฟอนต์ Tahoma เพราะ Arial ไม่มีสระไทย"},
 
     # ── soak tab ───────────────────────────────────────────────────────────
     "soak.card": {"en": "Bus soak", "th": "ทดสอบเดินยาว (soak)"},
