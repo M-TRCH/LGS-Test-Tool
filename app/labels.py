@@ -88,8 +88,7 @@ QR_CELL_PT = 1.0
 # clearance — TIGHTER than the 4.4 pt the old 1.6 pt symbol had. At 58 pt it
 # settles on EC-M at 54 pt with 7 pt clear: more data than before, stronger
 # error correction than before, and further from the edge than before.
-QR_MAX_SIDE_PT = 58.0            # the tape's own limit; the plate may be tighter
-QR_CLEAR_PT = 1.5                # code to the innermost line of the plate
+QR_MAX_SIDE_PT = 58.0            # the tape's own limit; the plate is tighter
 
 # Byte-mode capacity per version and error-correction level, MEASURED against
 # a real encoder rather than copied from a table. Versions 1-9 covers every
@@ -622,11 +621,16 @@ def use_frame(style: str) -> None:
     FRAME_STYLE = style
     FRAME_KIND, FRAME_PEN, FRAME_ART = _PLATES[style]
     CONTENT_X = EDGE_PT + 1.0 + FRAME_PAD
-    # The code answers to the plate's innermost LINE, not to the text pad --
-    # it is a graphic, and it does not need the breathing room a line of
-    # Thai does. Whichever of the two limits is tighter wins.
+    # The code keeps the SAME clearance from the plate as the text does, and
+    # this was got wrong once. The clearance was set to 1.5 pt by reasoning
+    # about how far a rounded corner cuts into its box -- reasoning about a
+    # radius nobody had measured, on artwork whose border is nothing like
+    # the 0.5 pt pen that declares it. At a 1.2 pt cell the code came to
+    # 54 pt and got away with it; at 1.0 pt it came to 57 and overflowed the
+    # frame. FRAME_PAD is the clearance the text uses, and the text has
+    # printed cleanly against this frame, so it is the one to trust.
     global QR_MAX_SIDE_PT, QR_MAX_BYTES
-    QR_MAX_SIDE_PT = min(QR_MAX_SIDE_PT_TAPE, FRAME_H - 2 * QR_CLEAR_PT)
+    QR_MAX_SIDE_PT = min(QR_MAX_SIDE_PT_TAPE, FRAME_H - 2 * FRAME_PAD)
     QR_MAX_BYTES = _max_bytes(QR_MAX_SIDE_PT)
 
 

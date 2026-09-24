@@ -53,7 +53,7 @@ def sample(**kw):
 # The only numbers here that depend on which plate is fitted. Everything
 # else is checked as a relationship, so switching the frame does not mean
 # editing the tests.
-ROWMAP_MM = {"round": 113, "bold": 113}
+ROWMAP_MM = {"round": 112, "bold": 112}
 
 print("rows_from_gateway — the shape overrides the preset, as the gateway does")
 check("type 80 is ten rows of eight", rows_for("80", "0", "1,2,3,4,5,6,7,8,7,8")[0],
@@ -88,7 +88,7 @@ check_true("which clears the tape edge better than the old 1.6 pt symbol",
            f"{(labels.TAPE_PT - side) / 2:.1f} pt vs 4.4")
 _, _, ecc_long = labels.fit_qr("x" * 120)
 check("a longer payload drops the error correction rather than the fit",
-      ecc_long, "q")
+      ecc_long, "m")
 try:
     labels.fit_qr("x" * 300)
     check("300 bytes is refused", "no exception", "LabelTooBig")
@@ -150,11 +150,11 @@ check("every text object is centred",
       set(re.findall(r'horizontalAlignment="(\w+)"', xml)), {"CENTER"})
 check(f"10 rows make a {ROWMAP_MM[labels.FRAME_STYLE]} mm label with the "
       f"{labels.FRAME_STYLE} plate", round(mm), ROWMAP_MM[labels.FRAME_STYLE])
-check("and dropping three rows takes 11 mm off, whatever the plate",
+check("and dropping three rows takes 10 mm off, whatever the plate",
       round(mm) - round(labels.render("rowmap",
                                       sample(rows=rows_for("0", "8,8,8,8,8,8,8",
                                                            "1,2,3,4,5,6,7")),
-                                      created="x")[1]), 11)
+                                      created="x")[1]), 10)
 
 print("\nboxes are measured, not assumed")
 # labels.text_width sums advance widths out of the font's own hmtx table.
@@ -285,13 +285,15 @@ check_true("the site name IS on it, because Thai cannot go in the code",
 # version, and so its box — grows with the row count, and the label grows
 # with it. A couple of millimetres, and the price of the code being worth
 # scanning.
+# True, then briefly false, then true again -- worth the note. The code
+# carries the channel map, so its payload grows with the row count, and at
+# a 1.2 pt cell a five-row fridge dropped a version and took 2 mm off the
+# label. At 1.0 pt every cabinet in the fleet lands on version 8, so the
+# length is one number again.
 _five = round(labels.render("minimal", sample(rows=rows_for("0", "8,8,8,8,8",
                                                             "1,2,3,4,5")),
                             created="x")[1])
-check_true("a five-row cabinet gives a slightly shorter label",
-           _five < round(mini_mm), f"{_five} mm vs {round(mini_mm)} mm")
-check_true("but only slightly", round(mini_mm) - _five <= 4,
-           f"{round(mini_mm) - _five} mm")
+check("its length does not depend on the row count", _five, round(mini_mm))
 # 28 Thai characters are 82 bytes in UTF-8, and for a long time that was
 # more than the whole code could hold -- which was the reason the site name
 # is printed rather than encoded. At 1.0 pt it would now fit alongside
@@ -387,6 +389,26 @@ if labels.FRAME_KIND == "frame":
           re.search(r'<draw:frame><pt:objectStyle[^>]*>'
                     r'<pt:pen style="(\w+)" widthX="([\d.]+)pt"',
                     xml).groups(), ("INSIDEFRAME", "0.5"))
+# The code overflowed the frame once, on every layout at once, because its
+# ceiling was set from a clearance that had been reasoned about rather than
+# measured. Check the thing that actually matters -- the gap between the two
+# boxes -- on every layout and not just on the one the eye happens to be on.
+for key in ("minimal", "standard", "rowmap"):
+    b_k, mm_k = labels.render(key, sample(), created="x")
+    x_k = zipfile.ZipFile(io.BytesIO(b_k)).read("label.xml").decode()
+    pf = [float(v) for v in re.search(
+        f'<{PLATE}><pt:objectStyle x="([\d.]+)pt" y="([\d.]+)pt"'
+        r' width="([\d.]+)pt" height="([\d.]+)pt"', x_k).groups()]
+    pq = [float(v) for v in re.search(
+        r'<barcode:barcode><pt:objectStyle x="([\d.]+)pt" y="([\d.]+)pt"'
+        r' width="([\d.]+)pt" height="([\d.]+)pt"', x_k).groups()]
+    gaps = (pq[0] - pf[0], pq[1] - pf[1],
+            (pf[0] + pf[2]) - (pq[0] + pq[2]), (pf[1] + pf[3]) - (pq[1] + pq[3]))
+    check_true(f"  {key}: the code clears the plate on all four sides",
+               min(gaps) >= labels.FRAME_PAD - 0.05,
+               "left %.1f top %.1f right %.1f bottom %.1f, need %.1f"
+               % (*gaps, labels.FRAME_PAD))
+
 # Whatever the plate, no rectangle may claim a rounded corner. The attribute
 # does nothing, and copying Brother's habit of filling it with 25% of the
 # shorter side is what sent this the wrong way twice.
