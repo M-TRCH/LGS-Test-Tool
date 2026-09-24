@@ -88,7 +88,8 @@ QR_CELL_PT = 1.2
 # clearance — TIGHTER than the 4.4 pt the old 1.6 pt symbol had. At 58 pt it
 # settles on EC-M at 54 pt with 7 pt clear: more data than before, stronger
 # error correction than before, and further from the edge than before.
-QR_MAX_SIDE_PT = 58.0
+QR_MAX_SIDE_PT = 58.0            # the tape's own limit; the plate may be tighter
+QR_CLEAR_PT = 1.5                # code to the innermost line of the plate
 
 # Byte-mode capacity per version and error-correction level, MEASURED against
 # a real encoder rather than copied from a table. Versions 1-9 covers every
@@ -102,18 +103,26 @@ _QR_BYTES = {
 _ECC_PCT = {"h": "30%", "q": "25%", "m": "15%", "l": "7%"}
 
 
-def _max_bytes() -> int:
-    """The most any payload can be, at the current cell size and box cap."""
+def _max_bytes(limit_pt: float) -> int:
+    """The most any payload can be, at the current cell size and a box cap."""
     best = 0
-    for ecc, caps in _QR_BYTES.items():
+    for _ecc, caps in _QR_BYTES.items():
         for version, n in caps.items():
             side = (17 + 4 * version + 4) * QR_CELL_PT
-            if side <= QR_MAX_SIDE_PT:
+            if side <= limit_pt:
                 best = max(best, n)
     return best
 
 
-QR_MAX_BYTES = _max_bytes()
+# Set by use_frame, below: the code lives inside the plate, so how big it may
+# be depends on which plate is fitted. Today nothing turns on it -- at 1.2 pt
+# the versions step 54.0, 58.8, and only 54.0 fits any of the three -- but
+# the cap was a bare 58.0 for the tape while the double plate's innermost
+# line leaves 58.4 less clearance. Drop the cell to 1.0 and version 9 lands
+# at 57 pt, which clears the tape and crosses the hairline. Better to derive
+# it than to find that out on a sticker.
+QR_MAX_SIDE_PT_TAPE = QR_MAX_SIDE_PT
+QR_MAX_BYTES = 0                 # use_frame fills both in
 
 # Arial has no Thai glyphs at all, so Thai text must name its own face.
 #
@@ -201,7 +210,7 @@ def check_fits(objects_xywh, paper_len_pt: float) -> list:
 
 
 def fit_qr(data: str, *, cell_pt: float = QR_CELL_PT,
-           limit_pt: float = QR_MAX_SIDE_PT) -> tuple:
+           limit_pt: float | None = None) -> tuple:
     """(modules, side_pt, ecc_key) for the strongest EC that still fits.
 
     The serial is free text typed at print time and the warehouse has never
@@ -210,6 +219,7 @@ def fit_qr(data: str, *, cell_pt: float = QR_CELL_PT,
     instead, strongest first, and raise rather than emit a symbol that
     overflows the tape — that failure is invisible until it is printed.
     """
+    limit_pt = QR_MAX_SIDE_PT if limit_pt is None else limit_pt
     n = len(data.encode("utf-8"))
     for ecc in ("h", "q", "m", "l"):
         for version, cap in sorted(_QR_BYTES[ecc].items()):
@@ -607,6 +617,13 @@ def use_frame(style: str) -> None:
     FRAME_STYLE = style
     FRAME_KIND, FRAME_PEN, FRAME_INSET, FRAME_PAD, FRAME_ART = _PLATES[style]
     CONTENT_X = EDGE_PT + 1.0 + FRAME_INSET + FRAME_PAD
+    # The code answers to the plate's innermost LINE, not to the text pad --
+    # it is a graphic, and it does not need the breathing room a line of
+    # Thai does. Whichever of the two limits is tighter wins.
+    global QR_MAX_SIDE_PT, QR_MAX_BYTES
+    QR_MAX_SIDE_PT = min(QR_MAX_SIDE_PT_TAPE,
+                         FRAME_H - 2 * (FRAME_INSET + QR_CLEAR_PT))
+    QR_MAX_BYTES = _max_bytes(QR_MAX_SIDE_PT)
 
 
 def frame_objects(x, w, *, obj_id: int = 0) -> list:
