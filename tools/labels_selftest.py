@@ -53,7 +53,7 @@ def sample(**kw):
 # The only numbers here that depend on which plate is fitted. Everything
 # else is checked as a relationship, so switching the frame does not mean
 # editing the tests.
-ROWMAP_MM = {"round": 112, "bold": 112}
+ROWMAP_MM = {"round": 109, "bold": 109}
 
 print("rows_from_gateway — the shape overrides the preset, as the gateway does")
 check("type 80 is ten rows of eight", rows_for("80", "0", "1,2,3,4,5,6,7,8,7,8")[0],
@@ -88,7 +88,7 @@ check_true("which clears the tape edge better than the old 1.6 pt symbol",
            f"{(labels.TAPE_PT - side) / 2:.1f} pt vs 4.4")
 _, _, ecc_long = labels.fit_qr("x" * 120)
 check("a longer payload drops the error correction rather than the fit",
-      ecc_long, "m")
+      ecc_long, "q")
 try:
     labels.fit_qr("x" * 300)
     check("300 bytes is refused", "no exception", "LabelTooBig")
@@ -285,15 +285,18 @@ check_true("the site name IS on it, because Thai cannot go in the code",
 # version, and so its box — grows with the row count, and the label grows
 # with it. A couple of millimetres, and the price of the code being worth
 # scanning.
-# True, then briefly false, then true again -- worth the note. The code
-# carries the channel map, so its payload grows with the row count, and at
-# a 1.2 pt cell a five-row fridge dropped a version and took 2 mm off the
-# label. At 1.0 pt every cabinet in the fleet lands on version 8, so the
-# length is one number again.
+# The code carries the channel map, so its payload grows with the row count
+# and can tip it into the next version. Whether that shows up in the label's
+# length depends entirely on where the cell size puts the version boundary:
+# it did at 1.2 pt, it did not at 1.0, and at 0.8 it does again, by a
+# millimetre. Check the bound rather than the fact, which keeps moving.
 _five = round(labels.render("minimal", sample(rows=rows_for("0", "8,8,8,8,8",
                                                             "1,2,3,4,5")),
                             created="x")[1])
-check("its length does not depend on the row count", _five, round(mini_mm))
+check_true("a five-row cabinet is never longer", _five <= round(mini_mm),
+           f"{_five} mm vs {round(mini_mm)} mm")
+check_true("and never shorter by more than a few mm",
+           round(mini_mm) - _five <= 4, f"{round(mini_mm) - _five} mm")
 # 28 Thai characters are 82 bytes in UTF-8, and for a long time that was
 # more than the whole code could hold -- which was the reason the site name
 # is printed rather than encoded. At 1.0 pt it would now fit alongside

@@ -81,7 +81,7 @@ CONTENT_INSET_PT = 2.0
 # every one of them is real. 1.2 pt is chosen rather than the smallest: six
 # dots a module keeps a comfortable margin against the printer, and the extra
 # room is spent on stronger error correction instead of a smaller sticker.
-QR_CELL_PT = 1.0
+QR_CELL_PT = 0.8
 
 # Cap the symbol well inside the 64 pt of usable tape. Without this the
 # strongest-EC-that-fits rule would take EC-Q at 63.6 pt and leave 2.2 pt of
