@@ -53,7 +53,7 @@ def sample(**kw):
 # The only numbers here that depend on which plate is fitted. Everything
 # else is checked as a relationship, so switching the frame does not mean
 # editing the tests.
-ROWMAP_MM = {"round": 109, "bold": 109}
+ROWMAP_MM = {"round": 111, "bold": 111}
 
 print("rows_from_gateway — the shape overrides the preset, as the gateway does")
 check("type 80 is ten rows of eight", rows_for("80", "0", "1,2,3,4,5,6,7,8,7,8")[0],
@@ -127,9 +127,10 @@ check_true("the QR payload keeps its line breaks",
 # Compared as the file writes it, not as a float: CONTENT_X is a sum of
 # constants and on the double plate it comes to 17.700000000000003, which is
 # not equal to 17.7 and is exactly why _pt exists.
-check("the QR sits inside the frame, not on the paper edge",
-      re.search(r'<barcode:barcode><pt:objectStyle x="([\d.]+)pt"',
-                xml).group(1), labels._pt(labels.CONTENT_X))
+check_true("the QR sits inside the frame, not on the paper edge",
+           float(re.search(r'<barcode:barcode><pt:objectStyle x="([\d.]+)pt"',
+                           xml).group(1)) >= labels.CONTENT_X,
+           "the code takes its own gap, never less than the text's")
 # A coordinate computed from constants lands on 17.700000000000003 unless
 # every one of them goes through _pt. Float noise in a file the printer
 # parses is not worth discovering at the printer.
@@ -411,6 +412,24 @@ for key in ("minimal", "standard", "rowmap"):
                min(gaps) >= labels.FRAME_PAD - 0.05,
                "left %.1f top %.1f right %.1f bottom %.1f, need %.1f"
                % (*gaps, labels.FRAME_PAD))
+    # and its LEFT gap equals its vertical one, so it reads as a square cell
+    # centred in the frame rather than a code pushed into a corner
+    check(f"  {key}: the same gap on the left as above and below",
+          (round(gaps[0], 1), round(gaps[1], 1)),
+          (round(gaps[3], 1), round(gaps[3], 1)))
+
+# The version is pinned rather than left on "auto". Our capacity table is
+# byte mode, and a payload carrying "1234455678" would encode smaller in
+# numeric mode -- so on "auto" P-touch could draw a smaller symbol than the
+# box computed for it, and every clearance worked out here would be wrong by
+# an unknowable amount. Proven to be accepted: a file written with
+# version="9" opened, and its symbol sat exactly on the box edges.
+check("the version is pinned, not left to the encoder",
+      re.search(r'<barcode:qrcodeStyle[^>]*version="([^"]+)"', xml).group(1),
+      str((int(re.search(r'<barcode:barcode><pt:objectStyle[^>]*width="([\d.]+)pt"',
+                         xml).group(1).split(".")[0]) // 1) and
+          (round(float(re.search(r'<barcode:barcode><pt:objectStyle[^>]*width="([\d.]+)pt"',
+                                 xml).group(1)) / labels.QR_CELL_PT) - 4 - 17) // 4))
 
 # Whatever the plate, no rectangle may claim a rounded corner. The attribute
 # does nothing, and copying Brother's habit of filling it with 25% of the
@@ -472,7 +491,7 @@ if os.path.exists(BQR):
     # nothing in it is the one thing a scanner is entitled to.
     MINE = {"x", "y", "width", "height", "ID", "objectName", "mbcs",
             "eccLevel", "cellSize", "checkDigit", "templateMergeTarget",
-            "templateMergeType", "templateMergeID", "style"}
+            "templateMergeType", "templateMergeID", "style", "version"}
 
     def _bat(o):
         d = {}

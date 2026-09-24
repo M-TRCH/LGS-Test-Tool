@@ -308,6 +308,18 @@ def qr_object(data: str, x, y, *, modules: int, cell_pt: float, ecc: str,
     side. Getting that wrong makes a box that disagrees with what prints.
     No `stringItem` and no `charLen` here, unlike a text object.
 
+    The VERSION is pinned, not left on "auto". Every P-touch file we have
+    seen says "auto", so this was a guess and it was tested on its own in
+    case it opened blank; it does not, and it settles something that could
+    not be settled any other way. Our capacity table is byte mode, and it is
+    what chooses the version and therefore the box -- but a good encoder
+    does not put everything in byte mode, and "1234455678" is ten digits
+    that numeric mode would pack into 34 bits where byte mode spends 80. On
+    "auto" P-touch was free to pick a smaller version than the table
+    predicted, draw a smaller symbol, and leave the box we computed around
+    it wrong by an amount nothing here could know. Pinned, the box is right
+    by construction.
+
     `anchor="CENTER"`, and this one is worth the words. Every text and drawn
     object in Brother's library is TOPLEFT and both of its BARCODES are
     CENTER, which is not a coincidence: the anchor says where the content
@@ -336,7 +348,8 @@ def qr_object(data: str, x, y, *, modules: int, cell_pt: float, ecc: str,
         'humanReadableAlignment="LEFT" checkDigit="false" autoLengths="true" '
         'margin="true" sameLengthBar="false" bearerBar="false"/>'
         '<barcode:qrcodeStyle model="2" eccLevel="' + _ECC_PCT[ecc] + '" '
-        'cellSize="' + str(cell_pt) + 'pt" mbcs="auto" joint="1" version="auto"/>'
+        'cellSize="' + str(cell_pt) + 'pt" mbcs="auto" joint="1" '
+        'version="' + str((modules - 17) // 4) + '"/>'
         '<pt:data>' + _esc(data) + '</pt:data></barcode:barcode>')
     return xml, side
 
@@ -762,7 +775,14 @@ def _detail_label(c: CabinetLabel, *, created: str, with_rows: bool) -> tuple:
 
     GAP, CW = 5.0, 26.0                          # QR-to-rule, and a map column
     fr_x = EDGE_PT + 1.0                         # 12.4
-    qr_x = CONTENT_X
+    # The text block fills the frame's height, so a 3.5 pt pad puts it an
+    # even 3.5 from every edge it touches. The code does not fill it -- it
+    # is square and smaller -- so the same 3.5 on the left against 8.2 above
+    # and below read as a code shoved into a corner. Give it its own gap:
+    # whatever clearance its height leaves, it takes on the left too, and it
+    # sits in a square cell centred in the frame however big it comes out.
+    qr_gap = round((TAPE_PT - side) / 2 - FRAME_Y, 1)
+    qr_x = round(fr_x + qr_gap, 1)
     rule1_x = qr_x + side + GAP
     id_x = rule1_x + GAP
 
@@ -851,7 +871,8 @@ def _minimal_label(c: CabinetLabel, *, created: str) -> tuple:
     top = FRAME_Y + FRAME_PAD
     inner_h = FRAME_H - 2 * FRAME_PAD
     fr_x = EDGE_PT + 1.0
-    qr_x = CONTENT_X
+    qr_gap = round((TAPE_PT - side) / 2 - FRAME_Y, 1)
+    qr_x = round(fr_x + qr_gap, 1)
     rule_x = qr_x + side + GAP
     tx = rule_x + GAP
 
