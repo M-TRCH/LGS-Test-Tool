@@ -539,31 +539,39 @@ def vline_object(x, y, h, *, name: str, obj_id: int, pen_pt: float = 0.5) -> str
 
 
 # -- The plate ---------------------------------------------------------------
-# A 1 pt outer border with a 0.5 pt hairline just inside it. Chosen from four
-# candidates by looking at them side by side; the pair reads as a made thing
-# rather than a box drawn round some text, and it costs 1 mm of tape over a
-# single frame.
+# Two plates, and one line to swap them. Four were rendered side by side and
+# looked at; these are the two that survived. `double` is a 1 pt border with
+# a 0.5 pt hairline inside it, `bold` a single heavier border with a wider
+# corner. Keeping both costs nothing, and it means the choice gets made from
+# a sticker rather than from a screen.
 #
-# 3 pt clear of both edges of the tape. The printer can reach 2 pt, and a
-# calibration print put the first whole character at 1 pt -- but a border is
-# a straight line along the whole label, which is the least forgiving thing
-# to put near an edge, and the last sticker came back with its top shaved.
-
+# Either way the plate sits 3 pt clear of both edges of the tape. The printer
+# reaches 2 pt and a calibration print put the first whole character at 1 pt,
+# but a border is a straight line down the whole label, which is the least
+# forgiving thing to put near an edge, and the last sticker came back shaved.
+FRAME_STYLE = "bold"
+_PLATES = {
+    #          border  inner hairline  corner
+    "double": (1.0,    1.8,            7.0),
+    "bold":   (1.0,    0.0,            11.0),
+}
 FRAME_Y, FRAME_H = 3.0, 62.0
-FRAME_PAD = 3.5              # inner hairline to content
-FRAME_INSET = 1.8            # outer border to inner hairline
-FRAME_ROUND = 7.0
+FRAME_PAD = 3.5                                  # innermost line to content
+FRAME_PEN, FRAME_INSET, FRAME_ROUND = _PLATES[FRAME_STYLE]
 CONTENT_X = EDGE_PT + 1.0 + FRAME_INSET + FRAME_PAD
 
 
 def frame_objects(x, w, *, obj_id: int = 0) -> list:
-    """The two rectangles of the plate, outermost first."""
-    return [rect_object(x, FRAME_Y, w, FRAME_H, name="frame", obj_id=obj_id,
-                        roundness=FRAME_ROUND, pen_pt=1.0),
-            rect_object(x + FRAME_INSET, FRAME_Y + FRAME_INSET,
-                        w - 2 * FRAME_INSET, FRAME_H - 2 * FRAME_INSET,
-                        name="frameInner", obj_id=obj_id + 1,
-                        roundness=FRAME_ROUND - 2.0)]
+    """The plate: one rectangle, or two for `double`, outermost first."""
+    objs = [rect_object(x, FRAME_Y, w, FRAME_H, name="frame", obj_id=obj_id,
+                        roundness=FRAME_ROUND, pen_pt=FRAME_PEN)]
+    if FRAME_INSET:
+        objs.append(rect_object(
+            x + FRAME_INSET, FRAME_Y + FRAME_INSET,
+            w - 2 * FRAME_INSET, FRAME_H - 2 * FRAME_INSET,
+            name="frameInner", obj_id=obj_id + 1,
+            roundness=FRAME_ROUND - 2.0))
+    return objs
 
 
 # ── The cabinet a label describes ──────────────────────────────────────────
