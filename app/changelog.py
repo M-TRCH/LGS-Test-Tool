@@ -16,6 +16,51 @@ class Release:
 
 
 RELEASES: tuple = (
+    Release("1.8.0", "2026-09-24", (
+        "New Labels tab: a Brother P-touch sticker for the front of a "
+        "cabinet, saved as a .lbx and printed from P-touch Editor. Press "
+        "Read and the short name, the address, the MAC and the row/channel "
+        "map come off the gateway live, so a sticker can never describe a "
+        "cabinet that no longer exists -- the worst it can be is old, and "
+        "reprinting costs nothing. Only two fields are typed and neither is "
+        "kept: the ward name, which is printed for people to read, and the "
+        "serial, which belongs to the warehouse's database and would only "
+        "drift if a second copy lived here.",
+        "Three layouts -- minimal, standard and a row map for a cabinet "
+        "whose row widths nobody can guess -- and three frames. The QR "
+        "carries the whole shape of the cabinet, channels and row widths "
+        "included, in 95 bytes of the 134 a 24 mm tape holds; the panel "
+        "showing exactly what it encodes is there because a wrong channel "
+        "map is invisible until someone is at a cabinet with a scanner.",
+        "Soak: several cabinets at once. The roster is remembered, because a "
+        "weekend run is set up once and started many times, and cabinets "
+        "that share an IP no longer trip the two-masters guard, which had "
+        "been refusing every cabinet in a fleet run.",
+        "The pharmacy simulation now shows what it is doing and admits when "
+        "it cannot keep up. Its pick schedule was drifting and quietly "
+        "losing 14% of the requested rate; dwell is tied to the pick rate, "
+        "and the writes are timed.",
+        "The refrigerated cabinet is a type of its own rather than a "
+        "40-slot chest with the wrong row widths.",
+        "Bundled gateway firmware is v1.12.3.",
+    )),
+    Release("1.7.3", "2026-09-09", (
+        "A panel action the firmware does not know about no longer takes the "
+        "whole card down with it.",
+    )),
+    Release("1.7.2", "2026-09-08", (
+        "The commissioning sweep asks the board what it is before deciding "
+        "what to assert. On a type-10 mask board running module v3.5.0, coil "
+        "1001 correctly stays lit when 1003 is enabled -- window n is person "
+        "n, and one slot can serve several people at once -- so the old "
+        "assertion would have reported every module in an 80-slot cabinet as "
+        "a hardware fault while it worked exactly as designed.",
+        "The global fan-out check now restores the global register too. It "
+        "left the test value behind, and because those are CHANGE watches "
+        "the next run's identical write was not a change, so nothing fanned "
+        "out: the check passed once per board and failed forever after.",
+        "Bundled module firmware is v3.5.0.",
+    )),
     Release("1.7.1", "2026-08-31", (
         "The Soak tab's pause between passes now defaults to 2 seconds "
         "instead of 0.5. That half-second was not a harmless default: on a "
