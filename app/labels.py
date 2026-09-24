@@ -127,45 +127,63 @@ def _esc(s: str) -> str:
              .replace('"', "&quot;"))
 
 
+# The font block, byte for byte as in the file that printed. It appears
+# twice in a text object — once for the box, once inside the stringItem —
+# and the two must agree.
+_FONT = ('<text:ptFontInfo><text:logFont name="{font}" width="0" italic="false"'
+         ' weight="{weight}" charSet="0" pitchAndFamily="34"/>'
+         '<text:fontExt effect="NOEFFECT" underline="0" strikeout="0"'
+         ' size="{size}pt" orgSize="{orgsize}pt" textColor="#000000"'
+         ' textPrintColorNumber="1"/></text:ptFontInfo>')
+
+
 def text_object(data: str, x, y, w, h, *, name: str, obj_id: int,
-                font: str = "Arial", weight: int = 400, size: str = "10",
+                font: str = LATIN_FONT, weight: int = 400, size: str = "10",
                 orgsize: str = "12", align: str = "CENTER") -> str:
-    # charLen counts code points, not bytes: Thai floating vowels are one
-    # each and the file is rejected if the count disagrees with the data.
+    """One text box, matching a file P-touch wrote attribute for attribute.
+
+    This is a transcription, not a design. Four attributes were retyped
+    differently when this moved out of the scratchpad, and every one of them
+    mattered:
+
+    * `shrink="false"` — with shrink ON, P-touch squeezes text that does not
+      fit rather than clipping it, and squeezed Thai stacks its vowels and
+      tone marks on top of each other. This is what Teerachot kept seeing.
+    * `inLineAlignment="BASELINE"` — dropped entirely in the port. Thai hangs
+      marks above and below the line, so the baseline is what holds them
+      apart.
+    * `aspectNormal="false"` — with it true, a squeeze also distorts.
+    * `pitchAndFamily="34"` — the font's family class; 2 says something else
+      about the face and invites a substitution.
+
+    `orgPoint` is the LAYOUT point size and equals `size`, never `orgSize`.
+
+    `charLen` counts CODE POINTS, not bytes, so Thai floating vowels are one
+    each; the file is rejected if the count disagrees with the data.
+    """
+    f = _FONT.format(font=font, weight=weight, size=size, orgsize=orgsize)
     return (
-        '<text:text><pt:objectStyle x="' + str(x) + 'pt" y="' + str(y) + 'pt" '
-        'width="' + str(w) + 'pt" height="' + str(h) + 'pt" backColor="#FFFFFF" '
-        'backPrintColorNumber="0" ropMode="COPYPEN" angle="0" anchor="TOPLEFT" '
-        'flip="NONE"><pt:pen style="NULL" widthX="0.5pt" widthY="0.5pt" '
-        'color="#000000" printColorNumber="1"/><pt:brush style="NULL" '
-        'color="#000000" printColorNumber="1" id="0"/><pt:expanded '
-        'objectName="' + _esc(name) + '" ID="' + str(obj_id) + '" lock="0" '
-        'templateMergeTarget="LABELPRINTER" templateMergeType="NONE" '
-        'templateMergeID="0"/></pt:objectStyle>'
-        '<text:ptFontInfo><text:logFont name="' + font + '" width="0" italic="false" '
-        'weight="' + str(weight) + '" charSet="0" pitchAndFamily="2"/>'
-        '<text:fontExt effect="NOEFFECT" underline="0" strikeout="0" size="'
-        + str(size) + 'pt" orgSize="' + str(orgsize) + 'pt" textColor="#000000" '
-        'textPrintColorNumber="1"/></text:ptFontInfo>'
-        '<text:textControl control="FREE" clipFrame="false" aspectNormal="true" '
-        'shrink="true" autoLF="false" avoidImage="false"/>'
-        '<text:textAlign horizontalAlignment="' + align + '" '
-        # orgPoint is the LAYOUT point size, and P-touch sets it equal to
-        # `size` — never to `orgSize` — in every text object of a file it
-        # wrote itself. Feeding it orgSize (1.2x size) lays the line out a
-        # fifth taller than the glyphs are, which crowds a tight block until
-        # characters touch. That produced the overlapping Thai reported on
-        # 2026-09-24, and the font was a red herring.
-        'verticalAlignment="TOP"/><text:textStyle vertical="false" '
-        'nullBlock="false" charSpace="0" lineSpace="0" orgPoint="' + str(size)
-        + 'pt" combinedChars="false"/>'
-        '<pt:data>' + _esc(data) + '</pt:data>'
-        '<text:stringItem charLen="' + str(len(data)) + '"><text:ptFontInfo>'
-        '<text:logFont name="' + font + '" width="0" italic="false" weight="'
-        + str(weight) + '" charSet="0" pitchAndFamily="2"/>'
-        '<text:fontExt effect="NOEFFECT" underline="0" strikeout="0" size="'
-        + str(size) + 'pt" orgSize="' + str(orgsize) + 'pt" textColor="#000000" '
-        'textPrintColorNumber="1"/></text:ptFontInfo></text:stringItem>'
+        '<text:text><pt:objectStyle'
+        f' x="{x}pt" y="{y}pt" width="{w}pt" height="{h}pt"'
+        ' backColor="#FFFFFF" backPrintColorNumber="0" ropMode="COPYPEN"'
+        ' angle="0" anchor="TOPLEFT" flip="NONE">'
+        '<pt:pen style="NULL" widthX="0.5pt" widthY="0.5pt" color="#000000"'
+        ' printColorNumber="1"/>'
+        '<pt:brush style="NULL" color="#000000" printColorNumber="1" id="0"/>'
+        f'<pt:expanded objectName="{_esc(name)}" ID="{obj_id}" lock="0"'
+        ' templateMergeTarget="LABELLIST" templateMergeType="NONE"'
+        ' templateMergeID="0" linkStatus="NONE" linkID="0"/>'
+        '</pt:objectStyle>'
+        + f +
+        '<text:textControl control="FREE" clipFrame="false"'
+        ' aspectNormal="false" shrink="false" autoLF="false"'
+        ' avoidImage="false"/>'
+        f'<text:textAlign horizontalAlignment="{align}" verticalAlignment="TOP"'
+        ' inLineAlignment="BASELINE"/>'
+        '<text:textStyle vertical="false" nullBlock="false" charSpace="0"'
+        f' lineSpace="0" orgPoint="{size}pt" combinedChars="false"/>'
+        f'<pt:data>{_esc(data)}</pt:data>'
+        f'<text:stringItem charLen="{len(data)}">{f}</text:stringItem>'
         '</text:text>')
 
 
@@ -331,31 +349,33 @@ def rows_from_gateway(settings: dict) -> tuple:
 # Each takes a CabinetLabel and returns (label_xml, prop_xml, length_mm).
 # Registered below so a new sticker is a function plus one dict entry.
 
-def _full_label(c: CabinetLabel, *, created: str) -> tuple:
-    """QR + identity block + row/channel strip, on one length of 24 mm tape.
+def _detail_label(c: CabinetLabel, *, created: str, with_rows: bool) -> tuple:
+    """QR + identity block, and optionally the row/id strip.
 
-    The row strip is the part nobody has written down on site: a technician
-    moving between an 80 and a 40 cannot guess that one is eight per row and
-    the other four, and the channel matters because two rows can share one,
-    which is why a whole row stalls together.
+    With `with_rows`, it also carries the part nobody has written down on
+    site: a technician moving between an 80 and a 40 cannot guess that one
+    is eight slots per row and the other four. Without it, the label is
+    shorter and the strip is simply not available at the door.
     """
     qr_data = c.qr_payload()
     modules, side, ecc = fit_qr(qr_data)
 
     # 130 pt, not 108: the site name is the widest thing on the label and
-    # Thai has no room to give. P-touch's shrink=true would squeeze it to
-    # fit rather than clip, and squeezed Thai puts tone marks on top of each
-    # other, so the box is sized to hold the text outright.
+    # Thai has no room to give. The old box was 1.6 pt narrower than the
+    # hospital's name needs at 10 pt, and P-touch's shrink would have
+    # squeezed it — so the box holds the text outright instead.
     GAP, IW, CW = 9.0, 130.0, 26.0
     qr_x = 13.0
     id_x = qr_x + side + GAP
     map_x = id_x + IW + GAP
-    ncol = max(1, (len(c.rows) + 1) // 2)             # two banks, always
+    rows = c.rows if with_rows else ()
+    ncol = max(1, (len(rows) + 1) // 2) if rows else 0   # two banks, always
     # Round the cut up to a whole millimetre. The tape is continuous so any
     # length prints, but a label whose length is a round number is one a
     # person can check with a ruler and one that reproduces exactly.
     import math
-    paper = round(math.ceil((map_x + ncol * CW + EDGE_PT + 2) / MM) * MM, 1)
+    right = (map_x + ncol * CW) if rows else (id_x + IW)
+    paper = round(math.ceil((right + EDGE_PT + 2) / MM) * MM, 1)
 
     lines = [
         (c.ward, id_x, 3.0, IW, 14.0, "10", THAI_FONT, 400),
@@ -367,7 +387,7 @@ def _full_label(c: CabinetLabel, *, created: str) -> tuple:
     # Row and id range only. The hub channel used to print here, but it is
     # wiring detail nobody reads at the cabinet door, and dropping it buys
     # the two remaining lines room to be larger.
-    for i, (row, ids, _ch) in enumerate(c.rows):
+    for i, (row, ids, _ch) in enumerate(rows):
         cx = map_x + (i % ncol) * CW
         yy = 10.0 if i < ncol else 38.0
         lines += [
@@ -443,13 +463,25 @@ class Layout:
     note: str = ""
 
 
+def _standard_label(c: CabinetLabel, *, created: str) -> tuple:
+    return _detail_label(c, created=created, with_rows=False)
+
+
+def _rowmap_label(c: CabinetLabel, *, created: str) -> tuple:
+    return _detail_label(c, created=created, with_rows=True)
+
+
 LAYOUTS = {
     "minimal": Layout("minimal", "Minimal — site, cabinet name, QR", _minimal_label,
-                      "Two lines and the code. The serial, address and MAC "
-                      "are in the QR; the row strip is not on this one."),
-    "full": Layout("full", "Full label — QR, identity, row map", _full_label,
-                   "Everything a technician needs at the cabinet without a "
-                   "phone. Length follows the row count."),
+                      "Two lines and the code. Everything else is in the QR."),
+    "standard": Layout("standard", "Standard — site, name, serial, address, QR",
+                       _standard_label,
+                       "The identity a person reads, printed. One fixed "
+                       "length whatever the cabinet."),
+    "rowmap": Layout("rowmap", "Row map — standard, plus every row and its ids",
+                     _rowmap_label,
+                     "For the door of a cabinet whose row widths nobody can "
+                     "guess. Length follows the row count."),
 }
 
 

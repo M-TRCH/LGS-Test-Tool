@@ -91,7 +91,7 @@ check_true("an object off the side of the tape is flagged",
            labels.check_fits([("a", 20.0, 60.0, 10, 20)], 340.2))
 
 print("\nthe full layout, against the label that was printed and scanned")
-blob, mm = labels.render("full", sample(), created="2026-09-23T00:00:00Z")
+blob, mm = labels.render("rowmap", sample(), created="2026-09-23T00:00:00Z")
 xml = zipfile.ZipFile(io.BytesIO(blob)).read("label.xml").decode()
 check("zip holds exactly label.xml then prop.xml",
       zipfile.ZipFile(io.BytesIO(blob)).namelist(), ["label.xml", "prop.xml"])
@@ -118,7 +118,7 @@ check("every text object is centred",
       set(re.findall(r'horizontalAlignment="(\w+)"', xml)), {"CENTER"})
 check("10 rows make a 129 mm label", round(mm), 129)
 check("7 rows make a shorter one",
-      round(labels.render("full", sample(rows=rows_for("0", "8,8,8,8,8,8,8",
+      round(labels.render("rowmap", sample(rows=rows_for("0", "8,8,8,8,8,8,8",
                                                        "1,2,3,4,5,6,7")),
                           created="x")[1]), 120)
 # The site name must not be squeezed: P-touch's shrink=true compresses
@@ -133,6 +133,41 @@ for face in ("tahoma.ttf", "LeelawUI.ttf"):
     need = _d.textbbox((0, 0), WARD, font=_f)[2] / 10.0          # at 10 pt
     check_true(f"the site name fits the 130 pt box in {face}", need <= 130,
                f"needs {need:.0f} pt")
+
+print("\nEVERY attribute, against the file that printed and scanned")
+# Five attributes were retyped differently when this left the scratchpad --
+# shrink, aspectNormal, inLineAlignment, pitchAndFamily and orgPoint -- and
+# shrink alone squeezes Thai until its tone marks stack. Two rounds of
+# comparison missed them by checking only the fields someone thought to
+# name. So compare the whole tag, and let geometry be the only exception.
+REF = Path(r"C:\Users\mteer\AppData\Local\Temp\claude\lbx-tests\test5-qr-fitted.lbx")
+if REF.exists():
+    ref_xml = zipfile.ZipFile(REF).read("label.xml").decode()
+
+    def _thai_object(x):
+        for o in re.findall(r'<text:text>.*?</text:text>', x, re.S):
+            t = re.search(r'<pt:data>(.*?)</pt:data>', o, re.S).group(1)
+            if any('\u0e00' <= ch <= '\u0e7f' for ch in t):
+                return o
+        return ""
+
+    def _attrs(o):
+        d = {}
+        for tag in re.findall(r'<[a-z:]+[^>]*/?>', o):
+            n = re.match(r'<([a-z:]+)', tag).group(1)
+            for k, v in re.findall(r'(\w+)="([^"]*)"', tag):
+                d[f"{n}.{k}"] = v
+        return d
+
+    # Excluded because they are functions of the content and the layout,
+    # not style choices that could silently drift. charLen has its own case.
+    GEOM = {"x", "y", "width", "height", "ID", "objectName", "charLen"}
+    A, B = _attrs(_thai_object(ref_xml)), _attrs(_thai_object(xml))
+    drift = [(k, A.get(k, "—"), B.get(k, "—")) for k in sorted(set(A) | set(B))
+             if A.get(k) != B.get(k) and k.split(".")[-1] not in GEOM]
+    check("no attribute drifts from the printed reference", drift, [])
+else:
+    print("  --   reference label not on this machine, comparison skipped")
 
 print("\nfont attributes, against what P-touch writes for itself")
 # The first comparison against the printed reference checked coordinates and
@@ -191,7 +226,7 @@ check("a cabinet with no serial simply omits the line",
 
 print("\na serial too long to encode is refused before any tape is spent")
 try:
-    labels.render("full", sample(serial="X" * 40), created="x")
+    labels.render("rowmap", sample(serial="X" * 40), created="x")
     check("40-character serial", "no exception", "LabelTooBig")
 except labels.LabelTooBig:
     print("  ok   40-character serial is refused")
