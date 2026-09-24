@@ -38,11 +38,24 @@ def build(ctx: Ctx) -> None:
             serial = ui.input(t("labels.serial")).props("dense outlined").classes("w-56")
         helps(serial, t("labels.serial_tip"))
 
+        # "full" was renamed to "rowmap" and this default was left behind:
+        # the select opened on a key LAYOUTS does not have, so the first
+        # render raised KeyError before anything reached the tape.
         layout_sel = ui.select(
             {k: v.title for k, v in labels.LAYOUTS.items()},
-            value="full", label=t("labels.layout")).props("dense outlined").classes("w-96")
+            value="standard",
+            label=t("labels.layout")).props("dense outlined").classes("w-96")
+        plate_sel = ui.select(
+            {k: t(f"labels.plate_{k}") for k in labels.FRAME_STYLES},
+            value=labels.FRAME_STYLE,
+            label=t("labels.plate")).props("dense outlined").classes("w-96")
 
         status = ui.label("").classes("text-sm")
+        # The code is the half of the sticker nobody can proof-read, so show
+        # it as text. A wrong channel map is invisible until someone is at a
+        # cabinet with a scanner and no idea why the rows do not match.
+        with ui.expansion(t("labels.payload")).classes("w-full text-sm"):
+            payload_box = ui.label("").classes("font-mono text-xs whitespace-pre")
         save_btn = ui.button(t("labels.save"))
         save_btn.disable()
 
@@ -55,6 +68,8 @@ def build(ctx: Ctx) -> None:
                 return
             cab.ward = (ward.value or "").strip()
             cab.serial = (serial.value or "").strip()
+            labels.use_frame(plate_sel.value)
+            payload_box.set_text(cab.qr_payload())
             try:
                 blob, mm = labels.render(layout_sel.value, cab,
                                          created=_now())
@@ -109,6 +124,7 @@ def build(ctx: Ctx) -> None:
                 return
             cab.ward = (ward.value or "").strip()
             cab.serial = (serial.value or "").strip()
+            labels.use_frame(plate_sel.value)
             blob, _mm = labels.render(layout_sel.value, cab, created=_now())
             stem = "".join(ch if ch.isalnum() or ch in "-_" else "-"
                            for ch in (cab.name or "cabinet")).strip("-") or "cabinet"
@@ -118,7 +134,8 @@ def build(ctx: Ctx) -> None:
         save_btn.on_click(do_save)
         for widget in (ward, serial):
             widget.on("blur", lambda _e: describe())
-        layout_sel.on("update:model-value", lambda _e: describe())
+        for sel in (layout_sel, plate_sel):
+            sel.on("update:model-value", lambda _e: describe())
 
     with ui.card().classes("p-3 w-full"):
         ui.label(t("labels.print_card")).classes("font-bold")

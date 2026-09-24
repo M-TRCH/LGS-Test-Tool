@@ -551,26 +551,48 @@ def vline_object(x, y, h, *, name: str, obj_id: int, pen_pt: float = 0.5) -> str
 # forgiving thing to put near an edge, and the last sticker came back shaved.
 FRAME_STYLE = "bold"
 _PLATES = {
-    #          border  inner hairline  corner
-    "double": (1.0,    1.8,            7.0),
-    "bold":   (1.0,    0.0,            11.0),
+    #          border  inner hairline
+    "double": (1.0,    1.8),
+    "bold":   (1.0,    0.0),
 }
 FRAME_Y, FRAME_H = 3.0, 62.0
 FRAME_PAD = 3.5                                  # innermost line to content
-FRAME_PEN, FRAME_INSET, FRAME_ROUND = _PLATES[FRAME_STYLE]
+FRAME_PEN, FRAME_INSET = _PLATES[FRAME_STYLE]
 CONTENT_X = EDGE_PT + 1.0 + FRAME_INSET + FRAME_PAD
+FRAME_STYLES = tuple(_PLATES)
+
+
+def use_frame(style: str) -> None:
+    """Fit a different plate. Changes where the content starts, so the
+    derived constants move with it rather than being set independently."""
+    global FRAME_STYLE, FRAME_PEN, FRAME_INSET, CONTENT_X
+    if style not in _PLATES:
+        raise KeyError(f"no such plate: {style!r}")
+    FRAME_STYLE = style
+    FRAME_PEN, FRAME_INSET = _PLATES[style]
+    CONTENT_X = EDGE_PT + 1.0 + FRAME_INSET + FRAME_PAD
+
+# A quarter of the shorter side, which is not a taste: every rounded
+# rectangle in Brother's library -- all thirteen of them, across boxes from
+# 8 pt to 187 pt -- has roundnessX at exactly 25% of min(width, height).
+# That is the Editor's own arithmetic, so a frame drawn to it is one P-touch
+# could have drawn itself. Typing a number instead gave 11 pt where the rule
+# wants 15.5, which is why the corners looked half-finished.
+ROUND_FRACTION = 0.25
 
 
 def frame_objects(x, w, *, obj_id: int = 0) -> list:
     """The plate: one rectangle, or two for `double`, outermost first."""
+    def _r(ww, hh):
+        return round(min(ww, hh) * ROUND_FRACTION, 1)
+
     objs = [rect_object(x, FRAME_Y, w, FRAME_H, name="frame", obj_id=obj_id,
-                        roundness=FRAME_ROUND, pen_pt=FRAME_PEN)]
+                        roundness=_r(w, FRAME_H), pen_pt=FRAME_PEN)]
     if FRAME_INSET:
+        iw, ih = w - 2 * FRAME_INSET, FRAME_H - 2 * FRAME_INSET
         objs.append(rect_object(
-            x + FRAME_INSET, FRAME_Y + FRAME_INSET,
-            w - 2 * FRAME_INSET, FRAME_H - 2 * FRAME_INSET,
-            name="frameInner", obj_id=obj_id + 1,
-            roundness=FRAME_ROUND - 2.0))
+            x + FRAME_INSET, FRAME_Y + FRAME_INSET, iw, ih,
+            name="frameInner", obj_id=obj_id + 1, roundness=_r(iw, ih)))
     return objs
 
 

@@ -196,6 +196,13 @@ TEXTS: dict[str, dict[str, str]] = {
               "ความยาวที่ใส่ได้ขึ้นกับชื่อตู้และ MAC ที่อยู่ใน QR เดียวกัน จึงไม่มีตัวเลขตายตัว "
               "ให้ดูจำนวนไบต์ที่เหลือจากบรรทัดด้านบน ถ้ายาวเกินจะถูกปฏิเสธก่อนเซฟเสมอ"},
     "labels.layout": {"en": "Layout", "th": "รูปแบบสติ๊กเกอร์"},
+    "labels.plate": {"en": "Frame", "th": "กรอบ"},
+    "labels.plate_bold": {"en": "Bold — one heavy border",
+                          "th": "หนา — เส้นเดียว"},
+    "labels.plate_double": {"en": "Double — border and hairline",
+                            "th": "สองชั้น — เส้นหนา + เส้นบาง"},
+    "labels.payload": {"en": "What the QR carries",
+                       "th": "ข้อมูลที่อยู่ใน QR"},
     "labels.save": {"en": "Save .lbx", "th": "เซฟไฟล์ .lbx"},
     "labels.ready": {
         "en": "{mm} x 24 mm · {rows} rows · QR carries {qr} bytes "

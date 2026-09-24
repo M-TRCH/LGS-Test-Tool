@@ -406,6 +406,19 @@ check("content starts one pad inside the innermost line",
       round(labels.FRAME_PAD - labels.FRAME_PEN / 2, 2))
 
 
+# Brother's Editor derives a rounded corner as a quarter of the shorter
+# side, without exception across the thirteen in its library. Follow it and
+# the frame is one P-touch could have drawn; type a number and the corners
+# come out half-finished, which is what 11 pt on a 62 pt box looked like.
+for _m in re.finditer(r'<draw:rect><pt:objectStyle x="[\d.]+pt" y="[\d.]+pt"'
+                      r' width="([\d.]+)pt" height="([\d.]+)pt".*?'
+                      r'roundnessX="([\d.]+)pt" roundnessY="([\d.]+)pt"',
+                      xml, re.S):
+    _w, _h, _rx, _ry = (float(v) for v in _m.groups())
+    check(f"a {_w:.0f}x{_h:.0f} pt frame rounds to a quarter of its short side",
+          _rx, round(min(_w, _h) * labels.ROUND_FRACTION, 1))
+    check("  and both axes agree", _rx, _ry)
+
 BROTHER = (r"C:\Program Files (x86)\Brother\Ptedit54\LayoutStyle\RDRoll"
            r"\Large Shipping Label\Shipping 1.lbx")
 if os.path.exists(BROTHER):
