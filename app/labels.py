@@ -169,7 +169,14 @@ SHEET = "ชีท1"                    # P-touch's own default sheet name
 
 
 def _pt(v) -> str:
-    """68.0 -> '68', 11.4 -> '11.4' — lengths as P-touch writes them."""
+    """68.0 -> '68', 11.4 -> '11.4' — lengths as P-touch writes them.
+
+    Every coordinate in the file goes through this, not just the paper. A
+    layout computed from constants lands on values like 17.700000000000003,
+    and seventeen digits of float noise in a coordinate is not something to
+    find out about from a printer. It also matches Brother's own files,
+    which write "125pt" and "4.3pt" and never "125.0pt".
+    """
     f = float(v)
     return str(int(f)) if f == int(f) else str(round(f, 1))
 
@@ -260,7 +267,7 @@ def text_object(data: str, x, y, w, h, *, name: str, obj_id: int,
     f = _FONT.format(font=font, weight=weight, size=size, orgsize=orgsize)
     return (
         '<text:text><pt:objectStyle'
-        f' x="{x}pt" y="{y}pt" width="{w}pt" height="{h}pt"'
+        f' x="{_pt(x)}pt" y="{_pt(y)}pt" width="{_pt(w)}pt" height="{_pt(h)}pt"'
         ' backColor="#FFFFFF" backPrintColorNumber="0" ropMode="COPYPEN"'
         ' angle="0" anchor="TOPLEFT" flip="NONE">'
         '<pt:pen style="NULL" widthX="0.5pt" widthY="0.5pt" color="#000000"'
@@ -306,8 +313,8 @@ def qr_object(data: str, x, y, *, modules: int, cell_pt: float, ecc: str,
     """
     side = round((modules + 4) * cell_pt, 1)
     xml = (
-        '<barcode:barcode><pt:objectStyle x="' + str(x) + 'pt" y="' + str(y) + 'pt" '
-        'width="' + str(side) + 'pt" height="' + str(side) + 'pt" '
+        '<barcode:barcode><pt:objectStyle x="' + _pt(x) + 'pt" y="' + _pt(y) + 'pt" '
+        'width="' + _pt(side) + 'pt" height="' + _pt(side) + 'pt" '
         'backColor="#FFFFFF" backPrintColorNumber="0" ropMode="COPYPEN" '
         'angle="0" anchor="CENTER" flip="NONE"><pt:pen style="NULL" '
         'widthX="0.5pt" widthY="0.5pt" color="#000000" printColorNumber="1"/>'
@@ -531,6 +538,34 @@ def vline_object(x, y, h, *, name: str, obj_id: int, pen_pt: float = 0.5) -> str
               '</draw:polyStyle></draw:poly>')
 
 
+# -- The plate ---------------------------------------------------------------
+# A 1 pt outer border with a 0.5 pt hairline just inside it. Chosen from four
+# candidates by looking at them side by side; the pair reads as a made thing
+# rather than a box drawn round some text, and it costs 1 mm of tape over a
+# single frame.
+#
+# 3 pt clear of both edges of the tape. The printer can reach 2 pt, and a
+# calibration print put the first whole character at 1 pt -- but a border is
+# a straight line along the whole label, which is the least forgiving thing
+# to put near an edge, and the last sticker came back with its top shaved.
+
+FRAME_Y, FRAME_H = 3.0, 62.0
+FRAME_PAD = 3.5              # inner hairline to content
+FRAME_INSET = 1.8            # outer border to inner hairline
+FRAME_ROUND = 7.0
+CONTENT_X = EDGE_PT + 1.0 + FRAME_INSET + FRAME_PAD
+
+
+def frame_objects(x, w, *, obj_id: int = 0) -> list:
+    """The two rectangles of the plate, outermost first."""
+    return [rect_object(x, FRAME_Y, w, FRAME_H, name="frame", obj_id=obj_id,
+                        roundness=FRAME_ROUND, pen_pt=1.0),
+            rect_object(x + FRAME_INSET, FRAME_Y + FRAME_INSET,
+                        w - 2 * FRAME_INSET, FRAME_H - 2 * FRAME_INSET,
+                        name="frameInner", obj_id=obj_id + 1,
+                        roundness=FRAME_ROUND - 2.0)]
+
+
 # ── The cabinet a label describes ──────────────────────────────────────────
 
 @dataclass
@@ -640,13 +675,12 @@ def _detail_label(c: CabinetLabel, *, created: str, with_rows: bool) -> tuple:
     # where the first whole character appeared on the calibration print. Its
     # inner height then comes to 56 pt, and the code at 54 pt very nearly
     # fills it, which is why the two look deliberate together.
-    FR_Y, FR_H, PAD = 3.0, 62.0, 3.5
-    top = FR_Y + PAD                             # 6.5
-    inner_h = FR_H - 2 * PAD                     # 55.0
+    top = FRAME_Y + FRAME_INSET + FRAME_PAD      # 8.3
+    inner_h = FRAME_H - 2 * (FRAME_INSET + FRAME_PAD)
 
     GAP, CW = 5.0, 26.0                          # QR-to-rule, and a map column
     fr_x = EDGE_PT + 1.0                         # 12.4
-    qr_x = fr_x + PAD
+    qr_x = CONTENT_X
     rule1_x = qr_x + side + GAP
     id_x = rule1_x + GAP
 
@@ -672,7 +706,7 @@ def _detail_label(c: CabinetLabel, *, created: str, with_rows: bool) -> tuple:
     # length prints, but a label whose length is a round number is one a
     # person can check with a ruler and one that reproduces exactly.
     import math
-    fr_w = right + PAD - fr_x
+    fr_w = right + FRAME_PAD + FRAME_INSET - fr_x
     paper = round(math.ceil((fr_x + fr_w + EDGE_PT + 1) / MM) * MM, 1)
 
     # Five lines stacked inside the frame, summing to exactly its inner
@@ -696,7 +730,7 @@ def _detail_label(c: CabinetLabel, *, created: str, with_rows: bool) -> tuple:
     lines = [ln for ln in lines if ln[0]]
 
     rules = [(rule1_x, "rule1")] + ([(rule2_x, "rule2")] if rows else [])
-    boxes = [("frame", fr_x, FR_Y, fr_w, FR_H),
+    boxes = [("frame", fr_x, FRAME_Y, fr_w, FRAME_H),
              ("qr", qr_x, round((TAPE_PT - side) / 2, 1), side, side)]
     boxes += [(n, x, top, 0.6, inner_h) for x, n in rules]
     boxes += [(str(t)[:10], x, yy, w, h) for t, x, yy, w, h, _, _, _ in lines]
@@ -704,9 +738,8 @@ def _detail_label(c: CabinetLabel, *, created: str, with_rows: bool) -> tuple:
     if bad:
         raise LabelTooBig("; ".join(bad))
 
-    objs = [rect_object(fr_x, FR_Y, fr_w, FR_H, name="frame", obj_id=0,
-                        roundness=6.0)]
-    objs += [vline_object(x, top, inner_h, name=n, obj_id=i + 1)
+    objs = frame_objects(fr_x, fr_w)
+    objs += [vline_object(x, top, inner_h, name=n, obj_id=len(objs) + i)
              for i, (x, n) in enumerate(rules)]
     n0 = len(objs)
     qr_xml, _ = qr_object(qr_data, qr_x, round((TAPE_PT - side) / 2, 1),
@@ -732,11 +765,11 @@ def _minimal_label(c: CabinetLabel, *, created: str) -> tuple:
     qr_data = c.qr_payload()
     modules, side, ecc = fit_qr(qr_data)
 
-    FR_Y, FR_H, PAD, GAP = 3.0, 62.0, 3.5, 5.0
-    top = FR_Y + PAD
-    inner_h = FR_H - 2 * PAD
+    GAP = 5.0
+    top = FRAME_Y + FRAME_INSET + FRAME_PAD
+    inner_h = FRAME_H - 2 * (FRAME_INSET + FRAME_PAD)
     fr_x = EDGE_PT + 1.0
-    qr_x = fr_x + PAD
+    qr_x = CONTENT_X
     rule_x = qr_x + side + GAP
     tx = rule_x + GAP
 
@@ -749,7 +782,7 @@ def _minimal_label(c: CabinetLabel, *, created: str) -> tuple:
                       pad=4.0, fallback=150.0)
 
     import math
-    fr_w = tx + TW + PAD - fr_x
+    fr_w = tx + TW + FRAME_PAD + FRAME_INSET - fr_x
     paper = round(math.ceil((fr_x + fr_w + EDGE_PT + 1) / MM) * MM, 1)
 
     # The pair is centred in the frame rather than hung from its top: with
@@ -761,7 +794,7 @@ def _minimal_label(c: CabinetLabel, *, created: str) -> tuple:
         y += h
     lines = [ln for ln in lines if ln[0]]
 
-    boxes = [("frame", fr_x, FR_Y, fr_w, FR_H),
+    boxes = [("frame", fr_x, FRAME_Y, fr_w, FRAME_H),
              ("qr", qr_x, round((TAPE_PT - side) / 2, 1), side, side),
              ("rule", rule_x, top, 0.6, inner_h)]
     boxes += [(str(t)[:10], x, yy, w, h) for t, x, yy, w, h, _, _, _ in lines]
@@ -769,15 +802,16 @@ def _minimal_label(c: CabinetLabel, *, created: str) -> tuple:
     if bad:
         raise LabelTooBig("; ".join(bad))
 
-    objs = [rect_object(fr_x, FR_Y, fr_w, FR_H, name="frame", obj_id=0,
-                        roundness=6.0),
-            vline_object(rule_x, top, inner_h, name="rule", obj_id=1)]
+    objs = frame_objects(fr_x, fr_w)
+    objs.append(vline_object(rule_x, top, inner_h, name="rule",
+                             obj_id=len(objs)))
     qr_xml, _ = qr_object(qr_data, qr_x, round((TAPE_PT - side) / 2, 1),
                           modules=modules, cell_pt=QR_CELL_PT, ecc=ecc,
-                          obj_id=2)
+                          obj_id=len(objs))
     objs.append(qr_xml)
+    n0 = len(objs)
     objs += [
-        text_object(txt, x, yy, w, h, name=f"o{i}", obj_id=3 + i, font=fo,
+        text_object(txt, x, yy, w, h, name=f"o{i}", obj_id=n0 + i, font=fo,
                     weight=wt, size=sz, orgsize=str(round(float(sz) * 1.2, 1)))
         for i, (txt, x, yy, w, h, sz, fo, wt) in enumerate(lines)]
     return label_xml(objs, paper_len_pt=paper), prop_xml(created=created), paper / MM

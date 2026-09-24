@@ -118,7 +118,13 @@ check_true("the QR payload keeps its line breaks",
 # sits inside the frame, which is itself 1 pt inside that edge.
 check("the QR sits inside the frame, not on the paper edge",
       re.search(r'<barcode:barcode><pt:objectStyle x="([\d.]+)pt"', xml).group(1),
-      "15.9")
+      "17.7")
+# A coordinate computed from constants lands on 17.700000000000003 unless
+# every one of them goes through _pt. Float noise in a file the printer
+# parses is not worth discovering at the printer.
+check("no coordinate carries float noise",
+      [v for v in re.findall(r'(?:x|y|width|height)="([\d.]+)pt"', xml)
+       if len(v.split(".")[-1]) > 1 and "." in v], [])
 check("the cell size is one the printer was shown to honour",
       float(re.search(r'cellSize="([\d.]+)pt"', xml).group(1)), labels.QR_CELL_PT)
 check_true("and it is one of the five that were print-tested",
@@ -131,11 +137,11 @@ check_true("and it is not Arial, which has no Thai glyphs",
 # barcode style carries humanReadableAlignment="LEFT" from P-touch itself.
 check("every text object is centred",
       set(re.findall(r'horizontalAlignment="(\w+)"', xml)), {"CENTER"})
-check("10 rows make a 112 mm label", round(mm), 112)
+check("10 rows make a 113 mm label", round(mm), 113)
 check("7 rows make a shorter one",
       round(labels.render("rowmap", sample(rows=rows_for("0", "8,8,8,8,8,8,8",
                                                        "1,2,3,4,5,6,7")),
-                          created="x")[1]), 101)
+                          created="x")[1]), 102)
 
 print("\nboxes are measured, not assumed")
 # labels.text_width sums advance widths out of the font's own hmtx table.
@@ -326,7 +332,8 @@ print("\nthe frame and the rule, against Brother's own template library")
 for key in ("minimal", "standard", "rowmap"):
     b_k, _ = labels.render(key, sample(), created="x")
     x_k = zipfile.ZipFile(io.BytesIO(b_k)).read("label.xml").decode()
-    check(f"  {key} has exactly one frame", len(re.findall(r"<draw:rect>", x_k)), 1)
+    check(f"  {key} is plated with two rectangles",
+          len(re.findall(r"<draw:rect>", x_k)), 2)
     check_true(f"  {key} has a rule beside the code", "<draw:poly>" in x_k)
 
 # The frame has to stay inside the band the printer can actually mark. A
@@ -358,6 +365,21 @@ check("which is the box centre line", round(px0 - rx, 2), round(rw / 2, 2))
 check("inset half a box width at the top", round(py0 - ry, 2), round(rw / 2, 2))
 check("and at the bottom", round(ry + rh - py1, 2), round(rw / 2, 2))
 check("the box is a tenth wider than the pen", rw, 0.6)
+
+# The hairline has to sit strictly inside the border on all four sides, or
+# the pair reads as one thick smudge at this size.
+_o, _i = [tuple(float(v) for v in m)
+          for m in re.findall(r'<draw:rect><pt:objectStyle x="([\d.]+)pt"'
+                              r' y="([\d.]+)pt" width="([\d.]+)pt"'
+                              r' height="([\d.]+)pt"', xml)]
+check_true("the hairline is strictly inside the border",
+           _i[0] > _o[0] and _i[1] > _o[1]
+           and _i[0] + _i[2] < _o[0] + _o[2]
+           and _i[1] + _i[3] < _o[1] + _o[3],
+           f"inner {_i[0]}..{_i[0] + _i[2]} in outer {_o[0]}..{_o[0] + _o[2]}")
+check("the border is the heavier of the two",
+      re.findall(r'<draw:rect>.*?<pt:pen style="\w+" widthX="([\d.]+)pt"',
+                 xml)[:2], ["1", "0.5"])
 
 BROTHER = (r"C:\Program Files (x86)\Brother\Ptedit54\LayoutStyle\RDRoll"
            r"\Large Shipping Label\Shipping 1.lbx")
