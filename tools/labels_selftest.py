@@ -377,6 +377,55 @@ if os.path.exists(BROTHER):
 else:
     print("  --   Brother's template library is not on this machine")
 
+print("\nthe barcode object, against one P-touch wrote itself")
+# The barcode object had never been diffed against anything -- the check
+# above only covers the Thai text object -- and that is how anchor="TOPLEFT"
+# survived on it. The right reference is not one of our own files but
+# Brother's, whose library contains a QR that P-touch itself wrote.
+BQR = (r"C:\\Program Files (x86)\\Brother\\Ptedit54\\LayoutStyle\\RDRoll"
+       r"\\Continuous Length Paper and Film Tape\\Continuous 5.lbx")
+if os.path.exists(BQR):
+    bref = zipfile.ZipFile(BQR).read("label.xml").decode("utf-8")
+    ours = re.search(r"<barcode:barcode>.*?</barcode:barcode>", xml, re.S).group(0)
+    theirs = re.search(r"<barcode:barcode>.*?</barcode:barcode>", bref, re.S).group(0)
+    # Excluded on purpose, on top of geometry and identity: the character
+    # set (they encode Shift-JIS, we let P-touch decide), the error
+    # correction and cell size, which fit_qr picks per payload, and the
+    # check digit, which QR does not have. And `style`: Brother strokes a
+    # 0.5 pt border INSIDEFRAME round the barcode box, which is the outer
+    # edge of the quiet zone -- our pen is NULL, and a quiet zone with
+    # nothing in it is the one thing a scanner is entitled to.
+    MINE = {"x", "y", "width", "height", "ID", "objectName", "mbcs",
+            "eccLevel", "cellSize", "checkDigit", "templateMergeTarget",
+            "templateMergeType", "templateMergeID", "style"}
+
+    def _bat(o):
+        d = {}
+        for tag in re.findall(r"<[a-z:]+[^>]*/?>", o):
+            n = re.match(r"<([a-z:]+)", tag).group(1)
+            for k, v in re.findall(r'(\w+)="([^"]*)"', tag):
+                if k not in MINE:
+                    d[f"{n}.{k}"] = v
+        return d
+    a, b = _bat(theirs), _bat(ours)
+    drift = {k: (a[k], b.get(k)) for k in a if b.get(k) != a[k]}
+    check("our QR matches the one P-touch wrote, attribute for attribute",
+          drift, {})
+else:
+    print("  --   Brother's library is not on this machine")
+
+# The anchor says where the content sits inside its box. A barcode is the
+# one object whose rendered size P-touch decides for itself, so it is the
+# one object that must be CENTER: anything else and the slack all falls on
+# one side. Brother does exactly this -- every text and drawn object TOPLEFT,
+# both barcodes CENTER.
+check("the code is centred inside its box",
+      re.search(r'<barcode:barcode><pt:objectStyle[^>]*anchor="(\w+)"',
+                xml).group(1), "CENTER")
+check("and everything else is anchored top-left",
+      set(re.findall(r'<(?:text:text|draw:rect|draw:poly)><pt:objectStyle'
+                     r'[^>]*anchor="(\w+)"', xml)), {"TOPLEFT"})
+
 print()
 if FAILS:
     print(f"{len(FAILS)} FAILED: {', '.join(FAILS)}")

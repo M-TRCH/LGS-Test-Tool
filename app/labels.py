@@ -291,18 +291,30 @@ def qr_object(data: str, x, y, *, modules: int, cell_pt: float, ecc: str,
     the extra four are the two-module quiet zone `margin="true"` adds at each
     side. Getting that wrong makes a box that disagrees with what prints.
     No `stringItem` and no `charLen` here, unlike a text object.
+
+    `anchor="CENTER"`, and this one is worth the words. Every text and drawn
+    object in Brother's library is TOPLEFT and both of its BARCODES are
+    CENTER, which is not a coincidence: the anchor says where the content
+    sits INSIDE its box, and a barcode is the one object whose rendered size
+    P-touch decides for itself. Ours was TOPLEFT, so whenever the symbol came
+    out smaller than the box we had computed for it, every point of the
+    difference fell at the bottom and the code sat high. Invisible until a
+    frame was drawn round it to be off-centre against — which is how
+    Teerachot found it. x and y are still the box's top-left either way:
+    Brother's own second barcode sits at x=10.8 and would run off the paper
+    if CENTER moved the origin.
     """
     side = round((modules + 4) * cell_pt, 1)
     xml = (
         '<barcode:barcode><pt:objectStyle x="' + str(x) + 'pt" y="' + str(y) + 'pt" '
         'width="' + str(side) + 'pt" height="' + str(side) + 'pt" '
         'backColor="#FFFFFF" backPrintColorNumber="0" ropMode="COPYPEN" '
-        'angle="0" anchor="TOPLEFT" flip="NONE"><pt:pen style="NULL" '
+        'angle="0" anchor="CENTER" flip="NONE"><pt:pen style="NULL" '
         'widthX="0.5pt" widthY="0.5pt" color="#000000" printColorNumber="1"/>'
         '<pt:brush style="NULL" color="#000000" printColorNumber="1" id="0"/>'
         '<pt:expanded objectName="' + _esc(name) + '" ID="' + str(obj_id) + '" '
         'lock="0" templateMergeTarget="LABELPRINTER" templateMergeType="NONE" '
-        'templateMergeID="0"/></pt:objectStyle>'
+        'templateMergeID="0" linkStatus="NONE" linkID="0"/></pt:objectStyle>'
         '<barcode:barcodeStyle protocol="QRCODE" lengths="48" zeroFill="false" '
         'barWidth="1.2pt" barRatio="1:3" humanReadable="true" '
         'humanReadableAlignment="LEFT" checkDigit="false" autoLengths="true" '
