@@ -116,11 +116,37 @@ check_true("and it is not Arial, which has no Thai glyphs",
 # barcode style carries humanReadableAlignment="LEFT" from P-touch itself.
 check("every text object is centred",
       set(re.findall(r'horizontalAlignment="(\w+)"', xml)), {"CENTER"})
-check("10 rows make a 121 mm label", round(mm), 121)
+check("10 rows make a 129 mm label", round(mm), 129)
 check("7 rows make a shorter one",
       round(labels.render("full", sample(rows=rows_for("0", "8,8,8,8,8,8,8",
                                                        "1,2,3,4,5,6,7")),
-                          created="x")[1]), 112)
+                          created="x")[1]), 120)
+# The site name must not be squeezed: P-touch's shrink=true compresses
+# rather than clips, and compressed Thai stacks its tone marks.
+from PIL import ImageDraw, Image, ImageFont                     # noqa: E402
+_d = ImageDraw.Draw(Image.new("RGB", (8, 8)))
+for face in ("tahoma.ttf", "LeelawUI.ttf"):
+    try:
+        _f = ImageFont.truetype(face, 100)
+    except OSError:
+        continue
+    need = _d.textbbox((0, 0), WARD, font=_f)[2] / 10.0          # at 10 pt
+    check_true(f"the site name fits the 130 pt box in {face}", need <= 130,
+               f"needs {need:.0f} pt")
+
+print("\nfont attributes, against what P-touch writes for itself")
+# The first comparison against the printed reference checked coordinates and
+# data and reported 36/36 identical — while orgPoint was 20% wrong on every
+# object, because it was never looked at. Compare the whole triple.
+triples = set()
+for o in re.findall(r'<text:text>.*?</text:text>', xml, re.S):
+    sz = re.search(r'size="([\d.]+)pt" orgSize="([\d.]+)pt"', o)
+    op = re.search(r'orgPoint="([\d.]+)pt"', o)
+    triples.add((sz.group(1), sz.group(2), op.group(1)))
+bad_point = [t for t in triples if float(t[2]) != float(t[0])]
+check("orgPoint equals size on every object", bad_point, [])
+bad_org = [t for t in triples if abs(float(t[1]) - float(t[0]) * 1.2) > 0.05]
+check("orgSize is 1.2x size on every object", bad_org, [])
 
 print("\ncharLen counts CODE POINTS, so Thai floating vowels survive")
 for m in re.finditer(r'<pt:data>(.*?)</pt:data><text:stringItem charLen="(\d+)"', xml):
@@ -136,7 +162,13 @@ mx = zipfile.ZipFile(io.BytesIO(mini)).read("label.xml").decode()
 check("three objects: the QR and two lines",
       len(re.findall(r'<text:text>|<barcode:barcode>', mx)), 3)
 check_true("shorter than the full label", mini_mm < mm, f"{mini_mm:.0f} < {mm:.0f} mm")
-check_true("the row strip is NOT on it", "ch1" not in mx)
+check_true("the row strip is NOT on it", "R1" not in mx)
+check_true("the full label still has it", "R1" in xml)
+# The channel is still carried in the data — another layout may want it —
+# it just stopped being printed, being wiring detail nobody reads at a door.
+check_true("the channel is no longer printed", "ch1" not in xml)
+check("but rows_from_gateway still reports it",
+      rows_for("80", "0", "1,2,3,4,5,6,7,8,7,8")[8][2], 7)
 check_true("nor the address, which lives in the code", "192.168" not in
            re.sub(r'<barcode:barcode>.*?</barcode:barcode>', '', mx, flags=re.S))
 check_true("the site name IS on it, because Thai cannot go in the code",

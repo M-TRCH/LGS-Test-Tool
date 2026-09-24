@@ -57,13 +57,24 @@ _ECC_PCT = {"h": "30%", "q": "25%", "m": "15%", "l": "7%"}
 QR_MAX_BYTES = _QR_BYTES["l"][4]                 # 78
 
 # Arial has no Thai glyphs at all, so Thai text must name its own face.
-# Tahoma is the one PROVEN on the PT-9700PC — vowels and tone marks composed
-# correctly on glass. Leelawadee UI is Windows' modern Thai UI face and reads
-# better at these sizes; it prints only if the machine driving the Editor has
-# it, which every current Windows does. Keep Tahoma here as the fallback the
-# hardware has actually seen.
-THAI_FONT = "Leelawadee UI"
-THAI_FONT_FALLBACK = "Tahoma"
+#
+# Tahoma, and only Tahoma. It is the one face the PT-9700PC has actually
+# printed with its vowels and tone marks composed correctly. Leelawadee UI
+# was tried on 2026-09-24 because it reads better on screen at 10-12 pt, and
+# Teerachot got overlapping characters straight away.
+#
+# TWO things could produce that and only one of them has been eliminated.
+# A substituted face that does not position Thai combining marks stacks tone
+# marks exactly like this — but so does shrink=true squeezing text into a box
+# it does not fit, and the old 108 pt identity box was 1.6 pt NARROWER than
+# "รพ.สมเด็จพระนางเจ้าสิริกิติ์" needs in Tahoma at 10 pt. The box is now 130 pt,
+# which clears both faces at every size used here, so the layout is fixed
+# either way; which of the two was to blame is untested.
+#
+# Do not swap this for something that only looks better on a screen. A font
+# here is a claim about a printer in another room, and the only evidence
+# that counts is a sticker off that printer.
+THAI_FONT = "Tahoma"
 LATIN_FONT = "Arial"
 
 
@@ -139,8 +150,14 @@ def text_object(data: str, x, y, w, h, *, name: str, obj_id: int,
         '<text:textControl control="FREE" clipFrame="false" aspectNormal="true" '
         'shrink="true" autoLF="false" avoidImage="false"/>'
         '<text:textAlign horizontalAlignment="' + align + '" '
+        # orgPoint is the LAYOUT point size, and P-touch sets it equal to
+        # `size` — never to `orgSize` — in every text object of a file it
+        # wrote itself. Feeding it orgSize (1.2x size) lays the line out a
+        # fifth taller than the glyphs are, which crowds a tight block until
+        # characters touch. That produced the overlapping Thai reported on
+        # 2026-09-24, and the font was a red herring.
         'verticalAlignment="TOP"/><text:textStyle vertical="false" '
-        'nullBlock="false" charSpace="0" lineSpace="0" orgPoint="' + str(orgsize)
+        'nullBlock="false" charSpace="0" lineSpace="0" orgPoint="' + str(size)
         + 'pt" combinedChars="false"/>'
         '<pt:data>' + _esc(data) + '</pt:data>'
         '<text:stringItem charLen="' + str(len(data)) + '"><text:ptFontInfo>'
@@ -325,7 +342,11 @@ def _full_label(c: CabinetLabel, *, created: str) -> tuple:
     qr_data = c.qr_payload()
     modules, side, ecc = fit_qr(qr_data)
 
-    GAP, IW, CW = 9.0, 108.0, 26.0
+    # 130 pt, not 108: the site name is the widest thing on the label and
+    # Thai has no room to give. P-touch's shrink=true would squeeze it to
+    # fit rather than clip, and squeezed Thai puts tone marks on top of each
+    # other, so the box is sized to hold the text outright.
+    GAP, IW, CW = 9.0, 130.0, 26.0
     qr_x = 13.0
     id_x = qr_x + side + GAP
     map_x = id_x + IW + GAP
@@ -343,13 +364,15 @@ def _full_label(c: CabinetLabel, *, created: str) -> tuple:
         (c.ip, id_x, 43.0, IW, 11.0, "9", LATIN_FONT, 400),
         (c.mac, id_x, 55.0, IW, 8.0, "6", LATIN_FONT, 400),
     ]
-    for i, (row, ids, ch) in enumerate(c.rows):
+    # Row and id range only. The hub channel used to print here, but it is
+    # wiring detail nobody reads at the cabinet door, and dropping it buys
+    # the two remaining lines room to be larger.
+    for i, (row, ids, _ch) in enumerate(c.rows):
         cx = map_x + (i % ncol) * CW
-        yy = 6.0 if i < ncol else 36.0
+        yy = 10.0 if i < ncol else 38.0
         lines += [
-            (f"R{row}", cx, yy, CW, 8.0, "6", LATIN_FONT, 700),
-            (ids, cx, yy + 9, CW, 8.0, "5.5", LATIN_FONT, 400),
-            (f"ch{ch}", cx, yy + 18, CW, 8.0, "6", LATIN_FONT, 400),
+            (f"R{row}", cx, yy, CW, 10.0, "7", LATIN_FONT, 700),
+            (ids, cx, yy + 11, CW, 10.0, "6.5", LATIN_FONT, 400),
         ]
     lines = [ln for ln in lines if ln[0]]
 
