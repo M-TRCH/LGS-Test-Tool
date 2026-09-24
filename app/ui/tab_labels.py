@@ -120,6 +120,8 @@ def build(ctx: Ctx) -> None:
                 ip=info.get("net.ip", ""),
                 mac=info.get("mac", ""),
                 rows=labels.rows_from_gateway(s),
+                fw=info.get("fw", ""),
+                built=_now()[:10],
             )
             cab = state["cab"]
             who.set_text(t("labels.read_ok", name=cab.name, ip=cab.ip,

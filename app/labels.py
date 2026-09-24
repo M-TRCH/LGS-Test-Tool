@@ -678,6 +678,8 @@ class CabinetLabel:
     ip: str = ""
     mac: str = ""
     rows: tuple = ()                     # ((row, "11-18", channel), ...)
+    fw: str = ""                         # gateway firmware, as built
+    built: str = ""                      # the date it was that, YYYY-MM-DD
 
     def qr_payload(self) -> str:
         """Identity, and the whole shape of the cabinet.
@@ -711,6 +713,16 @@ class CabinetLabel:
             widths = [int(ids.split("-")[1]) - int(ids.split("-")[0]) + 1
                       for _r, ids, _c in self.rows]
             lines.append("w " + "".join(str(n) for n in widths))
+        # The firmware version, and the DATE it was that version.
+        # Everything above describes the cabinet for as long as it exists;
+        # this one stops being true at the next OTA, which was the argument
+        # for leaving it out. Dated, it is not a claim about today -- it is
+        # a record of what the cabinet was running when the sticker was
+        # made, and a record cannot go stale. It dates every other line as
+        # well, which is worth having on its own.
+        if self.fw:
+            lines.append(f"fw {self.fw}"
+                         + (f" {self.built}" if self.built else ""))
         return "\n".join(lines)
 
 

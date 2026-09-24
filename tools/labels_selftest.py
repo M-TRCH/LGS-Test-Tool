@@ -340,6 +340,27 @@ check_true("with room to spare, unlike the four bytes it had at 1.6 pt",
            labels.QR_MAX_BYTES - n > 20,
            f"{labels.QR_MAX_BYTES - n} bytes spare")
 
+
+# The firmware version is the one field on the label that stops being true.
+# Everything else describes the cabinet for as long as it exists; this one
+# changes at the next OTA, which was the reason for leaving it out. It is
+# carried with the DATE it was read, so it is a record of what the cabinet
+# was running when the sticker was made rather than a claim about today --
+# and a record cannot go stale.
+_fw = sample(fw="1.12.2", built="2026-09-24").qr_payload()
+check("the firmware line is last, and dated",
+      _fw.split(chr(10))[-1], "fw 1.12.2 2026-09-24")
+check_true("a cabinet whose firmware was not read simply omits it",
+           "fw " not in sample().qr_payload())
+check("the date is dropped rather than left dangling",
+      sample(fw="1.12.2").qr_payload().split(chr(10))[-1], "fw 1.12.2")
+_m, _s, _e = labels.fit_qr(_fw)
+check_true("it still fits, one level weaker",
+           _e == "q" and _s <= labels.QR_MAX_SIDE_PT,
+           f"{len(_fw.encode())} B, EC-{_e.upper()} ({labels._ECC_PCT[_e]}), {_s} pt")
+check_true("which is still stronger than the label that printed and scanned",
+           labels._ECC_PCT[_e] == "25%", labels._ECC_PCT[_e])
+
 print("\na serial too long to encode is refused before any tape is spent")
 # Forty characters used to be refused. At 1.2 pt the code holds 134 bytes
 # rather than 78, so it now fits with room over -- the guard is still needed,
