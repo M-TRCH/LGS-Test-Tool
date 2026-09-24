@@ -180,6 +180,24 @@ TEXTS: dict[str, dict[str, str]] = {
                        "th": "{name} · {ip} · {mac} · {rows} แถว"},
     "labels.read_failed": {"en": "could not read the gateway: {why}",
                            "th": "อ่านเกตเวย์ไม่ได้: {why}"},
+    "labels.survey": {"en": "Survey module firmware",
+                      "th": "สำรวจเฟิร์มแวร์โมดูล"},
+    "labels.survey_tip": {
+        "en": "The gateway does not know what its modules are running, so "
+              "this reads every one of them: about 22 seconds for a 64-slot "
+              "cabinet, read-only. Leave it off and the code simply carries "
+              "no module version, which is better than carrying an old one.",
+        "th": "เกตเวย์ไม่รู้ว่าโมดูลรันเฟิร์มแวร์อะไร ต้องไล่อ่านทีละตัว "
+              "ราว 22 วินาทีสำหรับตู้ 64 ช่อง อ่านอย่างเดียว ถ้าไม่ติ๊ก "
+              "QR จะไม่มีบรรทัดนี้ ซึ่งดีกว่ามีค่าเก่า"},
+    "labels.surveying": {"en": "reading module {n} of {of} ...",
+                         "th": "กำลังอ่านโมดูล {n} จาก {of} ..."},
+    "labels.survey_partial": {
+        "en": "{silent} modules did not answer, so no module version is "
+              "carried: a version read from only some of them would be a "
+              "claim about the rest.",
+        "th": "{silent} โมดูลไม่ตอบ จึงไม่ใส่เวอร์ชันโมดูลลงไป "
+              "เพราะค่าที่อ่านได้ไม่ครบคือการกล่าวอ้างแทนตัวที่ไม่ได้อ่าน"},
     "labels.ward": {"en": "Ward name (printed, any language)",
                     "th": "ชื่อหน่วยงาน (พิมพ์ลงสติ๊กเกอร์)"},
     "labels.serial": {"en": "Serial number", "th": "หมายเลขเครื่อง (S/N)"},

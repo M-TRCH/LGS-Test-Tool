@@ -680,6 +680,7 @@ class CabinetLabel:
     rows: tuple = ()                     # ((row, "11-18", channel), ...)
     fw: str = ""                         # gateway firmware, as built
     built: str = ""                      # the date it was that, YYYY-MM-DD
+    mod: str = ""                        # module firmware across the cabinet
 
     def qr_payload(self) -> str:
         """Identity, and the whole shape of the cabinet.
@@ -723,7 +724,36 @@ class CabinetLabel:
         if self.fw:
             lines.append(f"fw {self.fw}"
                          + (f" {self.built}" if self.built else ""))
+        # And what the MODULES are running, which the gateway does not
+        # know -- it has to be surveyed, one read per module, about 22 s
+        # for a 64. One version if they agree, lowest and highest if they
+        # do not, because a cabinet with a replaced board on a different
+        # version is exactly the thing worth knowing and exactly the thing
+        # a single number would hide.
+        if self.mod:
+            lines.append(f"mod {self.mod}")
         return "\n".join(lines)
+
+
+def ids_from_rows(rows) -> tuple:
+    """Every module id in the cabinet, from the row ranges on the label.
+
+    The rows carry "11-18" because that is what a person reads; a survey
+    needs the eight numbers behind it.
+    """
+    out = []
+    for _row, span, _ch in rows:
+        lo, _, hi = span.partition("-")
+        out.extend(range(int(lo), int(hi or lo) + 1))
+    return tuple(out)
+
+
+def module_version(versions) -> str:
+    """One version if the cabinet agrees, lowest-highest if it does not."""
+    seen = sorted({v for v in versions if v})
+    if not seen:
+        return ""
+    return seen[0] if len(seen) == 1 else f"{seen[0]}-{seen[-1]}"
 
 
 def rows_from_gateway(settings: dict) -> tuple:

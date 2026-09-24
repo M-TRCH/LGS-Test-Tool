@@ -361,6 +361,34 @@ check_true("it still fits, one level weaker",
 check_true("which is still stronger than the label that printed and scanned",
            labels._ECC_PCT[_e] == "25%", labels._ECC_PCT[_e])
 
+
+# What the MODULES run. The gateway does not know, so it costs a survey --
+# one read each, 22 s measured on the Queen's 64 -- which is why the tab
+# asks rather than assumes. One version when the cabinet agrees, lowest and
+# highest when it does not: a replaced board on a different version is
+# exactly the thing worth knowing and exactly the thing one number hides.
+check("one version when every module agrees",
+      labels.module_version(["v3.4.0"] * 64), "v3.4.0")
+check("lowest and highest when they do not",
+      labels.module_version(["v3.4.0"] * 63 + ["v3.5.0"]), "v3.4.0-v3.5.0")
+check("and nothing at all when none was read", labels.module_version([]), "")
+check("the row ranges expand back into module ids",
+      labels.ids_from_rows(((1, "11-18", 1), (2, "21-24", 2))),
+      (11, 12, 13, 14, 15, 16, 17, 18, 21, 22, 23, 24))
+_both = sample(fw="1.12.2", built="2026-09-24", mod="v3.4.0").qr_payload()
+check("the module line comes after the gateway's",
+      _both.split(chr(10))[-2:], ["fw 1.12.2 2026-09-24", "mod v3.4.0"])
+_m2, _s2, _e2 = labels.fit_qr(_both)
+check_true("both firmware lines still fit in the same symbol",
+           _e2 == "q" and _s2 <= labels.QR_MAX_SIDE_PT,
+           f"{len(_both.encode())} B, EC-{_e2.upper()}, {_s2} pt")
+_mixed = sample(fw="1.12.2", built="2026-09-24",
+                mod="v3.4.0-v3.5.0").qr_payload()
+_m3, _s3, _e3 = labels.fit_qr(_mixed)
+check_true("and so does a cabinet with two versions in it",
+           _s3 <= labels.QR_MAX_SIDE_PT,
+           f"{len(_mixed.encode())} B, EC-{_e3.upper()}, {_s3} pt")
+
 print("\na serial too long to encode is refused before any tape is spent")
 # Forty characters used to be refused. At 1.2 pt the code holds 134 bytes
 # rather than 78, so it now fits with room over -- the guard is still needed,

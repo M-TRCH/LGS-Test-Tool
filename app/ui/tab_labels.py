@@ -18,6 +18,7 @@ from datetime import datetime, timezone
 from nicegui import ui
 
 from .. import labels
+from ..lgs_map import fw_short
 from ..i18n import t
 from . import Ctx, helps
 
@@ -30,7 +31,15 @@ def build(ctx: Ctx) -> None:
         helps(ui.label(t("labels.card")).classes("font-bold text-lg"),
               t("labels.hint"))
 
-        read_btn = ui.button(t("labels.read"))
+        with ui.row().classes("items-center gap-3"):
+            read_btn = ui.button(t("labels.read"))
+            # The gateway does not know what its modules are running, so this
+            # is the one thing on the sticker that costs more than a console
+            # session: one read per module, about 22 s measured on the 64.
+            # Off by default -- a label is usually wanted in a hurry, and a
+            # sticker without the line is honest where a stale one is not.
+            survey = ui.checkbox(t("labels.survey"))
+        helps(survey, t("labels.survey_tip"))
         who = ui.label(t("labels.not_read")).classes("text-sm")
 
         with ui.row().classes("items-start gap-3 flex-wrap"):
@@ -124,6 +133,28 @@ def build(ctx: Ctx) -> None:
                 built=_now()[:10],
             )
             cab = state["cab"]
+            if survey.value and cab.rows:
+                ids = labels.ids_from_rows(cab.rows)
+                seen, silent = [], 0
+                for n, dev in enumerate(ids, start=1):
+                    if n % 8 == 1:
+                        who.set_text(t("labels.surveying", n=n, of=len(ids)))
+                    res = await worker.read_registers(1, 1, dev, source="labels")
+                    val = res.value if res.ok else None
+                    if isinstance(val, list):
+                        val = val[0] if val else None
+                    if val is None:
+                        silent += 1
+                    else:
+                        seen.append(fw_short(val))
+                # A version is only claimed for a cabinet that answered in
+                # full. One silent module and the line would be a claim about
+                # boards nobody read, which is the kind of half-truth a
+                # sticker outlives.
+                cab.mod = labels.module_version(seen) if not silent else ""
+                if silent:
+                    ui.notify(t("labels.survey_partial", silent=silent),
+                              type="warning")
             who.set_text(t("labels.read_ok", name=cab.name, ip=cab.ip,
                            mac=cab.mac, rows=len(cab.rows)))
             who.classes(replace="text-sm")
