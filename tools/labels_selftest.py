@@ -18,7 +18,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app import labels                                         # noqa: E402
 
-WARD = "ห้องยาผู้ป่วยนอก ชั้น 2"
+# The real site name, because its length is the whole reason the QR cannot
+# carry it: 28 Thai characters are 82 bytes in UTF-8 against a 78-byte code.
+WARD = "รพ.สมเด็จพระนางเจ้าสิริกิติ์"
 FAILS = []
 
 
@@ -106,7 +108,9 @@ check("the QR sits at x=13 as printed",
       re.search(r'<barcode:barcode><pt:objectStyle x="([\d.]+)pt"', xml).group(1), "13.0")
 check("the cell size is the one P-touch itself writes",
       re.search(r'cellSize="([\d.]+)pt"', xml).group(1), "1.6")
-check("Thai is set in Tahoma", 'name="Tahoma"' in xml, True)
+check("Thai names its own face", f'name="{labels.THAI_FONT}"' in xml, True)
+check_true("and it is not Arial, which has no Thai glyphs",
+           labels.THAI_FONT != labels.LATIN_FONT)
 # LEFT alignment at x=2.8 lost the first character of every line on a real
 # print. Check the attribute that governs text, not the bare word: the
 # barcode style carries humanReadableAlignment="LEFT" from P-touch itself.
@@ -125,6 +129,27 @@ for m in re.finditer(r'<pt:data>(.*?)</pt:data><text:stringItem charLen="(\d+)"'
         break
 else:
     print("  ok   every charLen matches its data")
+
+print("\nthe minimal layout — two lines and the code")
+mini, mini_mm = labels.render("minimal", sample(), created="2026-09-24T00:00:00Z")
+mx = zipfile.ZipFile(io.BytesIO(mini)).read("label.xml").decode()
+check("three objects: the QR and two lines",
+      len(re.findall(r'<text:text>|<barcode:barcode>', mx)), 3)
+check_true("shorter than the full label", mini_mm < mm, f"{mini_mm:.0f} < {mm:.0f} mm")
+check_true("the row strip is NOT on it", "ch1" not in mx)
+check_true("nor the address, which lives in the code", "192.168" not in
+           re.sub(r'<barcode:barcode>.*?</barcode:barcode>', '', mx, flags=re.S))
+check_true("the site name IS on it, because Thai cannot go in the code",
+           WARD in mx)
+check("its length does not depend on the row count",
+      round(labels.render("minimal", sample(rows=rows_for("0", "8,8,8,8,8",
+                                                          "1,2,3,4,5")),
+                          created="x")[1]), round(mini_mm))
+# 28 Thai characters are 82 bytes in UTF-8 against a 78-byte ceiling: the
+# site name could not be encoded even if it were the only thing in there.
+check_true("a Thai site name alone exceeds the whole QR budget",
+           len(WARD.encode("utf-8")) > labels.QR_MAX_BYTES,
+           f"{len(WARD.encode('utf-8'))} B > {labels.QR_MAX_BYTES}")
 
 print("\nthe QR carries identity only — the rest is printed beside it")
 check("payload is name, serial, ip, mac", sample().qr_payload().split("\n"),

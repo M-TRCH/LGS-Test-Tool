@@ -56,6 +56,16 @@ _QR_BYTES = {
 _ECC_PCT = {"h": "30%", "q": "25%", "m": "15%", "l": "7%"}
 QR_MAX_BYTES = _QR_BYTES["l"][4]                 # 78
 
+# Arial has no Thai glyphs at all, so Thai text must name its own face.
+# Tahoma is the one PROVEN on the PT-9700PC — vowels and tone marks composed
+# correctly on glass. Leelawadee UI is Windows' modern Thai UI face and reads
+# better at these sizes; it prints only if the machine driving the Editor has
+# it, which every current Windows does. Keep Tahoma here as the fallback the
+# hardware has actually seen.
+THAI_FONT = "Leelawadee UI"
+THAI_FONT_FALLBACK = "Tahoma"
+LATIN_FONT = "Arial"
+
 
 class LabelTooBig(ValueError):
     """The content cannot be placed inside the printable area."""
@@ -327,20 +337,64 @@ def _full_label(c: CabinetLabel, *, created: str) -> tuple:
     paper = round(math.ceil((map_x + ncol * CW + EDGE_PT + 2) / MM) * MM, 1)
 
     lines = [
-        (c.ward, id_x, 3.0, IW, 14.0, "10", "Tahoma", 400),
-        (c.name, id_x, 18.0, IW, 14.0, "11", "Arial", 700),
-        (f"S/N {c.serial}" if c.serial else "", id_x, 33.0, IW, 9.0, "7", "Arial", 400),
-        (c.ip, id_x, 43.0, IW, 11.0, "9", "Arial", 400),
-        (c.mac, id_x, 55.0, IW, 8.0, "6", "Arial", 400),
+        (c.ward, id_x, 3.0, IW, 14.0, "10", THAI_FONT, 400),
+        (c.name, id_x, 18.0, IW, 14.0, "11", LATIN_FONT, 700),
+        (f"S/N {c.serial}" if c.serial else "", id_x, 33.0, IW, 9.0, "7", LATIN_FONT, 400),
+        (c.ip, id_x, 43.0, IW, 11.0, "9", LATIN_FONT, 400),
+        (c.mac, id_x, 55.0, IW, 8.0, "6", LATIN_FONT, 400),
     ]
     for i, (row, ids, ch) in enumerate(c.rows):
         cx = map_x + (i % ncol) * CW
         yy = 6.0 if i < ncol else 36.0
         lines += [
-            (f"R{row}", cx, yy, CW, 8.0, "6", "Arial", 700),
-            (ids, cx, yy + 9, CW, 8.0, "5.5", "Arial", 400),
-            (f"ch{ch}", cx, yy + 18, CW, 8.0, "6", "Arial", 400),
+            (f"R{row}", cx, yy, CW, 8.0, "6", LATIN_FONT, 700),
+            (ids, cx, yy + 9, CW, 8.0, "5.5", LATIN_FONT, 400),
+            (f"ch{ch}", cx, yy + 18, CW, 8.0, "6", LATIN_FONT, 400),
         ]
+    lines = [ln for ln in lines if ln[0]]
+
+    boxes = [("qr", qr_x, (TAPE_PT - side) / 2, side, side)]
+    boxes += [(str(t)[:10], x, y, w, h) for t, x, y, w, h, _, _, _ in lines]
+    bad = check_fits(boxes, paper)
+    if bad:
+        raise LabelTooBig("; ".join(bad))
+
+    qr_xml, _ = qr_object(qr_data, qr_x, round((TAPE_PT - side) / 2, 1),
+                          modules=modules, cell_pt=QR_CELL_PT, ecc=ecc)
+    objs = [qr_xml] + [
+        text_object(txt, x, y, w, h, name=f"o{i + 1}", obj_id=i + 1, font=fo,
+                    weight=wt, size=sz, orgsize=str(round(float(sz) * 1.2, 1)))
+        for i, (txt, x, y, w, h, sz, fo, wt) in enumerate(lines)]
+    return label_xml(objs, paper_len_pt=paper), prop_xml(created=created), paper / MM
+
+
+def _minimal_label(c: CabinetLabel, *, created: str) -> tuple:
+    """Site name, cabinet name, QR. Nothing else printed.
+
+    The serial, the address and the MAC are all in the code already, so
+    printing them too only gives a person a second place to misread. What
+    this layout deliberately gives up is the row/channel strip, which is
+    NOT in the QR and cannot be: the Thai site name alone is 82 bytes in
+    UTF-8 and the whole symbol holds 78, so the code is identity and the
+    tape is the name. If the strip is wanted at a glance, that is the full
+    layout's job.
+    """
+    qr_data = c.qr_payload()
+    modules, side, ecc = fit_qr(qr_data)
+
+    GAP, TW = 9.0, 150.0
+    qr_x = 13.0
+    tx = qr_x + side + GAP
+    import math
+    paper = round(math.ceil((tx + TW + EDGE_PT + 2) / MM) * MM, 1)
+
+    # Two lines, weighted the way they are read: the site answers "whose
+    # cabinet is this" from across a room, the short name answers "which
+    # one" and is what every other system calls it.
+    lines = [
+        (c.ward, tx, 10.0, TW, 18.0, "12", THAI_FONT, 400),
+        (c.name, tx, 32.0, TW, 24.0, "18", LATIN_FONT, 700),
+    ]
     lines = [ln for ln in lines if ln[0]]
 
     boxes = [("qr", qr_x, (TAPE_PT - side) / 2, side, side)]
@@ -367,9 +421,12 @@ class Layout:
 
 
 LAYOUTS = {
+    "minimal": Layout("minimal", "Minimal — site, cabinet name, QR", _minimal_label,
+                      "Two lines and the code. The serial, address and MAC "
+                      "are in the QR; the row strip is not on this one."),
     "full": Layout("full", "Full label — QR, identity, row map", _full_label,
-                   "Everything a technician needs at the cabinet. "
-                   "Length follows the row count."),
+                   "Everything a technician needs at the cabinet without a "
+                   "phone. Length follows the row count."),
 }
 
 
