@@ -53,7 +53,7 @@ def sample(**kw):
 # The only numbers here that depend on which plate is fitted. Everything
 # else is checked as a relationship, so switching the frame does not mean
 # editing the tests.
-ROWMAP_MM = {"double": 113, "bold": 112}
+ROWMAP_MM = {"round": 112, "bold": 112, "double": 113}
 
 print("rows_from_gateway — the shape overrides the preset, as the gateway does")
 check("type 80 is ten rows of eight", rows_for("80", "0", "1,2,3,4,5,6,7,8,7,8")[0],
@@ -341,28 +341,63 @@ try:
 except labels.LabelTooBig:
     print("  ok   a 200-character serial is refused")
 
-print("\nthe frame and the rule, against Brother's own template library")
+print("\nthe plate, against Brother's own template library")
+PLATE = "draw:frame" if labels.FRAME_KIND == "frame" else "draw:rect"
 for key in ("minimal", "standard", "rowmap"):
     b_k, _ = labels.render(key, sample(), created="x")
     x_k = zipfile.ZipFile(io.BytesIO(b_k)).read("label.xml").decode()
     check(f"  {key} carries the {labels.FRAME_STYLE} plate",
-          len(re.findall(r"<draw:rect>", x_k)),
-          2 if labels.FRAME_INSET else 1)
+          len(re.findall(f"<{PLATE}>", x_k)), 2 if labels.FRAME_INSET else 1)
     check_true(f"  {key} has a rule beside the code", "<draw:poly>" in x_k)
 
-# The frame has to stay inside the band the printer can actually mark. A
+# The plate has to stay inside the band the printer can actually mark. A
 # calibration print put the first whole character at 1 pt from the top edge,
-# so a line at 3 pt has something in hand -- which matters, because the last
+# so a line at 3 pt has something in hand -- which matters, because one
 # sticker came back with its top edge shaved.
 fx, fy, fw, fh = [float(v) for v in re.search(
-    r'<draw:rect><pt:objectStyle x="([\d.]+)pt" y="([\d.]+)pt"'
+    f'<{PLATE}><pt:objectStyle x="([\d.]+)pt" y="([\d.]+)pt"'
     r' width="([\d.]+)pt" height="([\d.]+)pt"', xml).groups()]
-check_true("the frame clears both edges of the tape",
+check_true("the plate clears both edges of the tape",
            fy >= labels.ACROSS_PT and fy + fh <= labels.TAPE_PT - labels.ACROSS_PT,
            f"y {fy}..{fy + fh}, band {labels.ACROSS_PT}..{labels.TAPE_PT - labels.ACROSS_PT}")
 check_true("and both ends of the label",
            fx >= labels.EDGE_PT and fx + fw <= mm * labels.MM - labels.EDGE_PT,
            f"x {fx}..{fx + fw:.1f}")
+check("content starts one pad inside the plate",
+      labels._pt(labels.CONTENT_X),
+      labels._pt(fx + labels.FRAME_INSET + labels.FRAME_PAD))
+
+if labels.FRAME_KIND == "frame":
+    # A rounded corner is art, not geometry: roundnessX is inert, proven by a
+    # strip of five rectangles from 0 to 40 pt that came back identical and
+    # square. SIMPLE 3 is the Editor's plain rounded rectangle, found by
+    # sweeping the style index 0..15 and looking at the result.
+    cat, st = labels.FRAME_ART
+    check("the plate names the style that is actually round",
+          re.search(r'<draw:frameStyle category="(\w+)" style="(\d+)"',
+                    xml).groups(), (cat, str(st)))
+    check("stretched, so the corner keeps its size at any width",
+          re.search(r'stretchCenter="(\w+)"', xml).group(1), "true")
+    check("and drawn with the pen every frame in the library uses",
+          re.search(r'<draw:frame><pt:objectStyle[^>]*>'
+                    r'<pt:pen style="(\w+)" widthX="([\d.]+)pt"',
+                    xml).groups(), ("INSIDEFRAME", "0.5"))
+elif labels.FRAME_INSET:
+    _o, _i = [tuple(float(v) for v in m)
+              for m in re.findall(r'<draw:rect><pt:objectStyle x="([\d.]+)pt"'
+                                  r' y="([\d.]+)pt" width="([\d.]+)pt"'
+                                  r' height="([\d.]+)pt"', xml)]
+    check_true("the hairline is strictly inside the border",
+               _i[0] > _o[0] and _i[1] > _o[1]
+               and _i[0] + _i[2] < _o[0] + _o[2]
+               and _i[1] + _i[3] < _o[1] + _o[3],
+               f"inner {_i[0]}..{_i[0] + _i[2]} in outer {_o[0]}..{_o[0] + _o[2]}")
+
+# Whatever the plate, no rectangle may claim a rounded corner. The attribute
+# does nothing, and copying Brother's habit of filling it with 25% of the
+# shorter side is what sent this the wrong way twice.
+check("no rectangle pretends to be rounded",
+      set(re.findall(r'roundness[XY]="([\d.]+)pt"', xml)) - {"0"}, set())
 
 # Brother's own vertical rules -- twelve of the fifty in the library -- put
 # both points on the box's centre line, half the BOX width in from each end,
@@ -379,45 +414,6 @@ check("which is the box centre line", round(px0 - rx, 2), round(rw / 2, 2))
 check("inset half a box width at the top", round(py0 - ry, 2), round(rw / 2, 2))
 check("and at the bottom", round(ry + rh - py1, 2), round(rw / 2, 2))
 check("the box is a tenth wider than the pen", rw, 0.6)
-
-# On the double plate the hairline has to sit strictly inside the border on
-# all four sides, or the pair reads as one thick smudge at this size.
-_rects = [tuple(float(v) for v in m)
-          for m in re.findall(r'<draw:rect><pt:objectStyle x="([\d.]+)pt"'
-                              r' y="([\d.]+)pt" width="([\d.]+)pt"'
-                              r' height="([\d.]+)pt"', xml)]
-if labels.FRAME_INSET:
-    _o, _i = _rects
-    check_true("the hairline is strictly inside the border",
-               _i[0] > _o[0] and _i[1] > _o[1]
-               and _i[0] + _i[2] < _o[0] + _o[2]
-               and _i[1] + _i[3] < _o[1] + _o[3],
-               f"inner {_i[0]}..{_i[0] + _i[2]} in outer {_o[0]}..{_o[0] + _o[2]}")
-    check("the border is the heavier of the two",
-          re.findall(r'<draw:rect>.*?<pt:pen style="\w+" widthX="([\d.]+)pt"',
-                     xml)[:2], ["1", "0.5"])
-else:
-    check("the single plate is one rectangle", len(_rects), 1)
-    check("drawn at a full point", re.findall(
-        r'<draw:rect>.*?<pt:pen style="\w+" widthX="([\d.]+)pt"', xml)[:1], ["1"])
-# Content clears the innermost line by the same pad whichever plate is on.
-check("content starts one pad inside the innermost line",
-      round(labels.CONTENT_X - (_rects[-1][0] + labels.FRAME_PEN / 2), 2),
-      round(labels.FRAME_PAD - labels.FRAME_PEN / 2, 2))
-
-
-# Brother's Editor derives a rounded corner as a quarter of the shorter
-# side, without exception across the thirteen in its library. Follow it and
-# the frame is one P-touch could have drawn; type a number and the corners
-# come out half-finished, which is what 11 pt on a 62 pt box looked like.
-for _m in re.finditer(r'<draw:rect><pt:objectStyle x="[\d.]+pt" y="[\d.]+pt"'
-                      r' width="([\d.]+)pt" height="([\d.]+)pt".*?'
-                      r'roundnessX="([\d.]+)pt" roundnessY="([\d.]+)pt"',
-                      xml, re.S):
-    _w, _h, _rx, _ry = (float(v) for v in _m.groups())
-    check(f"a {_w:.0f}x{_h:.0f} pt frame rounds to a quarter of its short side",
-          _rx, round(min(_w, _h) * labels.ROUND_FRACTION, 1))
-    check("  and both axes agree", _rx, _ry)
 
 BROTHER = (r"C:\Program Files (x86)\Brother\Ptedit54\LayoutStyle\RDRoll"
            r"\Large Shipping Label\Shipping 1.lbx")

@@ -197,6 +197,8 @@ TEXTS: dict[str, dict[str, str]] = {
               "ให้ดูจำนวนไบต์ที่เหลือจากบรรทัดด้านบน ถ้ายาวเกินจะถูกปฏิเสธก่อนเซฟเสมอ"},
     "labels.layout": {"en": "Layout", "th": "รูปแบบสติ๊กเกอร์"},
     "labels.plate": {"en": "Frame", "th": "กรอบ"},
+    "labels.plate_round": {"en": "Rounded — the Editor's own frame",
+                           "th": "มุมมน — กรอบของ P-touch เอง"},
     "labels.plate_bold": {"en": "Bold — one heavy border",
                           "th": "หนา — เส้นเดียว"},
     "labels.plate_double": {"en": "Double — border and hairline",

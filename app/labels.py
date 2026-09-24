@@ -509,12 +509,36 @@ def _draw_style(x, y, w, h, *, name: str, obj_id: int, pen_pt: float) -> str:
 
 def rect_object(x, y, w, h, *, name: str, obj_id: int, roundness: float = 0.0,
                 pen_pt: float = 0.5) -> str:
-    """A rectangle outline, with rounded corners if roundness is given."""
+    """A rectangle outline. The corners are SQUARE.
+
+    `roundness` is written because the element carries it and Brother always
+    fills it in -- always at 25% of the shorter side, which looked like a
+    rule worth following. It is not a rule, it is a slider position that
+    nothing reads: a strip of five rectangles from 0 to 40 pt came back
+    identical, none of them rounded. shape="RECTANGLE" does not round, and
+    there is no ROUNDRECTANGLE. A rounded corner comes from draw:frame.
+    """
     return ('<draw:rect>'
             + _draw_style(x, y, w, h, name=name, obj_id=obj_id, pen_pt=pen_pt)
             + f'<draw:rectStyle shape="RECTANGLE"'
               f' roundnessX="{_pt(roundness)}pt"'
               f' roundnessY="{_pt(roundness)}pt"/></draw:rect>')
+
+
+def frame_object(x, y, w, h, *, category: str, style: int, name: str,
+                 obj_id: int, pen_pt: float = 0.5) -> str:
+    """One of the Editor's own frames, stretched to the box.
+
+    This is a resource index, not geometry: the art is nine-sliced, so the
+    corners keep their size and only the edges stretch, which means a corner
+    looks the same on a 46 pt box and a 156 pt one. Every frame in Brother's
+    library -- twelve of them, four styles -- uses a 0.5 pt INSIDEFRAME pen,
+    so that is the default here.
+    """
+    return ('<draw:frame>'
+            + _draw_style(x, y, w, h, name=name, obj_id=obj_id, pen_pt=pen_pt)
+            + f'<draw:frameStyle category="{category}" style="{style}"'
+              ' stretchCenter="true"/></draw:frame>')
 
 
 def vline_object(x, y, h, *, name: str, obj_id: int, pen_pt: float = 0.5) -> str:
@@ -539,61 +563,70 @@ def vline_object(x, y, h, *, name: str, obj_id: int, pen_pt: float = 0.5) -> str
 
 
 # -- The plate ---------------------------------------------------------------
-# Two plates, and one line to swap them. Four were rendered side by side and
-# looked at; these are the two that survived. `double` is a 1 pt border with
-# a 0.5 pt hairline inside it, `bold` a single heavier border with a wider
-# corner. Keeping both costs nothing, and it means the choice gets made from
-# a sticker rather than from a screen.
+# Three plates, and one line to swap them.
 #
-# Either way the plate sits 3 pt clear of both edges of the tape. The printer
+# `round` is the one fitted, and getting to it took two wrong turns worth
+# recording. draw:rect carries a roundnessX attribute, Brother fills it in on
+# every rectangle at exactly 25% of the shorter side, and that looked
+# conclusive twice. It is inert: a strip of five rectangles from 0 to 40 pt
+# came back identical and square. Rounded corners in P-touch are draw:frame
+# art -- a resource index into the set the Editor ships -- and SIMPLE 3 is a
+# plain rounded rectangle. Found by sweeping the index 0..15 and looking.
+#
+# The art is nine-sliced, so the corner keeps its size however wide the label
+# gets. The pad stays at 3.5 pt all the same: the QR's top-left corner sits
+# 3.5 pt right and 4 pt down from the frame's, and a curve of radius r is
+# only r - sqrt(r**2 - (r-4)**2) inside the edge at that height -- about 1 pt
+# for an 8 pt corner and 3 for a 12 pt one. Widening the pad would have cost
+# the five text lines their exact fit against the frame's inner height for a
+# clearance the geometry already gives.
+#
+# Either way the plate is 3 pt clear of both edges of the tape. The printer
 # reaches 2 pt and a calibration print put the first whole character at 1 pt,
 # but a border is a straight line down the whole label, which is the least
-# forgiving thing to put near an edge, and the last sticker came back shaved.
-FRAME_STYLE = "bold"
+# forgiving thing to put near an edge, and one sticker came back shaved.
+
+FRAME_STYLE = "round"
 _PLATES = {
-    #          border  inner hairline
-    "double": (1.0,    1.8),
-    "bold":   (1.0,    0.0),
+    #          kind     pen  hairline inset  pad   art
+    "round":  ("frame", 0.5, 0.0,            3.5,  ("SIMPLE", 3)),
+    "bold":   ("rect",  1.0, 0.0,            3.5,  None),
+    "double": ("rect",  1.0, 1.8,            3.5,  None),
 }
-FRAME_Y, FRAME_H = 3.0, 62.0
-FRAME_PAD = 3.5                                  # innermost line to content
-FRAME_PEN, FRAME_INSET = _PLATES[FRAME_STYLE]
-CONTENT_X = EDGE_PT + 1.0 + FRAME_INSET + FRAME_PAD
 FRAME_STYLES = tuple(_PLATES)
+FRAME_Y, FRAME_H = 3.0, 62.0
 
 
 def use_frame(style: str) -> None:
-    """Fit a different plate. Changes where the content starts, so the
+    """Fit a different plate. It moves where the content starts, so the
     derived constants move with it rather than being set independently."""
-    global FRAME_STYLE, FRAME_PEN, FRAME_INSET, CONTENT_X
+    global FRAME_STYLE, FRAME_KIND, FRAME_PEN, FRAME_INSET, FRAME_PAD
+    global FRAME_ART, CONTENT_X
     if style not in _PLATES:
         raise KeyError(f"no such plate: {style!r}")
     FRAME_STYLE = style
-    FRAME_PEN, FRAME_INSET = _PLATES[style]
+    FRAME_KIND, FRAME_PEN, FRAME_INSET, FRAME_PAD, FRAME_ART = _PLATES[style]
     CONTENT_X = EDGE_PT + 1.0 + FRAME_INSET + FRAME_PAD
-
-# A quarter of the shorter side, which is not a taste: every rounded
-# rectangle in Brother's library -- all thirteen of them, across boxes from
-# 8 pt to 187 pt -- has roundnessX at exactly 25% of min(width, height).
-# That is the Editor's own arithmetic, so a frame drawn to it is one P-touch
-# could have drawn itself. Typing a number instead gave 11 pt where the rule
-# wants 15.5, which is why the corners looked half-finished.
-ROUND_FRACTION = 0.25
 
 
 def frame_objects(x, w, *, obj_id: int = 0) -> list:
-    """The plate: one rectangle, or two for `double`, outermost first."""
-    def _r(ww, hh):
-        return round(min(ww, hh) * ROUND_FRACTION, 1)
-
+    """The plate: the art frame, or one or two rectangles."""
+    if FRAME_KIND == "frame":
+        category, style = FRAME_ART
+        return [frame_object(x, FRAME_Y, w, FRAME_H, category=category,
+                             style=style, name="frame", obj_id=obj_id,
+                             pen_pt=FRAME_PEN)]
     objs = [rect_object(x, FRAME_Y, w, FRAME_H, name="frame", obj_id=obj_id,
-                        roundness=_r(w, FRAME_H), pen_pt=FRAME_PEN)]
+                        pen_pt=FRAME_PEN)]
     if FRAME_INSET:
-        iw, ih = w - 2 * FRAME_INSET, FRAME_H - 2 * FRAME_INSET
         objs.append(rect_object(
-            x + FRAME_INSET, FRAME_Y + FRAME_INSET, iw, ih,
-            name="frameInner", obj_id=obj_id + 1, roundness=_r(iw, ih)))
+            x + FRAME_INSET, FRAME_Y + FRAME_INSET,
+            w - 2 * FRAME_INSET, FRAME_H - 2 * FRAME_INSET,
+            name="frameInner", obj_id=obj_id + 1))
     return objs
+
+
+use_frame(FRAME_STYLE)
 
 
 # ── The cabinet a label describes ──────────────────────────────────────────
@@ -705,7 +738,7 @@ def _detail_label(c: CabinetLabel, *, created: str, with_rows: bool) -> tuple:
     # where the first whole character appeared on the calibration print. Its
     # inner height then comes to 56 pt, and the code at 54 pt very nearly
     # fills it, which is why the two look deliberate together.
-    top = FRAME_Y + FRAME_INSET + FRAME_PAD      # 8.3
+    top = FRAME_Y + FRAME_INSET + FRAME_PAD
     inner_h = FRAME_H - 2 * (FRAME_INSET + FRAME_PAD)
 
     GAP, CW = 5.0, 26.0                          # QR-to-rule, and a map column
