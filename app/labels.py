@@ -95,8 +95,14 @@ QR_MAX_BYTES = _QR_BYTES["l"][4]                 # 78
 #
 # The rule that came out of that: a font here is a claim about a printer in
 # another room. Change it only with a sticker off that printer in hand.
-THAI_FONT = "Leelawadee UI"
-THAI_FONT_FALLBACK = "Tahoma"       # also print-proven, heavier
+THAI_FONT = "IBM Plex Sans Thai"
+# Both of these ARE print-proven on the PT-9700PC. IBM Plex Sans Thai is not
+# yet: it does not ship with Windows and was not installed on the machine
+# that drives the Editor when it was chosen on 2026-09-24, so until somebody
+# prints the test strip with it, P-touch will substitute a face and Thai
+# combining marks are the first thing a substitution ruins. If a printed
+# label looks wrong, put one of these back — it is a one-line change.
+THAI_FONT_PROVEN = ("Leelawadee UI", "Tahoma")
 LATIN_FONT = "Arial"
 
 
