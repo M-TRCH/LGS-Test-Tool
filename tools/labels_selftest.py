@@ -134,6 +134,20 @@ for face in ("tahoma.ttf", "LeelawUI.ttf"):
     check_true(f"the site name fits the 130 pt box in {face}", need <= 130,
                f"needs {need:.0f} pt")
 
+print("\nobject IDs — a list that starts at 1 opens as a blank label")
+ids = [int(n) for n in re.findall(r'<pt:expanded objectName="[^"]*" ID="(\d+)"', xml)]
+check("ids run 0..N with no gaps", sorted(ids), list(range(len(ids))))
+for key in labels.LAYOUTS:
+    blob_k, _ = labels.render(key, sample(), created="x")
+    x_k = zipfile.ZipFile(io.BytesIO(blob_k)).read("label.xml").decode()
+    i_k = [int(n) for n in re.findall(r'<pt:expanded objectName="[^"]*" ID="(\d+)"', x_k)]
+    check(f"  {key} starts at 0", min(i_k), 0)
+try:
+    labels.label_xml(['<pt:expanded objectName="a" ID="1"/>'], paper_len_pt=100.0)
+    check("a list starting at 1 is refused", "no exception", "LabelTooBig")
+except labels.LabelTooBig:
+    print("  ok   a list starting at 1 is refused")
+
 print("\nEVERY attribute, against the file that printed and scanned")
 # Five attributes were retyped differently when this left the scratchpad --
 # shrink, aspectNormal, inLineAlignment, pitchAndFamily and orgPoint -- and

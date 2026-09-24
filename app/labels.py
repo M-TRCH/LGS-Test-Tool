@@ -219,6 +219,19 @@ def qr_object(data: str, x, y, *, modules: int, cell_pt: float, ecc: str,
 
 def label_xml(objects, *, paper_len_pt: float) -> str:
     body = "".join(objects)
+
+    # Object IDs must start at 0 and run without a gap. A list that begins
+    # at 1 opens as a COMPLETELY BLANK label — P-touch reports no error, the
+    # printer would happily feed blank tape, and nothing in the file looks
+    # wrong. Found on 2026-09-24 when a test strip came out empty. Cheap to
+    # check, invisible to debug.
+    import re as _re
+    ids = [int(n) for n in _re.findall(r'<pt:expanded objectName="[^"]*" ID="(\d+)"',
+                                       body)]
+    if ids and sorted(ids) != list(range(len(ids))):
+        raise LabelTooBig(f"object IDs must be 0..{len(ids) - 1} with no gaps, "
+                          f"got {sorted(ids)} — P-touch opens such a file blank")
+
     bg_w = round(paper_len_pt - 2 * ACROSS_PT - 1.6, 1)
     return (
         '<?xml version="1.0" encoding="UTF-8"?>'
