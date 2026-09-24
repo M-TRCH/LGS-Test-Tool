@@ -78,6 +78,38 @@ THAI_FONT = "Tahoma"
 LATIN_FONT = "Arial"
 
 
+# The document shell, transcribed from the file that printed. Every piece of
+# it earned its place the hard way:
+#
+#   * `<style:sheet name=...>` WRAPS the paper, the cut line, the background
+#     and the objects, and `pt:body currentSheet` names it. Omit the wrapper
+#     and P-touch finds no sheet behind the name it was given: the label
+#     opens COMPLETELY BLANK, with no error and nothing wrong-looking in the
+#     XML. That is what a rewritten shell cost on 2026-09-24.
+#   * The namespace list, `version="1.7"`, the generator string,
+#     `format="261"`, `printerID="25136"` and `<style:cutLine>` are all
+#     copied rather than chosen. None of them is understood; all of them are
+#     in a file that works.
+#   * Lengths are written the way P-touch writes them — `68pt`, `2pt` — not
+#     `68.0pt`. Whether it cares is unknown and not worth finding out.
+_NS = ('xmlns:pt="http://schemas.brother.info/ptouch/2007/lbx/main" '
+       'xmlns:style="http://schemas.brother.info/ptouch/2007/lbx/style" '
+       'xmlns:text="http://schemas.brother.info/ptouch/2007/lbx/text" '
+       'xmlns:draw="http://schemas.brother.info/ptouch/2007/lbx/draw" '
+       'xmlns:image="http://schemas.brother.info/ptouch/2007/lbx/image" '
+       'xmlns:barcode="http://schemas.brother.info/ptouch/2007/lbx/barcode" '
+       'xmlns:database="http://schemas.brother.info/ptouch/2007/lbx/database" '
+       'xmlns:table="http://schemas.brother.info/ptouch/2007/lbx/table" '
+       'xmlns:cable="http://schemas.brother.info/ptouch/2007/lbx/cable"')
+SHEET = "ชีท1"                    # P-touch's own default sheet name
+
+
+def _pt(v) -> str:
+    """68.0 -> '68', 11.4 -> '11.4' — lengths as P-touch writes them."""
+    f = float(v)
+    return str(int(f)) if f == int(f) else str(round(f, 1))
+
+
 class LabelTooBig(ValueError):
     """The content cannot be placed inside the printable area."""
 
@@ -232,52 +264,52 @@ def label_xml(objects, *, paper_len_pt: float) -> str:
         raise LabelTooBig(f"object IDs must be 0..{len(ids) - 1} with no gaps, "
                           f"got {sorted(ids)} — P-touch opens such a file blank")
 
-    bg_w = round(paper_len_pt - 2 * ACROSS_PT - 1.6, 1)
+    bg_w = _pt(paper_len_pt - 2 * ACROSS_PT - 1.6)
     return (
         '<?xml version="1.0" encoding="UTF-8"?>'
-        '<pt:document xmlns:pt="http://schemas.brother.info/ptouch/2007/lbx/main" '
-        'xmlns:style="http://schemas.brother.info/ptouch/2007/lbx/style" '
-        'xmlns:text="http://schemas.brother.info/ptouch/2007/lbx/text" '
-        'xmlns:barcode="http://schemas.brother.info/ptouch/2007/lbx/barcode" '
-        'xmlns:image="http://schemas.brother.info/ptouch/2007/lbx/image" '
-        'version="1.9" generator="LGS-Test-Tool">'
-        '<pt:body currentSheet="LGS" direction="LTR">'
-        '<style:paper media="0" width="' + str(TAPE_PT) + 'pt" height="'
-        + str(paper_len_pt) + 'pt" marginLeft="' + str(ACROSS_PT) + 'pt" '
-        'marginTop="' + str(EDGE_PT) + 'pt" marginRight="' + str(ACROSS_PT) + 'pt" '
-        'marginBottom="' + str(EDGE_PT) + 'pt" orientation="landscape" '
-        'autoLength="false" monochromeDisplay="true" printColorDisplay="false" '
-        'printColorsID="0" paperColor="#FFFFFF" paperInk="#000000" '
-        'split="1" format="0" backgroundTheme="0" printerID="30256" '
-        'printerName="Brother PT-9700PC"/>'
-        '<style:backGrounds><style:backGround x="' + str(ACROSS_PT + 0.8) + 'pt" '
-        'y="' + str(ACROSS_PT) + 'pt" width="' + str(bg_w) + 'pt" '
-        'height="' + str(USABLE_ACROSS) + 'pt" brushStyle="NULL" '
-        'brushId="0" backColor="#FFFFFF" backPrintColorNumber="0" '
-        'brushColor="#000000" brushPrintColorNumber="1"/></style:backGrounds>'
-        '<pt:objects>' + body + '</pt:objects></pt:body></pt:document>')
+        f'<pt:document {_NS} version="1.7"'
+        ' generator="P-touch Editor 5.4.011 Windows">'
+        f'<pt:body currentSheet="{SHEET}" direction="LTR">'
+        f'<style:sheet name="{SHEET}">'
+        f'<style:paper media="0" width="{_pt(TAPE_PT)}pt"'
+        f' height="{_pt(paper_len_pt)}pt"'
+        f' marginLeft="{_pt(ACROSS_PT)}pt" marginTop="{_pt(EDGE_PT)}pt"'
+        f' marginRight="{_pt(ACROSS_PT)}pt" marginBottom="{_pt(EDGE_PT)}pt"'
+        ' orientation="landscape" autoLength="false"'
+        ' monochromeDisplay="true" printColorDisplay="false"'
+        ' printColorsID="0" paperColor="#FFFFFF" paperInk="#000000"'
+        ' split="1" format="261" backgroundTheme="0" printerID="25136"'
+        ' printerName="Brother PT-9700PC"/>'
+        '<style:cutLine regularCut="0pt" freeCut=""/>'
+        f'<style:backGround x="{_pt(ACROSS_PT + 0.8)}pt" y="{_pt(ACROSS_PT)}pt"'
+        f' width="{bg_w}pt" height="{_pt(USABLE_ACROSS)}pt"'
+        ' brushStyle="NULL" brushId="0"'
+        ' userPattern="NONE" userPatternId="0" color="#000000"'
+        ' printColorNumber="1" backColor="#FFFFFF" backPrintColorNumber="0"/>'
+        f'<pt:objects>{body}</pt:objects>'
+        '</style:sheet></pt:body></pt:document>')
 
 
-def prop_xml(*, created: str, revision: int = 1) -> str:
+def prop_xml(*, created: str, revision: int = 2) -> str:
     return (
         '<?xml version="1.0" encoding="UTF-8"?>'
-        '<meta:properties xmlns:meta="http://schemas.brother.info/ptouch/2007/lbx/meta" '
-        'xmlns:dc="http://purl.org/dc/elements/1.1/" '
-        'xmlns:dcterms="http://purl.org/dc/terms/">'
-        '<meta:appName>LGS-Test-Tool</meta:appName>'
-        '<dc:title></dc:title><dc:subject></dc:subject><dc:creator></dc:creator>'
+        '<meta:properties'
+        ' xmlns:meta="http://schemas.brother.info/ptouch/2007/lbx/meta"'
+        ' xmlns:dc="http://purl.org/dc/elements/1.1/"'
+        ' xmlns:dcterms="http://purl.org/dc/terms/">'
+        '<meta:appName>P-touch Editor</meta:appName>'
+        '<dc:title></dc:title><dc:subject></dc:subject>'
+        '<dc:creator>LGS-Test-Tool</dc:creator>'
         '<meta:keyword></meta:keyword><dc:description></dc:description>'
         '<meta:template></meta:template>'
-        '<dcterms:created>' + created + '</dcterms:created>'
-        '<dcterms:modified>' + created + '</dcterms:modified>'
-        '<meta:lastPrinted>' + created + '</meta:lastPrinted>'
-        '<meta:modifiedBy></meta:modifiedBy>'
-        '<meta:revision>' + str(revision) + '</meta:revision>'
-        '<meta:editTime>0</meta:editTime>'
-        '<meta:numberOfPages>1</meta:numberOfPages>'
-        '<meta:numberOfWords>0</meta:numberOfWords>'
-        '<meta:numberOfChars>0</meta:numberOfChars>'
-        '<meta:creatingApplication></meta:creatingApplication>'
+        f'<dcterms:created>{created}</dcterms:created>'
+        f'<dcterms:modified>{created}</dcterms:modified>'
+        f'<meta:lastPrinted>{created}</meta:lastPrinted>'
+        '<meta:modifiedBy>LGS-Test-Tool</meta:modifiedBy>'
+        f'<meta:revision>{revision}</meta:revision>'
+        '<meta:editTime>24</meta:editTime>'
+        '<meta:numPages>1</meta:numPages><meta:numWords>0</meta:numWords>'
+        '<meta:numChars>0</meta:numChars><meta:security>0</meta:security>'
         '</meta:properties>')
 
 
