@@ -234,9 +234,11 @@ TEXTS: dict[str, dict[str, str]] = {
     "labels.print_hint": {
         "en": "24 mm tape. Every label loses 8 mm of its length to the "
               "printer's own margins, which is already accounted for. Thai "
-              "text is set in Tahoma because Arial has no Thai glyphs.",
+              "text is set in {thai} because Arial has no Thai glyphs; the "
+              "font must be installed on the machine running P-touch Editor.",
         "th": "ใช้เทป 24 มม. ทุกใบเสียความยาวไป 8 มม. ให้ขอบที่เครื่องพิมพ์ไม่ได้ "
-              "ซึ่งคำนวณเผื่อไว้แล้ว ข้อความไทยใช้ฟอนต์ Tahoma เพราะ Arial ไม่มีสระไทย"},
+              "ซึ่งคำนวณเผื่อไว้แล้ว ข้อความไทยใช้ฟอนต์ {thai} เพราะ Arial "
+              "ไม่มีสระไทย และฟอนต์นั้นต้องติดตั้งบนเครื่องที่รัน P-touch Editor"},
 
     # ── soak tab ───────────────────────────────────────────────────────────
     "soak.card": {"en": "Bus soak", "th": "ทดสอบเดินยาว (soak)"},

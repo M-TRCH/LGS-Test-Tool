@@ -181,7 +181,7 @@ def build(ctx: Ctx) -> None:
 
     with ui.card().classes("p-3 w-full"):
         ui.label(t("labels.print_card")).classes("font-bold")
-        ui.label(t("labels.print_hint")).classes("text-sm")
+        ui.label(t("labels.print_hint", thai=labels.THAI_FONT)).classes("text-sm")
 
 
 def _now() -> str:
