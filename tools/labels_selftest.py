@@ -65,20 +65,29 @@ check("shape wins over a stale preset",
 check("the fridge is five rows of eight, not ten of four",
       rows_for("0", "8,8,8,8,8", "1,2,3,4,5")[0], (1, "11-18", 1))
 
-print("\nQR sizing — the ceiling is version 4, because version 5 overflows")
+print("\nQR sizing — the box cap decides now, not the tape")
+# The ceiling was version 4 and 78 bytes for a long time, on the belief that
+# 1.6 pt was the only cell size P-touch offers. A calibration print put the
+# same payload at 0.8, 1.0, 1.2, 1.4 and 1.6: all five printed at the size
+# declared and all five scanned. The limit is a choice, and the choice is to
+# spend the room on error correction and clearance rather than a small label.
 mods, side, ecc = labels.fit_qr("x" * 62)
-check("62 bytes still fits at EC-M", (mods, side, ecc), (33, 59.2, "m"))
+check("a short payload takes the strongest EC that fits", ecc, "q")
 check("the box is (modules + 4) * cell, quiet zone included", side,
       round((mods + 4) * labels.QR_CELL_PT, 1))
-check_true("a version 4 symbol fits a 64 pt tape", side <= labels.USABLE_ACROSS)
-_, _, ecc_long = labels.fit_qr("x" * 70)
+check_true("the symbol stays inside the cap", side <= labels.QR_MAX_SIDE_PT,
+           f"{side} <= {labels.QR_MAX_SIDE_PT}")
+check_true("which clears the tape edge better than the old 1.6 pt symbol",
+           (labels.TAPE_PT - side) / 2 > 4.4,
+           f"{(labels.TAPE_PT - side) / 2:.1f} pt vs 4.4")
+_, _, ecc_long = labels.fit_qr("x" * 120)
 check("a longer payload drops the error correction rather than the fit",
       ecc_long, "l")
 try:
-    labels.fit_qr("x" * 200)
-    check("200 bytes is refused", "no exception", "LabelTooBig")
+    labels.fit_qr("x" * 300)
+    check("300 bytes is refused", "no exception", "LabelTooBig")
 except labels.LabelTooBig:
-    print("  ok   200 bytes is refused")
+    print("  ok   300 bytes is refused")
 
 print("\ncheck_fits — clipping is silent on the printer, so catch it here")
 check("nothing inside the printable area is flagged",
@@ -106,8 +115,10 @@ check_true("the QR payload keeps its line breaks",
                              xml, re.S).group(1))
 check("the QR sits at x=13 as printed",
       re.search(r'<barcode:barcode><pt:objectStyle x="([\d.]+)pt"', xml).group(1), "13.0")
-check("the cell size is the one P-touch itself writes",
-      re.search(r'cellSize="([\d.]+)pt"', xml).group(1), "1.6")
+check("the cell size is one the printer was shown to honour",
+      float(re.search(r'cellSize="([\d.]+)pt"', xml).group(1)), labels.QR_CELL_PT)
+check_true("and it is one of the five that were print-tested",
+           labels.QR_CELL_PT in (0.8, 1.0, 1.2, 1.4, 1.6))
 check("Thai names its own face", f'name="{labels.THAI_FONT}"' in xml, True)
 check_true("and it is not Arial, which has no Thai glyphs",
            labels.THAI_FONT != labels.LATIN_FONT)
@@ -116,11 +127,11 @@ check_true("and it is not Arial, which has no Thai glyphs",
 # barcode style carries humanReadableAlignment="LEFT" from P-touch itself.
 check("every text object is centred",
       set(re.findall(r'horizontalAlignment="(\w+)"', xml)), {"CENTER"})
-check("10 rows make a 129 mm label", round(mm), 129)
+check("10 rows make a 127 mm label", round(mm), 127)
 check("7 rows make a shorter one",
       round(labels.render("rowmap", sample(rows=rows_for("0", "8,8,8,8,8,8,8",
                                                        "1,2,3,4,5,6,7")),
-                          created="x")[1]), 120)
+                          created="x")[1]), 116)
 # The site name must not be squeezed: P-touch's shrink=true compresses
 # rather than clips, and compressed Thai stacks its tone marks.
 from PIL import ImageDraw, Image, ImageFont                     # noqa: E402
@@ -224,47 +235,66 @@ check_true("nor the address, which lives in the code", "192.168" not in
            re.sub(r'<barcode:barcode>.*?</barcode:barcode>', '', mx, flags=re.S))
 check_true("the site name IS on it, because Thai cannot go in the code",
            WARD in mx)
-check("its length does not depend on the row count",
-      round(labels.render("minimal", sample(rows=rows_for("0", "8,8,8,8,8",
-                                                          "1,2,3,4,5")),
-                          created="x")[1]), round(mini_mm))
-# 28 Thai characters are 82 bytes in UTF-8 against a 78-byte ceiling: the
-# site name could not be encoded even if it were the only thing in there.
-check_true("a Thai site name alone exceeds the whole QR budget",
-           len(WARD.encode("utf-8")) > labels.QR_MAX_BYTES,
-           f"{len(WARD.encode('utf-8'))} B > {labels.QR_MAX_BYTES}")
+# It used to be one fixed length whatever the cabinet. Now that the QR
+# carries the channel map and the row widths, its payload — and so its
+# version, and so its box — grows with the row count, and the label grows
+# with it. A couple of millimetres, and the price of the code being worth
+# scanning.
+_five = round(labels.render("minimal", sample(rows=rows_for("0", "8,8,8,8,8",
+                                                            "1,2,3,4,5")),
+                            created="x")[1])
+check_true("a five-row cabinet gives a slightly shorter label",
+           _five < round(mini_mm), f"{_five} mm vs {round(mini_mm)} mm")
+check_true("but only slightly", round(mini_mm) - _five <= 4,
+           f"{round(mini_mm) - _five} mm")
+# 28 Thai characters are 82 bytes in UTF-8. That used to be more than the
+# whole 78-byte code; at 1.2 pt it would fit on its own, but not beside the
+# identity and the shape, so the site name is still printed and not encoded.
+_together = len(WARD.encode("utf-8")) + len(sample().qr_payload().encode("utf-8")) + 1
+check_true("the site name will not fit beside the rest",
+           _together > labels.QR_MAX_BYTES,
+           f"{_together} B > {labels.QR_MAX_BYTES}")
 
-print("\nthe QR: identity, plus the one thing NOT printed beside it")
-check("payload is name, serial, ip, mac, channels",
+print("\nthe QR: identity, and the whole shape of the cabinet")
+check("payload is name, serial, ip, mac, channels, widths",
       sample().qr_payload().split("\n"),
-      ["Chest-Std-02", "S/N LGS-2026-0042", "192.168.0.229", "A8610A515D9C",
-       "1234567878"])
+      ["Chest-Std-02", "S/N LGS-2026-0042", "192.168.0.229", "A8:61:0A:51:5D:9C",
+       "ch 1234567878", "w 8888888888"])
 check("a cabinet with no serial simply omits the line",
-      len(sample(serial="").qr_payload().split("\n")), 4)
-# The colons come out so the channels fit; the MAC reads the same without
-# them, which is why they went rather than the "S/N " label.
-check_true("the MAC carries no colons", ":" not in sample().qr_payload())
-check("one digit per row, in row order",
-      sample().qr_payload().split("\n")[-1],
-      "".join(str(r[2]) for r in sample().rows))
+      len(sample(serial="").qr_payload().split("\n")), 5)
+# The colons went for five bytes when the ceiling was 78; at 1.2 pt there is
+# no need, and a person reads the MAC off a phone screen.
+check_true("the MAC keeps its colons", ":" in sample().qr_payload())
+check("one channel digit per row, in row order",
+      sample().qr_payload().split("\n")[-2],
+      "ch " + "".join(str(r[2]) for r in sample().rows))
 check("the 64's doubled channels show up as repeats",
       labels.CabinetLabel(rows=rows_for("64", "0", "1,2,3,4,4,5,5,6,7,8"))
-      .qr_payload().split("\n")[-1], "1234455678")
-# Measured across the real fleet: 68 bytes without the map, 79 with it and
-# the colons left in, 74 once they come out. The ceiling is 78.
+      .qr_payload().split("\n")[-2], "ch 1234455678")
+check("and its half-width middle rows show in the widths",
+      labels.CabinetLabel(rows=rows_for("64", "0", "1,2,3,4,4,5,5,6,7,8"))
+      .qr_payload().split("\n")[-1], "w 8884444888")
 worst = labels.CabinetLabel(name="QueenSirikit-01", serial="LGS-CSV-1169-001",
                             ip="192.168.0.227", mac="A8:61:0A:50:D3:2B",
                             rows=rows_for("64", "0", "1,2,3,4,4,5,5,6,7,8"))
 n = len(worst.qr_payload().encode("utf-8"))
 check_true("the longest cabinet in the fleet still fits",
            n <= labels.QR_MAX_BYTES, f"{n} of {labels.QR_MAX_BYTES} bytes")
+check_true("with room to spare, unlike the four bytes it had at 1.6 pt",
+           labels.QR_MAX_BYTES - n > 20,
+           f"{labels.QR_MAX_BYTES - n} bytes spare")
 
 print("\na serial too long to encode is refused before any tape is spent")
+# Forty characters used to be refused. At 1.2 pt the code holds 134 bytes
+# rather than 78, so it now fits with room over -- the guard is still needed,
+# just a good deal further out than it was.
+labels.render("rowmap", sample(serial="X" * 40), created="x")
+print("  ok   a 40-character serial encodes fine at 1.2 pt")
 try:
-    labels.render("rowmap", sample(serial="X" * 40), created="x")
-    check("40-character serial", "no exception", "LabelTooBig")
+    labels.render("rowmap", sample(serial="X" * 200), created="x")
+    check("200-character serial", "no exception", "LabelTooBig")
 except labels.LabelTooBig:
-    print("  ok   40-character serial is refused")
+    print("  ok   a 200-character serial is refused")
 
 print()
 if FAILS:

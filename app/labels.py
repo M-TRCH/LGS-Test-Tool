@@ -16,12 +16,16 @@ What the hardware taught us, none of it guessable from the file:
   spent rather than after.
 * **Use `horizontalAlignment="CENTER"`.** The one file that used `LEFT` with
   boxes at x=2.8 lost the first character of every line.
-* **Thai needs Tahoma.** Arial has no Thai glyphs; with Tahoma the vowels and
-  tone marks compose correctly on glass.
+* **Thai must name a face that is installed.** Arial has no Thai glyphs, and
+  an unresolvable family name is substituted silently — which ruins combining
+  marks and looks like a font bug. Browallia New, Leelawadee UI and Tahoma
+  are all print-proven here.
 * **`charLen` counts CODE POINTS**, so Thai floating vowels round-trip.
+* **`<style:sheet>` wraps everything and `pt:body currentSheet` names it.**
+  Leave it out and the label opens completely blank, with no error at all.
 
 The QR is sized, not rendered — P-touch draws it from `<pt:data>`. All this
-module needs is the module count, so a four-row capacity table replaces a QR
+module needs is the module count, so a measured capacity table replaces a QR
 library; the tool ships as an exe with a deliberately short dependency list.
 """
 from __future__ import annotations
@@ -61,23 +65,53 @@ USABLE_ACROSS = TAPE_PT - 2 * ACROSS_PT          # 64.0
 # 68 pt assumed here. A third of a point; the slack covers it.
 CONTENT_INSET_PT = 2.0
 
-# The cell size P-touch itself writes. A value it does not offer gets rounded
-# up and the symbol overflows the tape — which is how the first printed
-# sample came out visibly too big. Never invent one.
-QR_CELL_PT = 1.6
+# 1.2 pt: 0.423 mm, six printer dots per module.
+#
+# This was 1.6 pt for a long time, on the assumption that 1.6 was the only
+# size P-touch offers — because 1.6 is what it wrote in the sample we copied.
+# The assumption was never checked and it cost the whole design: at 1.6 pt a
+# version 5 symbol overflows the tape, which capped the code at 78 bytes and
+# is why the full report was abandoned, why the MAC lost its colons, and why
+# a logo was impossible.
+#
+# A calibration label printed the SAME payload at 0.8, 1.0, 1.2, 1.4 and
+# 1.6 pt. All five printed at their declared size and all five scanned, so
+# every one of them is real. 1.2 pt is chosen rather than the smallest: six
+# dots a module keeps a comfortable margin against the printer, and the extra
+# room is spent on stronger error correction instead of a smaller sticker.
+QR_CELL_PT = 1.2
 
-# Byte-mode capacity per version and error-correction level. Versions 1-4
-# only: at 1.6 pt a version 5 symbol is (37+4)*1.6 = 65.6 pt and will not fit
-# across a 64 pt tape, so 4 is the ceiling and there is nothing above it to
-# tabulate. Measured against a real encoder before being written down.
+# Cap the symbol well inside the 64 pt of usable tape. Without this the
+# strongest-EC-that-fits rule would take EC-Q at 63.6 pt and leave 2.2 pt of
+# clearance — TIGHTER than the 4.4 pt the old 1.6 pt symbol had. At 58 pt it
+# settles on EC-M at 54 pt with 7 pt clear: more data than before, stronger
+# error correction than before, and further from the edge than before.
+QR_MAX_SIDE_PT = 58.0
+
+# Byte-mode capacity per version and error-correction level, MEASURED against
+# a real encoder rather than copied from a table. Versions 1-9 covers every
+# symbol that can fit this tape at any cell size now in use.
 _QR_BYTES = {
-    "h": {1: 7, 2: 14, 3: 24, 4: 34},
-    "q": {1: 11, 2: 20, 3: 32, 4: 46},
-    "m": {1: 14, 2: 26, 3: 42, 4: 62},
-    "l": {1: 17, 2: 32, 3: 53, 4: 78},
+    "h": {1: 7, 2: 14, 3: 24, 4: 34, 5: 44, 6: 58, 7: 64, 8: 84, 9: 98},
+    "q": {1: 11, 2: 20, 3: 32, 4: 46, 5: 60, 6: 74, 7: 86, 8: 108, 9: 130},
+    "m": {1: 14, 2: 26, 3: 42, 4: 62, 5: 84, 6: 106, 7: 122, 8: 152, 9: 180},
+    "l": {1: 17, 2: 32, 3: 53, 4: 78, 5: 106, 6: 134, 7: 154, 8: 192, 9: 230},
 }
 _ECC_PCT = {"h": "30%", "q": "25%", "m": "15%", "l": "7%"}
-QR_MAX_BYTES = _QR_BYTES["l"][4]                 # 78
+
+
+def _max_bytes() -> int:
+    """The most any payload can be, at the current cell size and box cap."""
+    best = 0
+    for ecc, caps in _QR_BYTES.items():
+        for version, n in caps.items():
+            side = (17 + 4 * version + 4) * QR_CELL_PT
+            if side <= QR_MAX_SIDE_PT:
+                best = max(best, n)
+    return best
+
+
+QR_MAX_BYTES = _max_bytes()
 
 # Arial has no Thai glyphs at all, so Thai text must name its own face.
 #
@@ -158,7 +192,7 @@ def check_fits(objects_xywh, paper_len_pt: float) -> list:
 
 
 def fit_qr(data: str, *, cell_pt: float = QR_CELL_PT,
-           limit_pt: float = USABLE_ACROSS) -> tuple:
+           limit_pt: float = QR_MAX_SIDE_PT) -> tuple:
     """(modules, side_pt, ecc_key) for the strongest EC that still fits.
 
     The serial is free text typed at print time and the warehouse has never
@@ -370,26 +404,24 @@ class CabinetLabel:
     rows: tuple = ()                     # ((row, "11-18", channel), ...)
 
     def qr_payload(self) -> str:
-        """Identity, plus the hub channel of every row.
+        """Identity, and the whole shape of the cabinet.
 
-        The channel map is the one thing here that is NOT printed beside the
-        code on the standard layout, so it is the only line that makes the QR
-        worth scanning rather than reading. It is a bare digit per row, in
-        row order: "1234455678" is row 1 on channel 1 ... row 10 on channel 8.
+        Everything a person would otherwise retype, plus the two lines that
+        are NOT printed beside the code on the standard layout and are what
+        make the thing worth scanning rather than reading:
 
-        It only fits because the MAC's colons come out. Measured against the
-        whole fleet: identity alone is 68 bytes at worst, adding the channels
-        makes 79 against a 78-byte ceiling, and dropping five colons brings it
-        to 74. The MAC reads the same either way, which is why the colons went
-        rather than the "S/N " label — losing that would leave a bare string
-        with nothing to say which line it is.
+            ch 1234455678    hub channel of each row, in row order
+            w  8884444888    slots in each row
 
-        Row WIDTHS do not fit at all: 81 bytes even with everything trimmed.
-        They stay on the tape, in the rowmap layout.
+        Together those give the id of every slot and the channel it hangs
+        off — which is the cabinet's whole geometry, and the part nobody has
+        written down on site.
 
-        Four bytes of headroom is thin for a free-text serial, but `fit_qr`
-        refuses outright rather than emitting an oversized symbol, so the
-        failure is a message at save time and not a sticker nobody can scan.
+        This used to be four cramped lines with the MAC's colons stripped to
+        save five bytes, because the cell size was believed to be fixed at
+        1.6 pt and the ceiling at 78. Both were wrong; at 1.2 pt there is
+        room for all of it at stronger error correction, and the colons are
+        back because the MAC is read off a phone screen by a person.
         """
         lines = [self.name]
         if self.serial:
@@ -397,9 +429,12 @@ class CabinetLabel:
         if self.ip:
             lines.append(self.ip)
         if self.mac:
-            lines.append(self.mac.replace(":", ""))
+            lines.append(self.mac)
         if self.rows:
-            lines.append("".join(str(ch) for _row, _ids, ch in self.rows))
+            lines.append("ch " + "".join(str(ch) for _r, _i, ch in self.rows))
+            widths = [int(ids.split("-")[1]) - int(ids.split("-")[0]) + 1
+                      for _r, ids, _c in self.rows]
+            lines.append("w " + "".join(str(n) for n in widths))
         return "\n".join(lines)
 
 
@@ -569,8 +604,8 @@ LAYOUTS = {
                       "Two lines and the code. Everything else is in the QR."),
     "standard": Layout("standard", "Standard — site, name, serial, address, QR",
                        _standard_label,
-                       "The identity a person reads, printed. One fixed "
-                       "length whatever the cabinet."),
+                       "The identity a person reads, printed. 78 mm for "
+                       "every cabinet but the fridge, 2 mm shorter."),
     "rowmap": Layout("rowmap", "Row map — standard, plus every row and its ids",
                      _rowmap_label,
                      "For the door of a cabinet whose row widths nobody can "
