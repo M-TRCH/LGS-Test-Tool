@@ -38,6 +38,21 @@ ACROSS_PT = 2.0              # marginLeft/Right — unprintable across the tape
 EDGE_PT = 11.4               # marginTop/Bottom — unprintable along its LENGTH
 USABLE_ACROSS = TAPE_PT - 2 * ACROSS_PT          # 64.0
 
+# How far in from the top and bottom edges the content actually starts.
+#
+# ACROSS_PT above is copied from a file P-touch wrote; it is what goes in the
+# XML, and it is NOT the same thing as what the printer can reach. The margin
+# along the tape's LENGTH was measured on a real print at 11.4 pt, three
+# times the 2 pt the file declares — the across margin has never been
+# measured, and on 2026-09-24 Teerachot reported the top edge clipped.
+#
+# Until a calibration print says otherwise this holds the content clear of
+# both edges by more than the declared margin. The tape is also sold as 1 in
+# but specified at 0.94 in (67.7 pt against the 68 pt assumed here), which is
+# a third of a point — too little to explain a visible clip, but it all runs
+# the same way, so the inset absorbs it too.
+CONTENT_INSET_PT = 6.0
+
 # The cell size P-touch itself writes. A value it does not offer gets rounded
 # up and the symbol overflows the tape — which is how the first printed
 # sample came out visibly too big. Never invent one.
@@ -422,19 +437,23 @@ def _detail_label(c: CabinetLabel, *, created: str, with_rows: bool) -> tuple:
     right = (map_x + ncol * CW) if rows else (id_x + IW)
     paper = round(math.ceil((right + EDGE_PT + 2) / MM) * MM, 1)
 
+    # Five lines inside TAPE_PT - 2 * CONTENT_INSET_PT, so both edges keep
+    # their clearance whatever the inset is set to.
+    t = CONTENT_INSET_PT
     lines = [
-        (c.ward, id_x, 3.0, IW, 14.0, "10", THAI_FONT, 400),
-        (c.name, id_x, 18.0, IW, 14.0, "11", LATIN_FONT, 700),
-        (f"S/N {c.serial}" if c.serial else "", id_x, 33.0, IW, 9.0, "7", LATIN_FONT, 400),
-        (c.ip, id_x, 43.0, IW, 11.0, "9", LATIN_FONT, 400),
-        (c.mac, id_x, 55.0, IW, 8.0, "6", LATIN_FONT, 400),
+        (c.ward, id_x, t, IW, 13.0, "10", THAI_FONT, 400),
+        (c.name, id_x, t + 13.0, IW, 14.0, "11", LATIN_FONT, 700),
+        (f"S/N {c.serial}" if c.serial else "", id_x, t + 27.0, IW, 9.0, "7",
+         LATIN_FONT, 400),
+        (c.ip, id_x, t + 36.0, IW, 11.0, "9", LATIN_FONT, 400),
+        (c.mac, id_x, t + 47.0, IW, 8.0, "6", LATIN_FONT, 400),
     ]
     # Row and id range only. The hub channel used to print here, but it is
     # wiring detail nobody reads at the cabinet door, and dropping it buys
     # the two remaining lines room to be larger.
     for i, (row, ids, _ch) in enumerate(rows):
         cx = map_x + (i % ncol) * CW
-        yy = 10.0 if i < ncol else 38.0
+        yy = CONTENT_INSET_PT if i < ncol else CONTENT_INSET_PT + 26.0
         lines += [
             (f"R{row}", cx, yy, CW, 10.0, "7", LATIN_FONT, 700),
             (ids, cx, yy + 11, CW, 10.0, "6.5", LATIN_FONT, 400),
@@ -480,8 +499,8 @@ def _minimal_label(c: CabinetLabel, *, created: str) -> tuple:
     # cabinet is this" from across a room, the short name answers "which
     # one" and is what every other system calls it.
     lines = [
-        (c.ward, tx, 10.0, TW, 18.0, "12", THAI_FONT, 400),
-        (c.name, tx, 32.0, TW, 24.0, "18", LATIN_FONT, 700),
+        (c.ward, tx, CONTENT_INSET_PT + 2.0, TW, 16.0, "12", THAI_FONT, 400),
+        (c.name, tx, CONTENT_INSET_PT + 20.0, TW, 24.0, "18", LATIN_FONT, 700),
     ]
     lines = [ln for ln in lines if ln[0]]
 
