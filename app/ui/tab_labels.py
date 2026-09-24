@@ -80,8 +80,17 @@ def build(ctx: Ctx) -> None:
                 return
             payload = cab.qr_payload()
             n = len(payload.encode("utf-8"))
+            # Which error correction the code landed on, and how much may be
+            # added before it drops a level. fit_qr chooses the strongest
+            # that fits and says nothing, so "bytes to spare" measured
+            # against the absolute ceiling quietly meant "to spare, if you
+            # are content with the weakest error correction there is".
+            modules, _side, ecc = labels.fit_qr(payload)
+            version = (modules - 17) // 4
             status.set_text(t("labels.ready", mm=f"{mm:.0f}", rows=len(cab.rows),
-                              qr=n, spare=labels.QR_MAX_BYTES - n,
+                              qr=n, ecc=ecc.upper(),
+                              recover=labels._ECC_PCT[ecc],
+                              spare=labels._QR_BYTES[ecc][version] - n,
                               size=f"{len(blob):,}"))
             status.classes(replace="text-sm text-positive")
             save_btn.enable()

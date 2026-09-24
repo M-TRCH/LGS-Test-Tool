@@ -53,7 +53,7 @@ def sample(**kw):
 # The only numbers here that depend on which plate is fitted. Everything
 # else is checked as a relationship, so switching the frame does not mean
 # editing the tests.
-ROWMAP_MM = {"round": 112, "bold": 112, "double": 113}
+ROWMAP_MM = {"round": 113, "bold": 113}
 
 print("rows_from_gateway — the shape overrides the preset, as the gateway does")
 check("type 80 is ten rows of eight", rows_for("80", "0", "1,2,3,4,5,6,7,8,7,8")[0],
@@ -78,7 +78,7 @@ print("\nQR sizing — the box cap decides now, not the tape")
 # declared and all five scanned. The limit is a choice, and the choice is to
 # spend the room on error correction and clearance rather than a small label.
 mods, side, ecc = labels.fit_qr("x" * 62)
-check("a short payload takes the strongest EC that fits", ecc, "q")
+check("a short payload takes the strongest EC that fits", ecc, "h")
 check("the box is (modules + 4) * cell, quiet zone included", side,
       round((mods + 4) * labels.QR_CELL_PT, 1))
 check_true("the symbol stays inside the cap", side <= labels.QR_MAX_SIDE_PT,
@@ -88,7 +88,7 @@ check_true("which clears the tape edge better than the old 1.6 pt symbol",
            f"{(labels.TAPE_PT - side) / 2:.1f} pt vs 4.4")
 _, _, ecc_long = labels.fit_qr("x" * 120)
 check("a longer payload drops the error correction rather than the fit",
-      ecc_long, "l")
+      ecc_long, "q")
 try:
     labels.fit_qr("x" * 300)
     check("300 bytes is refused", "no exception", "LabelTooBig")
@@ -292,13 +292,18 @@ check_true("a five-row cabinet gives a slightly shorter label",
            _five < round(mini_mm), f"{_five} mm vs {round(mini_mm)} mm")
 check_true("but only slightly", round(mini_mm) - _five <= 4,
            f"{round(mini_mm) - _five} mm")
-# 28 Thai characters are 82 bytes in UTF-8. That used to be more than the
-# whole 78-byte code; at 1.2 pt it would fit on its own, but not beside the
-# identity and the shape, so the site name is still printed and not encoded.
+# 28 Thai characters are 82 bytes in UTF-8, and for a long time that was
+# more than the whole code could hold -- which was the reason the site name
+# is printed rather than encoded. At 1.0 pt it would now fit alongside
+# everything else, so the reason has changed and is worth stating: the name
+# is the one field nobody reads live, it is the most likely thing on the
+# label to be wrong, and it is already printed in full an inch away.
 _together = len(WARD.encode("utf-8")) + len(sample().qr_payload().encode("utf-8")) + 1
-check_true("the site name will not fit beside the rest",
-           _together > labels.QR_MAX_BYTES,
-           f"{_together} B > {labels.QR_MAX_BYTES}")
+check_true("the site name WOULD now fit beside the rest",
+           _together <= labels.QR_MAX_BYTES,
+           f"{_together} B of {labels.QR_MAX_BYTES}")
+check_true("it is left out on purpose, not for want of room",
+           "รพ." not in sample().qr_payload())
 
 print("\nthe QR: identity, and the whole shape of the cabinet")
 check("payload is name, serial, ip, mac, channels, widths",
@@ -347,7 +352,7 @@ for key in ("minimal", "standard", "rowmap"):
     b_k, _ = labels.render(key, sample(), created="x")
     x_k = zipfile.ZipFile(io.BytesIO(b_k)).read("label.xml").decode()
     check(f"  {key} carries the {labels.FRAME_STYLE} plate",
-          len(re.findall(f"<{PLATE}>", x_k)), 2 if labels.FRAME_INSET else 1)
+          len(re.findall(f"<{PLATE}>", x_k)), 1)
     check_true(f"  {key} has a rule beside the code", "<draw:poly>" in x_k)
 
 # The plate has to stay inside the band the printer can actually mark. A
@@ -365,7 +370,7 @@ check_true("and both ends of the label",
            f"x {fx}..{fx + fw:.1f}")
 check("content starts one pad inside the plate",
       labels._pt(labels.CONTENT_X),
-      labels._pt(fx + labels.FRAME_INSET + labels.FRAME_PAD))
+      labels._pt(fx + labels.FRAME_PAD))
 
 if labels.FRAME_KIND == "frame":
     # A rounded corner is art, not geometry: roundnessX is inert, proven by a
@@ -382,17 +387,6 @@ if labels.FRAME_KIND == "frame":
           re.search(r'<draw:frame><pt:objectStyle[^>]*>'
                     r'<pt:pen style="(\w+)" widthX="([\d.]+)pt"',
                     xml).groups(), ("INSIDEFRAME", "0.5"))
-elif labels.FRAME_INSET:
-    _o, _i = [tuple(float(v) for v in m)
-              for m in re.findall(r'<draw:rect><pt:objectStyle x="([\d.]+)pt"'
-                                  r' y="([\d.]+)pt" width="([\d.]+)pt"'
-                                  r' height="([\d.]+)pt"', xml)]
-    check_true("the hairline is strictly inside the border",
-               _i[0] > _o[0] and _i[1] > _o[1]
-               and _i[0] + _i[2] < _o[0] + _o[2]
-               and _i[1] + _i[3] < _o[1] + _o[3],
-               f"inner {_i[0]}..{_i[0] + _i[2]} in outer {_o[0]}..{_o[0] + _o[2]}")
-
 # Whatever the plate, no rectangle may claim a rounded corner. The attribute
 # does nothing, and copying Brother's habit of filling it with 25% of the
 # shorter side is what sent this the wrong way twice.

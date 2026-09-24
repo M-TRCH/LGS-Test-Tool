@@ -201,16 +201,16 @@ TEXTS: dict[str, dict[str, str]] = {
                            "th": "มุมมน — กรอบของ P-touch เอง"},
     "labels.plate_bold": {"en": "Bold — one heavy border",
                           "th": "หนา — เส้นเดียว"},
-    "labels.plate_double": {"en": "Double — border and hairline",
-                            "th": "สองชั้น — เส้นหนา + เส้นบาง"},
     "labels.payload": {"en": "What the QR carries",
                        "th": "ข้อมูลที่อยู่ใน QR"},
     "labels.save": {"en": "Save .lbx", "th": "เซฟไฟล์ .lbx"},
     "labels.ready": {
-        "en": "{mm} x 24 mm · {rows} rows · QR carries {qr} bytes "
-              "({spare} to spare) · file {size} bytes",
-        "th": "{mm} x 24 มม. · {rows} แถว · QR เก็บ {qr} ไบต์ "
-              "(เหลือ {spare}) · ไฟล์ {size} ไบต์"},
+        "en": "{mm} x 24 mm · {rows} rows · QR carries {qr} bytes at "
+              "EC-{ecc} ({recover} recovery), {spare} more before it drops "
+              "a level · file {size} bytes",
+        "th": "{mm} x 24 มม. · {rows} แถว · QR เก็บ {qr} ไบต์ ที่ EC-{ecc} "
+              "(กู้คืนได้ {recover}) · ใส่ได้อีก {spare} ไบต์ก่อนลดชั้น "
+              "· ไฟล์ {size} ไบต์"},
     "labels.too_big": {"en": "will not fit: {why}", "th": "ใส่ไม่พอดี: {why}"},
     "labels.print_card": {"en": "Printing", "th": "การพิมพ์"},
     "labels.print_hint": {

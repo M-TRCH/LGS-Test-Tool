@@ -81,7 +81,7 @@ CONTENT_INSET_PT = 2.0
 # every one of them is real. 1.2 pt is chosen rather than the smallest: six
 # dots a module keeps a comfortable margin against the printer, and the extra
 # room is spent on stronger error correction instead of a smaller sticker.
-QR_CELL_PT = 1.2
+QR_CELL_PT = 1.0
 
 # Cap the symbol well inside the 64 pt of usable tape. Without this the
 # strongest-EC-that-fits rule would take EC-Q at 63.6 pt and leave 2.2 pt of
@@ -573,7 +573,13 @@ def vline_object(x, y, h, *, name: str, obj_id: int, pen_pt: float = 0.5) -> str
 
 
 # -- The plate ---------------------------------------------------------------
-# Three plates, and one line to swap them.
+# Two plates, and one line to swap them. There were three: `double` drew a
+# 1 pt border with a 0.5 pt hairline inside it, and it is gone. Its hairline
+# took 3.6 pt out of the frame's height, which at a 1.2 pt cell cost nothing
+# and at 1.0 pt costs the code a whole level of error correction -- EC-M
+# where the other plates get EC-H, for the same payload. A frame that
+# quietly weakens the thing it surrounds is not a choice worth offering, and
+# nobody had chosen it.
 #
 # `round` is the one fitted, and getting to it took two wrong turns worth
 # recording. draw:rect carries a roundnessX attribute, Brother fills it in on
@@ -598,49 +604,41 @@ def vline_object(x, y, h, *, name: str, obj_id: int, pen_pt: float = 0.5) -> str
 
 FRAME_STYLE = "round"
 _PLATES = {
-    #          kind     pen  hairline inset  pad   art
-    "round":  ("frame", 0.5, 0.0,            3.5,  ("SIMPLE", 3)),
-    "bold":   ("rect",  1.0, 0.0,            3.5,  None),
-    "double": ("rect",  1.0, 1.8,            3.5,  None),
+    #          kind     pen   art
+    "round":  ("frame", 0.5,  ("SIMPLE", 3)),
+    "bold":   ("rect",  1.0,  None),
 }
 FRAME_STYLES = tuple(_PLATES)
 FRAME_Y, FRAME_H = 3.0, 62.0
+FRAME_PAD = 3.5                  # plate to content, the same on both
 
 
 def use_frame(style: str) -> None:
     """Fit a different plate. It moves where the content starts, so the
     derived constants move with it rather than being set independently."""
-    global FRAME_STYLE, FRAME_KIND, FRAME_PEN, FRAME_INSET, FRAME_PAD
-    global FRAME_ART, CONTENT_X
+    global FRAME_STYLE, FRAME_KIND, FRAME_PEN, FRAME_ART, CONTENT_X
     if style not in _PLATES:
         raise KeyError(f"no such plate: {style!r}")
     FRAME_STYLE = style
-    FRAME_KIND, FRAME_PEN, FRAME_INSET, FRAME_PAD, FRAME_ART = _PLATES[style]
-    CONTENT_X = EDGE_PT + 1.0 + FRAME_INSET + FRAME_PAD
+    FRAME_KIND, FRAME_PEN, FRAME_ART = _PLATES[style]
+    CONTENT_X = EDGE_PT + 1.0 + FRAME_PAD
     # The code answers to the plate's innermost LINE, not to the text pad --
     # it is a graphic, and it does not need the breathing room a line of
     # Thai does. Whichever of the two limits is tighter wins.
     global QR_MAX_SIDE_PT, QR_MAX_BYTES
-    QR_MAX_SIDE_PT = min(QR_MAX_SIDE_PT_TAPE,
-                         FRAME_H - 2 * (FRAME_INSET + QR_CLEAR_PT))
+    QR_MAX_SIDE_PT = min(QR_MAX_SIDE_PT_TAPE, FRAME_H - 2 * QR_CLEAR_PT)
     QR_MAX_BYTES = _max_bytes(QR_MAX_SIDE_PT)
 
 
 def frame_objects(x, w, *, obj_id: int = 0) -> list:
-    """The plate: the art frame, or one or two rectangles."""
+    """The plate: the art frame, or a plain rectangle."""
     if FRAME_KIND == "frame":
         category, style = FRAME_ART
         return [frame_object(x, FRAME_Y, w, FRAME_H, category=category,
                              style=style, name="frame", obj_id=obj_id,
                              pen_pt=FRAME_PEN)]
-    objs = [rect_object(x, FRAME_Y, w, FRAME_H, name="frame", obj_id=obj_id,
+    return [rect_object(x, FRAME_Y, w, FRAME_H, name="frame", obj_id=obj_id,
                         pen_pt=FRAME_PEN)]
-    if FRAME_INSET:
-        objs.append(rect_object(
-            x + FRAME_INSET, FRAME_Y + FRAME_INSET,
-            w - 2 * FRAME_INSET, FRAME_H - 2 * FRAME_INSET,
-            name="frameInner", obj_id=obj_id + 1))
-    return objs
 
 
 use_frame(FRAME_STYLE)
@@ -755,8 +753,8 @@ def _detail_label(c: CabinetLabel, *, created: str, with_rows: bool) -> tuple:
     # where the first whole character appeared on the calibration print. Its
     # inner height then comes to 56 pt, and the code at 54 pt very nearly
     # fills it, which is why the two look deliberate together.
-    top = FRAME_Y + FRAME_INSET + FRAME_PAD
-    inner_h = FRAME_H - 2 * (FRAME_INSET + FRAME_PAD)
+    top = FRAME_Y + FRAME_PAD
+    inner_h = FRAME_H - 2 * FRAME_PAD
 
     GAP, CW = 5.0, 26.0                          # QR-to-rule, and a map column
     fr_x = EDGE_PT + 1.0                         # 12.4
@@ -786,7 +784,7 @@ def _detail_label(c: CabinetLabel, *, created: str, with_rows: bool) -> tuple:
     # length prints, but a label whose length is a round number is one a
     # person can check with a ruler and one that reproduces exactly.
     import math
-    fr_w = right + FRAME_PAD + FRAME_INSET - fr_x
+    fr_w = right + FRAME_PAD - fr_x
     paper = round(math.ceil((fr_x + fr_w + EDGE_PT + 1) / MM) * MM, 1)
 
     # Five lines stacked inside the frame, summing to exactly its inner
@@ -846,8 +844,8 @@ def _minimal_label(c: CabinetLabel, *, created: str) -> tuple:
     modules, side, ecc = fit_qr(qr_data)
 
     GAP = 5.0
-    top = FRAME_Y + FRAME_INSET + FRAME_PAD
-    inner_h = FRAME_H - 2 * (FRAME_INSET + FRAME_PAD)
+    top = FRAME_Y + FRAME_PAD
+    inner_h = FRAME_H - 2 * FRAME_PAD
     fr_x = EDGE_PT + 1.0
     qr_x = CONTENT_X
     rule_x = qr_x + side + GAP
@@ -862,7 +860,7 @@ def _minimal_label(c: CabinetLabel, *, created: str) -> tuple:
                       pad=4.0, fallback=150.0)
 
     import math
-    fr_w = tx + TW + FRAME_PAD + FRAME_INSET - fr_x
+    fr_w = tx + TW + FRAME_PAD - fr_x
     paper = round(math.ceil((fr_x + fr_w + EDGE_PT + 1) / MM) * MM, 1)
 
     # The pair is centred in the frame rather than hung from its top: with
