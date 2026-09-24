@@ -234,11 +234,30 @@ check_true("a Thai site name alone exceeds the whole QR budget",
            len(WARD.encode("utf-8")) > labels.QR_MAX_BYTES,
            f"{len(WARD.encode('utf-8'))} B > {labels.QR_MAX_BYTES}")
 
-print("\nthe QR carries identity only — the rest is printed beside it")
-check("payload is name, serial, ip, mac", sample().qr_payload().split("\n"),
-      ["Chest-Std-02", "S/N LGS-2026-0042", "192.168.0.229", "A8:61:0A:51:5D:9C"])
+print("\nthe QR: identity, plus the one thing NOT printed beside it")
+check("payload is name, serial, ip, mac, channels",
+      sample().qr_payload().split("\n"),
+      ["Chest-Std-02", "S/N LGS-2026-0042", "192.168.0.229", "A8610A515D9C",
+       "1234567878"])
 check("a cabinet with no serial simply omits the line",
-      len(sample(serial="").qr_payload().split("\n")), 3)
+      len(sample(serial="").qr_payload().split("\n")), 4)
+# The colons come out so the channels fit; the MAC reads the same without
+# them, which is why they went rather than the "S/N " label.
+check_true("the MAC carries no colons", ":" not in sample().qr_payload())
+check("one digit per row, in row order",
+      sample().qr_payload().split("\n")[-1],
+      "".join(str(r[2]) for r in sample().rows))
+check("the 64's doubled channels show up as repeats",
+      labels.CabinetLabel(rows=rows_for("64", "0", "1,2,3,4,4,5,5,6,7,8"))
+      .qr_payload().split("\n")[-1], "1234455678")
+# Measured across the real fleet: 68 bytes without the map, 79 with it and
+# the colons left in, 74 once they come out. The ceiling is 78.
+worst = labels.CabinetLabel(name="QueenSirikit-01", serial="LGS-CSV-1169-001",
+                            ip="192.168.0.227", mac="A8:61:0A:50:D3:2B",
+                            rows=rows_for("64", "0", "1,2,3,4,4,5,5,6,7,8"))
+n = len(worst.qr_payload().encode("utf-8"))
+check_true("the longest cabinet in the fleet still fits",
+           n <= labels.QR_MAX_BYTES, f"{n} of {labels.QR_MAX_BYTES} bytes")
 
 print("\na serial too long to encode is refused before any tape is spent")
 try:

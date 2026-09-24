@@ -95,14 +95,14 @@ QR_MAX_BYTES = _QR_BYTES["l"][4]                 # 78
 #
 # The rule that came out of that: a font here is a claim about a printer in
 # another room. Change it only with a sticker off that printer in hand.
-THAI_FONT = "IBM Plex Sans Thai"
-# Both of these ARE print-proven on the PT-9700PC. IBM Plex Sans Thai is not
-# yet: it does not ship with Windows and was not installed on the machine
-# that drives the Editor when it was chosen on 2026-09-24, so until somebody
-# prints the test strip with it, P-touch will substitute a face and Thai
-# combining marks are the first thing a substitution ruins. If a printed
-# label looks wrong, put one of these back — it is a one-line change.
-THAI_FONT_PROVEN = ("Leelawadee UI", "Tahoma")
+THAI_FONT = "Browallia New"
+# Print-proven on the PT-9700PC, all three, by a test strip that came back
+# with every line complete — including "ติ์", a consonant carrying two
+# stacked marks. IBM Plex Sans Thai was set briefly and reverted: it does not
+# ship with Windows, was not installed on the machine that drives the Editor,
+# and an unresolvable family name is substituted silently. Pick from this
+# list, or print a strip first.
+THAI_FONT_PROVEN = ("Browallia New", "Leelawadee UI", "Tahoma")
 LATIN_FONT = "Arial"
 
 
@@ -370,12 +370,26 @@ class CabinetLabel:
     rows: tuple = ()                     # ((row, "11-18", channel), ...)
 
     def qr_payload(self) -> str:
-        """What the code carries: identity, and only identity.
+        """Identity, plus the hub channel of every row.
 
-        The row map, the type and the slot count are all PRINTED on the same
-        label centimetres away, and firmware belongs on no sticker because one
-        OTA makes it a lie. What is left is the four things somebody would
-        otherwise retype by hand, which is exactly what a scanner is for.
+        The channel map is the one thing here that is NOT printed beside the
+        code on the standard layout, so it is the only line that makes the QR
+        worth scanning rather than reading. It is a bare digit per row, in
+        row order: "1234455678" is row 1 on channel 1 ... row 10 on channel 8.
+
+        It only fits because the MAC's colons come out. Measured against the
+        whole fleet: identity alone is 68 bytes at worst, adding the channels
+        makes 79 against a 78-byte ceiling, and dropping five colons brings it
+        to 74. The MAC reads the same either way, which is why the colons went
+        rather than the "S/N " label — losing that would leave a bare string
+        with nothing to say which line it is.
+
+        Row WIDTHS do not fit at all: 81 bytes even with everything trimmed.
+        They stay on the tape, in the rowmap layout.
+
+        Four bytes of headroom is thin for a free-text serial, but `fit_qr`
+        refuses outright rather than emitting an oversized symbol, so the
+        failure is a message at save time and not a sticker nobody can scan.
         """
         lines = [self.name]
         if self.serial:
@@ -383,7 +397,9 @@ class CabinetLabel:
         if self.ip:
             lines.append(self.ip)
         if self.mac:
-            lines.append(self.mac)
+            lines.append(self.mac.replace(":", ""))
+        if self.rows:
+            lines.append("".join(str(ch) for _row, _ids, ch in self.rows))
         return "\n".join(lines)
 
 
