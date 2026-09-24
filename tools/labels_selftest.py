@@ -173,9 +173,11 @@ if REF.exists():
                 d[f"{n}.{k}"] = v
         return d
 
-    # Excluded because they are functions of the content and the layout,
-    # not style choices that could silently drift. charLen has its own case.
-    GEOM = {"x", "y", "width", "height", "ID", "objectName", "charLen"}
+    # Excluded because they are functions of the content and the layout, or
+    # a deliberate choice with its own case above — not values that could
+    # silently drift. `name` is the font family: the reference was printed in
+    # Tahoma and the generator now sets Leelawadee UI, both print-proven.
+    GEOM = {"x", "y", "width", "height", "ID", "objectName", "charLen", "name"}
     A, B = _attrs(_thai_object(ref_xml)), _attrs(_thai_object(xml))
     drift = [(k, A.get(k, "—"), B.get(k, "—")) for k in sorted(set(A) | set(B))
              if A.get(k) != B.get(k) and k.split(".")[-1] not in GEOM]

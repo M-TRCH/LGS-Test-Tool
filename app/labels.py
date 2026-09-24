@@ -46,12 +46,20 @@ USABLE_ACROSS = TAPE_PT - 2 * ACROSS_PT          # 64.0
 # times the 2 pt the file declares — the across margin has never been
 # measured, and on 2026-09-24 Teerachot reported the top edge clipped.
 #
-# Until a calibration print says otherwise this holds the content clear of
-# both edges by more than the declared margin. The tape is also sold as 1 in
-# but specified at 0.94 in (67.7 pt against the 68 pt assumed here), which is
-# a third of a point — too little to explain a visible clip, but it all runs
-# the same way, so the inset absorbs it too.
-CONTENT_INSET_PT = 6.0
+# MEASURED 2026-09-24. A ruler label printed the same digit at 0..8 pt from
+# each edge: at the top the first whole digit was 1, at the bottom it was 0.
+# So the across margin is about 1 pt at the top and nothing at the bottom —
+# SMALLER than the 2 pt the file declares, and nothing like the 11.4 pt the
+# length margin turned out to be.
+#
+# Which means the clipped top edge that prompted this was almost certainly
+# another symptom of the broken document shell, like the overlapping Thai:
+# content at y=3 clears a 1 pt margin easily. 2 pt keeps a point of slack
+# over the measurement and gives back the 4 pt an unmeasured guess had cost.
+#
+# The tape is sold as 1 in but specified at 0.94 in — 67.7 pt against the
+# 68 pt assumed here. A third of a point; the slack covers it.
+CONTENT_INSET_PT = 2.0
 
 # The cell size P-touch itself writes. A value it does not offer gets rounded
 # up and the symbol overflows the tape — which is how the first printed
@@ -73,23 +81,22 @@ QR_MAX_BYTES = _QR_BYTES["l"][4]                 # 78
 
 # Arial has no Thai glyphs at all, so Thai text must name its own face.
 #
-# Tahoma, and only Tahoma. It is the one face the PT-9700PC has actually
-# printed with its vowels and tone marks composed correctly. Leelawadee UI
-# was tried on 2026-09-24 because it reads better on screen at 10-12 pt, and
-# Teerachot got overlapping characters straight away.
+# Leelawadee UI, chosen for a cleaner and more minimal look — and this time
+# on evidence. A test strip printed "สิริกิติ์ ชั้น ผู้" in six combinations of
+# face and combinedChars on the PT-9700PC, and Teerachot confirmed every line
+# came out complete, garan and all. Tahoma also prints correctly and stays a
+# safe fallback; it is simply heavier at 10-12 pt.
 #
-# TWO things could produce that and only one of them has been eliminated.
-# A substituted face that does not position Thai combining marks stacks tone
-# marks exactly like this — but so does shrink=true squeezing text into a box
-# it does not fit, and the old 108 pt identity box was 1.6 pt NARROWER than
-# "รพ.สมเด็จพระนางเจ้าสิริกิติ์" needs in Tahoma at 10 pt. The box is now 130 pt,
-# which clears both faces at every size used here, so the layout is fixed
-# either way; which of the two was to blame is untested.
+# Leelawadee UI was tried once BEFORE that strip existed, while chasing
+# overlapping characters, and it looked guilty for a while. It was not: the
+# document shell was broken and P-touch was rendering something else
+# entirely. Two rounds of blaming the font, the box width and shrink=true all
+# missed it.
 #
-# Do not swap this for something that only looks better on a screen. A font
-# here is a claim about a printer in another room, and the only evidence
-# that counts is a sticker off that printer.
-THAI_FONT = "Tahoma"
+# The rule that came out of that: a font here is a claim about a printer in
+# another room. Change it only with a sticker off that printer in hand.
+THAI_FONT = "Leelawadee UI"
+THAI_FONT_FALLBACK = "Tahoma"       # also print-proven, heavier
 LATIN_FONT = "Arial"
 
 
