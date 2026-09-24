@@ -11,6 +11,7 @@ PT-9700PC and scanned back — if a refactor moves an object, this says so.
 """
 import sys
 import io
+import os
 import re
 import zipfile
 from pathlib import Path
@@ -113,8 +114,11 @@ check_true("the XML structure is one line", "\n" not in structure)
 check_true("the QR payload keeps its line breaks",
            "\n" in re.search(r'<barcode:barcode>.*?<pt:data>(.*?)</pt:data>',
                              xml, re.S).group(1))
-check("the QR sits at x=13 as printed",
-      re.search(r'<barcode:barcode><pt:objectStyle x="([\d.]+)pt"', xml).group(1), "13.0")
+# The code used to start at x=13, hard against the printable edge. It now
+# sits inside the frame, which is itself 1 pt inside that edge.
+check("the QR sits inside the frame, not on the paper edge",
+      re.search(r'<barcode:barcode><pt:objectStyle x="([\d.]+)pt"', xml).group(1),
+      "15.9")
 check("the cell size is one the printer was shown to honour",
       float(re.search(r'cellSize="([\d.]+)pt"', xml).group(1)), labels.QR_CELL_PT)
 check_true("and it is one of the five that were print-tested",
@@ -127,23 +131,45 @@ check_true("and it is not Arial, which has no Thai glyphs",
 # barcode style carries humanReadableAlignment="LEFT" from P-touch itself.
 check("every text object is centred",
       set(re.findall(r'horizontalAlignment="(\w+)"', xml)), {"CENTER"})
-check("10 rows make a 127 mm label", round(mm), 127)
+check("10 rows make a 112 mm label", round(mm), 112)
 check("7 rows make a shorter one",
       round(labels.render("rowmap", sample(rows=rows_for("0", "8,8,8,8,8,8,8",
                                                        "1,2,3,4,5,6,7")),
-                          created="x")[1]), 116)
-# The site name must not be squeezed: P-touch's shrink=true compresses
-# rather than clips, and compressed Thai stacks its tone marks.
-from PIL import ImageDraw, Image, ImageFont                     # noqa: E402
-_d = ImageDraw.Draw(Image.new("RGB", (8, 8)))
-for face in ("tahoma.ttf", "LeelawUI.ttf"):
+                          created="x")[1]), 101)
+
+print("\nboxes are measured, not assumed")
+# labels.text_width sums advance widths out of the font's own hmtx table.
+# Check it against a real shaper rather than against numbers typed in here:
+# Pillow lays the string out properly, applying Thai mark positioning, and
+# the two should agree because marks are zero-advance -- shaping moves them
+# about without changing how far the pen travels.
+from PIL import ImageFont                                       # noqa: E402
+for label_, text_, font_, weight_, size_, file_, idx_ in (
+        ("Thai site name", WARD, labels.THAI_FONT, 400, 10.0, "browalia.ttc", 0),
+        ("cabinet name", "QueenSirikit-01", "Arial", 700, 11.0, "arialbd.ttf", 0),
+        ("serial line", "S/N LGS-CSV-1169-001", "Arial", 400, 7.0, "arial.ttf", 0),
+        ("the MAC", "A8:61:0A:50:D3:2B", "Arial", 400, 6.0, "arial.ttf", 0)):
+    mine = labels.text_width(text_, font=font_, weight=weight_, size_pt=size_)
     try:
-        _f = ImageFont.truetype(face, 100)
+        theirs = ImageFont.truetype(file_, int(size_ * 10),
+                                    index=idx_).getlength(text_) / 10.0
     except OSError:
         continue
-    need = _d.textbbox((0, 0), WARD, font=_f)[2] / 10.0          # at 10 pt
-    check_true(f"the site name fits the 130 pt box in {face}", need <= 130,
-               f"needs {need:.0f} pt")
+    check_true(f"  {label_} agrees with Pillow's shaper",
+               mine is not None and abs(mine - theirs) < 0.3,
+               f"{mine:.2f} vs {theirs:.2f} pt")
+check("a face that is not installed cannot be measured",
+      labels.text_width("x", font="No Such Face", weight=400, size_pt=10), None)
+check("so the column keeps the old generous box",
+      labels.column_width([("x", "10", "No Such Face", 400)], pad=4.0,
+                          fallback=130.0), 130.0)
+_iw = labels.column_width([(WARD, "10", labels.THAI_FONT, 400),
+                           ("QueenSirikit-01", "11", labels.LATIN_FONT, 700)],
+                          pad=4.0, fallback=130.0)
+check_true("a measured column is far narrower than that fallback",
+           _iw < 90, f"{_iw} pt, not 130")
+check_true("but still wider than the widest line in it", _iw > 80.8,
+           f"{_iw} pt > 80.8")
 
 print("\nobject IDs — a list that starts at 1 opens as a blank label")
 ids = [int(n) for n in re.findall(r'<pt:expanded objectName="[^"]*" ID="(\d+)"', xml)]
@@ -295,6 +321,61 @@ try:
     check("200-character serial", "no exception", "LabelTooBig")
 except labels.LabelTooBig:
     print("  ok   a 200-character serial is refused")
+
+print("\nthe frame and the rule, against Brother's own template library")
+for key in ("minimal", "standard", "rowmap"):
+    b_k, _ = labels.render(key, sample(), created="x")
+    x_k = zipfile.ZipFile(io.BytesIO(b_k)).read("label.xml").decode()
+    check(f"  {key} has exactly one frame", len(re.findall(r"<draw:rect>", x_k)), 1)
+    check_true(f"  {key} has a rule beside the code", "<draw:poly>" in x_k)
+
+# The frame has to stay inside the band the printer can actually mark. A
+# calibration print put the first whole character at 1 pt from the top edge,
+# so a line at 3 pt has something in hand -- which matters, because the last
+# sticker came back with its top edge shaved.
+fx, fy, fw, fh = [float(v) for v in re.search(
+    r'<draw:rect><pt:objectStyle x="([\d.]+)pt" y="([\d.]+)pt"'
+    r' width="([\d.]+)pt" height="([\d.]+)pt"', xml).groups()]
+check_true("the frame clears both edges of the tape",
+           fy >= labels.ACROSS_PT and fy + fh <= labels.TAPE_PT - labels.ACROSS_PT,
+           f"y {fy}..{fy + fh}, band {labels.ACROSS_PT}..{labels.TAPE_PT - labels.ACROSS_PT}")
+check_true("and both ends of the label",
+           fx >= labels.EDGE_PT and fx + fw <= mm * labels.MM - labels.EDGE_PT,
+           f"x {fx}..{fx + fw:.1f}")
+
+# Brother's own vertical rules -- twelve of the fifty in the library -- put
+# both points on the box's centre line, half the BOX width in from each end,
+# and the box is a tenth of a point wider than the pen. Copied, not deduced.
+rule = re.search(r'<draw:poly>.*?</draw:poly>', xml, re.S).group(0)
+rx, ry, rw, rh = [float(v) for v in re.search(
+    r'x="([\d.]+)pt" y="([\d.]+)pt" width="([\d.]+)pt" height="([\d.]+)pt"',
+    rule).groups()]
+(px0, py0), (px1, py1) = [tuple(float(v[:-2]) for v in pair.split(","))
+                          for pair in re.search(r'points="([^"]+)"',
+                                                rule).group(1).split()]
+check("the rule's two points share one x", px0, px1)
+check("which is the box centre line", round(px0 - rx, 2), round(rw / 2, 2))
+check("inset half a box width at the top", round(py0 - ry, 2), round(rw / 2, 2))
+check("and at the bottom", round(ry + rh - py1, 2), round(rw / 2, 2))
+check("the box is a tenth wider than the pen", rw, 0.6)
+
+BROTHER = (r"C:\Program Files (x86)\Brother\Ptedit54\LayoutStyle\RDRoll"
+           r"\Large Shipping Label\Shipping 1.lbx")
+if os.path.exists(BROTHER):
+    ref = zipfile.ZipFile(BROTHER).read("label.xml").decode("utf-8")
+    ref_rule = [m.group(0) for m in re.finditer(r'<draw:poly>.*?</draw:poly>',
+                                                ref, re.S)
+                if float(re.search(r'height="([\d.]+)pt"', m.group(0)).group(1))
+                > float(re.search(r'width="([\d.]+)pt"', m.group(0)).group(1))][0]
+    for tag in ("draw:polyStyle", "pt:pen", "pt:brush"):
+        want = dict(re.findall(r'(\w+)="([^"]*)"',
+                               re.search(rf"<{tag} ([^>]*?)/?>", ref_rule).group(1)))
+        got = dict(re.findall(r'(\w+)="([^"]*)"',
+                              re.search(rf"<{tag} ([^>]*?)/?>", rule).group(1)))
+        drift = {k: (want[k], got.get(k)) for k in want if got.get(k) != want[k]}
+        check(f"  {tag} matches Brother's vertical rule", drift, {})
+else:
+    print("  --   Brother's template library is not on this machine")
 
 print()
 if FAILS:

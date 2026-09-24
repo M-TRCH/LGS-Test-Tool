@@ -30,8 +30,10 @@ library; the tool ships as an exe with a deliberately short dependency list.
 """
 from __future__ import annotations
 
+import os
 import zipfile
 from dataclasses import dataclass, field
+from functools import lru_cache
 from typing import Callable
 
 MM = 2.8346                  # points per millimetre
@@ -385,6 +387,138 @@ def pack(label: str, prop: str) -> bytes:
     return buf.getvalue()
 
 
+# -- Measuring text, so a box is the size of what goes in it ----------------
+# The identity column used to be 130 pt wide whatever went in it. That was
+# sized by eye against a wider Thai face; Browallia New is much narrower, and
+# the widest line on the Queen's label measures 80.8 pt -- so 49 pt of the
+# box was empty air. Every line is CENTRE aligned, so half of that air sat
+# between the code and the text, and that is the gap Teerachot could see.
+# Measure the string instead of guessing at it.
+#
+# fontTools arrives with fpdf2, which is already a dependency, so this costs
+# the build nothing. Summing advance widths is the right answer for Thai: a
+# floating vowel or tone mark has zero advance, and shaping moves marks about
+# without changing how far the pen travels. Checked against Pillow's shaper
+# on all five lines of the real label -- the two agree within 0.2 pt.
+#
+# When a face cannot be found -- another machine, another OS -- the
+# measurement returns None and the caller keeps the old generous box. A label
+# that is too roomy still prints; one sized from a guess might not.
+
+_FONT_FILES = {
+    ("Browallia New", 400): ("browalia.ttc", 0),
+    ("Browallia New", 700): ("browalia.ttc", 1),
+    ("Leelawadee UI", 400): ("LeelawUI.ttf", 0),
+    ("Leelawadee UI", 700): ("LeelaUIb.ttf", 0),
+    ("Tahoma", 400): ("tahoma.ttf", 0),
+    ("Tahoma", 700): ("tahomabd.ttf", 0),
+    ("Arial", 400): ("arial.ttf", 0),
+    ("Arial", 700): ("arialbd.ttf", 0),
+}
+
+
+@lru_cache(maxsize=None)
+def _face(font: str, weight: int):
+    """(unitsPerEm, cmap, hmtx metrics) for one face, or None if not here."""
+    entry = _FONT_FILES.get((font, weight)) or _FONT_FILES.get((font, 400))
+    if not entry:
+        return None
+    name, index = entry
+    path = os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts", name)
+    if not os.path.exists(path):
+        return None
+    try:
+        from fontTools.ttLib import TTCollection, TTFont
+        f = (TTCollection(path).fonts[index] if path.lower().endswith(".ttc")
+             else TTFont(path))
+        return f["head"].unitsPerEm, f.getBestCmap(), f["hmtx"].metrics
+    except Exception:
+        return None
+
+
+def text_width(text: str, *, font: str, weight: int, size_pt: float):
+    """How wide the string really prints, or None if it cannot be measured."""
+    face = _face(font, weight)
+    if face is None:
+        return None
+    upm, cmap, metrics = face
+    total = 0
+    for ch in text:
+        g = cmap.get(ord(ch))
+        if g is None or g not in metrics:
+            return None                 # a glyph unaccounted for: do not guess
+        total += metrics[g][0]
+    return total * size_pt / upm
+
+
+def column_width(lines, *, pad: float, fallback: float) -> float:
+    """Width of a column of (text, size, font, weight), plus breathing room."""
+    widths = [text_width(t, font=fo, weight=wt, size_pt=float(sz))
+              for t, sz, fo, wt in lines if t]
+    if not widths or any(w is None for w in widths):
+        return fallback
+    return round(max(widths) + pad, 1)
+
+
+# -- Drawn objects ----------------------------------------------------------
+# Transcribed from Brother's own template library, which ships beside the
+# editor in Ptedit54/LayoutStyle/ -- 144 files, using draw:rect, draw:poly
+# and draw:frame. The attribute sets below are theirs, not invented; the last
+# time element names were invented here every label opened blank.
+#
+# One thing is NOT verbatim: the point list of a VERTICAL rule. Every line in
+# the library runs horizontally, so the geometry below is their rule turned
+# on its side -- same attributes, different coordinates.
+#
+# The objectStyle wrapper is ours rather than theirs. Their files are older
+# (version 1.1) and omit printColorNumber; ours is the one proven to print.
+
+def _draw_style(x, y, w, h, *, name: str, obj_id: int, pen_pt: float) -> str:
+    return (
+        f'<pt:objectStyle x="{_pt(x)}pt" y="{_pt(y)}pt"'
+        f' width="{_pt(w)}pt" height="{_pt(h)}pt"'
+        ' backColor="#FFFFFF" backPrintColorNumber="0" ropMode="COPYPEN"'
+        ' angle="0" anchor="TOPLEFT" flip="NONE">'
+        f'<pt:pen style="INSIDEFRAME" widthX="{_pt(pen_pt)}pt"'
+        f' widthY="{_pt(pen_pt)}pt" color="#000000" printColorNumber="1"/>'
+        '<pt:brush style="NULL" color="#000000" printColorNumber="1" id="0"/>'
+        f'<pt:expanded objectName="{_esc(name)}" ID="{obj_id}" lock="0"'
+        ' templateMergeTarget="LABELLIST" templateMergeType="NONE"'
+        ' templateMergeID="0" linkStatus="NONE" linkID="0"/>'
+        '</pt:objectStyle>')
+
+
+def rect_object(x, y, w, h, *, name: str, obj_id: int, roundness: float = 0.0,
+                pen_pt: float = 0.5) -> str:
+    """A rectangle outline, with rounded corners if roundness is given."""
+    return ('<draw:rect>'
+            + _draw_style(x, y, w, h, name=name, obj_id=obj_id, pen_pt=pen_pt)
+            + f'<draw:rectStyle shape="RECTANGLE"'
+              f' roundnessX="{_pt(roundness)}pt"'
+              f' roundnessY="{_pt(roundness)}pt"/></draw:rect>')
+
+
+def vline_object(x, y, h, *, name: str, obj_id: int, pen_pt: float = 0.5) -> str:
+    """A vertical hairline, to the library's own convention.
+
+    Twelve of the fifty rules in Brother's templates run vertically, so this
+    is transcribed rather than deduced. Their box is a tenth of a point wider
+    than the pen, and the two points sit on the box's CENTRE line -- half the
+    box width in from the left, and half in from each end.
+    """
+    w = round(pen_pt + 0.1, 1)
+    cx, y0, y1 = x + w / 2, y + w / 2, y + h - w / 2
+    return ('<draw:poly>'
+            + _draw_style(x, y, w, h, name=name, obj_id=obj_id, pen_pt=pen_pt)
+            + '<draw:polyStyle shape="LINE" arrowBegin="SQUARE"'
+              ' arrowEnd="SQUARE">'
+              f'<draw:polyOrgPos x="{_pt(x)}pt" y="{_pt(y)}pt"'
+              f' width="{_pt(w)}pt" height="{_pt(h)}pt"/>'
+              f'<draw:polyLinePoints points="{_pt(cx)}pt,{_pt(y0)}pt'
+              f' {_pt(cx)}pt,{_pt(y1)}pt"/>'
+              '</draw:polyStyle></draw:poly>')
+
+
 # ── The cabinet a label describes ──────────────────────────────────────────
 
 @dataclass
@@ -474,68 +608,103 @@ def rows_from_gateway(settings: dict) -> tuple:
 # Registered below so a new sticker is a function plus one dict entry.
 
 def _detail_label(c: CabinetLabel, *, created: str, with_rows: bool) -> tuple:
-    """QR + identity block, and optionally the row/id strip.
+    """QR + identity block in a frame, and optionally the row/id strip.
 
     With `with_rows`, it also carries the part nobody has written down on
     site: a technician moving between an 80 and a 40 cannot guess that one
     is eight slots per row and the other four. Without it, the label is
     shorter and the strip is simply not available at the door.
+
+    Everything horizontal is measured rather than assumed. The columns are
+    as wide as the text in them, the frame is as wide as the columns, and
+    the tape is as long as the frame -- so the Queen's standard label came
+    down from 78 mm to 65 mm without losing a character.
     """
     qr_data = c.qr_payload()
     modules, side, ecc = fit_qr(qr_data)
 
-    # 130 pt, not 108: the site name is the widest thing on the label and
-    # Thai has no room to give. The old box was 1.6 pt narrower than the
-    # hospital's name needs at 10 pt, and P-touch's shrink would have
-    # squeezed it — so the box holds the text outright instead.
-    GAP, IW, CW = 9.0, 130.0, 26.0
-    qr_x = 13.0
-    id_x = qr_x + side + GAP
-    map_x = id_x + IW + GAP
+    # Across the tape: the frame sits 3 pt inside each edge, which is inside
+    # the 2 pt the printer can reach and a little further in than the 1 pt
+    # where the first whole character appeared on the calibration print. Its
+    # inner height then comes to 56 pt, and the code at 54 pt very nearly
+    # fills it, which is why the two look deliberate together.
+    FR_Y, FR_H, PAD = 3.0, 62.0, 3.5
+    top = FR_Y + PAD                             # 6.5
+    inner_h = FR_H - 2 * PAD                     # 55.0
+
+    GAP, CW = 5.0, 26.0                          # QR-to-rule, and a map column
+    fr_x = EDGE_PT + 1.0                         # 12.4
+    qr_x = fr_x + PAD
+    rule1_x = qr_x + side + GAP
+    id_x = rule1_x + GAP
+
+    idlines = [
+        (c.ward, "10", THAI_FONT, 400, 13.0),
+        (c.name, "11", LATIN_FONT, 700, 14.0),
+        (f"S/N {c.serial}" if c.serial else "", "7", LATIN_FONT, 400, 9.0),
+        (c.ip, "9", LATIN_FONT, 400, 11.0),
+        (c.mac, "6", LATIN_FONT, 400, 8.0),
+    ]
+    # 130 pt was the old fixed width and stays as the fallback: if the faces
+    # cannot be measured the label is merely roomy, not wrong.
+    IW = column_width([(t, sz, fo, wt) for t, sz, fo, wt, _h in idlines],
+                      pad=4.0, fallback=130.0)
+
     rows = c.rows if with_rows else ()
     ncol = max(1, (len(rows) + 1) // 2) if rows else 0   # two banks, always
+    rule2_x = id_x + IW + GAP
+    map_x = rule2_x + GAP
+    right = (map_x + ncol * CW) if rows else (id_x + IW)
+
     # Round the cut up to a whole millimetre. The tape is continuous so any
     # length prints, but a label whose length is a round number is one a
     # person can check with a ruler and one that reproduces exactly.
     import math
-    right = (map_x + ncol * CW) if rows else (id_x + IW)
-    paper = round(math.ceil((right + EDGE_PT + 2) / MM) * MM, 1)
+    fr_w = right + PAD - fr_x
+    paper = round(math.ceil((fr_x + fr_w + EDGE_PT + 1) / MM) * MM, 1)
 
-    # Five lines inside TAPE_PT - 2 * CONTENT_INSET_PT, so both edges keep
-    # their clearance whatever the inset is set to.
-    t = CONTENT_INSET_PT
-    lines = [
-        (c.ward, id_x, t, IW, 13.0, "10", THAI_FONT, 400),
-        (c.name, id_x, t + 13.0, IW, 14.0, "11", LATIN_FONT, 700),
-        (f"S/N {c.serial}" if c.serial else "", id_x, t + 27.0, IW, 9.0, "7",
-         LATIN_FONT, 400),
-        (c.ip, id_x, t + 36.0, IW, 11.0, "9", LATIN_FONT, 400),
-        (c.mac, id_x, t + 47.0, IW, 8.0, "6", LATIN_FONT, 400),
-    ]
+    # Five lines stacked inside the frame, summing to exactly its inner
+    # height. Each box is about 1.2x its point size, and the Thai line gets
+    # the most slack of the five because its marks hang furthest.
+    y, lines = top, []
+    for txt, sz, fo, wt, h in idlines:
+        lines.append((txt, id_x, y, IW, h, sz, fo, wt))
+        y += h
+
     # Row and id range only. The hub channel used to print here, but it is
     # wiring detail nobody reads at the cabinet door, and dropping it buys
     # the two remaining lines room to be larger.
     for i, (row, ids, _ch) in enumerate(rows):
         cx = map_x + (i % ncol) * CW
-        yy = CONTENT_INSET_PT if i < ncol else CONTENT_INSET_PT + 26.0
+        yy = top + (0 if i < ncol else 26.0)
         lines += [
             (f"R{row}", cx, yy, CW, 10.0, "7", LATIN_FONT, 700),
             (ids, cx, yy + 11, CW, 10.0, "6.5", LATIN_FONT, 400),
         ]
     lines = [ln for ln in lines if ln[0]]
 
-    boxes = [("qr", qr_x, (TAPE_PT - side) / 2, side, side)]
-    boxes += [(str(t)[:10], x, y, w, h) for t, x, y, w, h, _, _, _ in lines]
+    rules = [(rule1_x, "rule1")] + ([(rule2_x, "rule2")] if rows else [])
+    boxes = [("frame", fr_x, FR_Y, fr_w, FR_H),
+             ("qr", qr_x, round((TAPE_PT - side) / 2, 1), side, side)]
+    boxes += [(n, x, top, 0.6, inner_h) for x, n in rules]
+    boxes += [(str(t)[:10], x, yy, w, h) for t, x, yy, w, h, _, _, _ in lines]
     bad = check_fits(boxes, paper)
     if bad:
         raise LabelTooBig("; ".join(bad))
 
+    objs = [rect_object(fr_x, FR_Y, fr_w, FR_H, name="frame", obj_id=0,
+                        roundness=6.0)]
+    objs += [vline_object(x, top, inner_h, name=n, obj_id=i + 1)
+             for i, (x, n) in enumerate(rules)]
+    n0 = len(objs)
     qr_xml, _ = qr_object(qr_data, qr_x, round((TAPE_PT - side) / 2, 1),
-                          modules=modules, cell_pt=QR_CELL_PT, ecc=ecc)
-    objs = [qr_xml] + [
-        text_object(txt, x, y, w, h, name=f"o{i + 1}", obj_id=i + 1, font=fo,
+                          modules=modules, cell_pt=QR_CELL_PT, ecc=ecc,
+                          obj_id=n0)
+    objs.append(qr_xml)
+    objs += [
+        text_object(txt, x, yy, w, h, name=f"o{i}", obj_id=n0 + 1 + i, font=fo,
                     weight=wt, size=sz, orgsize=str(round(float(sz) * 1.2, 1)))
-        for i, (txt, x, y, w, h, sz, fo, wt) in enumerate(lines)]
+        for i, (txt, x, yy, w, h, sz, fo, wt) in enumerate(lines)]
     return label_xml(objs, paper_len_pt=paper), prop_xml(created=created), paper / MM
 
 
@@ -544,42 +713,61 @@ def _minimal_label(c: CabinetLabel, *, created: str) -> tuple:
 
     The serial, the address and the MAC are all in the code already, so
     printing them too only gives a person a second place to misread. What
-    this layout deliberately gives up is the row/channel strip, which is
-    NOT in the QR and cannot be: the Thai site name alone is 82 bytes in
-    UTF-8 and the whole symbol holds 78, so the code is identity and the
-    tape is the name. If the strip is wanted at a glance, that is the full
-    layout's job.
+    this layout gives up is the row/id strip, which the code now carries as
+    channels and widths but not as printed text -- if the strip is wanted at
+    a glance, that is the row map layout's job.
     """
     qr_data = c.qr_payload()
     modules, side, ecc = fit_qr(qr_data)
 
-    GAP, TW = 9.0, 150.0
-    qr_x = 13.0
-    tx = qr_x + side + GAP
-    import math
-    paper = round(math.ceil((tx + TW + EDGE_PT + 2) / MM) * MM, 1)
+    FR_Y, FR_H, PAD, GAP = 3.0, 62.0, 3.5, 5.0
+    top = FR_Y + PAD
+    inner_h = FR_H - 2 * PAD
+    fr_x = EDGE_PT + 1.0
+    qr_x = fr_x + PAD
+    rule_x = qr_x + side + GAP
+    tx = rule_x + GAP
 
     # Two lines, weighted the way they are read: the site answers "whose
     # cabinet is this" from across a room, the short name answers "which
     # one" and is what every other system calls it.
-    lines = [
-        (c.ward, tx, CONTENT_INSET_PT + 2.0, TW, 16.0, "12", THAI_FONT, 400),
-        (c.name, tx, CONTENT_INSET_PT + 20.0, TW, 24.0, "18", LATIN_FONT, 700),
-    ]
+    txtlines = [(c.ward, "12", THAI_FONT, 400, 18.0),
+                (c.name, "18", LATIN_FONT, 700, 26.0)]
+    TW = column_width([(t, sz, fo, wt) for t, sz, fo, wt, _h in txtlines],
+                      pad=4.0, fallback=150.0)
+
+    import math
+    fr_w = tx + TW + PAD - fr_x
+    paper = round(math.ceil((fr_x + fr_w + EDGE_PT + 1) / MM) * MM, 1)
+
+    # The pair is centred in the frame rather than hung from its top: with
+    # only two lines, the leftover space reads as a mistake anywhere else.
+    y = top + (inner_h - sum(h for *_r, h in txtlines)) / 2
+    lines = []
+    for txt, sz, fo, wt, h in txtlines:
+        lines.append((txt, tx, round(y, 1), TW, h, sz, fo, wt))
+        y += h
     lines = [ln for ln in lines if ln[0]]
 
-    boxes = [("qr", qr_x, (TAPE_PT - side) / 2, side, side)]
-    boxes += [(str(t)[:10], x, y, w, h) for t, x, y, w, h, _, _, _ in lines]
+    boxes = [("frame", fr_x, FR_Y, fr_w, FR_H),
+             ("qr", qr_x, round((TAPE_PT - side) / 2, 1), side, side),
+             ("rule", rule_x, top, 0.6, inner_h)]
+    boxes += [(str(t)[:10], x, yy, w, h) for t, x, yy, w, h, _, _, _ in lines]
     bad = check_fits(boxes, paper)
     if bad:
         raise LabelTooBig("; ".join(bad))
 
+    objs = [rect_object(fr_x, FR_Y, fr_w, FR_H, name="frame", obj_id=0,
+                        roundness=6.0),
+            vline_object(rule_x, top, inner_h, name="rule", obj_id=1)]
     qr_xml, _ = qr_object(qr_data, qr_x, round((TAPE_PT - side) / 2, 1),
-                          modules=modules, cell_pt=QR_CELL_PT, ecc=ecc)
-    objs = [qr_xml] + [
-        text_object(txt, x, y, w, h, name=f"o{i + 1}", obj_id=i + 1, font=fo,
+                          modules=modules, cell_pt=QR_CELL_PT, ecc=ecc,
+                          obj_id=2)
+    objs.append(qr_xml)
+    objs += [
+        text_object(txt, x, yy, w, h, name=f"o{i}", obj_id=3 + i, font=fo,
                     weight=wt, size=sz, orgsize=str(round(float(sz) * 1.2, 1)))
-        for i, (txt, x, y, w, h, sz, fo, wt) in enumerate(lines)]
+        for i, (txt, x, yy, w, h, sz, fo, wt) in enumerate(lines)]
     return label_xml(objs, paper_len_pt=paper), prop_xml(created=created), paper / MM
 
 
