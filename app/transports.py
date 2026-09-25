@@ -29,10 +29,19 @@ DEFAULT_TCP_PORT = 502
 # tool had better follow it too.
 #
 # It was 3.5 s, on the reasoning that this "clears a 2600 ms budget with
-# margin". The arithmetic was wrong: bus.hub_budget_ms is what the gateway
-# will spend WAITING FOR THE CHANNEL, on top of the ~2.2 s settle, so the
-# Queen's 2200 + 2600 is 4800 ms before a reply is even late. 3.5 s did not
-# clear it, it sat underneath it.
+# margin". That number was the wrong one to reason from, and so was the
+# 4800 ms (settle + budget) it was first corrected to. Both are what the
+# gateway is ALLOWED to spend. What it does spend is rtt.max_ms, and every
+# cabinet in the fleet reports about 2280 ms -- the gateway is never the
+# thing that takes four seconds.
+#
+# The client is. A 6078 ms read was recorded on Chest-Std-04 while its own
+# gateway put its worst round trip at 2275 ms, and the difference is this
+# end: nine cabinets polled by nine threads in one Python process, each
+# waiting on its own socket. Tool-side latency above a gateway's own
+# rtt.max_ms is never a bus measurement -- the type-80 link drops taught
+# that once already -- but it is exactly what the timeout has to outlast,
+# because it is the client that decides when to give up.
 #
 # The 2 h fleet soak of 2026-09-22 shows what that cost. It reported 41
 # passes, 21,320 reads and zero failures -- while pymodbus threw away twelve
@@ -40,10 +49,14 @@ DEFAULT_TCP_PORT = 502
 # of them a reply one address stale. The slow reads it did record land at
 # 3656-3875 ms: 3500 ms of timed-out first attempt plus a retry that worked.
 #
-# 6 s clears the gateway's own 4800 ms worst case with margin. It costs
-# nothing in normal traffic -- a module that is genuinely silent is answered
-# for by the GATEWAY inside rs485.t1_ms, not by this timeout, which only ever
-# bites on a hub crossing, which is the case it exists for.
+# 6 s covers the 3656-3875 ms band those discarded frames came out of, and
+# it costs nothing in normal traffic -- a module that is genuinely silent is
+# answered for by the GATEWAY inside rs485.t1_ms, not by this timeout, which
+# only bites when the answer is merely late.
+#
+# It is not a ceiling anyone has proven. The 6078 ms read is 78 ms over it,
+# so a fleet run wide enough will find the next one. The number that settles
+# it is framer_watch's count across a full-length run, not this comment.
 HUB_SAFE_TIMEOUT_S = 6.0
 
 
