@@ -319,12 +319,12 @@ check_true("it is left out on purpose, not for want of room",
            "รพ." not in sample().qr_payload())
 
 print("\nthe QR: identity, and the whole shape of the cabinet")
-check("payload is name, serial, ip, mac, channels, widths",
+check("payload is name, serial, ip, mac, type, channels, widths",
       sample().qr_payload().split("\n"),
       ["Chest-Std-02", "S/N LGS-2026-0042", "192.168.0.229", "A8:61:0A:51:5D:9C",
-       "ch 1234567878", "w 8888888888"])
+       "type 80", "ch 1234567878", "w 8888888888"])
 check("a cabinet with no serial simply omits the line",
-      len(sample(serial="").qr_payload().split("\n")), 5)
+      len(sample(serial="").qr_payload().split("\n")), 6)
 # The colons went for five bytes when the ceiling was 78; at 1.2 pt there is
 # no need, and a person reads the MAC off a phone screen.
 check_true("the MAC keeps its colons", ":" in sample().qr_payload())
@@ -426,8 +426,20 @@ check_true("the type is printed beside the name",
            f"Chest-Std-02 · 80" in _tx,
            [d for d in re.findall(r"<pt:data>([^<]*)</pt:data>", _tx)
             if "Chest" in d])
-check_true("and is NOT in the code, which already knows the shape",
-           "80" not in sample().qr_payload().split(chr(10))[0])
+# And it IS in the code as well now. The widths carry the same fact and
+# carry it better, but only for a reader holding the table -- which nobody
+# is, at a cabinet, with a phone. It costs EC-Q down to EC-M, a level that
+# samples C and D of the density strip both scanned at.
+check("the code spells the type out too",
+      [l for l in sample().qr_payload().split(chr(10)) if l.startswith("type")],
+      ["type 80"])
+check("the widths stay, being the finer answer",
+      [l for l in sample().qr_payload().split(chr(10)) if l.startswith("w ")],
+      ["w 8888888888"])
+_t_ecc = labels.fit_qr(sample(fw="1.12.2", built="2026-09-25",
+                              mod="v3.4.0").qr_payload())[2]
+check_true("which the whole payload still fits inside",
+           _t_ecc in ("h", "q", "m"), f"EC-{_t_ecc.upper()}")
 
 print("\na serial too long to encode is refused before any tape is spent")
 # Forty characters used to be refused. At 1.2 pt the code holds 134 bytes

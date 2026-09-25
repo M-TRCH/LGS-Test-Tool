@@ -710,6 +710,18 @@ class CabinetLabel:
         if self.mac:
             lines.append(self.mac)
         if self.rows:
+            # The type, spelled out. It IS derivable from the widths below --
+            # no two presets share a widths string, and the widths are the
+            # finer answer, telling a 10x4 forty from a 5x8 one where "40"
+            # cannot. But derivable is not the same as readable: someone
+            # scanning this with a phone sees "w 8884444888" and has to know
+            # the table to get "64" out of it, and nobody carries the table.
+            # It costs a level of error correction -- EC-Q down to EC-M --
+            # and EC-M is what samples C and D of the density strip scanned
+            # at, and what the label printed at yesterday.
+            # (cabinet_type is defined below; the name resolves when this
+            # runs, not when the class is built.)
+            lines.append(f"type {cabinet_type(self.rows)}")
             lines.append("ch " + "".join(str(ch) for _r, _i, ch in self.rows))
             widths = [int(ids.split("-")[1]) - int(ids.split("-")[0]) + 1
                       for _r, ids, _c in self.rows]
