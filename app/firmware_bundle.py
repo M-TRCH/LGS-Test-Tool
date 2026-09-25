@@ -50,13 +50,22 @@ class BundledImage:
 # Newest first: the UI offers the first entry of a kind as its default.
 IMAGES: tuple = (
     BundledImage(
+        key="gateway_v1.12.4",
+        kind=KIND_GATEWAY,
+        version="v1.12.4",
+        blob="gateway_opta_v1.12.4.bin",
+        sha256="4f42f4ff75929221ecaaee8a81481b2b3f6545040e526441f39e890cd86af06c",
+        source="LGS-Gateway-Arduino-Opta release v1.12.4",
+        note="panel.cabinet 0 = no preset, follow the shape",
+    ),
+    BundledImage(
         key="gateway_v1.12.3",
         kind=KIND_GATEWAY,
         version="v1.12.3",
         blob="gateway_opta_v1.12.3.bin",
         sha256="cebfc2add0ec892c101b7437820636fdab952b48aa74ed9fbdb4eabf70b5ba1a",
         source="LGS-Gateway-Arduino-Opta release v1.12.3",
-        note="all_8 panel action for the mask cabinets",
+        note="previous release, for rollback",
     ),
     BundledImage(
         key="gateway_v1.12.2",

@@ -16,6 +16,55 @@ class Release:
 
 
 RELEASES: tuple = (
+    Release("1.9.0", "2026-09-25", (
+        "The fleet soak is now fit to be left alone over a long weekend. "
+        "Give it a duration in hours and it stops by itself, clearing every "
+        "cabinet on the way out, with the time remaining counting down in "
+        "the status line; 0 keeps the old run-until-stopped behaviour. When "
+        "a run ends — by the clock, the Stop button, or every cabinet "
+        "failing — it writes a verdict: one row per cabinet with passes, "
+        "reads, failures, reboots, watchdogs, worst read, silent ids, and "
+        "how many cabinets were completely clean. The verdict is shown on "
+        "the card AND written to exports/fleet-<start>.txt, because closing "
+        "the app is the normal end of a weekend run.",
+        "The verdict includes a number nothing measured before: reply "
+        "frames the Modbus library silently threw away. A reply carrying "
+        "the wrong unit id is discarded and retried, so a two-hour run in "
+        "September reported zero failures while the bus lost sync twelve "
+        "times. These are now counted per cabinet. The client timeout also "
+        "rose from 3.5 s to 6 s — the discarded frames were replies "
+        "arriving after the tool had given up.",
+        "A fleet run now holds the sleep block. It never did: only the "
+        "single-cabinet soak was checked, so a laptop that suspends at "
+        "midnight ended a weekend fleet run at midnight with nothing in "
+        "the CSVs saying why.",
+        "Check the gateways: one button fills every roster row with the "
+        "gateway's firmware, how many of its two TCP slots are taken, and "
+        "any other client connected — before the run starts, not after it "
+        "is refused. A gateway whose client vanished without closing (an "
+        "IP change, a killed process) holds its slot until reboot, and now "
+        "that is visible.",
+        "The roster can be exported and imported as CSV — typed once, "
+        "carried between machines, reviewable in a spreadsheet. Import "
+        "tolerates what Excel produces (BOM, CRLF, quoted commas, Thai "
+        "code page) and names every line it cannot use; the old roster is "
+        "only replaced once the whole file parses.",
+        "The fleet card now says which Bus-soak settings it inherits, and "
+        "warns in orange when the pass gap sits in the 0.4–0.9 s band that "
+        "makes healthy modules look chronically slow. The remove button is "
+        "a red bin with a tooltip instead of a grey cross nobody found.",
+        "Labels: the QR now carries the cabinet type spelled out, the "
+        "channel map, row widths, the gateway firmware WITH the date it "
+        "was read, and — optionally, via a ~22 s survey — what firmware "
+        "the modules run (one version if they agree, lowest–highest if "
+        "not). The symbol shrank to a 0.8 pt cell, print-proven at full "
+        "density, and its version is pinned so the drawn size can never "
+        "disagree with the declared box. Frames: the Editor's own rounded "
+        "frame or a plain bold border.",
+        "Bundled gateway firmware v1.12.4 (panel.cabinet 0 = no preset, "
+        "follow the shape) — deployed across the fleet 2026-09-25; v1.12.3 "
+        "kept for rollback.",
+    )),
     Release("1.8.0", "2026-09-24", (
         "New Labels tab: a Brother P-touch sticker for the front of a "
         "cabinet, saved as a .lbx and printed from P-touch Editor. Press "
