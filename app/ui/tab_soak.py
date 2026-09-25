@@ -369,6 +369,8 @@ def build(ctx: Ctx) -> None:
             # saying so. It is red for pharmacy because that is the one that
             # touches the hardware.
             fleet_mode = ui.label().classes("text-sm")
+            fleet_inherits = ui.label().classes("text-xs text-grey")
+            fleet_gap_warn = ui.label().classes("text-xs text-orange font-bold")
 
             def fleet_mode_text() -> None:
                 pharm = mode.value == "pharmacy"
@@ -376,6 +378,27 @@ def build(ctx: Ctx) -> None:
                                     if pharm else t("fleet.will_run_poll"))
                 fleet_mode.classes(replace="text-sm "
                                    + ("text-red" if pharm else "text-grey"))
+                # Every field on the Bus soak card drives this run too -- the
+                # whole SoakConfig comes from up there and only the id list
+                # differs. The mode has been called out since it can write
+                # coils; the rest were silent, and the pass gap is the one
+                # that cost this project months. Somebody sets 0.5 s for a
+                # single-cabinet test, scrolls down, starts a weekend run on
+                # ten cabinets, and gets back the phantom "chronically slow
+                # modules" that took until 2026-08-31 to explain.
+                inherited = t("fleet.inherits",
+                              gap=f"{float(gap.value or 2.0):g}",
+                              every=int(every.value or 5),
+                              slow=int(slow.value or 400))
+                if pharm:
+                    inherited += t("fleet.inherits_pharmacy",
+                                   picks=int(picks.value or 2000),
+                                   dwell=f"{float(dwell.value or 20):g}",
+                                   wins=int(wins.value or 8))
+                fleet_inherits.set_text(inherited)
+                bad_gap = 0.4 <= float(gap.value or 2.0) <= 0.9
+                fleet_gap_warn.set_text(t("fleet.gap_band") if bad_gap else "")
+                fleet_gap_warn.visible = bad_gap
 
             mode.on_value_change(lambda _e: fleet_mode_text())
             ui.timer(1.0, fleet_mode_text)
