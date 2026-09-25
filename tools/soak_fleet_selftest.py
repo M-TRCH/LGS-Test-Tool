@@ -352,6 +352,51 @@ def case_discarded_frames_reach_the_summary():
     return None
 
 
+def case_roster_csv_round_trips():
+    keys = {"lgs40", "lgs64", "lgs80"}
+    rows = [("Queen", "192.168.0.227", "lgs64"),
+            ("Chest-Std-07", "192.168.0.234", "lgs40")]
+    back, problems = soak_fleet.roster_from_csv(
+        soak_fleet.roster_to_csv(rows), keys)
+    if problems:
+        return f"a roster this tool wrote came back with {problems}"
+    if back != rows:
+        return f"round trip changed it: {back}"
+    return None
+
+
+def case_roster_csv_survives_a_spreadsheet():
+    """Everything Excel does to a file on the way out."""
+    keys = {"lgs40", "lgs80"}
+    text = ("﻿name,host,type" + chr(13) + chr(10)
+            + " Chest-Std-07 , 192.168.0.234 , lgs40 " + chr(13) + chr(10)
+            + chr(13) + chr(10)
+            + '"Ward 3, bed 4",192.168.0.235,lgs80' + chr(13) + chr(10))
+    rows, problems = soak_fleet.roster_from_csv(text, keys)
+    if problems:
+        return f"clean spreadsheet output rejected: {problems}"
+    if rows != [("Chest-Std-07", "192.168.0.234", "lgs40"),
+                ("Ward 3, bed 4", "192.168.0.235", "lgs80")]:
+        return f"parsed wrong: {rows}"
+    return None
+
+
+def case_roster_csv_reports_what_it_could_not_use():
+    """A bad line is named, not silently dropped, and never guessed at."""
+    keys = {"lgs80"}
+    rows, problems = soak_fleet.roster_from_csv(
+        "Queen" + chr(10) + "ok,192.168.0.1,lgs99" + chr(10), keys)
+    if len(rows) != 1 or rows[0][2] != "lgs80":
+        return f"an unknown type was not replaced: {rows}"
+    if not any("line 1" in p for p in problems):
+        return f"a row with no address was not reported: {problems}"
+    if not any("lgs99" in p for p in problems):
+        return f"an unknown type was replaced in silence: {problems}"
+    if soak_fleet.roster_from_csv("", keys)[1] == []:
+        return "an empty file reported nothing at all"
+    return None
+
+
 CASES = (
     ("thai name survives", case_thai_survives),
     ("illegal chars removed", case_illegal_chars_go),
@@ -372,6 +417,9 @@ CASES = (
     ("clean means ran+answered", case_clean_means_ran_and_answered),
     ("the summary judges it", case_summary_judges_the_run),
     ("discarded frames counted", case_discarded_frames_reach_the_summary),
+    ("roster csv round-trips", case_roster_csv_round_trips),
+    ("roster csv from excel", case_roster_csv_survives_a_spreadsheet),
+    ("roster csv names bad rows", case_roster_csv_reports_what_it_could_not_use),
 )
 
 

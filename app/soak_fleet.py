@@ -638,3 +638,66 @@ def probe_gateway(host: str, port: int = 502, *, timeout_s: float = 4.0) -> str:
         return f"{type(exc).__name__}: {exc}"[:60]
     finally:
         client.close()
+
+
+# -- Carrying a roster between machines -------------------------------------
+# Ten cabinets is thirty fields typed by hand, and they get typed on a laptop
+# and then wanted on the server, or rebuilt after a reinstall. CSV rather
+# than JSON because the people who own these addresses keep them in a
+# spreadsheet, and because a roster that can be diffed can be reviewed.
+
+ROSTER_COLUMNS = ("name", "host", "type")
+
+
+def _csv_cell(value) -> str:
+    text = str(value)
+    if any(ch in text for ch in ',"' + "\n" + chr(13)):
+        return '"' + text.replace('"', '""') + '"'
+    return text
+
+
+def roster_to_csv(rows) -> str:
+    """The roster as text, with a header, ready to hand to someone else."""
+    out = [",".join(ROSTER_COLUMNS)]
+    for name, host, key in rows:
+        out.append(",".join(_csv_cell(v) for v in
+                            (name.strip(), host.strip(), key or "lgs80")))
+    return "\n".join(out) + "\n"
+
+
+def roster_from_csv(text: str, known_keys) -> tuple:
+    """(rows, problems) from an uploaded roster.
+
+    Nothing comes back half-parsed by accident: the caller is replacing a
+    roster somebody typed by hand, so it gets both lists and decides. A file
+    that is wrong in the middle must not leave an operator with the first
+    half of a new list and none of their old one.
+
+    Tolerated, because a spreadsheet produces all of it: a byte-order mark, a
+    header row or none, blank lines, CRLF, spaces around the commas, and a
+    type column that is missing or names a cabinet this build does not know.
+    """
+    import csv
+    import io
+
+    rows, problems = [], []
+    reader = csv.reader(io.StringIO((text or "").lstrip("\ufeff")))
+    for lineno, raw in enumerate(reader, start=1):
+        cells = [c.strip() for c in raw]
+        while cells and not cells[-1]:
+            cells.pop()
+        if not cells:
+            continue
+        if lineno == 1 and [c.lower() for c in cells[:2]] == ["name", "host"]:
+            continue                       # a header, not a cabinet
+        if len(cells) < 2 or not cells[1]:
+            problems.append(f"line {lineno}: no gateway address")
+            continue
+        key = cells[2] if len(cells) > 2 and cells[2] else "lgs80"
+        if key not in known_keys:
+            problems.append(f"line {lineno}: unknown type {key!r}, using lgs80")
+            key = "lgs80"
+        rows.append((cells[0], cells[1], key))
+    if not rows and not problems:
+        problems.append("no cabinets in the file")
+    return rows, problems

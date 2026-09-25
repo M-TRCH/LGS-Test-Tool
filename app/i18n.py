@@ -357,6 +357,11 @@ TEXTS: dict[str, dict[str, str]] = {
     "fleet.add": {"en": "add cabinet", "th": "เพิ่มตู้"},
     "fleet.drop": {"en": "Remove this cabinet from the roster",
                    "th": "ลบตู้นี้ออกจากรายชื่อ"},
+    "fleet.export": {"en": "Export list", "th": "ส่งออกรายชื่อ"},
+    "fleet.import": {"en": "Import list (.csv)",
+                     "th": "นำเข้ารายชื่อ (.csv)"},
+    "fleet.imported": {"en": "{n} cabinets loaded, replacing the roster",
+                       "th": "โหลดมา {n} ตู้ แทนรายชื่อเดิม"},
     "fleet.probe": {"en": "Check the gateways", "th": "ตรวจเกตเวย์"},
     "fleet.hours": {"en": "Run for (hours)", "th": "รันนาน (ชั่วโมง)"},
     "fleet.hours_tip": {

@@ -311,6 +311,54 @@ def build(ctx: Ctx) -> None:
 
             ui.button(t("fleet.probe"), icon="travel_explore",
                       on_click=probe_all).props("flat dense")
+
+            def export_roster() -> None:
+                text = soak_fleet.roster_to_csv(
+                    ((e["name"].value or ""), (e["host"].value or ""),
+                     e["cab"].value) for e in fleet_rows)
+                ui.download(text.encode("utf-8"), "lgs-fleet.csv")
+
+            def import_roster(event) -> None:
+                raw = event.content.read()
+                try:
+                    text = raw.decode("utf-8")
+                except UnicodeDecodeError:
+                    # Excel on a Thai Windows writes cp874, and a roster is
+                    # exactly the file somebody will have opened in Excel.
+                    text = raw.decode("cp874", "replace")
+                rows, problems = soak_fleet.roster_from_csv(
+                    text, {lay.key for lay in CABINET_LAYOUTS})
+                for problem in problems:
+                    ui.notify(problem, type="warning")
+                if not rows:
+                    return
+                # Swapped only once the file has parsed. Half a new roster
+                # and none of the old one is the worst outcome here: the old
+                # one was typed by hand and is written down nowhere else.
+                for entry in list(fleet_rows):
+                    rows_box.remove(entry["row"])
+                    fleet_rows.remove(entry)
+                for name, host, key in rows:
+                    add_row(name, host, key)
+                save_fleet()
+                ui.notify(t("fleet.imported", n=len(rows)), type="positive")
+
+            ui.button(t("fleet.export"), icon="download",
+                      on_click=export_roster).props("flat dense")
+            # A plain upload rather than a button hiding one: the hidden
+            # variant depends on how Quasar nests its file input and breaks
+            # quietly when that changes. This control gets used twice a year,
+            # and when it does it has to work.
+            # Quasar's uploader prints "0.0B / 0.00%" under its title, which
+            # beside three plain buttons reads as a fault rather than a
+            # control. Only the SUBTITLE goes: hiding the whole header took
+            # the words "Import list" with it and left a control nobody could
+            # name. Scoped to this one widget, and the picker is untouched.
+            ui.add_css(".fleet-import .q-uploader__subtitle { display: none }")
+            ui.upload(label=t("fleet.import"), on_upload=import_roster,
+                      auto_upload=True) \
+                .props("flat dense accept=.csv,.txt")\
+                .classes("fleet-import w-64")
             ui.button(t("fleet.add"), icon="add",
                       on_click=lambda: add_row()).props("flat dense no-caps")
             # WHICH MODE. The fleet inherits the toggle from the
