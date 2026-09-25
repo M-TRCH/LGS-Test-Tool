@@ -8,6 +8,7 @@ still succeeds. Boot counters are what give it away.
 """
 from __future__ import annotations
 
+import asyncio
 import time
 from datetime import datetime
 
@@ -287,6 +288,21 @@ def build(ctx: Ctx) -> None:
                     fleet_rows.append(entry)
 
         with ui.row().classes("items-center gap-2 q-mt-sm"):
+            # Read every gateway before committing to the run. Cheap, and
+            # the answer it gives most often -- "free" -- is the one worth
+            # having on a Friday evening.
+            async def probe_all() -> None:
+                for entry in fleet_rows:
+                    target = (entry["host"].value or "").strip()
+                    if not target:
+                        continue
+                    entry["live"].set_text("checking ...")
+                    await asyncio.sleep(0)          # let the row repaint
+                    entry["live"].set_text(
+                        await asyncio.to_thread(soak_fleet.probe_gateway, target))
+
+            ui.button(t("fleet.probe"), icon="travel_explore",
+                      on_click=probe_all).props("flat dense")
             ui.button(t("fleet.add"), icon="add",
                       on_click=lambda: add_row()).props("flat dense no-caps")
             # WHICH MODE. The fleet inherits the toggle from the

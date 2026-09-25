@@ -355,6 +355,7 @@ TEXTS: dict[str, dict[str, str]] = {
     "fleet.host": {"en": "gateway IP", "th": "IP เกตเวย์"},
     "fleet.cabinet": {"en": "shape", "th": "รูปตู้"},
     "fleet.add": {"en": "add cabinet", "th": "เพิ่มตู้"},
+    "fleet.probe": {"en": "Check the gateways", "th": "ตรวจเกตเวย์"},
     "fleet.hours": {"en": "Run for (hours)", "th": "รันนาน (ชั่วโมง)"},
     "fleet.hours_tip": {
         "en": "Stop by itself after this many hours, clearing every "

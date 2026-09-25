@@ -580,3 +580,61 @@ def summarise(tallies, framer=None, *, started: str = "",
         else:
             out.append("reply frames discarded as the wrong unit id: none")
     return "\n".join(out)
+
+
+def probe_gateway(host: str, port: int = 502, *, timeout_s: float = 4.0) -> str:
+    """One line about a gateway, for a roster row before the run starts.
+
+    A fleet run is refused when somebody else already holds a slot, and
+    until now the only way to find out was to start the run and read the
+    refusal. That is a poor trade on a Friday evening.
+
+    It is worth more than convenience. On 2026-09-25 the Queen refused a run
+    because of a peer at 192.168.0.27 -- which was THIS MACHINE's address
+    earlier the same day, before DHCP moved it to .11. The gateway had not
+    reaped the socket of a process that no longer existed, and the only way
+    back was to reboot the gateway. A slot count on the row would have said
+    that in a second, and it is the same failure a hospital server will hit
+    the first time its address changes.
+    """
+    from pymodbus.client import ModbusTcpClient
+    client = ModbusTcpClient(host, port=port, timeout=timeout_s)
+    try:
+        if not client.connect():
+            return f"no TCP to {host}:{port}"
+    except Exception as exc:                                     # noqa: BLE001
+        return f"{type(exc).__name__}: {exc}"[:60]
+    try:
+        from .gateway_tcp import GatewayTcpLink, register_pdu
+        register_pdu(client)
+        res = GatewayTcpLink(client).command("INFO")
+        if not res.ok:
+            return "reachable, but no console (fw < 1.12.0 or net.console=0)"
+        info: dict = {}
+        for line in res.lines:
+            for pair in line.split():
+                if "=" in pair:
+                    k, _, v = pair.partition("=")
+                    info.setdefault(k, v)
+        peers = info.get("net.peer", "-")
+        clients = info.get("net.client", "?")
+        mine = local_ip_toward(host)
+        others, dropped_self = [], False
+        for peer in ("" if peers in ("-", "") else peers).split(","):
+            if not peer:
+                continue
+            if not dropped_self and mine and peer.split(":")[0] == mine:
+                dropped_self = True           # this very connection
+                continue
+            others.append(peer)
+        bits = [f"fw {info.get('fw', '?')}", f"{clients}/2 clients"]
+        if others:
+            bits.append("OTHER MASTER: " + ", ".join(others))
+            bits.append("a fleet run will be refused")
+        else:
+            bits.append("free")
+        return " · ".join(bits)
+    except Exception as exc:                                     # noqa: BLE001
+        return f"{type(exc).__name__}: {exc}"[:60]
+    finally:
+        client.close()
