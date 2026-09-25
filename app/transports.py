@@ -25,9 +25,26 @@ DEFAULT_TCP_PORT = 502
 # A client that gives up before the gateway does gets the worst of both — the
 # read fails AND the late answer desynchronises the reads behind it: measured
 # on the bench at a 1 s timeout, one crossing took the next three modules with
-# it. 3.5 s clears a 2600 ms budget with margin. This is exactly the rule the
-# hospital's server has to follow, so the tool had better follow it too.
-HUB_SAFE_TIMEOUT_S = 3.5
+# it. This is exactly the rule the hospital's server has to follow, so the
+# tool had better follow it too.
+#
+# It was 3.5 s, on the reasoning that this "clears a 2600 ms budget with
+# margin". The arithmetic was wrong: bus.hub_budget_ms is what the gateway
+# will spend WAITING FOR THE CHANNEL, on top of the ~2.2 s settle, so the
+# Queen's 2200 + 2600 is 4800 ms before a reply is even late. 3.5 s did not
+# clear it, it sat underneath it.
+#
+# The 2 h fleet soak of 2026-09-22 shows what that cost. It reported 41
+# passes, 21,320 reads and zero failures -- while pymodbus threw away twelve
+# frames with "request ask for id=N but got id=N-1", in two bursts, every one
+# of them a reply one address stale. The slow reads it did record land at
+# 3656-3875 ms: 3500 ms of timed-out first attempt plus a retry that worked.
+#
+# 6 s clears the gateway's own 4800 ms worst case with margin. It costs
+# nothing in normal traffic -- a module that is genuinely silent is answered
+# for by the GATEWAY inside rs485.t1_ms, not by this timeout, which only ever
+# bites on a hub crossing, which is the case it exists for.
+HUB_SAFE_TIMEOUT_S = 6.0
 
 
 @dataclass

@@ -40,6 +40,7 @@ from typing import Callable, Optional, Sequence
 
 from . import soak
 from .ntp_server import local_ip_toward
+from . import framer_watch
 from .transports import HUB_SAFE_TIMEOUT_S, TcpSettings, make_client
 
 
@@ -469,6 +470,12 @@ def run_fleet(cabinets: Sequence[FleetCabinet], cfg: soak.SoakConfig,
             handle.close()
             ops.close()
 
+    # Start counting what pymodbus discards before the first read. A reply
+    # carrying the wrong unit id is thrown away and retried, so the run
+    # otherwise reports a clean pass over a bus that desynchronised -- which
+    # is exactly the measurement a timeout change has to be judged on.
+    framer_watch.start()
+    framer_watch.reset()
     threads = [threading.Thread(target=one, args=(c,), name=f"soak-{c.name}",
                                 daemon=True) for c in cabinets]
     for th in threads:
