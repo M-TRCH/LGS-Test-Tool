@@ -14,12 +14,14 @@ gateway takes two TCP clients and has one bus behind them, so two fleet rows
 aimed at one gateway is the same fault the tool refuses from outsiders,
 committed by the tool itself.
 """
+import logging
 import sys
+import threading
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app import soak_fleet                                        # noqa: E402
+from app import framer_watch, soak_fleet                          # noqa: E402
 
 
 def cab(name, host="192.168.0.204"):
@@ -272,6 +274,84 @@ def case_roster_handles_none():
     return None
 
 
+# ── the verdict ────────────────────────────────────────────────────────────
+# A weekend run is read on Tuesday by someone who was not there, so the
+# summary IS the product. Two things it has to get right: a cabinet that
+# never ran must not be counted clean, and the discarded-frame count must
+# reach the text -- that is the number which let the 2026-09-22 run report
+# zero failures while the bus lost sync twelve times.
+def _tallies():
+    ran = soak_fleet.CabinetTally(name="Queen", modules=64, passes=40,
+                                  reads=2560)
+    dirty = soak_fleet.CabinetTally(name="Chest-Std-04", modules=80, passes=38,
+                                    reads=3040, fails=2)
+    dirty.silent.add(88)
+    never = soak_fleet.CabinetTally(name="Chest-Std-05", modules=80,
+                                    note="cannot reach 192.168.0.232:502")
+    quiet = soak_fleet.CabinetTally(name="Chest-Std-09", modules=40, passes=5,
+                                    reads=200)
+    quiet.silent.add(33)
+    return ran, dirty, never, quiet
+
+
+def case_clean_means_ran_and_answered():
+    ran, dirty, never, quiet = _tallies()
+    if never.ran:
+        return "a cabinet with no passes counted as having run"
+    for tally, why in ((never, "never ran"), (dirty, "had failures"),
+                       (quiet, "had a silent module")):
+        if tally.clean:
+            return f"{tally.name} counted clean although it {why}"
+    if not ran.clean:
+        return "a cabinet with no failures and no silence was not clean"
+    return None
+
+
+def case_summary_judges_the_run():
+    framer_watch.reset()
+    text = soak_fleet.summarise(_tallies(), framer_watch.snapshot(),
+                                started="2026-09-25 10:58:56",
+                                duration_s=3600.0)
+    if "1 of 4 cabinets completely clean" not in text:
+        return f"verdict line wrong:{NL}{text}"
+    if "did not run" not in text or "192.168.0.232" not in text:
+        return "a cabinet that never ran does not say so, with its reason"
+    if "88" not in text:
+        return "silent ids never reach the table"
+    if "discarded as the wrong unit id: none" not in text:
+        return "a quiet framer is omitted rather than stated"
+    return None
+
+
+def case_discarded_frames_reach_the_summary():
+    """And are filed against the cabinet whose thread saw them.
+
+    run_fleet names one thread per cabinet, which is the only thing tying a
+    pymodbus log line -- it carries no cabinet, no host, nothing -- to the
+    gateway it came from.
+    """
+    framer_watch.start()
+    framer_watch.reset()
+    th = threading.Thread(
+        target=lambda: logging.getLogger("pymodbus.logging").error(
+            "ERROR: request ask for id=42 but got id=41, Skipping."),
+        name=framer_watch.owner_for("Chest-Std-04"))
+    th.start()
+    th.join()
+    ran, dirty, _never, _quiet = _tallies()
+    text = soak_fleet.summarise([ran, dirty], framer_watch.snapshot(),
+                                started="x", duration_s=60.0)
+    framer_watch.reset()
+    if "discarded as the wrong unit id: 1" not in text:
+        return f"the count never reached the summary:{NL}{text}"
+    row = [ln for ln in text.splitlines() if "Chest-Std-04" in ln][0]
+    if row.split()[-2] != "1":
+        return f"not filed against the right cabinet: {row!r}"
+    if [ln for ln in text.splitlines() if ln.startswith("Queen")][0].split()[-2] != "0":
+        return "a cabinet that saw none was charged for it"
+    return None
+
+
 CASES = (
     ("thai name survives", case_thai_survives),
     ("illegal chars removed", case_illegal_chars_go),
@@ -289,6 +369,9 @@ CASES = (
     ("roster survives junk", case_roster_survives_a_mangled_config),
     ("roster handles None", case_roster_handles_none),
     ("conflict with main conn", case_conflict_with_main_connection),
+    ("clean means ran+answered", case_clean_means_ran_and_answered),
+    ("the summary judges it", case_summary_judges_the_run),
+    ("discarded frames counted", case_discarded_frames_reach_the_summary),
 )
 
 

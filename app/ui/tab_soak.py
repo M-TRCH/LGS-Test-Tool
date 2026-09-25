@@ -8,11 +8,13 @@ still succeeds. Boot counters are what give it away.
 """
 from __future__ import annotations
 
+import time
 from datetime import datetime
 
 from nicegui import ui
 
-from .. import applog, config_store, keep_awake, soak, soak_fleet
+from .. import (applog, config_store, framer_watch, keep_awake, soak,
+                soak_fleet)
 from ..i18n import t
 from ..lgs_map import CABINET_LAYOUTS, resolve_cabinet
 from . import Ctx, helps
@@ -244,7 +246,8 @@ def build(ctx: Ctx) -> None:
     # A fleet writes one CSV per cabinet so soak_csv.py and the site report
     # read them exactly as they read a single-cabinet run.
     fleet_rows: list = []
-    fleet_state: dict = {"seq": 0}
+    fleet_state: dict = {"seq": 0, "tally": {}, "deadline": 0.0,
+                         "started": "", "t0": 0.0, "early": False}
 
     with ui.card().classes("p-3 w-full q-mt-md"):
         helps(ui.label(t("fleet.card")).classes("font-bold text-lg"), t("fleet.hint"))
@@ -305,11 +308,27 @@ def build(ctx: Ctx) -> None:
             mode.on_value_change(lambda _e: fleet_mode_text())
             ui.timer(1.0, fleet_mode_text)
             fleet_mode_text()
+            # A run without an end is a run somebody has to remember to
+            # stop. The ones that matter here are weekends: set up on a
+            # Friday, read on a Tuesday, by which time nobody is going to
+            # recall which day the polling was supposed to have finished.
+            # Zero means "until I press stop", which is what this card did
+            # before and is still the right answer for a ten-minute check.
+            fleet_hours = ui.number(t("fleet.hours"), value=0, min=0, max=336,
+                                    step=0.5, format="%g")                 .props("dense outlined").classes("w-36")
+            helps(fleet_hours, t("fleet.hours_tip"))
             fleet_start = ui.button(t("fleet.start"), color="primary")
             fleet_stop = ui.button(t("fleet.stop"), color="red").props("outline")
             fleet_status = ui.label(t("soak.idle")).classes("text-sm")
 
         fleet_log = ui.log(max_lines=300).classes("w-full h-40 font-mono text-xs q-mt-sm")
+        # The log scrolls and is capped at 300 lines; a three-day run throws
+        # away everything that happened on the Saturday. The verdict has to
+        # live somewhere that does not scroll, and on DISK as well, because
+        # the app being closed is the normal end of a weekend run.
+        fleet_summary = ui.label("").classes(
+            "w-full font-mono text-xs whitespace-pre q-mt-sm")
+        fleet_summary.visible = False
 
     # Restore the saved roster. The single hardcoded row is only what a
     # brand-new install starts from.
@@ -357,16 +376,72 @@ def build(ctx: Ctx) -> None:
             return
         fleet_log.clear()
         fleet_log.push(f"{datetime.now():%H:%M:%S}  start · {len(cabs)} cabinets")
-        fleet_status.set_text(t("fleet.running", n=len(cabs)))
+        # Everything the verdict is built from is reset here rather than at
+        # the end, so a second run cannot inherit the first one's numbers.
+        fleet_state["tally"] = {c.name: soak_fleet.CabinetTally(
+            name=c.name, modules=len(c.ids)) for c in cabs}
+        fleet_state["t0"] = time.monotonic()
+        fleet_state["started"] = f"{datetime.now():%Y-%m-%d %H:%M:%S}"
+        fleet_state["early"] = False
+        hours = float(fleet_hours.value or 0)
+        fleet_state["deadline"] = (time.monotonic() + hours * 3600.0
+                                   if hours > 0 else 0.0)
+        framer_watch.start()
+        framer_watch.reset()
+        fleet_summary.visible = False
+        fleet_summary.set_text("")
+        fleet_status.set_text(t("fleet.running", n=len(cabs))
+                              + (f" - {hours:g} h" if hours > 0 else ""))
         fleet_status.classes(replace="text-sm text-green")
 
     fleet_start.on_click(do_fleet_start)
     fleet_stop.on_click(lambda: worker.cancel_fleet())
 
+    def finish_fleet() -> None:
+        """Write the verdict where a Tuesday morning can find it."""
+        tallies = list(fleet_state["tally"].values())
+        if not tallies:
+            return
+        text = soak_fleet.summarise(
+            tallies, framer_watch.snapshot(),
+            started=fleet_state["started"],
+            duration_s=time.monotonic() - fleet_state["t0"],
+            stopped_early=bool(fleet_state["early"]))
+        fleet_summary.set_text(text)
+        fleet_summary.visible = True
+        # On disk too. The app being closed is the ordinary end of a weekend
+        # run, and a verdict that lives only in a browser tab does not
+        # survive it. Beside the CSVs, so the whole run is one folder.
+        try:
+            stem = (fleet_state["started"].replace(":", "")
+                    .replace("-", "").replace(" ", "-"))
+            path = config_store.data_dir() / "exports" / f"fleet-{stem}.txt"
+            path.write_text(text, encoding="utf-8")
+            fleet_log.push(f"{datetime.now():%H:%M:%S}  summary written to "
+                           f"{path.name}")
+        except OSError as exc:
+            # Never let the disk be the reason a finished run reports nothing.
+            fleet_log.push(f"{datetime.now():%H:%M:%S}  could not write the "
+                           f"summary: {exc}")
+        fleet_state["tally"] = {}
+
     def fleet_drain() -> None:
         running = worker.fleet_running()
         fleet_start.set_enabled(not running)
         fleet_stop.set_enabled(running)
+        # The clock. Checked here rather than on a thread of its own, so that
+        # stopping is the same code path whoever asks for it.
+        if running and fleet_state["deadline"]:
+            left = fleet_state["deadline"] - time.monotonic()
+            if left <= 0:
+                fleet_state["deadline"] = 0.0
+                fleet_log.push(f"{datetime.now():%H:%M:%S}  time is up - "
+                               f"stopping and clearing every cabinet")
+                worker.cancel_fleet()
+            else:
+                fleet_status.set_text(t("fleet.running_left",
+                                        n=len(fleet_state["tally"]),
+                                        left=_dur(left)))
         fleet_state["seq"], events = worker.drain_fleet_events(fleet_state["seq"])
         # STRIPPED, to match FleetCabinet.name. Keying on the raw field value
         # meant a name typed with a trailing space never matched its own
@@ -383,12 +458,20 @@ def build(ctx: Ctx) -> None:
                                f"REFUSED — another master: {ev.peers}")
                 if ev.cabinet in by_name:
                     by_name[ev.cabinet]["live"].set_text(f"refused · {ev.peers}")
+                if ev.cabinet in fleet_state["tally"]:
+                    fleet_state["tally"][ev.cabinet].note = (
+                        f"refused, another master: {ev.peers}")
             elif isinstance(ev, soak_fleet.FleetFailed):
                 fleet_log.push(f"{datetime.now():%H:%M:%S}  {ev.cabinet} · {ev.reason}")
+                if ev.cabinet in fleet_state["tally"]:
+                    fleet_state["tally"][ev.cabinet].note = ev.reason
                 if ev.cabinet in by_name:
                     by_name[ev.cabinet]["live"].set_text(ev.reason)
             elif isinstance(ev, soak_fleet.FleetEvent):
                 inner = ev.inner
+                tally = fleet_state["tally"].get(ev.cabinet)
+                if tally is not None:
+                    tally.absorb(inner)
                 if isinstance(inner, soak.SoakTick) and ev.cabinet in by_name:
                     by_name[ev.cabinet]["live"].set_text(
                         f"{_dur(inner.elapsed_s)} · {inner.passes} passes · "
@@ -400,8 +483,14 @@ def build(ctx: Ctx) -> None:
                 elif isinstance(inner, soak.SoakDone):
                     fleet_log.push(f"{datetime.now():%H:%M:%S}  {ev.cabinet} · "
                                    f"stopped · {inner.summary}")
-        if not running and fleet_status.text == t("fleet.running", n=len(fleet_rows)):
+        if not running and fleet_state["tally"]:
+            # However it ended - the clock, the stop button, or every cabinet
+            # giving up - the run gets judged exactly once.
+            fleet_state["early"] = bool(fleet_state["deadline"])
+            fleet_state["deadline"] = 0.0
+            finish_fleet()
             fleet_status.set_text(t("soak.idle"))
+            fleet_status.classes(replace="text-sm")
 
     ui.timer(0.5, fleet_drain)
     fleet_drain()

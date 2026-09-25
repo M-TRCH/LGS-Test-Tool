@@ -355,6 +355,17 @@ TEXTS: dict[str, dict[str, str]] = {
     "fleet.host": {"en": "gateway IP", "th": "IP เกตเวย์"},
     "fleet.cabinet": {"en": "shape", "th": "รูปตู้"},
     "fleet.add": {"en": "add cabinet", "th": "เพิ่มตู้"},
+    "fleet.hours": {"en": "Run for (hours)", "th": "รันนาน (ชั่วโมง)"},
+    "fleet.hours_tip": {
+        "en": "Stop by itself after this many hours, clearing every "
+              "cabinet on the way out. 0 means run until Stop is "
+              "pressed, which is right for a ten-minute check and is "
+              "how a weekend run gets left polling into Tuesday.",
+        "th": "หยุดเองเมื่อครบเวลา และเคลียร์ทุกตู้ตอนออก ใส่ 0 = "
+              "รันจนกว่าจะกด Stop เหมาะกับการเช็คสิบนาที "
+              "และเป็นวิธีที่ทำให้การรันข้ามวันหยุดยิงบัสต่อถึงวันอังคาร"},
+    "fleet.running_left": {"en": "running · {n} cabinets · {left} left",
+                           "th": "กำลังรัน · {n} ตู้ · เหลือ {left}"},
     "fleet.start": {"en": "START FLEET", "th": "เริ่มทั้งกลุ่ม"},
     "fleet.stop": {"en": "STOP FLEET", "th": "หยุดทั้งกลุ่ม"},
     "fleet.none": {"en": "no cabinet has an IP yet", "th": "ยังไม่ได้ใส่ IP สักตู้"},

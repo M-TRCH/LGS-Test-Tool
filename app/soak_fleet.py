@@ -33,6 +33,7 @@ from __future__ import annotations
 import re
 import threading
 import time
+from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -483,3 +484,99 @@ def run_fleet(cabinets: Sequence[FleetCabinet], cfg: soak.SoakConfig,
     for th in threads:
         th.join()
     return reports
+
+# -- The verdict ------------------------------------------------------------
+# A weekend run is read on Tuesday, by someone who was not there. Everything
+# below exists so that what they read is a table and a sentence rather than
+# eight hundred lines of scrolled-past log.
+
+
+@dataclass
+class CabinetTally:
+    """What one cabinet did, accumulated from its own ticks and anomalies."""
+    name: str
+    modules: int = 0
+    passes: int = 0
+    reads: int = 0
+    fails: int = 0
+    reboots: int = 0
+    watchdogs: int = 0
+    crossings: int = 0
+    worst_ms: float = 0.0
+    elapsed_s: float = 0.0
+    silent: set = field(default_factory=set)
+    kinds: Counter = field(default_factory=Counter)
+    note: str = ""              # why it never ran, if it never ran
+
+    @property
+    def ran(self) -> bool:
+        return self.passes > 0
+
+    @property
+    def clean(self) -> bool:
+        return self.ran and not self.fails and not self.silent
+
+    def absorb(self, inner) -> None:
+        if isinstance(inner, soak.SoakTick):
+            self.passes = inner.passes
+            self.reads = inner.txns
+            self.fails = inner.fails
+            self.reboots = inner.reboots
+            self.watchdogs = inner.watchdogs
+            self.crossings = inner.crossings
+            self.worst_ms = max(self.worst_ms, inner.worst_ms)
+            self.elapsed_s = inner.elapsed_s
+        elif isinstance(inner, soak.SoakAnomaly):
+            item = inner.item
+            self.kinds[item.kind] += 1
+            # A module that missed one read and answered the next is not a
+            # silent module, but it is the only thing that leaves this trace,
+            # so the id is kept and the COUNT beside it says how bad it was.
+            if item.kind == "no_reply":
+                self.silent.add(item.device_id)
+
+
+def summarise(tallies, framer=None, *, started: str = "",
+              duration_s: float = 0.0, stopped_early: bool = False) -> str:
+    """The whole run as text: a table, then a sentence that judges it."""
+    out = []
+    out.append(f"fleet soak  {started}")
+    out.append(f"  ran for {duration_s / 3600:.2f} h"
+               + ("  (stopped early)" if stopped_early else "")
+               + f"   client timeout {HUB_SAFE_TIMEOUT_S} s")
+    out.append("")
+    head = (f"{'cabinet':<15}{'mod':>5}{'pass':>6}{'reads':>9}{'fail':>6}"
+            f"{'rbt':>5}{'wdt':>5}{'cross':>7}{'worst':>8}{'drop':>6}  silent ids")
+    out.append(head)
+    out.append("-" * len(head))
+    clean = 0
+    for t in tallies:
+        if not t.ran:
+            out.append(f"{t.name:<15}{t.modules:>5}   -- did not run --  "
+                       f"{t.note}")
+            continue
+        if t.clean:
+            clean += 1
+        drops = 0 if framer is None else framer.per_owner.get(
+            f"soak-{t.name}", 0)
+        silent = ",".join(str(i) for i in sorted(t.silent)) or "none"
+        out.append(f"{t.name:<15}{t.modules:>5}{t.passes:>6}{t.reads:>9,}"
+                   f"{t.fails:>6}{t.reboots:>5}{t.watchdogs:>5}"
+                   f"{t.crossings:>7}{t.worst_ms:>8.0f}{drops:>6}  {silent}")
+    out.append("")
+    out.append(f"{clean} of {len(tallies)} cabinets completely clean")
+
+    # The number nothing measured before 2026-09-25. pymodbus discards a
+    # reply that carries the wrong unit id, retries, and the retry usually
+    # works -- so a run can report zero failures over a bus that lost sync.
+    if framer is not None:
+        if framer.total:
+            more = "  (at least; pymodbus collapses repeats)" if framer.repeats else ""
+            out.append(f"reply frames discarded as the wrong unit id: "
+                       f"{framer.total}{more}")
+            out.append("  a reply one address stale means a read was abandoned "
+                       "before its answer arrived;")
+            out.append("  the client timeout is the thing to raise.")
+        else:
+            out.append("reply frames discarded as the wrong unit id: none")
+    return "\n".join(out)

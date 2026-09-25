@@ -141,7 +141,14 @@ async def _hold_awake() -> None:
     # was asked for against what was granted.
     was_want, was_held = False, False
     while True:
-        want = worker.soak_running() or ntp_server.server.running
+        # fleet_running is a SEPARATE flag from soak_running, and this
+        # line only ever asked the second one. A fleet run therefore held no
+        # sleep block at all: the card above it says "the machine will not
+        # sleep under the run" and for the multi-cabinet case that was not
+        # true. A weekend run on a laptop that suspends at midnight ends at
+        # midnight, and the CSVs stop without saying why.
+        want = (worker.soak_running() or worker.fleet_running()
+                or ntp_server.server.running)
         held = keep_awake.apply(want)
         if (want, held) != (was_want, was_held):
             was_want, was_held = want, held
