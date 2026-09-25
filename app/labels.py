@@ -748,6 +748,33 @@ def ids_from_rows(rows) -> tuple:
     return tuple(out)
 
 
+# Widths to a cabinet type, and the mapping is one-to-one: no two presets
+# share a widths string. It is also FINER than the slot count -- lgs40 and
+# lgs40r are both forty slots, ten rows of four against five rows of eight,
+# and "40" cannot tell them apart where "4444444444" can. Which is why the
+# type is printed for a person to read and NOT encoded: the code already
+# carries the better answer, and at 127 of 130 bytes adding a worse one
+# would have cost a level of error correction.
+_WIDTHS_TO_KEY: dict = {}
+
+
+def cabinet_type(rows) -> str:
+    """The short type a person says out loud -- "64", "40R" -- or the slot
+    count for a shape that matches no preset."""
+    if not rows:
+        return ""
+    widths = tuple(int(i.split("-")[1]) - int(i.split("-")[0]) + 1
+                   for _r, i, _c in rows)
+    if not _WIDTHS_TO_KEY:
+        from .lgs_map import CABINET_LAYOUTS, layout_widths
+        for layout in CABINET_LAYOUTS:
+            _WIDTHS_TO_KEY[tuple(layout_widths(layout))] = layout.key
+    key = _WIDTHS_TO_KEY.get(widths)
+    if not key:
+        return str(sum(widths))
+    return key[3:].upper() if key.startswith("lgs") else key.upper()
+
+
 def module_version(versions) -> str:
     """One version if the cabinet agrees, lowest-highest if it does not."""
     seen = sorted({v for v in versions if v})
@@ -791,6 +818,13 @@ def rows_from_gateway(settings: dict) -> tuple:
 # Each takes a CabinetLabel and returns (label_xml, prop_xml, length_mm).
 # Registered below so a new sticker is a function plus one dict entry.
 
+def _titled(c: CabinetLabel) -> str:
+    """The cabinet name with its type, which is the one thing about a
+    cabinet nobody can read off the front of it."""
+    kind = cabinet_type(c.rows)
+    return f"{c.name} · {kind}" if (c.name and kind) else c.name
+
+
 def _detail_label(c: CabinetLabel, *, created: str, with_rows: bool) -> tuple:
     """QR + identity block in a frame, and optionally the row/id strip.
 
@@ -830,7 +864,7 @@ def _detail_label(c: CabinetLabel, *, created: str, with_rows: bool) -> tuple:
 
     idlines = [
         (c.ward, "10", THAI_FONT, 400, 13.0),
-        (c.name, "11", LATIN_FONT, 700, 14.0),
+        (_titled(c), "11", LATIN_FONT, 700, 14.0),
         (f"S/N {c.serial}" if c.serial else "", "7", LATIN_FONT, 400, 9.0),
         (c.ip, "9", LATIN_FONT, 400, 11.0),
         (c.mac, "6", LATIN_FONT, 400, 8.0),
@@ -922,7 +956,7 @@ def _minimal_label(c: CabinetLabel, *, created: str) -> tuple:
     # cabinet is this" from across a room, the short name answers "which
     # one" and is what every other system calls it.
     txtlines = [(c.ward, "12", THAI_FONT, 400, 18.0),
-                (c.name, "18", LATIN_FONT, 700, 26.0)]
+                (_titled(c), "18", LATIN_FONT, 700, 26.0)]
     TW = column_width([(t, sz, fo, wt) for t, sz, fo, wt, _h in txtlines],
                       pad=4.0, fallback=150.0)
 

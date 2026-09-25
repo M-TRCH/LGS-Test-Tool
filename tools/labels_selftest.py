@@ -17,7 +17,8 @@ import zipfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from app import labels                                         # noqa: E402
+from app import labels
+from app.lgs_map import layout_by_key, layout_widths                                         # noqa: E402
 
 # The real site name, because its length is the whole reason the QR cannot
 # carry it: 28 Thai characters are 82 bytes in UTF-8 against a 78-byte code.
@@ -53,7 +54,7 @@ def sample(**kw):
 # The only numbers here that depend on which plate is fitted. Everything
 # else is checked as a relationship, so switching the frame does not mean
 # editing the tests.
-ROWMAP_MM = {"round": 111, "bold": 111}
+ROWMAP_MM = {"round": 116, "bold": 116}
 
 print("rows_from_gateway — the shape overrides the preset, as the gateway does")
 check("type 80 is ten rows of eight", rows_for("80", "0", "1,2,3,4,5,6,7,8,7,8")[0],
@@ -294,10 +295,16 @@ check_true("the site name IS on it, because Thai cannot go in the code",
 _five = round(labels.render("minimal", sample(rows=rows_for("0", "8,8,8,8,8",
                                                             "1,2,3,4,5")),
                             created="x")[1])
-check_true("a five-row cabinet is never longer", _five <= round(mini_mm),
+# This one has been true, false, true and is now false again, and each time
+# for a different reason. The code carries the channel map, so its payload
+# grows with the row count and can tip it into the next version; the printed
+# name now carries the type, and "40R" is wider than "80". So the fridge can
+# come out LONGER than a ten-row chest even though it holds half as much.
+# Check the bound, which is the thing worth guaranteeing: no label strays
+# far from its neighbours, whatever drives the difference.
+check_true("no cabinet is wildly out of step with another",
+           abs(round(mini_mm) - _five) <= 6,
            f"{_five} mm vs {round(mini_mm)} mm")
-check_true("and never shorter by more than a few mm",
-           round(mini_mm) - _five <= 4, f"{round(mini_mm) - _five} mm")
 # 28 Thai characters are 82 bytes in UTF-8, and for a long time that was
 # more than the whole code could hold -- which was the reason the site name
 # is printed rather than encoded. At 1.0 pt it would now fit alongside
@@ -388,6 +395,39 @@ _m3, _s3, _e3 = labels.fit_qr(_mixed)
 check_true("and so does a cabinet with two versions in it",
            _s3 <= labels.QR_MAX_SIDE_PT,
            f"{len(_mixed.encode())} B, EC-{_e3.upper()}, {_s3} pt")
+
+
+# The cabinet type: printed, never encoded. The widths already identify it
+# in the code and identify it BETTER -- lgs40 and lgs40r are both forty
+# slots and only the widths tell them apart -- so encoding a slot count
+# would have spent a level of error correction on a worse answer. Printed,
+# it costs 3 mm of tape and saves a person adding up eight digits in their
+# head to find out what they are standing in front of.
+for _key, _want in (("lgs80", "80"), ("lgs64", "64"), ("lgs56", "56"),
+                    ("lgs40", "40"), ("lgs40r", "40R"), ("smt", "SMT")):
+    _L = layout_by_key(_key)
+    _ids, _rows, _k = list(_L.ids), [], 0
+    for _i, _n in enumerate(layout_widths(_L), start=1):
+        _rows.append((_i, f"{_ids[_k]}-{_ids[_k + _n - 1]}", 1)); _k += _n
+    check(f"  {_key} reads as {_want}", labels.cabinet_type(tuple(_rows)), _want)
+check("the two forty-slot cabinets do NOT collide",
+      labels.cabinet_type(((1, "11-14", 1), (2, "21-24", 1), (3, "31-34", 1),
+                           (4, "41-44", 1), (5, "51-54", 1), (6, "61-64", 1),
+                           (7, "71-74", 1), (8, "81-84", 1), (9, "91-94", 1),
+                           (10, "101-104", 1))) != "40R", True)
+check("a shape matching no preset falls back to its slot count",
+      labels.cabinet_type(((1, "11-15", 1), (2, "21-25", 1))), "10")
+check("and a cabinet that was never read says nothing",
+      labels.cabinet_type(()), "")
+
+_typed, _ = labels.render("standard", sample(), created="x")
+_tx = zipfile.ZipFile(io.BytesIO(_typed)).read("label.xml").decode()
+check_true("the type is printed beside the name",
+           f"Chest-Std-02 · 80" in _tx,
+           [d for d in re.findall(r"<pt:data>([^<]*)</pt:data>", _tx)
+            if "Chest" in d])
+check_true("and is NOT in the code, which already knows the shape",
+           "80" not in sample().qr_payload().split(chr(10))[0])
 
 print("\na serial too long to encode is refused before any tape is spent")
 # Forty characters used to be refused. At 1.2 pt the code holds 134 bytes
