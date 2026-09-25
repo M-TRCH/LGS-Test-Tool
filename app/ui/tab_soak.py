@@ -284,7 +284,15 @@ def build(ctx: Ctx) -> None:
                         rows_box.remove(row)
                         fleet_rows.remove(entry)
                         save_fleet()
-                    ui.button(icon="close", on_click=drop)                         .props("flat dense round").classes("text-grey")
+                    # This was a grey "close" cross, and it was invisible in
+                    # use: asked for a delete button while six of them were
+                    # on screen. A cross is a dismiss, a bin is a delete, and
+                    # the colour is what makes it findable at the end of a row
+                    # of grey-on-white fields. The tooltip names the cabinet,
+                    # because six identical bins in a column is the shape of
+                    # deleting the wrong row.
+                    kill = ui.button(icon="delete", on_click=drop)                         .props("flat dense round color=negative")
+                    kill.tooltip(t("fleet.drop"))
                     fleet_rows.append(entry)
 
         with ui.row().classes("items-center gap-2 q-mt-sm"):
