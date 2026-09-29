@@ -33,6 +33,18 @@ RELEASES: tuple = (
         "run is going, not only in the verdict afterwards. Zero in grey "
         "is the measurement that says the timeout is right; anything "
         "else turns orange while there is still time to care.",
+        "Pharmacy mode now prices its own traffic. A pick to a random "
+        "slot holds the bus ~4.4 s (measured — the hub crossing, not the "
+        "write), so the card shows what the chosen rate costs: the "
+        "2,000/day design target is ~10% of every day, 10,000/day is "
+        "half the bus and says so in orange, and a rate the bus cannot "
+        "carry says so in red before the night is spent.",
+        "Check the gateways now reads each gateway's own event log along "
+        "with INFO: the row says firmware, uptime and boot reason, NTP "
+        "state (a dead NTP means the server tool is closed), client "
+        "slots, and any link drops with the newest one's timestamp — "
+        "the fault that leaves no other trace. One button now answers "
+        "what 2026-09-29 took three hand-written scripts to learn.",
     )),
     Release("1.9.0", "2026-09-25", (
         "The fleet soak is now fit to be left alone over a long weekend. "

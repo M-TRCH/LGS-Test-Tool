@@ -72,15 +72,37 @@ def build(ctx: Ctx) -> None:
         # that from "2000" and "20". So show the product, live, before the
         # night is spent rather than after.
         sim_calc = ui.label().classes("text-xs")
+        # The bus bill, live. Rate x ~4.4 s/pick is the whole calculation,
+        # and not showing it is how 10,000/day got proposed as a REDUCTION.
+        sim_duty = ui.label().classes("text-xs")
         ui.label(t("soak.sim_note")).classes("text-xs text-grey")
         sim_row.bind_visibility_from(mode, "value", lambda v: v == "pharmacy")
         sim_calc.bind_visibility_from(mode, "value", lambda v: v == "pharmacy")
+        sim_duty.bind_visibility_from(mode, "value", lambda v: v == "pharmacy")
 
-        shown: dict = {"text": None}
+        shown: dict = {"text": None, "duty": None}
+
+        def recalc_duty() -> None:
+            duty = soak.pick_bus_duty(int(picks.value or 2000))
+            text = t("soak.sim_duty", pct=f"{duty * 100:.0f}",
+                     rate=f"{int(picks.value or 2000):,}")
+            tone = "text-grey"
+            if duty >= 1.0:
+                text += " · " + t("soak.sim_duty_over")
+                tone = "text-red"
+            elif duty >= 0.25:
+                text += " · " + t("soak.sim_duty_hot")
+                tone = "text-orange"
+            if text == shown["duty"]:
+                return
+            shown["duty"] = text
+            sim_duty.set_text(text)
+            sim_duty.classes(replace=f"text-xs {tone}")
 
         def recalc() -> None:
             if mode.value != "pharmacy":
                 return          # the label is hidden; poll runs pay nothing
+            recalc_duty()
             conc, cap = soak.estimate_concurrent(
                 ctx.cabinet().ids, int(wins.value or 8),
                 int(picks.value or 2000), float(dwell.value or 20))
@@ -391,6 +413,7 @@ def build(ctx: Ctx) -> None:
                 if pharm:
                     inherited += t("fleet.inherits_pharmacy",
                                    picks=int(picks.value or 2000),
+                                   pct=f"{soak.pick_bus_duty(int(picks.value or 2000)) * 100:.0f}",
                                    dwell=f"{float(dwell.value or 20):g}",
                                    wins=int(wins.value or 8))
                 fleet_inherits.set_text(inherited)

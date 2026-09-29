@@ -672,6 +672,51 @@ def summarise(tallies, framer=None, *, started: str = "",
     return "\n".join(out)
 
 
+def _health_digest(info: dict, log_rows, *, mine: str = "") -> str:
+    """One line of gateway health from INFO pairs and LOG rows. Pure, so the
+    selftest can replay mornings this project has already lived through.
+
+    What it carries was chosen by 2026-09-29: that morning took three
+    hand-written scripts to learn that Std-04's link had flickered at
+    10:55 (its cable's conviction), that NTP had silently died fleet-wide
+    (the server app was closed), and that a gateway's uptime and boot
+    reason exonerate it. All of that was in INFO and LOG all along.
+    """
+    bits = [f"fw {info.get('fw', '?')}"]
+    try:
+        bits.append(f"up {float(info.get('sys.up', 0)) / 86400.0:.1f} d"
+                    f" ({info.get('sys.reset', '?')})")
+    except (TypeError, ValueError):
+        pass
+    ntp = info.get("ntp.state", "")
+    if ntp:
+        # A failed NTP shouts: it means the server-side tool is not running,
+        # which nobody notices until the clocks have drifted apart.
+        bits.append("ntp ok" if ntp == "ok" else f"NTP {ntp.upper()}")
+    peers = info.get("net.peer", "-")
+    others, dropped_self = [], False
+    for peer in ("" if peers in ("-", "") else peers).split(","):
+        if not peer:
+            continue
+        if not dropped_self and mine and peer.split(":")[0] == mine:
+            dropped_self = True           # this very connection
+            continue
+        others.append(peer)
+    bits.append(f"{info.get('net.client', '?')}/2 clients")
+    if others:
+        bits.append("OTHER MASTER: " + ", ".join(others))
+        bits.append("a fleet run will be refused")
+    else:
+        bits.append("free")
+    drops = [r for r in log_rows if r.get("ev") == "link_down"]
+    if drops:
+        # Newest first, straight from LOG. The timestamp is what keeps an
+        # old flap on a quiet gateway from reading like a live fault.
+        bits.append(f"LINK DROPS {len(drops)} in last {len(log_rows)} "
+                    f"events, newest {drops[0].get('t', '?')}")
+    return " · ".join(bits)
+
+
 def probe_gateway(host: str, port: int = 502, *, timeout_s: float = 4.0) -> str:
     """One line about a gateway, for a roster row before the run starts.
 
@@ -697,7 +742,8 @@ def probe_gateway(host: str, port: int = 502, *, timeout_s: float = 4.0) -> str:
     try:
         from .gateway_tcp import GatewayTcpLink, register_pdu
         register_pdu(client)
-        res = GatewayTcpLink(client).command("INFO")
+        link = GatewayTcpLink(client)
+        res = link.info()
         if not res.ok:
             return "reachable, but no console (fw < 1.12.0 or net.console=0)"
         info: dict = {}
@@ -706,24 +752,12 @@ def probe_gateway(host: str, port: int = 502, *, timeout_s: float = 4.0) -> str:
                 if "=" in pair:
                     k, _, v = pair.partition("=")
                     info.setdefault(k, v)
-        peers = info.get("net.peer", "-")
-        clients = info.get("net.client", "?")
-        mine = local_ip_toward(host)
-        others, dropped_self = [], False
-        for peer in ("" if peers in ("-", "") else peers).split(","):
-            if not peer:
-                continue
-            if not dropped_self and mine and peer.split(":")[0] == mine:
-                dropped_self = True           # this very connection
-                continue
-            others.append(peer)
-        bits = [f"fw {info.get('fw', '?')}", f"{clients}/2 clients"]
-        if others:
-            bits.append("OTHER MASTER: " + ", ".join(others))
-            bits.append("a fleet run will be refused")
-        else:
-            bits.append("free")
-        return " · ".join(bits)
+        # The event log rides along: link drops are the one fault a gateway
+        # survives without a trace anywhere else (uptime continuous, INFO
+        # clean), and old firmware simply answers err — an empty list here.
+        logres = link.log(100)
+        rows = list(logres.rows) if logres.ok else []
+        return _health_digest(info, rows, mine=local_ip_toward(host) or "")
     except Exception as exc:                                     # noqa: BLE001
         return f"{type(exc).__name__}: {exc}"[:60]
     finally:

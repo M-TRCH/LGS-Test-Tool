@@ -458,6 +458,41 @@ def case_verdict_written_with_no_page():
     return None
 
 
+# ── the health line ────────────────────────────────────────────────────────
+def case_health_digest_tells_the_morning():
+    """The probe line must carry what 2026-09-29 took three hand-written
+    scripts to learn: link drops with a timestamp, a dead NTP in capitals,
+    the uptime story, and the master check unchanged."""
+    info = {"fw": "1.12.4", "sys.up": "328697", "sys.reset": "software",
+            "ntp.state": "failed", "net.client": "1",
+            "net.peer": "192.168.0.11:39618"}
+    rows = [{"i": "4363", "t": "2026-09-29T10:56:13", "ev": "link_up"},
+            {"i": "4362", "t": "2026-09-29T10:56:11", "ev": "link_down"},
+            {"i": "4360", "t": "2026-09-29T10:56:09", "ev": "link_down"},
+            {"i": "4358", "t": "2026-09-29T10:55:56", "ev": "link_down"}]
+    line = soak_fleet._health_digest(info, rows, mine="192.168.0.11")
+    if "LINK DROPS 3" not in line or "2026-09-29T10:56:11" not in line:
+        return f"the drops are not told, newest first: {line!r}"
+    if "NTP FAILED" not in line:
+        return f"a dead ntp whispers: {line!r}"
+    if "up 3.8 d (software)" not in line:
+        return f"the uptime story is missing: {line!r}"
+    if "free" not in line or "OTHER MASTER" in line:
+        return f"our own connection counted as a master: {line!r}"
+    stranger = soak_fleet._health_digest(
+        {"net.peer": "192.168.0.87:1234", "net.client": "2"}, [],
+        mine="192.168.0.11")
+    if "OTHER MASTER: 192.168.0.87:1234" not in stranger:
+        return f"a stranger went unnamed: {stranger!r}"
+    if "a fleet run will be refused" not in stranger:
+        return "the refusal warning was dropped"
+    healthy = soak_fleet._health_digest(
+        {"fw": "1.12.4", "ntp.state": "ok", "net.client": "1"}, [])
+    if "LINK DROPS" in healthy or "ntp ok" not in healthy:
+        return f"a healthy gateway misdescribed: {healthy!r}"
+    return None
+
+
 CASES = (
     ("thai name survives", case_thai_survives),
     ("illegal chars removed", case_illegal_chars_go),
@@ -483,6 +518,7 @@ CASES = (
     ("roster csv names bad rows", case_roster_csv_reports_what_it_could_not_use),
     ("clock lives in the run", case_clock_lives_in_the_run),
     ("verdict needs no page", case_verdict_written_with_no_page),
+    ("health line tells the day", case_health_digest_tells_the_morning),
 )
 
 

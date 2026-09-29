@@ -515,6 +515,29 @@ def case_estimate_matches_reality():
     return None
 
 
+def case_bus_duty_is_honest():
+    """The picks-per-day field must be priced in bus time.
+
+    On 2026-09-29, 10,000/day was proposed as a way to REDUCE traffic; at
+    ~4.4 s of bus per pick that is half of every day. These figures are the
+    ones the card now shows, so pin them: the target is ~10%, 10,000/day is
+    ~half the bus, and past ~19,600/day the arithmetic says saturation.
+    """
+    target = soak.pick_bus_duty(2000)
+    if abs(target - 2000 * soak.PICK_BUS_COST_S / 86400) > 1e-12:
+        return f"duty formula drifted: {target}"
+    if not 0.09 < target < 0.12:
+        return f"the 2,000/day target should price at ~10%, got {target:.0%}"
+    if not 0.45 < soak.pick_bus_duty(10000) < 0.56:
+        return f"10,000/day should price at ~half the bus, got " \
+               f"{soak.pick_bus_duty(10000):.0%}"
+    if soak.pick_bus_duty(20000) < 1.0:
+        return "20,000/day prices under saturation — the red line moved"
+    if soak.pick_bus_duty(0) != 0.0 or soak.pick_bus_duty(-5) != 0.0:
+        return "zero or junk input must price at zero, not raise"
+    return None
+
+
 CASES = (
     ("poll writes nothing", case_poll_writes_nothing),
     ("everything cleared", case_everything_cleared),
@@ -530,6 +553,7 @@ CASES = (
     ("rate does not drift", case_rate_does_not_drift),
     ("far behind resyncs", case_far_behind_resyncs_without_bursting),
     ("estimate matches reality", case_estimate_matches_reality),
+    ("bus duty is honest", case_bus_duty_is_honest),
 )
 
 

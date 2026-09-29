@@ -44,6 +44,23 @@ REG_BOOTS = 7
 REG_RESET_CAUSE = 8     # bit0 IWDG, 1 SW, 2 power-on, 3 NRST, 4 WWDG, 5 LP, 6 OBL
 REG_STATS2_IWDG = 410   # fw >= v3.3.0
 
+# What one pick actually costs the bus, measured on the type-80 2026-09-13:
+# ~4.4 s of bus time for a coil write to a random slot -- the hub crossing
+# and its settle dominate; the write itself is ~80 ms. This is the number
+# behind "the 2,000/day target has ~8x margin", and on 2026-09-29 its
+# absence from the UI let 10,000/day be proposed as a way to REDUCE
+# traffic, when it would hold the bus for half of every day.
+PICK_BUS_COST_S = 4.4
+
+
+def pick_bus_duty(picks_per_day: float) -> float:
+    """Fraction of the bus day spent on picks alone (1.0 = saturated).
+
+    The design target of 2,000/day comes out at ~0.10; the poll underneath
+    shares whatever remains.
+    """
+    return max(0.0, float(picks_per_day)) * PICK_BUS_COST_S / 86400.0
+
 
 class SoakOps(Protocol):
     def read_regs(self, device_id: int, addr: int, count: int): ...

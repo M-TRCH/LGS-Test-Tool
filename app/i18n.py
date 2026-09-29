@@ -324,6 +324,20 @@ TEXTS: dict[str, dict[str, str]] = {
         "en": "dwell too long for this rate — all {cap} windows stay lit and "
               "picks will be dropped",
         "th": "dwell นานเกินสำหรับอัตรานี้ — ทั้ง {cap} หน้าต่างจะติดค้าง และจะมีการทิ้งครั้งหยิบ"},
+    "soak.sim_duty": {
+        "en": "bus time for picks: ~{pct}% of every day ({rate}/day × "
+              "~4.4 s each; the 2,000/day target is ~10%)",
+        "th": "เวลาบัสที่การหยิบใช้: ~{pct}% ของทั้งวัน ({rate}/วัน × "
+              "~4.4 วินาที/ครั้ง; เป้าออกแบบ 2,000/วัน ≈ 10%)"},
+    "soak.sim_duty_hot": {
+        "en": "several times the design target — this is a stress test, "
+              "not a simulation",
+        "th": "เกินเป้าออกแบบหลายเท่า — นี่คือ stress test "
+              "ไม่ใช่การจำลองการใช้งานจริง"},
+    "soak.sim_duty_over": {
+        "en": "the bus cannot keep this rate — the run will fall behind "
+              "and say so",
+        "th": "บัสตามเรตนี้ไม่ทัน — run จะทำได้ต่ำกว่าเป้าและรายงานเอง"},
     "soak.sim_note": {
         "en": "Windows are drawn from a shuffled deck, so every slot gets the "
               "same number of activations over a run — a uniform draw would "
@@ -366,8 +380,8 @@ TEXTS: dict[str, dict[str, str]] = {
         "en": "using the Bus soak settings above: {gap} s between passes \u00b7 counters every {every} \u00b7 slow over {slow} ms",
         "th": "\u0e43\u0e0a\u0e49\u0e04\u0e48\u0e32\u0e08\u0e32\u0e01\u0e01\u0e32\u0e23\u0e4c\u0e14 Bus soak \u0e02\u0e49\u0e32\u0e07\u0e1a\u0e19: \u0e1e\u0e31\u0e01\u0e23\u0e2d\u0e1a\u0e25\u0e30 {gap} \u0e27\u0e34\u0e19\u0e32\u0e17\u0e35 \u00b7 \u0e15\u0e23\u0e27\u0e08\u0e15\u0e31\u0e27\u0e19\u0e31\u0e1a\u0e17\u0e38\u0e01 {every} \u0e23\u0e2d\u0e1a \u00b7 \u0e0a\u0e49\u0e32\u0e40\u0e21\u0e37\u0e48\u0e2d\u0e40\u0e01\u0e34\u0e19 {slow} ms"},
     "fleet.inherits_pharmacy": {
-        "en": " \u00b7 {picks} picks/day \u00b7 {dwell} s dwell \u00b7 {wins} windows",
-        "th": " \u00b7 {picks} \u0e04\u0e23\u0e31\u0e49\u0e07/\u0e27\u0e31\u0e19 \u00b7 \u0e04\u0e49\u0e32\u0e07 {dwell} \u0e27\u0e34\u0e19\u0e32\u0e17\u0e35 \u00b7 {wins} \u0e0a\u0e48\u0e2d\u0e07"},
+        "en": " \u00b7 {picks} picks/day (~{pct}% bus) \u00b7 {dwell} s dwell \u00b7 {wins} windows",
+        "th": " \u00b7 {picks} \u0e04\u0e23\u0e31\u0e49\u0e07/\u0e27\u0e31\u0e19 (~{pct}% \u0e02\u0e2d\u0e07\u0e1a\u0e31\u0e2a) \u00b7 \u0e04\u0e49\u0e32\u0e07 {dwell} \u0e27\u0e34\u0e19\u0e32\u0e17\u0e35 \u00b7 {wins} \u0e0a\u0e48\u0e2d\u0e07"},
     "fleet.gap_band": {
         "en": "the pass gap is inside 0.4-0.9 s \u2014 the band that makes healthy modules look chronically slow. Change it above before starting.",
         "th": "\u0e1e\u0e31\u0e01\u0e15\u0e48\u0e2d\u0e23\u0e2d\u0e1a\u0e2d\u0e22\u0e39\u0e48\u0e43\u0e19\u0e0a\u0e48\u0e27\u0e07 0.4-0.9 \u0e27\u0e34\u0e19\u0e32\u0e17\u0e35 \u2014 \u0e0a\u0e48\u0e27\u0e07\u0e17\u0e35\u0e48\u0e17\u0e33\u0e43\u0e2b\u0e49\u0e42\u0e21\u0e14\u0e39\u0e25\u0e1b\u0e01\u0e15\u0e34\u0e14\u0e39\u0e40\u0e2b\u0e21\u0e37\u0e2d\u0e19\u0e0a\u0e49\u0e32\u0e40\u0e23\u0e37\u0e49\u0e2d\u0e23\u0e31\u0e07 \u0e41\u0e01\u0e49\u0e02\u0e49\u0e32\u0e07\u0e1a\u0e19\u0e01\u0e48\u0e2d\u0e19\u0e40\u0e23\u0e34\u0e48\u0e21"},
