@@ -9,6 +9,7 @@ still succeeds. Boot counters are what give it away.
 from __future__ import annotations
 
 import asyncio
+import time
 from datetime import datetime
 
 from nicegui import ui
@@ -433,6 +434,11 @@ def build(ctx: Ctx) -> None:
             fleet_hours = ui.number(t("fleet.hours"), value=0, min=0, max=336,
                                     step=0.5, format="%g")                 .props("dense outlined").classes("w-36")
             helps(fleet_hours, t("fleet.hours_tip"))
+            # A run set up in the afternoon and wanted at nine p.m. The wait
+            # is armed in the worker, so this page can close at four o'clock
+            # and the evening still happens.
+            fleet_at = ui.input(t("fleet.start_at"))                 .props("dense outlined").classes("w-32")
+            helps(fleet_at, t("fleet.start_at_tip"))
             fleet_start = ui.button(t("fleet.start"), color="primary")
             fleet_stop = ui.button(t("fleet.stop"), color="red").props("outline")
             fleet_status = ui.label(t("soak.idle")).classes("text-sm")
@@ -487,7 +493,15 @@ def build(ctx: Ctx) -> None:
             return
         log_dir = config_store.data_dir() / "exports"
         hours = float(fleet_hours.value or 0)
-        if not worker.start_fleet(cabs, _cfg(()), log_dir, hours=hours):
+        start_epoch, bad_time = soak_fleet.parse_start_at(fleet_at.value)
+        if bad_time:
+            # Refused rather than guessed: a typo that silently became
+            # "start now" would light a ward that asked for nine p.m.
+            ui.notify(t("fleet.bad_time", got=(fleet_at.value or "").strip()),
+                      type="warning")
+            return
+        if not worker.start_fleet(cabs, _cfg(()), log_dir, hours=hours,
+                                  start_at_epoch=start_epoch):
             # start_fleet refuses a host this tool is already connected to:
             # two masters on one bus is the failure that looks like bad
             # hardware for a week.
@@ -496,7 +510,12 @@ def build(ctx: Ctx) -> None:
             fleet_status.classes(replace="text-sm text-orange")
             return
         fleet_log.clear()
-        fleet_log.push(f"{datetime.now():%H:%M:%S}  start · {len(cabs)} cabinets")
+        if start_epoch:
+            fleet_log.push(f"{datetime.now():%H:%M:%S}  armed · {len(cabs)} "
+                           f"cabinets · starts at "
+                           f"{datetime.fromtimestamp(start_epoch):%a %H:%M}")
+        else:
+            fleet_log.push(f"{datetime.now():%H:%M:%S}  start · {len(cabs)} cabinets")
         # The deadline, the tallies, the verdict and the framer count all
         # live in the run itself now. This page only watches, because on
         # 2026-09-26..29 the page died on the first night and everything it
@@ -505,9 +524,15 @@ def build(ctx: Ctx) -> None:
         fleet_summary.visible = False
         fleet_summary.set_text("")
         fleet_drops.set_text("")
-        fleet_status.set_text(t("fleet.running", n=len(cabs))
-                              + (f" - {hours:g} h" if hours > 0 else ""))
-        fleet_status.classes(replace="text-sm text-green")
+        if start_epoch:
+            fleet_status.set_text(t("fleet.waiting", n=len(cabs),
+                                    at=f"{datetime.fromtimestamp(start_epoch):%H:%M}",
+                                    left="..."))
+            fleet_status.classes(replace="text-sm text-orange")
+        else:
+            fleet_status.set_text(t("fleet.running", n=len(cabs))
+                                  + (f" - {hours:g} h" if hours > 0 else ""))
+            fleet_status.classes(replace="text-sm text-green")
 
     fleet_start.on_click(do_fleet_start)
     fleet_stop.on_click(lambda: worker.cancel_fleet())
@@ -518,18 +543,30 @@ def build(ctx: Ctx) -> None:
         fleet_stop.set_enabled(running)
         if running:
             fleet_state["was_running"] = True
-            # Display only. The clock that STOPS the run is run_fleet's own;
-            # this page could close right now and the run would still end on
-            # time, judge itself, and leave the verdict on disk.
-            left = worker.fleet_left_s()
-            if left is not None:
-                fleet_status.set_text(t("fleet.running_left",
+            # Display only. The clocks that START and STOP the run are the
+            # worker's own; this page could close right now and the evening
+            # would still happen, end on time, and leave its verdict on disk.
+            wait_s = worker.fleet_starts_in_s()
+            if wait_s is not None:
+                at = datetime.fromtimestamp(time.time() + wait_s)
+                fleet_status.set_text(t("fleet.waiting",
                                         n=worker.fleet_count(),
-                                        left=_dur(left)))
-            drops = framer_watch.snapshot().total
-            fleet_drops.set_text(t("fleet.drops_live", n=drops))
-            fleet_drops.classes(replace="text-xs " + (
-                "text-orange font-bold" if drops else "text-grey"))
+                                        at=f"{at:%H:%M}", left=_dur(wait_s)))
+                fleet_status.classes(replace="text-sm text-orange")
+            else:
+                left = worker.fleet_left_s()
+                if left is not None:
+                    fleet_status.set_text(t("fleet.running_left",
+                                            n=worker.fleet_count(),
+                                            left=_dur(left)))
+                else:
+                    fleet_status.set_text(t("fleet.running",
+                                            n=worker.fleet_count()))
+                fleet_status.classes(replace="text-sm text-green")
+                drops = framer_watch.snapshot().total
+                fleet_drops.set_text(t("fleet.drops_live", n=drops))
+                fleet_drops.classes(replace="text-xs " + (
+                    "text-orange font-bold" if drops else "text-grey"))
         fleet_state["seq"], events = worker.drain_fleet_events(fleet_state["seq"])
         # STRIPPED, to match FleetCabinet.name. Keying on the raw field value
         # meant a name typed with a trailing space never matched its own

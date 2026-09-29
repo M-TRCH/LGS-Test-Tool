@@ -458,6 +458,46 @@ def case_verdict_written_with_no_page():
     return None
 
 
+# ── the delayed start ──────────────────────────────────────────────────────
+def case_start_at_reads_like_a_human():
+    """21:00 typed at 15:47 means tonight; 09:00 means tomorrow morning;
+    junk is a named problem, never a silent "start now"."""
+    from datetime import datetime
+    now = datetime(2026, 9, 29, 15, 47, 12)
+    for text in ("21:00", "21.00", "2100"):
+        ep, bad = soak_fleet.parse_start_at(text, now=now)
+        if bad or datetime.fromtimestamp(ep) != datetime(2026, 9, 29, 21, 0):
+            return f"{text!r} -> {datetime.fromtimestamp(ep)}, {bad!r}"
+    ep, bad = soak_fleet.parse_start_at("09:00", now=now)
+    if bad or datetime.fromtimestamp(ep) != datetime(2026, 9, 30, 9, 0):
+        return "a time already past today must mean tomorrow"
+    ep, bad = soak_fleet.parse_start_at("", now=now)
+    if bad or ep != 0.0:
+        return "empty must mean start now, problem-free"
+    for junk in ("25:00", "12:75", "9", "tonight", "21:0O"):
+        ep, bad = soak_fleet.parse_start_at(junk, now=now)
+        if not bad or ep != 0.0:
+            return f"{junk!r} was not refused ({ep}, {bad!r})"
+    return None
+
+
+def case_armed_wait_obeys_cancel():
+    if not soak_fleet.wait_until_epoch(0.0, threading.Event()):
+        return "no delay must return immediately as a go"
+    if not soak_fleet.wait_until_epoch(time.time() - 5, threading.Event()):
+        return "a time already reached must be a go"
+    cancel = threading.Event()
+    threading.Timer(0.3, cancel.set).start()
+    t0 = time.monotonic()
+    went = soak_fleet.wait_until_epoch(time.time() + 30, cancel)
+    took = time.monotonic() - t0
+    if went:
+        return "a cancelled wait still said go"
+    if took > 5.0:
+        return f"cancel took {took:.1f} s to bite — the wait is not polling"
+    return None
+
+
 # ── the health line ────────────────────────────────────────────────────────
 def case_health_digest_tells_the_morning():
     """The probe line must carry what 2026-09-29 took three hand-written
@@ -519,6 +559,8 @@ CASES = (
     ("clock lives in the run", case_clock_lives_in_the_run),
     ("verdict needs no page", case_verdict_written_with_no_page),
     ("health line tells the day", case_health_digest_tells_the_morning),
+    ("start-at reads like a human", case_start_at_reads_like_a_human),
+    ("armed wait obeys cancel", case_armed_wait_obeys_cancel),
 )
 
 

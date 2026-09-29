@@ -372,6 +372,47 @@ def _other_master(client, gateway_host: str) -> Optional[str]:
 
 
 
+def parse_start_at(text: str, *, now=None) -> tuple:
+    """"21:00", "21.00" or "2100" -> (wall epoch to start at, problem).
+
+    Empty means start now (epoch 0.0). A time already past today means the
+    NEXT occurrence, tomorrow: the field answers "when tonight?", and typing
+    09:00 at 15:47 can only mean tomorrow morning. Anything unparsable is
+    returned as a problem rather than guessed at -- a typo that silently
+    became "start now" would light a ward that asked for nine p.m.
+    """
+    text = (text or "").strip()
+    if not text:
+        return 0.0, ""
+    digits = text.replace(":", "").replace(".", "")
+    if not digits.isdigit() or len(digits) not in (3, 4):
+        return 0.0, f"not a time: {text!r}"
+    hour, minute = int(digits[:-2]), int(digits[-2:])
+    if not (0 <= hour <= 23 and 0 <= minute <= 59):
+        return 0.0, f"not a time: {text!r}"
+    from datetime import timedelta
+    now = now or datetime.now()
+    target = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+    if target <= now:
+        target += timedelta(days=1)
+    return target.timestamp(), ""
+
+
+def wait_until_epoch(epoch: float, cancel: threading.Event) -> bool:
+    """Block until the wall clock reaches `epoch` (0 = no wait at all).
+
+    False when cancelled first. Wall clock rather than monotonic on purpose:
+    the promise on the card is a TIME OF DAY, and an NTP nudge should move
+    the start with it. Lives beside _mind_the_clock for the same reason it
+    does: nothing that decides when a run BEGINS may live in a page.
+    """
+    while epoch and time.time() < epoch:
+        if cancel.is_set():
+            return False
+        time.sleep(0.25)
+    return not cancel.is_set()
+
+
 def _mind_the_clock(threads, cancel: threading.Event,
                     deadline_mono: float) -> bool:
     """Wait every thread out; set `cancel` when the clock runs out.

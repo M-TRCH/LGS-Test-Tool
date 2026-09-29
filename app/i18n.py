@@ -388,6 +388,21 @@ TEXTS: dict[str, dict[str, str]] = {
     "fleet.drops_live": {
         "en": "frames discarded (wrong unit id): {n}",
         "th": "เฟรมถูกทิ้ง (unit id ไม่ตรง): {n}"},
+    "fleet.start_at": {"en": "Start at (HH:MM)", "th": "เริ่มเวลา (ชม:นาที)"},
+    "fleet.start_at_tip": {
+        "en": "Leave empty to start now. A time already past today means "
+              "tomorrow. The wait is armed in the worker, so this page can "
+              "be closed and the run will still begin on time.",
+        "th": "เว้นว่าง = เริ่มทันที · ถ้าเวลาที่ใส่ผ่านไปแล้ววันนี้ หมายถึงพรุ่งนี้ · "
+              "ตัวหน่วงอยู่ฝั่งโปรแกรม ปิดหน้าเว็บได้เลย ถึงเวลา run เริ่มเองแน่นอน"},
+    "fleet.bad_time": {
+        "en": "cannot read {got!r} as a time — use HH:MM, e.g. 21:00. "
+              "Nothing was started.",
+        "th": "อ่าน {got!r} เป็นเวลาไม่ได้ — ใช้รูปแบบ ชม:นาที เช่น 21:00 · "
+              "ยังไม่ได้เริ่มอะไรทั้งสิ้น"},
+    "fleet.waiting": {
+        "en": "armed · {n} cabinets · starts at {at} (in {left})",
+        "th": "ตั้งเวลาแล้ว · {n} ตู้ · จะเริ่ม {at} (อีก {left})"},
     "fleet.probe": {"en": "Check the gateways", "th": "ตรวจเกตเวย์"},
     "fleet.hours": {"en": "Run for (hours)", "th": "รันนาน (ชั่วโมง)"},
     "fleet.hours_tip": {

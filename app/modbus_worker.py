@@ -205,6 +205,7 @@ class ModbusWorker:
         self._fleet_hours = 0.0
         self._fleet_t0 = 0.0
         self._fleet_n = 0
+        self._fleet_start_epoch = 0.0       # wall epoch of a delayed start
         self._ota_running = False
         self._ota_cancel = threading.Event()
         self._ota_events: list = []
@@ -1304,7 +1305,8 @@ class ModbusWorker:
 
     # ── fleet soak (several cabinets, several sockets, several threads) ────
     def start_fleet(self, cabinets, cfg: "soak.SoakConfig", log_dir,
-                    allow_shared: bool = False, hours: float = 0.0) -> bool:
+                    allow_shared: bool = False, hours: float = 0.0,
+                    start_at_epoch: float = 0.0) -> bool:
         """Soak N cabinets at once.
 
         Deliberately does NOT take the worker's long-job slot or its
@@ -1332,10 +1334,16 @@ class ModbusWorker:
         self._fleet_hours = float(hours or 0.0)
         self._fleet_t0 = time.monotonic()
         self._fleet_n = len(cabinets)
+        # A delayed start is armed in the WORKER, so the page that set it up
+        # can die at 16:00 and the nine-p.m. run still happens. While armed,
+        # fleet_running() is already True: the slot is taken, a second start
+        # is refused, and the keep-awake block holds through the wait.
+        self._fleet_start_epoch = float(start_at_epoch or 0.0)
         self._fleet_running = True
         threading.Thread(target=self._do_fleet, name="fleet-soak", daemon=True,
                          args=(list(cabinets), cfg, log_dir, ours,
-                               allow_shared, self._fleet_hours)).start()
+                               allow_shared, self._fleet_hours,
+                               self._fleet_start_epoch)).start()
         return True
 
     def cancel_fleet(self) -> None:
@@ -1344,11 +1352,22 @@ class ModbusWorker:
     def fleet_running(self) -> bool:
         return self._fleet_running
 
+    def fleet_starts_in_s(self) -> Optional[float]:
+        """Seconds until an armed run actually begins — None once it is
+        running (or was never delayed). Display only: the wait itself lives
+        in the fleet thread."""
+        if not self._fleet_running or not self._fleet_start_epoch:
+            return None
+        left = self._fleet_start_epoch - time.time()
+        return left if left > 0 else None
+
     def fleet_left_s(self) -> Optional[float]:
         """Seconds until the run's own clock fires — None when the run has
-        no deadline or is not running. Display only: the clock that STOPS
-        the run lives in run_fleet itself."""
+        no deadline, is not running, or is still waiting to start. Display
+        only: the clock that STOPS the run lives in run_fleet itself."""
         if not self._fleet_running or self._fleet_hours <= 0:
+            return None
+        if self.fleet_starts_in_s() is not None:
             return None
         return max(0.0, self._fleet_t0 + self._fleet_hours * 3600.0
                    - time.monotonic())
@@ -1371,13 +1390,20 @@ class ModbusWorker:
             return (fresh[-1].seq if fresh else since), fresh
 
     def _do_fleet(self, cabinets, cfg, log_dir, ours, allow_shared,
-                  hours) -> None:
+                  hours, start_epoch) -> None:
         def emit(ev) -> None:
             with self._fleet_lock:
                 self._event_seq += 1
                 ev.seq = self._event_seq
                 self._fleet_events.append(ev)
         try:
+            if not soak_fleet.wait_until_epoch(start_epoch,
+                                               self._fleet_cancel):
+                return               # armed run cancelled before it began
+            # The wait is over: countdowns switch from "starts in" to
+            # "time left", and the deadline is measured from HERE.
+            self._fleet_start_epoch = 0.0
+            self._fleet_t0 = time.monotonic()
             outcome = soak_fleet.run_fleet(cabinets, cfg, emit,
                                            self._fleet_cancel,
                                            log_dir, our_host=ours,

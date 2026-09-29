@@ -16,6 +16,17 @@ class Release:
 
 
 RELEASES: tuple = (
+    Release("1.9.2", "2026-09-29", (
+        "The fleet run can be told WHEN to begin: a Start at (HH:MM) field "
+        "beside the duration. Set it up in the afternoon, type 21:00, and "
+        "the run arms itself — the status line counts down to the start in "
+        "orange, then runs as usual. A time already past today means "
+        "tomorrow, and an unreadable time refuses to start rather than "
+        "quietly starting now. The wait lives in the worker like the "
+        "deadline does, so the page (or the whole screen) can be closed "
+        "at four o'clock and the nine-p.m. run still happens; Stop "
+        "disarms a waiting run.",
+    )),
     Release("1.9.1", "2026-09-29", (
         "The fleet run no longer needs its browser page to survive. On the "
         "long weekend of 2026-09-26..29 the page died on the first night, "
