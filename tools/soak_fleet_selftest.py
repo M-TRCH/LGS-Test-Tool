@@ -16,12 +16,14 @@ committed by the tool itself.
 """
 import logging
 import sys
+import tempfile
 import threading
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app import framer_watch, soak_fleet                          # noqa: E402
+from app import framer_watch, soak, soak_fleet                    # noqa: E402
 
 
 def cab(name, host="192.168.0.204"):
@@ -397,6 +399,65 @@ def case_roster_csv_reports_what_it_could_not_use():
     return None
 
 
+# ── the run outlives its page ──────────────────────────────────────────────
+# The 89.5 h run of 2026-09-25 outlived its browser page by three days, and
+# the deadline, the verdict and the framer flush all lived in that page's
+# ui.timer: no auto-stop, no verdict file, no discard count. These two cases
+# pin the cure — the run ends itself and judges itself with NO page at all.
+def case_clock_lives_in_the_run():
+    cancel = threading.Event()
+    th = threading.Thread(target=cancel.wait, args=(10.0,), daemon=True)
+    th.start()
+    t0 = time.monotonic()
+    fired = soak_fleet._mind_the_clock([th], cancel, time.monotonic() + 0.4)
+    took = time.monotonic() - t0
+    if not fired:
+        return "the clock never fired"
+    if not cancel.is_set():
+        return "the clock fired but cancel was never set"
+    if th.is_alive():
+        return "the worker thread outlived the clock"
+    if took > 5.0:
+        return f"stopping took {took:.1f} s - the join loop is not polling"
+    quick = threading.Thread(target=lambda: None, daemon=True)
+    quick.start()
+    if soak_fleet._mind_the_clock([quick], threading.Event(), 0.0):
+        return "a run with no deadline claimed its clock fired"
+    return None
+
+
+def case_verdict_written_with_no_page():
+    """run_fleet writes fleet-<stamp>.txt and emits FleetFinished itself,
+    even when every cabinet is unreachable and nobody is watching."""
+    events: list = []
+    cancel = threading.Event()
+    ghost = soak_fleet.FleetCabinet(name="Ghost", host="127.0.0.1",
+                                    ids=(11,), port=9)
+    with tempfile.TemporaryDirectory() as tmp:
+        out = soak_fleet.run_fleet([ghost], soak.SoakConfig(), events.append,
+                                   cancel, Path(tmp), timeout_s=0.5)
+        if out is None:
+            return "no outcome came back"
+        if "did not run" not in out.text:
+            return f"the verdict does not say the cabinet never ran: {out.text!r}"
+        if not out.path or not Path(out.path).is_file():
+            return "no verdict file on disk"
+        if Path(out.path).read_text(encoding="utf-8") != out.text:
+            return "the file and the outcome disagree"
+        if not Path(out.path).name.startswith("fleet-"):
+            return f"unexpected verdict filename {Path(out.path).name!r}"
+    fins = [e for e in events if isinstance(e, soak_fleet.FleetFinished)]
+    if len(fins) != 1 or fins[0].text != out.text:
+        return "FleetFinished did not carry the verdict"
+    if fins[0].clock:
+        return "a run with no deadline claims the clock stopped it"
+    if not any(isinstance(e, soak_fleet.FleetFailed) for e in events):
+        return "the unreachable cabinet raised no FleetFailed"
+    if events[-1] is not fins[0]:
+        return "FleetFinished must be the last word of the run"
+    return None
+
+
 CASES = (
     ("thai name survives", case_thai_survives),
     ("illegal chars removed", case_illegal_chars_go),
@@ -420,6 +481,8 @@ CASES = (
     ("roster csv round-trips", case_roster_csv_round_trips),
     ("roster csv from excel", case_roster_csv_survives_a_spreadsheet),
     ("roster csv names bad rows", case_roster_csv_reports_what_it_could_not_use),
+    ("clock lives in the run", case_clock_lives_in_the_run),
+    ("verdict needs no page", case_verdict_written_with_no_page),
 )
 
 

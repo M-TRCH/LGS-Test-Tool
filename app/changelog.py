@@ -16,6 +16,24 @@ class Release:
 
 
 RELEASES: tuple = (
+    Release("1.9.1", "2026-09-29", (
+        "The fleet run no longer needs its browser page to survive. On the "
+        "long weekend of 2026-09-26..29 the page died on the first night, "
+        "and because the duration clock, the verdict and the discarded-"
+        "frame count all lived in that page, the run never auto-stopped "
+        "and judged nothing — only the CSVs survived. All three now live "
+        "in the run itself: it stops on time, writes exports/fleet-"
+        "<stamp>.txt (the same stamp its CSVs carry) and counts its "
+        "discards with every page closed. The page is just a window now.",
+        "A freshly opened page inherits the fleet: a run still going shows "
+        "its countdown and live rows, and a run that finished while no "
+        "page was open shows its full verdict instead of pretending "
+        "nothing happened — which is exactly how the weekend was read.",
+        "The discarded-frame count is on the fleet card LIVE while the "
+        "run is going, not only in the verdict afterwards. Zero in grey "
+        "is the measurement that says the timeout is right; anything "
+        "else turns orange while there is still time to care.",
+    )),
     Release("1.9.0", "2026-09-25", (
         "The fleet soak is now fit to be left alone over a long weekend. "
         "Give it a duration in hours and it stops by itself, clearing every "

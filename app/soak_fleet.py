@@ -294,6 +294,31 @@ class FleetBusy:
     seq: int = 0
 
 
+@dataclass
+class FleetFinished:
+    """The run's verdict, emitted by the run itself.
+
+    It rides the same event stream as everything else so a live page shows
+    it the moment it exists — but it is only a COPY. The verdict is written
+    to disk and returned to the worker before this is emitted, so a page
+    that died on Friday costs nothing but the pleasure of watching."""
+    text: str
+    path: str = ""              # "" when the disk refused the file
+    clock: bool = False         # the run's own duration ran out
+    seq: int = 0
+
+
+@dataclass
+class FleetOutcome:
+    """Everything run_fleet concluded, for whoever started it."""
+    reports: dict
+    text: str
+    path: str
+    started: str
+    duration_s: float
+    stopped_by_clock: bool
+
+
 def _other_master(client, gateway_host: str) -> Optional[str]:
     """Names any peer on this gateway that is NOT this connection.
 
@@ -347,16 +372,41 @@ def _other_master(client, gateway_host: str) -> Optional[str]:
 
 
 
+def _mind_the_clock(threads, cancel: threading.Event,
+                    deadline_mono: float) -> bool:
+    """Wait every thread out; set `cancel` when the clock runs out.
+
+    In the run, not in a page timer. The 89.5 h run of 2026-09-25 outlived
+    its browser page by three days, and because the deadline, the verdict
+    and the framer count all lived in that page's ui.timer, the run had no
+    end, no judgement and no discard count — the CSVs alone survived.
+    Nothing that decides how a run ENDS may live in the UI.
+    """
+    fired = False
+    while True:
+        alive = [th for th in threads if th.is_alive()]
+        if not alive:
+            return fired
+        if deadline_mono and not fired and time.monotonic() >= deadline_mono:
+            fired = True
+            cancel.set()
+        alive[0].join(timeout=0.25)
+
+
 def run_fleet(cabinets: Sequence[FleetCabinet], cfg: soak.SoakConfig,
               emit: Callable, cancel: threading.Event,
               log_dir: Path,
               timeout_s: float = HUB_SAFE_TIMEOUT_S,
               our_host: Optional[str] = None,
-              allow_shared: bool = False) -> dict:
+              allow_shared: bool = False,
+              hours: float = 0.0) -> Optional[FleetOutcome]:
     """Start one soak per cabinet and block until all of them finish.
 
-    Returns {cabinet name: soak.SoakReport} for those that ran. Cabinets that
-    could not be reached are reported through FleetFailed and simply absent.
+    `hours` > 0 gives the run its own deadline; 0 means "until cancelled".
+    Returns a FleetOutcome whose verdict text has already been written to
+    `log_dir` — or None when the run was refused before it began. Cabinets
+    that could not be reached are reported through FleetFailed and appear
+    in the verdict as "did not run".
     """
     # THE CARDINAL RULE, enforced where it cannot be skipped. The UI checks
     # it too, but run_fleet documents itself as the thing that stops a night's
@@ -368,7 +418,26 @@ def run_fleet(cabinets: Sequence[FleetCabinet], cfg: soak.SoakConfig,
             if cab.host in dupes:
                 emit(FleetBusy(cabinet=cab.name,
                                peers=f"another row in this run ({cab.host})"))
-        return {}
+        return None                      # refused before it began: no verdict
+
+    # The judgement is kept HERE, beside the threads it describes, because
+    # the page that started the run is the least durable thing in the room.
+    tallies = {c.name: CabinetTally(name=c.name, modules=len(c.ids))
+               for c in cabinets}
+    tally_lock = threading.Lock()
+
+    def tell(ev) -> None:
+        """Absorb an event into the run's own tally, then pass it on."""
+        with tally_lock:
+            tally = tallies.get(getattr(ev, "cabinet", None))
+            if tally is not None:
+                if isinstance(ev, FleetEvent):
+                    tally.absorb(ev.inner)
+                elif isinstance(ev, FleetFailed):
+                    tally.note = ev.reason
+                elif isinstance(ev, FleetBusy):
+                    tally.note = f"refused, another master: {ev.peers}"
+        emit(ev)
 
     # Seconds, not minutes: stopping a fleet to fix a typo'd host and starting
     # again inside the same minute reopened the previous run's CSVs with "w".
@@ -403,15 +472,15 @@ def run_fleet(cabinets: Sequence[FleetCabinet], cfg: soak.SoakConfig,
                                timeout_s=timeout_s)
         ops = _ClientOps(settings, cancel)
         if not ops.connect():
-            emit(FleetFailed(cabinet=cab.name,
-                             reason=f"cannot reach {cab.host}:{cab.port}"))
+            tell(FleetFailed(cabinet=cab.name,
+                               reason=f"cannot reach {cab.host}:{cab.port}"))
             return
         busy = None if allow_shared else _other_master(ops._client, cab.host)
         if busy:
             # Refuse rather than produce a file that has to be distrusted
             # later. allow_shared exists for the case where the operator
             # knows the other client is read-only (gw_bus_watch).
-            emit(FleetBusy(cabinet=cab.name, peers=busy))
+            tell(FleetBusy(cabinet=cab.name, peers=busy))
             ops.close()
             return
         handle = None
@@ -420,15 +489,15 @@ def run_fleet(cabinets: Sequence[FleetCabinet], cfg: soak.SoakConfig,
             handle = path.open("w", encoding="utf-8", newline="")
             handle.write("time,device_id,kind,detail\n")
             handle.flush()
-            emit(FleetStarted(cabinet=cab.name, path=str(path),
-                              modules=len(cab.ids)))
+            tell(FleetStarted(cabinet=cab.name, path=str(path),
+                                modules=len(cab.ids)))
         except OSError as exc:
             # A missing exports folder, or a path past MAX_PATH, used to kill
             # this thread with no FleetFailed and -- worse -- leave the socket
             # open, holding one of the gateway's two client slots for the life
             # of the process while the UI row sat at "..." all night.
-            emit(FleetFailed(cabinet=cab.name,
-                             reason=f"cannot open the log: {exc}"[:80]))
+            tell(FleetFailed(cabinet=cab.name,
+                               reason=f"cannot open the log: {exc}"[:80]))
             if handle is not None:
                 handle.close()
             ops.close()
@@ -454,7 +523,7 @@ def run_fleet(cabinets: Sequence[FleetCabinet], cfg: soak.SoakConfig,
                                 crossing_slow_ms=cfg.crossing_slow_ms,
                                 mode=cfg.mode, picks_per_day=cfg.picks_per_day,
                                 dwell_s=cfg.dwell_s, windows=cfg.windows),
-                lambda ev, _n=cab.name: emit(FleetEvent(cabinet=_n, inner=ev)),
+                lambda ev, _n=cab.name: tell(FleetEvent(cabinet=_n, inner=ev)),
                 cancel, log_line)
             with lock:
                 # Keyed so a collision cannot lose a cabinet: two rows both
@@ -465,8 +534,8 @@ def run_fleet(cabinets: Sequence[FleetCabinet], cfg: soak.SoakConfig,
         except BaseException as exc:                             # noqa: BLE001
             # One cabinet falling over must not take the fleet with it. Its
             # own CSV already carries a stop row saying why.
-            emit(FleetFailed(cabinet=cab.name,
-                             reason=f"{type(exc).__name__}: {exc}"[:80]))
+            tell(FleetFailed(cabinet=cab.name,
+                               reason=f"{type(exc).__name__}: {exc}"[:80]))
         finally:
             handle.close()
             ops.close()
@@ -477,13 +546,34 @@ def run_fleet(cabinets: Sequence[FleetCabinet], cfg: soak.SoakConfig,
     # is exactly the measurement a timeout change has to be judged on.
     framer_watch.start()
     framer_watch.reset()
+    started_h = f"{datetime.now():%Y-%m-%d %H:%M:%S}"
+    t0 = time.monotonic()
+    deadline = t0 + hours * 3600.0 if hours > 0 else 0.0
     threads = [threading.Thread(target=one, args=(c,), name=f"soak-{c.name}",
                                 daemon=True) for c in cabinets]
     for th in threads:
         th.start()
-    for th in threads:
-        th.join()
-    return reports
+    clock_fired = _mind_the_clock(threads, cancel, deadline)
+    duration_s = time.monotonic() - t0
+
+    # Judge the run and put the judgement ON DISK before telling anyone.
+    # "(stopped early)" means a promised duration was cut short by a hand or
+    # a fault; a run with no deadline has promised nothing.
+    with tally_lock:
+        text = summarise(list(tallies.values()), framer_watch.snapshot(),
+                         started=started_h, duration_s=duration_s,
+                         stopped_early=bool(hours > 0 and not clock_fired))
+    path = log_dir / f"fleet-{stamp}.txt"       # same stamp as the CSVs
+    written = ""
+    try:
+        path.write_text(text, encoding="utf-8")
+        written = str(path)
+    except OSError:
+        pass          # never let the disk be the reason a run reports nothing
+    tell(FleetFinished(text=text, path=written, clock=clock_fired))
+    return FleetOutcome(reports=reports, text=text, path=written,
+                        started=started_h, duration_s=duration_s,
+                        stopped_by_clock=clock_fired)
 
 # -- The verdict ------------------------------------------------------------
 # A weekend run is read on Tuesday, by someone who was not there. Everything

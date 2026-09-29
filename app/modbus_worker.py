@@ -199,6 +199,12 @@ class ModbusWorker:
         self._fleet_cancel = threading.Event()
         self._fleet_events: list = []
         self._fleet_lock = threading.Lock()
+        # The run's own clock and its last verdict live here, not in a page:
+        # a browser tab is the least durable participant in a weekend run.
+        self._fleet_outcome = None          # soak_fleet.FleetOutcome
+        self._fleet_hours = 0.0
+        self._fleet_t0 = 0.0
+        self._fleet_n = 0
         self._ota_running = False
         self._ota_cancel = threading.Event()
         self._ota_events: list = []
@@ -1298,7 +1304,7 @@ class ModbusWorker:
 
     # ── fleet soak (several cabinets, several sockets, several threads) ────
     def start_fleet(self, cabinets, cfg: "soak.SoakConfig", log_dir,
-                    allow_shared: bool = False) -> bool:
+                    allow_shared: bool = False, hours: float = 0.0) -> bool:
         """Soak N cabinets at once.
 
         Deliberately does NOT take the worker's long-job slot or its
@@ -1322,10 +1328,14 @@ class ModbusWorker:
         self._fleet_cancel.clear()
         with self._fleet_lock:
             self._fleet_events.clear()
+        self._fleet_outcome = None
+        self._fleet_hours = float(hours or 0.0)
+        self._fleet_t0 = time.monotonic()
+        self._fleet_n = len(cabinets)
         self._fleet_running = True
         threading.Thread(target=self._do_fleet, name="fleet-soak", daemon=True,
                          args=(list(cabinets), cfg, log_dir, ours,
-                               allow_shared)).start()
+                               allow_shared, self._fleet_hours)).start()
         return True
 
     def cancel_fleet(self) -> None:
@@ -1334,6 +1344,25 @@ class ModbusWorker:
     def fleet_running(self) -> bool:
         return self._fleet_running
 
+    def fleet_left_s(self) -> Optional[float]:
+        """Seconds until the run's own clock fires — None when the run has
+        no deadline or is not running. Display only: the clock that STOPS
+        the run lives in run_fleet itself."""
+        if not self._fleet_running or self._fleet_hours <= 0:
+            return None
+        return max(0.0, self._fleet_t0 + self._fleet_hours * 3600.0
+                   - time.monotonic())
+
+    def fleet_count(self) -> int:
+        """How many cabinets the current (or last) run was started with."""
+        return self._fleet_n
+
+    def fleet_outcome(self):
+        """The finished run's FleetOutcome — survives the page that started
+        it, cleared when a new run starts. None while running or before
+        any run."""
+        return self._fleet_outcome
+
     def drain_fleet_events(self, since: int) -> tuple[int, list]:
         with self._fleet_lock:
             fresh = [e for e in self._fleet_events if e.seq > since]
@@ -1341,16 +1370,21 @@ class ModbusWorker:
                 del self._fleet_events[:-800]
             return (fresh[-1].seq if fresh else since), fresh
 
-    def _do_fleet(self, cabinets, cfg, log_dir, ours, allow_shared) -> None:
+    def _do_fleet(self, cabinets, cfg, log_dir, ours, allow_shared,
+                  hours) -> None:
         def emit(ev) -> None:
             with self._fleet_lock:
                 self._event_seq += 1
                 ev.seq = self._event_seq
                 self._fleet_events.append(ev)
         try:
-            soak_fleet.run_fleet(cabinets, cfg, emit, self._fleet_cancel,
-                                 log_dir, our_host=ours,
-                                 allow_shared=allow_shared)
+            outcome = soak_fleet.run_fleet(cabinets, cfg, emit,
+                                           self._fleet_cancel,
+                                           log_dir, our_host=ours,
+                                           allow_shared=allow_shared,
+                                           hours=hours)
+            if outcome is not None:
+                self._fleet_outcome = outcome
         except BaseException as exc:                            # noqa: BLE001
             applog.note(f"fleet soak stopped by {type(exc).__name__}: {exc}")
             applog.note("".join(traceback.format_exception(

@@ -9,7 +9,6 @@ still succeeds. Boot counters are what give it away.
 from __future__ import annotations
 
 import asyncio
-import time
 from datetime import datetime
 
 from nicegui import ui
@@ -247,8 +246,7 @@ def build(ctx: Ctx) -> None:
     # A fleet writes one CSV per cabinet so soak_csv.py and the site report
     # read them exactly as they read a single-cabinet run.
     fleet_rows: list = []
-    fleet_state: dict = {"seq": 0, "tally": {}, "deadline": 0.0,
-                         "started": "", "t0": 0.0, "early": False}
+    fleet_state: dict = {"seq": 0, "was_running": False}
 
     with ui.card().classes("p-3 w-full q-mt-md"):
         helps(ui.label(t("fleet.card")).classes("font-bold text-lg"), t("fleet.hint"))
@@ -415,6 +413,10 @@ def build(ctx: Ctx) -> None:
             fleet_start = ui.button(t("fleet.start"), color="primary")
             fleet_stop = ui.button(t("fleet.stop"), color="red").props("outline")
             fleet_status = ui.label(t("soak.idle")).classes("text-sm")
+            # The discard count, live. This is the number the 2026-09-22 run
+            # could not show anyone until it was over — and the run that
+            # taught us pages die kept it in the page.
+            fleet_drops = ui.label("").classes("text-xs text-grey")
 
         fleet_log = ui.log(max_lines=300).classes("w-full h-40 font-mono text-xs q-mt-sm")
         # The log scrolls and is capped at 300 lines; a three-day run throws
@@ -461,7 +463,8 @@ def build(ctx: Ctx) -> None:
                     e["live"].set_text(t("fleet.dupe_short"))
             return
         log_dir = config_store.data_dir() / "exports"
-        if not worker.start_fleet(cabs, _cfg(()), log_dir):
+        hours = float(fleet_hours.value or 0)
+        if not worker.start_fleet(cabs, _cfg(()), log_dir, hours=hours):
             # start_fleet refuses a host this tool is already connected to:
             # two masters on one bus is the failure that looks like bad
             # hardware for a week.
@@ -471,20 +474,14 @@ def build(ctx: Ctx) -> None:
             return
         fleet_log.clear()
         fleet_log.push(f"{datetime.now():%H:%M:%S}  start · {len(cabs)} cabinets")
-        # Everything the verdict is built from is reset here rather than at
-        # the end, so a second run cannot inherit the first one's numbers.
-        fleet_state["tally"] = {c.name: soak_fleet.CabinetTally(
-            name=c.name, modules=len(c.ids)) for c in cabs}
-        fleet_state["t0"] = time.monotonic()
-        fleet_state["started"] = f"{datetime.now():%Y-%m-%d %H:%M:%S}"
-        fleet_state["early"] = False
-        hours = float(fleet_hours.value or 0)
-        fleet_state["deadline"] = (time.monotonic() + hours * 3600.0
-                                   if hours > 0 else 0.0)
-        framer_watch.start()
-        framer_watch.reset()
+        # The deadline, the tallies, the verdict and the framer count all
+        # live in the run itself now. This page only watches, because on
+        # 2026-09-26..29 the page died on the first night and everything it
+        # was holding — the clock, the judgement — died with it.
+        fleet_state["was_running"] = True
         fleet_summary.visible = False
         fleet_summary.set_text("")
+        fleet_drops.set_text("")
         fleet_status.set_text(t("fleet.running", n=len(cabs))
                               + (f" - {hours:g} h" if hours > 0 else ""))
         fleet_status.classes(replace="text-sm text-green")
@@ -492,51 +489,24 @@ def build(ctx: Ctx) -> None:
     fleet_start.on_click(do_fleet_start)
     fleet_stop.on_click(lambda: worker.cancel_fleet())
 
-    def finish_fleet() -> None:
-        """Write the verdict where a Tuesday morning can find it."""
-        tallies = list(fleet_state["tally"].values())
-        if not tallies:
-            return
-        text = soak_fleet.summarise(
-            tallies, framer_watch.snapshot(),
-            started=fleet_state["started"],
-            duration_s=time.monotonic() - fleet_state["t0"],
-            stopped_early=bool(fleet_state["early"]))
-        fleet_summary.set_text(text)
-        fleet_summary.visible = True
-        # On disk too. The app being closed is the ordinary end of a weekend
-        # run, and a verdict that lives only in a browser tab does not
-        # survive it. Beside the CSVs, so the whole run is one folder.
-        try:
-            stem = (fleet_state["started"].replace(":", "")
-                    .replace("-", "").replace(" ", "-"))
-            path = config_store.data_dir() / "exports" / f"fleet-{stem}.txt"
-            path.write_text(text, encoding="utf-8")
-            fleet_log.push(f"{datetime.now():%H:%M:%S}  summary written to "
-                           f"{path.name}")
-        except OSError as exc:
-            # Never let the disk be the reason a finished run reports nothing.
-            fleet_log.push(f"{datetime.now():%H:%M:%S}  could not write the "
-                           f"summary: {exc}")
-        fleet_state["tally"] = {}
-
     def fleet_drain() -> None:
         running = worker.fleet_running()
         fleet_start.set_enabled(not running)
         fleet_stop.set_enabled(running)
-        # The clock. Checked here rather than on a thread of its own, so that
-        # stopping is the same code path whoever asks for it.
-        if running and fleet_state["deadline"]:
-            left = fleet_state["deadline"] - time.monotonic()
-            if left <= 0:
-                fleet_state["deadline"] = 0.0
-                fleet_log.push(f"{datetime.now():%H:%M:%S}  time is up - "
-                               f"stopping and clearing every cabinet")
-                worker.cancel_fleet()
-            else:
+        if running:
+            fleet_state["was_running"] = True
+            # Display only. The clock that STOPS the run is run_fleet's own;
+            # this page could close right now and the run would still end on
+            # time, judge itself, and leave the verdict on disk.
+            left = worker.fleet_left_s()
+            if left is not None:
                 fleet_status.set_text(t("fleet.running_left",
-                                        n=len(fleet_state["tally"]),
+                                        n=worker.fleet_count(),
                                         left=_dur(left)))
+            drops = framer_watch.snapshot().total
+            fleet_drops.set_text(t("fleet.drops_live", n=drops))
+            fleet_drops.classes(replace="text-xs " + (
+                "text-orange font-bold" if drops else "text-grey"))
         fleet_state["seq"], events = worker.drain_fleet_events(fleet_state["seq"])
         # STRIPPED, to match FleetCabinet.name. Keying on the raw field value
         # meant a name typed with a trailing space never matched its own
@@ -553,20 +523,26 @@ def build(ctx: Ctx) -> None:
                                f"REFUSED — another master: {ev.peers}")
                 if ev.cabinet in by_name:
                     by_name[ev.cabinet]["live"].set_text(f"refused · {ev.peers}")
-                if ev.cabinet in fleet_state["tally"]:
-                    fleet_state["tally"][ev.cabinet].note = (
-                        f"refused, another master: {ev.peers}")
             elif isinstance(ev, soak_fleet.FleetFailed):
                 fleet_log.push(f"{datetime.now():%H:%M:%S}  {ev.cabinet} · {ev.reason}")
-                if ev.cabinet in fleet_state["tally"]:
-                    fleet_state["tally"][ev.cabinet].note = ev.reason
                 if ev.cabinet in by_name:
                     by_name[ev.cabinet]["live"].set_text(ev.reason)
+            elif isinstance(ev, soak_fleet.FleetFinished):
+                # The verdict arrives as an event because it was MADE
+                # elsewhere: the run judged itself and wrote the file before
+                # telling us. Any page that happens to be open just shows it.
+                fleet_summary.set_text(ev.text)
+                fleet_summary.visible = True
+                if ev.clock:
+                    fleet_log.push(f"{datetime.now():%H:%M:%S}  time is up - "
+                                   f"stopped and cleared every cabinet")
+                fleet_log.push(f"{datetime.now():%H:%M:%S}  "
+                               + (f"summary written to "
+                                  f"{ev.path.split(chr(92))[-1]}"
+                                  if ev.path else
+                                  "could not write the summary to disk"))
             elif isinstance(ev, soak_fleet.FleetEvent):
                 inner = ev.inner
-                tally = fleet_state["tally"].get(ev.cabinet)
-                if tally is not None:
-                    tally.absorb(inner)
                 if isinstance(inner, soak.SoakTick) and ev.cabinet in by_name:
                     by_name[ev.cabinet]["live"].set_text(
                         f"{_dur(inner.elapsed_s)} · {inner.passes} passes · "
@@ -578,14 +554,18 @@ def build(ctx: Ctx) -> None:
                 elif isinstance(inner, soak.SoakDone):
                     fleet_log.push(f"{datetime.now():%H:%M:%S}  {ev.cabinet} · "
                                    f"stopped · {inner.summary}")
-        if not running and fleet_state["tally"]:
-            # However it ended - the clock, the stop button, or every cabinet
-            # giving up - the run gets judged exactly once.
-            fleet_state["early"] = bool(fleet_state["deadline"])
-            fleet_state["deadline"] = 0.0
-            finish_fleet()
+        if not running and fleet_state["was_running"]:
+            fleet_state["was_running"] = False
             fleet_status.set_text(t("soak.idle"))
             fleet_status.classes(replace="text-sm")
+
+    # A fresh page inherits the last verdict. This is the exact wound of
+    # 2026-09-29: the weekend page died on Friday night, and on Monday a
+    # fresh page had nothing to say about a run the worker had finished.
+    _last = worker.fleet_outcome()
+    if _last is not None and not worker.fleet_running():
+        fleet_summary.set_text(_last.text)
+        fleet_summary.visible = True
 
     ui.timer(0.5, fleet_drain)
     fleet_drain()
