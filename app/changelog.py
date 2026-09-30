@@ -16,6 +16,36 @@ class Release:
 
 
 RELEASES: tuple = (
+    Release("1.9.3", "2026-09-30", (
+        "The page heals itself. Three nights running, the browser page of a "
+        "fleet run was found dead in the morning while the run underneath "
+        "it was fine — NiceGUI reloads the page when a reconnection attempt "
+        "times out, which is precisely when the server cannot be reached, "
+        "and a reload into a dead LAN leaves the browser's own error page "
+        "forever. Now the server keeps a page's state for a full minute of "
+        "outage instead of three seconds (short drops replay what was "
+        "missed, no reload at all), a reload only happens once the server "
+        "has answered a probe, and a page that stops hearing the server's "
+        "heartbeat for a minute reloads itself the same careful way. Every "
+        "reload lands on a page that inherits the run (1.9.1), so nobody "
+        "has to press F5 on the server ever again.",
+        "The server autorun task restarts the tool a minute after a crash, "
+        "as often as it takes (was: three times, five minutes apart, then "
+        "give up). A deliberate stop is not a crash and is not restarted.",
+        "Firmware update streams hold the line quiet every few chunks (0.6 s "
+        "every 8), and a device that leaves the session is retried once "
+        "with a slower stream (1 s every 2) before the run gives up on it. "
+        "On 2026-09-30 the Queen's 64 modules took five hand-driven rounds "
+        "because one corrupt frame under a continuous stream desynchronised "
+        "a module for the rest of it — this is that lesson built in. A run "
+        "now says PASS only when every requested device runs the new image; "
+        "a salvaged 7-of-8 is still applied but reported as such.",
+        "Each cabinet in a fleet run is scored by its OWN gateway's hub map. "
+        "The 2026-09-29 run judged eleven cabinets with three different "
+        "wirings by one map, so the Queen's rows 9-10 were logged slow "
+        "instead of crossing and the crossing column read 0 all night. The "
+        "map used is on the fleet log line and in the CSV's start row.",
+    )),
     Release("1.9.2", "2026-09-29", (
         "The fleet run can be told WHEN to begin: a Start at (HH:MM) field "
         "beside the duration. Set it up in the afternoon, type 21:00, and "

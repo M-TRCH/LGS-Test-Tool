@@ -20,6 +20,11 @@
 # and run it again. The task is re-pointed at the newest version and the data
 # folder beside the exe -- settings, logs, CSV exports -- is left untouched.
 #
+# If the exe dies (an unhandled exception exits nonzero, a crash exits with
+# an NT status), the task restarts it a minute later, and keeps doing so:
+# the server PC has nobody to notice. A clean exit (code 0) is not a failure
+# and is not restarted, so stopping the tool on purpose still works.
+#
 # NOTE: keep this file ASCII-only. It has no BOM, so PowerShell 5.1 reads it as
 # ANSI, where a UTF-8 dash or curly quote becomes bytes that end a string early
 # and break the parse in a way that points at the wrong line.
@@ -283,7 +288,7 @@ $trigger.Delay = "PT$($DelaySeconds)S"
 $principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
 $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
     -StartWhenAvailable -MultipleInstances IgnoreNew -ExecutionTimeLimit ([TimeSpan]::Zero) `
-    -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 5)
+    -RestartCount 99 -RestartInterval (New-TimeSpan -Minutes 1)
 
 if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
     Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false

@@ -577,7 +577,8 @@ def build(ctx: Ctx) -> None:
         for ev in events:
             if isinstance(ev, soak_fleet.FleetStarted):
                 fleet_log.push(f"{datetime.now():%H:%M:%S}  {ev.cabinet} · "
-                               f"{ev.modules} modules · {ev.path.split(chr(92))[-1]}")
+                               f"{ev.modules} modules · {ev.path.split(chr(92))[-1]}"
+                               + (f" · hub {ev.hub_map}" if ev.hub_map else ""))
             elif isinstance(ev, soak_fleet.FleetBusy):
                 fleet_log.push(f"{datetime.now():%H:%M:%S}  {ev.cabinet} · "
                                f"REFUSED — another master: {ev.peers}")

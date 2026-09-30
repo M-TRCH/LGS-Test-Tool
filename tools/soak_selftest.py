@@ -97,6 +97,30 @@ CASES = (
 )
 
 
+def crossings_with(hub_map: tuple) -> int:
+    """One pass over ids 11 and 21 (rows 1 and 2); how many hub crossings
+    the run counted. The tool's own map puts the two rows on different
+    channels (two crossings, the first read included); a map that wires
+    both rows to one channel must count exactly one."""
+    class Flat(StubBus):
+        def __init__(self):
+            super().__init__("clean")
+
+    bus = Flat()
+    cancel = threading.Event()
+    seen: list = []
+
+    def emit(event):
+        if isinstance(event, soak.SoakTick):
+            seen.append(event)
+            cancel.set()
+
+    soak.run_soak(bus, soak.SoakConfig(ids=(11, 21), pass_gap_s=0, counter_every=99,
+                                       hub_map=hub_map),
+                  emit, cancel)
+    return seen[-1].crossings if seen else -1
+
+
 def main() -> int:
     failures = 0
     for kind, wanted, want_watchdog_row in CASES:
@@ -120,7 +144,16 @@ def main() -> int:
             print(f"            - {p}")
         failures += bool(problems)
 
-    print(f"\n{len(CASES) - failures}/{len(CASES)} cases pass")
+    # The map a cabinet is judged by is the cabinet's own (2026-09-29: one
+    # map for eleven cabinets zeroed the crossing column on the Queen).
+    shared = crossings_with((1,) * 10)          # rows 1 and 2 on one channel
+    default = crossings_with(())                # the tool's copy: separate channels
+    ok = shared == 1 and default == 2
+    print(f"{'hub map':9} {'ok  ' if ok else 'FAIL'}  shared-channel map -> {shared} "
+          f"crossing(s), tool's map -> {default}")
+    failures += not ok
+
+    print(f"\n{len(CASES) + 1 - failures}/{len(CASES) + 1} cases pass")
     return 1 if failures else 0
 
 

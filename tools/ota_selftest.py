@@ -31,14 +31,17 @@ class Reply:
 
 
 class Device:
-    def __init__(self, uid, miss_first=0, drop_after_stream=False):
+    def __init__(self, uid, miss_first=0, drop_after_stream=0):
         self.uid = uid
         self.fw = 30302
         self.state, self.err = 0, 0          # 0 idle, 1 receiving, 2 verified, 3 failed
         self.chunks: set = set()
         self.total = 0
         self.miss_first = miss_first         # chunks to drop during the first stream
-        self.drop_after_stream = drop_after_stream
+        # How many streams this device drops out of (session timeout at the
+        # end of the stream). 1 = the first only, so the runner's slow retry
+        # gets it; 2 = the retry too, so it stays lost.
+        self.drop_after_stream = int(drop_after_stream)
         self.streamed = 0                    # frames seen while receiving
 
 
@@ -50,6 +53,8 @@ class StubBus:
         self.meta = [0] * 5
         self.resent: list = []               # chunk idx re-sent after the stream
         self.streaming_done = False
+        self.sleeps: list = []               # every ops.sleep(), for pacing checks
+        self.sessions = 0                    # ENTER broadcasts seen
         # hub=True behaves like the real gateway: a broadcast (slave id 0) is
         # NOT a channel switch, so it only reaches whichever channel a unicast
         # last parked the hub on. Without modelling that, the stub cheerfully
@@ -111,11 +116,16 @@ class StubBus:
             if not self.streaming_done and idx == self.meta[4] - 1:
                 self.streaming_done = True
                 for d in self._reachable():
-                    if d.drop_after_stream and d.state == 1:
+                    if d.drop_after_stream > 0 and d.state == 1:
+                        d.drop_after_stream -= 1
                         d.state, d.err = 3, 4         # failed: session timeout
         return Reply()
 
     def bcast_coil(self, addr):
+        if addr == ota.COIL_ENTER:
+            # A new session: its own stream is a stream, not a repair.
+            self.streaming_done = False
+            self.sessions += 1
         for d in self._reachable():
             if addr == ota.COIL_ENTER:
                 d.state, d.err = 1, 0
@@ -138,10 +148,10 @@ class StubBus:
         return self.gateway_map              # None = "cannot ask", as over RTU
 
     def sleep(self, seconds):
-        pass
+        self.sleeps.append(seconds)
 
 
-def run(devices, hub=False, gateway_map=None):
+def run(devices, hub=False, gateway_map=None, **cfg):
     bus = StubBus(devices, hub=hub, gateway_map=gateway_map)
     lines: list = []
 
@@ -155,7 +165,7 @@ def run(devices, hub=False, gateway_map=None):
 
     image = bytes(range(256)) * 8            # 2,048 B -> 16 chunks
     rep = ota.run_ota(bus, ota.OtaConfig(ids=tuple(d.uid for d in devices),
-                                         image=image),
+                                         image=image, **cfg),
                       emit, threading.Event())
     return bus, rep, lines, dones
 
@@ -172,11 +182,13 @@ def main() -> int:
     bus, rep, _, _d = run([Device(11), Device(12)])
     check("clean: both updated", rep.ok and sorted(rep.updated) == [11, 12])
 
-    # 2. one device drops after the stream; the other missed 3 chunks
-    a, b = Device(11, miss_first=3), Device(12, drop_after_stream=True)
-    bus, rep, lines, dones = run([a, b])
-    check("drop: survivor updated", rep.ok and rep.updated == [11],
+    # 2. one device drops after the stream; the other missed 3 chunks.
+    #    Without the automatic retry this is the 2026-08-27 salvage rule.
+    a, b = Device(11, miss_first=3), Device(12, drop_after_stream=1)
+    bus, rep, lines, dones = run([a, b], retry_dropped=False)
+    check("drop: survivor updated", rep.updated == [11],
           f"ok={rep.ok} updated={rep.updated}")
+    check("drop: run not ok while a device is left behind", not rep.ok)
     check("drop: survivor really runs new fw", a.fw == 30400 and b.fw == 30302)
     check("drop: dropped device named with its own error",
           any("left the session" in l and "timeout" in l for l in lines),
@@ -186,13 +198,48 @@ def main() -> int:
     check("drop: only the survivor's chunks were re-sent",
           sorted(set(bus.resent)) == list(range(13, 16)),
           f"resent={sorted(set(bus.resent))}")
+    check("drop: the report names the dropped device", rep.dropped == [12],
+          f"dropped={rep.dropped}")
+    check("drop: exactly one Done", len(dones) == 1, f"{len(dones)} Done event(s)")
 
-    # 3. everyone drops: the run says so and fails
-    bus, rep, lines, dones = run([Device(11, drop_after_stream=True),
-                           Device(12, drop_after_stream=True)])
+    # 2b. the same bus with the retry ON (the default): the dropped device is
+    #     re-run once with the slow pacing and gets there. This is the Queen
+    #     of 2026-09-30 -- five hand-driven rounds -- made automatic.
+    a, b = Device(11, miss_first=3), Device(12, drop_after_stream=1)
+    bus, rep, lines, dones = run([a, b])
+    check("retry: both updated in one run", rep.ok and sorted(rep.updated) == [11, 12],
+          f"ok={rep.ok} updated={rep.updated}")
+    check("retry: both really run the new fw", a.fw == 30400 and b.fw == 30400)
+    check("retry: announced, naming the device",
+          any("retrying 1 device(s)" in l and "[12]" in l for l in lines),
+          str([l for l in lines if "retry" in l]))
+    check("retry: two sessions were opened", bus.sessions == 2, f"sessions={bus.sessions}")
+    check("retry: nothing left in the dropped list", rep.dropped == [],
+          f"dropped={rep.dropped}")
+    check("retry: still exactly one Done", len(dones) == 1 and dones[0].ok,
+          f"{len(dones)} Done event(s)")
+    # The retry pacing is the point: 16 chunks at "1.0 s every 2" is 8
+    # one-second holds; the first stream at "0.6 s every 8" is 2 holds.
+    # (Each session also waits 1.0 s once after FINALIZE, hence + sessions.)
+    check("retry: slow stream really paused the line",
+          bus.sleeps.count(1.0) == 8 + bus.sessions and bus.sleeps.count(0.6) == 2,
+          f"sleeps: 1.0 x{bus.sleeps.count(1.0)}, 0.6 x{bus.sleeps.count(0.6)}")
+
+    # 3. everyone drops, on the retry too: the run says so and fails
+    bus, rep, lines, dones = run([Device(11, drop_after_stream=2),
+                           Device(12, drop_after_stream=2)])
     check("all-drop: run fails", not rep.ok)
     check("all-drop: no chunks wasted on the deaf", bus.resent == [],
           f"resent={bus.resent}")
+    check("all-drop: both still named as dropped", sorted(rep.dropped) == [11, 12],
+          f"dropped={rep.dropped}")
+
+    # 3b. pauses off: a stream is just a stream (bench scripts, old behaviour)
+    bus, rep, lines, dones = run([Device(11)], resync_every=0)
+    check("no pacing: no holds at all",
+          0.6 not in bus.sleeps and bus.sleeps.count(1.0) == bus.sessions,
+          f"sleeps={bus.sleeps}")
+    check("no pacing: still updates", rep.ok and rep.updated == [11])
 
     # 4. two hub channels: one session per channel, or nobody on the far
     #    channel ever hears the ENTER broadcast

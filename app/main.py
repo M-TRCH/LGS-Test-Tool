@@ -25,10 +25,10 @@ try:
     from . import report_pdf  # noqa: F401
 except ImportError:
     pass
-from .ui import (Ctx, connection_bar, helps, log_pane, tab_autotest,
-                 tab_commission, tab_control, tab_danger, tab_gateway,
-                 tab_install, tab_labels, tab_monitor, tab_ota, tab_soak,
-                 theme)
+from .ui import (Ctx, connection_bar, helps, log_pane, page_guard,
+                 tab_autotest, tab_commission, tab_control, tab_danger,
+                 tab_gateway, tab_install, tab_labels, tab_monitor, tab_ota,
+                 tab_soak, theme)
 from .version import APP_VERSION
 
 # Shared across browsers: one Modbus worker, one log, one settings file — the
@@ -55,6 +55,9 @@ def index() -> None:
     i18n.set_language(cfg.language)
     ctx = Ctx(worker=worker, log=log, cfg=cfg)
 
+    # First, before any element: the page's own watchdog. On a server screen
+    # nobody presses F5, so the page has to come back by itself.
+    page_guard.install()
     theme.init(cfg.theme)
     connection_bar.build(ctx)
 
@@ -216,8 +219,15 @@ def run() -> None:
         probe.close()
     # reload=False is mandatory: the auto-reloader spawns a second process, which
     # would mean a second Modbus worker fighting over the COM port / TCP slot.
+    # reconnect_timeout: how long the server keeps a page's state after its
+    # socket drops. The default is 3.0 s -- one switch blink -- after which
+    # a returning browser fails its handshake and has to reload. Sixty
+    # seconds rides out the LAN the fleet soaks have been measuring (drops
+    # of 1-2 s, occasionally longer) with no reload at all; the message
+    # history (1000 by default) replays what the page missed. Longer than
+    # that, page_guard's reload takes over -- see app/ui/page_guard.py.
     ui.run(host="0.0.0.0", port=port, title=f"LGS Test Tool v{APP_VERSION}",
-           reload=False, show=show)
+           reload=False, show=show, reconnect_timeout=60.0)
 
 
 if __name__ in {"__main__", "__mp_main__"}:

@@ -72,6 +72,7 @@ class FleetStarted:
     cabinet: str
     path: str
     modules: int
+    hub_map: str = ""            # the gateway's own bus.hub_map, or "" if unasked
     seq: int = 0
 
 
@@ -371,6 +372,23 @@ def _other_master(client, gateway_host: str) -> Optional[str]:
     return None
 
 
+def _gateway_hub_map(client) -> tuple:
+    """This gateway's `bus.hub_map` as a row -> channel tuple, or () when it
+    cannot be asked (no console, old firmware, a hiccup) -- the run then
+    scores by the tool's copy, exactly as it always did."""
+    try:
+        from .gateway_tcp import GatewayTcpLink, register_pdu
+        from .lgs_map import parse_hub_map
+        register_pdu(client)
+        snap = GatewayTcpLink(client).snapshot()
+        if not snap.ok:
+            return ()
+        text = snap.settings.get("bus.hub_map") or ""
+        return tuple(parse_hub_map(text)) if text else ()
+    except Exception:                                            # noqa: BLE001
+        return ()
+
+
 
 def parse_start_at(text: str, *, now=None) -> tuple:
     """"21:00", "21.00" or "2100" -> (wall epoch to start at, problem).
@@ -524,6 +542,11 @@ def run_fleet(cabinets: Sequence[FleetCabinet], cfg: soak.SoakConfig,
             tell(FleetBusy(cabinet=cab.name, peers=busy))
             ops.close()
             return
+        # This cabinet's wiring, from the one place that knows it. Eleven
+        # cabinets carry three different maps; scoring them all by the
+        # tool's single copy is the bug that zeroed the crossing column on
+        # 2026-09-29. An old gateway with no console simply gets the copy.
+        hub_map = _gateway_hub_map(ops._client)
         handle = None
         try:
             path = paths[id(cab)]
@@ -531,7 +554,8 @@ def run_fleet(cabinets: Sequence[FleetCabinet], cfg: soak.SoakConfig,
             handle.write("time,device_id,kind,detail\n")
             handle.flush()
             tell(FleetStarted(cabinet=cab.name, path=str(path),
-                                modules=len(cab.ids)))
+                                modules=len(cab.ids),
+                                hub_map=",".join(str(c) for c in hub_map)))
         except OSError as exc:
             # A missing exports folder, or a path past MAX_PATH, used to kill
             # this thread with no FleetFailed and -- worse -- leave the socket
@@ -563,7 +587,8 @@ def run_fleet(cabinets: Sequence[FleetCabinet], cfg: soak.SoakConfig,
                                 slow_ms=cfg.slow_ms,
                                 crossing_slow_ms=cfg.crossing_slow_ms,
                                 mode=cfg.mode, picks_per_day=cfg.picks_per_day,
-                                dwell_s=cfg.dwell_s, windows=cfg.windows),
+                                dwell_s=cfg.dwell_s, windows=cfg.windows,
+                                hub_map=hub_map),
                 lambda ev, _n=cab.name: tell(FleetEvent(cabinet=_n, inner=ev)),
                 cancel, log_line)
             with lock:

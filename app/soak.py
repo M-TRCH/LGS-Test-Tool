@@ -92,6 +92,14 @@ class SoakConfig:
     # that as an anomaly would bury the real ones — so crossings are counted
     # separately and only complained about past their own, larger, threshold.
     crossing_slow_ms: int = 4000
+    # Row -> hub channel, row 1 first, for THIS cabinet. Empty means the
+    # tool's own copy (lgs_map), which is whichever gateway was last read on
+    # the Gateway tab. A fleet run fills this from each gateway itself: on
+    # 2026-09-29 eleven cabinets with three different wirings (Queen
+    # 1,2,3,4,4,5,5,6,7,8 / Std 1..8,7,8 / Ref-12 1,2,3,4,5) were all scored
+    # by one map, so every row-9/10 read on the Queen was logged "slow"
+    # instead of a crossing and the crossing column read 0 all night.
+    hub_map: tuple = ()
 
     # ── pharmacy simulation ────────────────────────────────────────────────
     # "poll" is the read-only soak that produced every baseline this project
@@ -425,6 +433,10 @@ def run_soak(ops: SoakOps, cfg: SoakConfig, emit: Callable,
     start_detail = (f"ids={len(ids)} gap_s={cfg.pass_gap_s} "
                     f"counter_every={cfg.counter_every} slow_ms={cfg.slow_ms} "
                     f"crossing_slow_ms={cfg.crossing_slow_ms} mode={cfg.mode}")
+    if cfg.hub_map:
+        # On the file too: a reader of a soak CSV must be able to tell which
+        # wiring its crossing column was judged by.
+        start_detail += " hub_map=" + ",".join(str(c) for c in cfg.hub_map)
     if cfg.mode == "pharmacy":
         # Record the derived concurrency, not just the two knobs. The whole
         # question a reader brings to a pharmacy-mode file months later is
@@ -487,6 +499,19 @@ def run_soak(ops: SoakOps, cfg: SoakConfig, emit: Callable,
     return report
 
 
+def channel_resolver(cfg: SoakConfig) -> Callable:
+    """Row -> hub channel for THIS run: the cabinet's own map when the run
+    was handed one (a fleet member), else the tool's copy."""
+    if not cfg.hub_map:
+        return hub_channel
+    m = tuple(cfg.hub_map)
+
+    def channel_of(dev: int) -> int:
+        row = dev // 10
+        return m[row - 1] if 1 <= row <= len(m) else 0
+    return channel_of
+
+
 def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event,
           report: SoakReport, note: Callable, csv: Callable, t0: float,
           live: Optional[list] = None) -> bool:
@@ -496,6 +521,7 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
     False = it never got past the baseline, and has already said so."""
     ids = list(cfg.ids)
     tick = report.tick
+    channel_of = channel_resolver(cfg)     # the crossing accounting's wiring
     link_state = {"down": False, "since": 0.0, "missed": 0}
 
     # Baseline: what every module says before we start leaning on the bus.
@@ -614,7 +640,7 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
                      f"{len(ids) * cfg.windows} windows) -- picks now dropped")
             return
         dev, coil, on = action
-        crossed = crossing_to(hub_channel(dev))
+        crossed = crossing_to(channel_of(dev))
         t = time.monotonic()
         res = ops.write_coil(dev, coil, on)
         took_ms = (time.monotonic() - t) * 1000.0
@@ -655,7 +681,7 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
             # The very first read counts as a crossing too: nobody knows which
             # channel the hub is parked on, and letting that one 2.2 s wait
             # into the ordinary "worst" made the panel look alarming forever.
-            crossing = crossing_to(hub_channel(device_id))
+            crossing = crossing_to(channel_of(device_id))
 
             t = time.monotonic()
             res = ops.read_regs(device_id, REG_IDENTITY, 3)
@@ -708,7 +734,7 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
                 # This loop walks the same ids in the same order, so it
                 # crosses the hub exactly as the main pass does and needs the
                 # same allowance -- the channel tracker carries over deliberately.
-                counter_crossing = crossing_to(hub_channel(device_id))
+                counter_crossing = crossing_to(channel_of(device_id))
 
                 # Only the FIRST read of the pair pays the channel settle;
                 # the second one is already on a woken channel, so it is held

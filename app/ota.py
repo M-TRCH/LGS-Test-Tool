@@ -57,6 +57,36 @@ class OtaConfig:
     filename: str = ""
     repair_rounds: int = 5
     broadcast_apply: bool = False
+    # Resync pauses. A module whose parser has mis-framed one chunk stays
+    # misaligned for as long as the line never goes quiet — firmware before
+    # v3.5.1 re-arms a 500 ms byte timeout on every byte that arrives, and a
+    # 145 B chunk every ~250 ms never lets it expire. On the Queen (64 x
+    # v3.4.0, 2026-09-30) that turned ONE corrupt frame into "chunks 0" for
+    # the whole stream: two attempts at 20 and 100 ms idle updated nobody.
+    # Holding the line quiet every few chunks lets such a module time out,
+    # flush and pick up the next frame aligned; the repair rounds then only
+    # have to re-send the handful it lost. 8 x 0.6 s costs ~36 s per stream
+    # and got 7/8 on the first channel tried; the stragglers needed 2 x 1.0
+    # (the SLOW pacing below), which is what the automatic retry uses.
+    resync_every: int = 8
+    resync_pause_s: float = 0.6
+    # A device that left the session (timeout, chunks 0) is re-run once with
+    # the slow pacing before the run gives up on it. Five hand-driven rounds
+    # on 2026-09-30 is what this replaces.
+    retry_dropped: bool = True
+
+    SLOW_RESYNC_EVERY = 2
+    SLOW_RESYNC_PAUSE_S = 1.0
+
+    def for_group(self, ids, slow: bool = False) -> "OtaConfig":
+        """The same job for a subset of ids; `slow` is the retry pacing."""
+        return OtaConfig(ids=tuple(ids), image=self.image, filename=self.filename,
+                         repair_rounds=self.repair_rounds,
+                         broadcast_apply=self.broadcast_apply,
+                         resync_every=self.SLOW_RESYNC_EVERY if slow else self.resync_every,
+                         resync_pause_s=(self.SLOW_RESYNC_PAUSE_S if slow
+                                         else self.resync_pause_s),
+                         retry_dropped=False if slow else self.retry_dropped)
 
     @property
     def total_chunks(self) -> int:
@@ -100,6 +130,7 @@ class OtaReport:
     summary: str = ""
     updated: list = field(default_factory=list)
     lines: list = field(default_factory=list)
+    dropped: list = field(default_factory=list)     # left the session; retry candidates
 
 
 def crc16_ccitt(data: bytes) -> int:
@@ -185,46 +216,77 @@ def run_ota(ops: OtaOps, cfg: OtaConfig, emit: Callable,
     groups: dict = {}
     for uid in ids:
         groups.setdefault(channel_of(uid), []).append(uid)
-    if len(groups) <= 1:
-        return _run_one_channel(ops, cfg, emit, cancel)
 
     merged = OtaReport()
     ok_all = True
     for ch in sorted(groups):
         group = groups[ch]
-        text = f"── hub channel {ch}: {len(group)} device(s) {group} ──"
-        merged.lines.append(text)
-        emit(Line(text))
-        ops.read_regs(group[0], 0, 3)          # park the hub on this channel
-
-        # A sub-session's Done must NOT reach the caller: Done means "the run
-        # is over", and the Firmware tab (and any script) stops listening at
-        # the first one — which would end the job after channel 1 and leave
-        # the rest of the cabinet untouched. Fold it into a line instead; the
-        # run emits exactly one Done, at the end, below.
-        def sub_emit(ev, _sink=merged) -> None:
-            if isinstance(ev, Done):
-                line = f"  channel {ch}: {ev.summary}"
-                _sink.lines.append(line)
-                emit(Line(line, "ok" if ev.ok else "err"))
-                return
-            emit(ev)
-
-        sub = _run_one_channel(ops, OtaConfig(ids=tuple(group), image=cfg.image,
-                                              filename=cfg.filename,
-                                              repair_rounds=cfg.repair_rounds,
-                                              broadcast_apply=cfg.broadcast_apply),
-                               sub_emit, cancel)
-        merged.lines.extend(sub.lines)
-        merged.updated.extend(sub.updated)
-        ok_all = ok_all and sub.ok
+        if len(groups) > 1:
+            text = f"── hub channel {ch}: {len(group)} device(s) {group} ──"
+            merged.lines.append(text)
+            emit(Line(text))
+            ops.read_regs(group[0], 0, 3)      # park the hub on this channel
+        sub_ok = _run_group(ops, cfg, group, ch if len(groups) > 1 else 0,
+                            merged, emit, cancel)
+        ok_all = ok_all and sub_ok
         if cancel.is_set():
             break
     merged.ok = ok_all
-    merged.summary = (f"{len(merged.updated)}/{len(ids)} device(s) updated "
-                      f"across {len(groups)} hub channel(s)")
+    merged.summary = f"{len(merged.updated)}/{len(ids)} device(s) updated"
+    if len(groups) > 1:
+        merged.summary += f" across {len(groups)} hub channel(s)"
     emit(Done(merged.ok, merged.summary))
     return merged
+
+
+def _run_group(ops: OtaOps, cfg: OtaConfig, group: list, channel: int,
+               merged: OtaReport, emit: Callable, cancel: threading.Event) -> bool:
+    """One channel's session, plus one slow retry for whoever dropped out.
+
+    A sub-session's Done must NOT reach the caller: Done means "the run is
+    over", and the Firmware tab (and any script) stops listening at the
+    first one — which would end the job after channel 1 and leave the rest
+    of the cabinet untouched. Fold it into a line instead; run_ota emits
+    exactly one Done, at the end.
+
+    The retry is the 2026-09-30 lesson made automatic: on a bus where one
+    frame in a few hundred arrives corrupt, the default pacing loses a
+    device or two per channel to the session timeout, and the SLOW pacing
+    (a second of silence every second chunk, ~6 min per channel) gets them.
+    Only devices that were IN the session and left it are retried — a device
+    that never answered the probe is not a pacing problem.
+    """
+    def sub_emit(ev) -> None:
+        if isinstance(ev, Done):
+            line = (f"  channel {channel}: {ev.summary}" if channel
+                    else f"  {ev.summary}")
+            merged.lines.append(line)
+            emit(Line(line, "ok" if ev.ok else "err"))
+            return
+        emit(ev)
+
+    sub = _run_one_channel(ops, cfg.for_group(group), sub_emit, cancel)
+    merged.lines.extend(sub.lines)
+    merged.updated.extend(sub.updated)
+    merged.dropped.extend(sub.dropped)
+    # "ok" means every device asked for is running the new image. A session
+    # that salvaged 7 of 8 used to report ok=True with the eighth named only
+    # in a line — and the Firmware tab said PASS over a cabinet that was not
+    # done. The salvage still happens; the verdict now counts everyone.
+    ok = sub.ok and all(u in sub.updated for u in group)
+    left = [u for u in sub.dropped if u not in sub.updated]
+    if left and cfg.retry_dropped and not cancel.is_set():
+        text = (f"  retrying {len(left)} device(s) that left the session "
+                f"{left} with the slow stream ({cfg.SLOW_RESYNC_PAUSE_S:g} s "
+                f"of silence every {cfg.SLOW_RESYNC_EVERY} chunks)")
+        merged.lines.append(text)
+        emit(Line(text, "warn"))
+        again = _run_one_channel(ops, cfg.for_group(left, slow=True), sub_emit, cancel)
+        merged.lines.extend(again.lines)
+        merged.updated.extend(again.updated)
+        merged.dropped = [u for u in merged.dropped if u not in again.updated]
+        ok = again.ok and all(u in merged.updated for u in group)
+    return ok
 
 
 
@@ -274,13 +336,28 @@ def _run_one_channel(ops: OtaOps, cfg: OtaConfig, emit: Callable,
         say(f"  all {len(ids)} device(s) receiving", "ok")
 
         # 4. stream
-        say(f"[4/8] streaming {total} chunks ...")
+        paced = cfg.resync_every > 0 and cfg.resync_pause_s > 0
+        pacing = (f", {cfg.resync_pause_s:g} s of silence every "
+                  f"{cfg.resync_every} chunks" if paced else "")
+        say(f"[4/8] streaming {total} chunks{pacing} ...")
         t0 = time.monotonic()
-        tx_counter = 0
+        sent = [0, 0]                       # frames sent, tx counter
+
+        def send_chunk(idx: int) -> None:
+            # 480 chunk frames would flood the log, hence log=False. The
+            # tx counter is what makes a re-sent chunk fire the module's
+            # commit handler again — a duplicate refreshes its session
+            # timer, so a repair round is also a keepalive for the devices
+            # that are already complete.
+            sent[1] = (sent[1] + 1) & 0xFFFF
+            ops.bcast_regs(REG_CHUNK_FIRST, _chunk_frame(cfg.image, idx, sent[1]),
+                           log=False)
+            sent[0] += 1
+            if paced and sent[0] % cfg.resync_every == 0:
+                ops.sleep(cfg.resync_pause_s)
+
         for idx in range(total):
-            tx_counter = (tx_counter + 1) & 0xFFFF
-            ops.bcast_regs(REG_CHUNK_FIRST, _chunk_frame(cfg.image, idx, tx_counter),
-                           log=False)          # 480 chunk frames would flood the log
+            send_chunk(idx)
             if idx % 8 == 7 or idx == total - 1:
                 emit(Progress(idx + 1, total))
         say(f"  streamed in {time.monotonic() - t0:.0f} s")
@@ -336,9 +413,7 @@ def _run_one_channel(ops: OtaOps, cfg: OtaConfig, emit: Callable,
                 break
             say(f"  repair round {round_no}: re-sending {len(union_missing)} chunk(s)")
             for idx in sorted(union_missing):
-                tx_counter = (tx_counter + 1) & 0xFFFF
-                ops.bcast_regs(REG_CHUNK_FIRST, _chunk_frame(cfg.image, idx, tx_counter),
-                               log=False)
+                send_chunk(idx)
         else:
             say("  chunks still missing after all repair rounds", "err")
 
@@ -357,6 +432,7 @@ def _run_one_channel(ops: OtaOps, cfg: OtaConfig, emit: Callable,
                             continue
                 dropped.setdefault(uid, describe_state(st))
         if dropped:
+            report.dropped = sorted(dropped)
             names = ", ".join(str(u) for u in sorted(dropped))
             say(f"  NOT updated this run: {names} — re-run the OTA for these "
                 f"ids once it finishes", "err")
@@ -411,5 +487,6 @@ def _run_one_channel(ops: OtaOps, cfg: OtaConfig, emit: Callable,
         return finish(ok_count == len(verified),
                       f"{ok_count}/{len(verified)} device(s) running the new image")
     except OtaCancelled:
-        say("cancelled — the device session times out by itself (~30 s)", "warn")
+        say("cancelled — the device session times out by itself "
+            "(30 s on firmware before v3.5.2, 90 s from there)", "warn")
         return finish(False, "cancelled")
