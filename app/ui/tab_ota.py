@@ -1,16 +1,21 @@
 """Firmware (OTA) tab — broadcast a firmware image to selected modules.
 
 The image is uploaded through the browser (so it also works when the tool runs
-on another machine), then streamed by app/ota.py on the worker thread.
+on another machine), then streamed by app/ota.py on the worker thread. The
+"several cabinets at once" card streams the same image to many gateways side
+by side (app/ota_fleet.py), one thread and connection per cabinet.
 """
 from __future__ import annotations
 
+import asyncio
+
 from nicegui import ui
 
+from .. import config_store, ota_fleet, soak_fleet
 from .. import firmware_bundle as fb
 from ..fw_survey import SurveyDone, SurveyProgress, SurveyRead
 from ..i18n import t
-from ..lgs_map import GRID_COLS, GRID_ROWS
+from ..lgs_map import CABINET_LAYOUTS, GRID_COLS, GRID_ROWS
 from ..ota import Done, Line, MAX_IMAGE_SIZE, OtaConfig, Progress
 from . import Ctx, bundled_picker, helps, inline_warning, warning_banner
 
@@ -302,3 +307,176 @@ def build(ctx: Ctx) -> None:
                 ui.notify(ev.summary, type="positive" if ev.ok else "negative", timeout=8000)
 
     ui.timer(0.2, drain)
+
+    _build_fleet_card(ctx, state)
+
+
+def _fleet_row_text(r: "ota_fleet.CabStatus") -> str:
+    """One cabinet's line while (and after) a fleet update runs."""
+    if r.state == "waiting":
+        return "—"
+    if r.state in ("refused", "failed"):
+        return f"{r.state} · {r.note}"
+    if r.state == "running":
+        where = f"ch {r.channel}/{r.channels}" if r.channel and r.channels else "starting"
+        what = f"{r.phase} {r.pct}%" if r.phase == "stream" else (r.phase or "")
+        return f"{where} · {what} · {r.updated}/{r.modules} updated · {r.minutes:.1f} min"
+    now = f" · now {r.census}" if r.census else ""
+    left = f" · left behind {', '.join(map(str, r.left))}" if r.left else ""
+    return f"{r.state} · {r.updated}/{r.modules} · {r.minutes:.1f} min{now}{left}"
+
+
+def _build_fleet_card(ctx: Ctx, state: dict) -> None:
+    """Several cabinets at once.
+
+    One gateway, one bus, one thread per cabinet: a roll-out takes as long as
+    its slowest cabinet. On 2026-10-01 three cabinets took 31 min side by
+    side; one after another, ten would have been five hours. The cabinet list
+    is the Soak tab's roster -- one list of cabinets for the whole tool -- and
+    the image is whatever the card above has armed.
+    """
+    worker = ctx.worker
+    layouts = {lay.key: lay for lay in CABINET_LAYOUTS}
+    fota = {"seq": 0, "rows": [], "was_running": False}
+
+    with ui.card().classes("p-3 w-full q-mt-md"):
+        helps(ui.label(t("otaf.card")).classes("font-bold text-lg"), t("otaf.hint"))
+        rows_box = ui.column().classes("gap-1 w-full")
+        with ui.row().classes("items-center gap-2 q-mt-sm flex-wrap"):
+            reload_btn = ui.button(t("otaf.reload")).props("flat dense no-caps")
+            probe_btn = ui.button(t("fleet.probe"), icon="travel_explore").props("flat dense")
+            start_btn = ui.button(t("otaf.start"), color="red")
+            ui.button(t("otaf.stop"), on_click=lambda: worker.cancel_fleet_ota()) \
+                .props("outline")
+            retry_btn = ui.button("").props("outline no-caps color=orange")
+            retry_btn.visible = False
+            status = ui.label(t("soak.idle")).classes("text-sm")
+        log_view = ui.log(max_lines=300).classes("w-full h-40 font-mono text-xs")
+        summary = ui.label().classes("font-mono text-xs whitespace-pre q-mt-sm")
+        summary.visible = False
+
+    def load_rows() -> None:
+        rows_box.clear()
+        fota["rows"] = []
+        roster = soak_fleet.roster_from_config(ctx.cfg.fleet, set(layouts))
+        with rows_box:
+            if not roster:
+                ui.label(t("otaf.empty")).classes("text-sm text-grey")
+                return
+            for name, host, key in roster:
+                lay = layouts[key]
+                with ui.row().classes("items-center gap-2 no-wrap w-full"):
+                    tick = ui.checkbox(value=True).props("dense")
+                    ui.label(name or host).classes("w-44 font-bold text-sm")
+                    ui.label(host).classes("w-32 font-mono text-xs")
+                    ui.label(f"{lay.label} · {len(lay.ids)}").classes("w-48 text-xs text-grey")
+                    bar = ui.linear_progress(value=0.0, show_value=False).classes("w-32")
+                    live = ui.label("—").classes("text-xs font-mono grow")
+                fota["rows"].append({"name": name or host, "host": host, "key": key,
+                                     "tick": tick, "bar": bar, "live": live})
+
+    async def probe_all() -> None:
+        if worker.fleet_ota_running():
+            return                 # the rows are showing the run; leave them be
+
+        async def one(entry) -> None:
+            entry["live"].set_text("checking ...")
+            entry["live"].set_text(
+                await asyncio.to_thread(soak_fleet.probe_gateway, entry["host"]))
+
+        await asyncio.gather(*(one(e) for e in fota["rows"]))
+
+    def ticked() -> list:
+        return [soak_fleet.FleetCabinet(name=e["name"], host=e["host"],
+                                        ids=tuple(layouts[e["key"]].ids))
+                for e in fota["rows"] if e["tick"].value and e["host"]]
+
+    def leftovers() -> list:
+        out = worker.fleet_ota_outcome()
+        return out.leftovers() if out is not None else []
+
+    async def go(cabs: list) -> None:
+        if not state["image"]:
+            ui.notify(t("ota.no_image"), type="warning")
+            return
+        if not cabs:
+            ui.notify(t("otaf.none"), type="warning")
+            return
+        dupes = soak_fleet.duplicate_hosts(cabs)
+        if dupes:
+            ui.notify(t("otaf.dup", hosts=", ".join(dupes)), type="negative")
+            return
+        modules = sum(len(c.ids) for c in cabs)
+        d = ui.dialog()
+        with d, ui.card().classes("border border-red-500"):
+            ui.label(t("otaf.confirm_title", n=len(cabs))).classes("font-bold text-red")
+            ui.label(t("otaf.confirm_body", image=state["name"],
+                       size=f"{len(state['image']):,}", modules=modules,
+                       names=", ".join(f"{c.name} ({len(c.ids)})" for c in cabs)))
+            with ui.row():
+                ui.button(t("btn.cancel"), on_click=lambda: d.submit(False)).props("flat")
+                ui.button(t("ota.confirm_btn"), color="red", on_click=lambda: d.submit(True))
+        if not await d:
+            return
+        if not worker.start_fleet_ota(cabs, state["image"], state["name"],
+                                      config_store.data_dir() / "exports"):
+            ui.notify(t("otaf.busy"), type="negative", timeout=8000)
+            return
+        log_view.clear()
+        summary.visible = False
+        retry_btn.visible = False
+        fota["was_running"] = True
+        fota["seq"] = 0
+
+    async def start_ticked() -> None:
+        await go(ticked())
+
+    async def start_leftovers() -> None:
+        await go(leftovers())
+
+    def show_outcome() -> None:
+        status.set_text(t("soak.idle"))
+        status.classes(replace="text-sm")
+        out = worker.fleet_ota_outcome()
+        if out is None:
+            return
+        summary.set_text(out.text)
+        summary.visible = True
+        left = sum(len(c.ids) for c in out.leftovers())
+        retry_btn.set_text(t("otaf.retry", n=left))
+        retry_btn.visible = left > 0
+
+    def drain() -> None:
+        # Closing the tab leaves this timer running against a deleted client;
+        # pushing into it only grows an outbox nobody will drain (log_pane).
+        if not log_view.client.has_socket_connection:
+            return
+        fota["seq"], events = worker.drain_fleet_ota_events(fota["seq"])
+        for ev in events:
+            if isinstance(ev, ota_fleet.FleetOtaEvent):
+                log_view.push(f"{ev.when}  {ev.cabinet} · {ev.text}")
+        rows = worker.fleet_ota_status()
+        by = {(r.name, r.host): r for r in rows}
+        for e in fota["rows"]:
+            r = by.get((e["name"], e["host"]))
+            if r is not None:
+                e["bar"].set_value(r.fraction)
+                e["live"].set_text(_fleet_row_text(r))
+        if worker.fleet_ota_running():
+            longest = max((r.minutes for r in rows), default=0.0)
+            status.set_text(t("otaf.running", n=len(rows), min=f"{longest:.1f}"))
+            status.classes(replace="text-sm text-orange")
+            fota["was_running"] = True
+        elif fota["was_running"] or (not summary.visible
+                                     and worker.fleet_ota_outcome() is not None):
+            # The run ended, or this page was opened after it did: either
+            # way the verdict and the re-run offer belong on screen.
+            fota["was_running"] = False
+            show_outcome()
+
+    reload_btn.on_click(load_rows)
+    probe_btn.on_click(probe_all)
+    start_btn.on_click(start_ticked)
+    retry_btn.on_click(start_leftovers)
+    load_rows()
+    ui.timer(0.5, drain)

@@ -150,8 +150,10 @@ async def _hold_awake() -> None:
         # sleep under the run" and for the multi-cabinet case that was not
         # true. A weekend run on a laptop that suspends at midnight ends at
         # midnight, and the CSVs stop without saying why.
+        # A firmware roll-out too: a PC that suspends halfway through leaves
+        # every cabinet on it with modules waiting in an OTA session.
         want = (worker.soak_running() or worker.fleet_running()
-                or ntp_server.server.running)
+                or worker.fleet_ota_running() or ntp_server.server.running)
         held = keep_awake.apply(want)
         if (want, held) != (was_want, was_held):
             was_want, was_held = want, held

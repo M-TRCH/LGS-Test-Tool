@@ -28,7 +28,7 @@ from typing import Callable, Optional, Sequence
 
 from . import (applog, commission, fieldcheck, fw_survey, gateway_config,
                gateway_tcp, gw_net_update, lgs_map, opta_flash, opta_update,
-               ota, soak, soak_fleet, stlink, testsuite)
+               ota, ota_fleet, soak, soak_fleet, stlink, testsuite)
 from .lgs_map import (CoilClass, HUB_WAKE_GAP_S, HUB_WAKE_TRIES,
                       INTER_CH_S, INTER_TXN_S, LATCH_COOLDOWN_S,
                       hub_channel)
@@ -206,6 +206,15 @@ class ModbusWorker:
         self._fleet_t0 = 0.0
         self._fleet_n = 0
         self._fleet_start_epoch = 0.0       # wall epoch of a delayed start
+        # Firmware update of several cabinets at once: its own threads and
+        # sockets like the fleet soak, and its status and verdict kept here
+        # so a page opened halfway through still shows every cabinet.
+        self._fleet_ota_running = False
+        self._fleet_ota_cancel = threading.Event()
+        self._fleet_ota_events: list = []
+        self._fleet_ota_lock = threading.Lock()
+        self._fleet_ota_board = None        # ota_fleet.StatusBoard
+        self._fleet_ota_outcome = None      # ota_fleet.FleetOtaOutcome
         self._ota_running = False
         self._ota_cancel = threading.Event()
         self._ota_events: list = []
@@ -1419,6 +1428,76 @@ class ModbusWorker:
                                         reason=f"{type(exc).__name__}: {exc}"))
         finally:
             self._fleet_running = False
+
+    # ── firmware update, several cabinets at once ──────────────────────────
+    def start_fleet_ota(self, cabinets, image: bytes, filename: str,
+                        log_dir) -> bool:
+        """Update N cabinets side by side, one thread and socket each.
+
+        Like the fleet soak it does not take the worker's long-job slot or
+        its transport, and it refuses a cabinet on the gateway this worker is
+        connected to: two masters on one bus is the one thing that would make
+        a firmware stream lose chunks for reasons nobody can see.
+        """
+        if self._fleet_ota_running or not cabinets or not image:
+            return False
+        ours = None
+        st = self._settings
+        if st is not None and self._connected:
+            ours = getattr(st, "host", None)
+        if soak_fleet.conflicting_hosts(cabinets, ours):
+            return False
+        self._fleet_ota_cancel.clear()
+        with self._fleet_ota_lock:
+            self._fleet_ota_events.clear()
+        self._fleet_ota_outcome = None
+        self._fleet_ota_board = ota_fleet.StatusBoard(cabinets)
+        self._fleet_ota_running = True
+        threading.Thread(target=self._do_fleet_ota, name="fleet-ota", daemon=True,
+                         args=(list(cabinets), bytes(image), filename, log_dir,
+                               self._fleet_ota_board)).start()
+        return True
+
+    def cancel_fleet_ota(self) -> None:
+        self._fleet_ota_cancel.set()
+
+    def fleet_ota_running(self) -> bool:
+        return self._fleet_ota_running
+
+    def fleet_ota_status(self) -> list:
+        """Per-cabinet status of the current (or last) run, copied."""
+        board = self._fleet_ota_board
+        return board.snapshot() if board is not None else []
+
+    def fleet_ota_outcome(self):
+        return self._fleet_ota_outcome
+
+    def drain_fleet_ota_events(self, since: int) -> tuple[int, list]:
+        with self._fleet_ota_lock:
+            fresh = [e for e in self._fleet_ota_events if e.seq > since]
+            if len(self._fleet_ota_events) > 3000:
+                del self._fleet_ota_events[:-800]
+            return (fresh[-1].seq if fresh else since), fresh
+
+    def _do_fleet_ota(self, cabinets, image, filename, log_dir, board) -> None:
+        def emit(ev) -> None:
+            with self._fleet_ota_lock:
+                self._event_seq += 1
+                ev.seq = self._event_seq
+                self._fleet_ota_events.append(ev)
+        try:
+            outcome = ota_fleet.run_fleet_ota(cabinets, image, filename, emit,
+                                              self._fleet_ota_cancel, log_dir,
+                                              board=board)
+            if outcome is not None:
+                self._fleet_ota_outcome = outcome
+        except BaseException as exc:                            # noqa: BLE001
+            applog.note(f"fleet OTA stopped by {type(exc).__name__}: {exc}")
+            applog.note("".join(traceback.format_exception(
+                type(exc), exc, exc.__traceback__)))
+            emit(ota_fleet.FleetOtaEvent("fleet", f"{type(exc).__name__}: {exc}", "err"))
+        finally:
+            self._fleet_ota_running = False
 
     # ── firmware survey (read-only, its own event stream) ──────────────────
     def start_fw_survey(self, ids: Sequence[int]) -> bool:

@@ -1649,6 +1649,40 @@ TEXTS: dict[str, dict[str, str]] = {
                                "บัสจะไม่ว่างหลายนาทีและทุกโมดูลจะรีบูตตอนจบ"},
     "ota.confirm_btn": {"en": "FLASH", "th": "เขียน"},
     "ota.progress": {"en": "chunk {done}/{total}", "th": "ชิ้นที่ {done}/{total}"},
+    # ── firmware: several cabinets at once ─────────────────────────────────
+    "otaf.card": {"en": "Several cabinets at once", "th": "หลายตู้พร้อมกัน"},
+    "otaf.hint": {
+        "en": "Every cabinet has its own gateway and its own bus, so they are updated "
+              "side by side: ten cabinets take as long as the slowest one (~30 min), "
+              "not ten times as long. Uses the firmware picked above and the cabinet "
+              "list from the Soak tab. Each cabinet gets its own connection; a cabinet "
+              "whose gateway already has another client is refused, never shared.",
+        "th": "แต่ละตู้มีเกตเวย์และบัสของตัวเอง จึงอัปเดตพร้อมกันได้: สิบตู้ใช้เวลาเท่าตู้ที่ช้าที่สุด "
+              "(ราว 30 นาที) ไม่ใช่สิบเท่า ใช้ไฟล์เฟิร์มแวร์ที่เลือกไว้ด้านบนและรายชื่อตู้จากแท็บ Soak "
+              "แต่ละตู้มีการเชื่อมต่อของตัวเอง ตู้ที่เกตเวย์มีเครื่องอื่นต่ออยู่จะถูกข้าม ไม่ใช้ร่วมกัน"},
+    "otaf.empty": {"en": "No cabinets yet — add them on the Soak tab (Several cabinets "
+                         "at once), then press Reload list.",
+                   "th": "ยังไม่มีรายชื่อตู้ — เพิ่มที่แท็บ Soak (หลายตู้พร้อมกัน) แล้วกด โหลดรายชื่อใหม่"},
+    "otaf.reload": {"en": "Reload list", "th": "โหลดรายชื่อใหม่"},
+    "otaf.start": {"en": "Update the ticked cabinets", "th": "อัปเดตตู้ที่เลือก"},
+    "otaf.stop": {"en": "Stop", "th": "หยุด"},
+    "otaf.retry": {"en": "Re-run the {n} module(s) left behind",
+                   "th": "รันซ้ำ {n} โมดูลที่ค้าง"},
+    "otaf.none": {"en": "tick at least one cabinet", "th": "เลือกอย่างน้อยหนึ่งตู้"},
+    "otaf.dup": {"en": "the same gateway is in the list twice: {hosts}",
+                 "th": "มีเกตเวย์ซ้ำในรายการ: {hosts}"},
+    "otaf.confirm_title": {"en": "Update {n} cabinet(s) at once?",
+                           "th": "อัปเดต {n} ตู้พร้อมกัน?"},
+    "otaf.confirm_body": {
+        "en": "{image} ({size} B) to {modules} module(s): {names}. Each cabinet's bus "
+              "is busy for about half an hour and every module reboots at the end.",
+        "th": "{image} ({size} ไบต์) ไปยัง {modules} โมดูล: {names} "
+              "บัสของแต่ละตู้จะไม่ว่างราวครึ่งชั่วโมง และทุกโมดูลจะรีบูตตอนจบ"},
+    "otaf.running": {"en": "updating {n} cabinet(s) · {min} min",
+                     "th": "กำลังอัปเดต {n} ตู้ · {min} นาที"},
+    "otaf.busy": {"en": "refused — already running, or one of these is the gateway this "
+                        "tool is connected to (disconnect first)",
+                  "th": "ปฏิเสธ — กำลังรันอยู่แล้ว หรือมีตู้ที่เป็นเกตเวย์ที่เครื่องมือต่ออยู่ (ตัดการเชื่อมต่อก่อน)"},
 
     # ── danger tab ─────────────────────────────────────────────────────────
     "dng.banner": {"en": "These commands reboot or wipe the module — double-check "
