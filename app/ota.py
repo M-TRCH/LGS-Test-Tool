@@ -40,6 +40,20 @@ class OtaCancelled(Exception):
     pass
 
 
+# The clock the keepalive is timed by. A module-level name so the selftest can
+# run the repair phase on a fake clock with read stalls in it.
+_now = time.monotonic
+
+# Longest the repair phase may go without putting a chunk frame on the line.
+# A module drops its session after 30 s (90 s from v3.5.2) with no chunk
+# commit, and bitmap/state READS do not count -- only frames that reach its
+# commit handler do, duplicates included. On 2026-10-01 a Queen channel took
+# 33 s to read eight bitmaps (first attempts timing out at 8 s each) and two
+# devices that held the whole image expired before FINALIZE reached them.
+# A re-sent chunk every 8 s keeps every listener alive however slow the reads.
+KEEPALIVE_S = 8.0
+
+
 class OtaOps(Protocol):
     """Transactions the runner needs; implemented by the worker."""
 
@@ -165,6 +179,12 @@ def describe_state(st: Optional[dict]) -> str:
     text = STATE_NAMES.get(st["state"], "?")
     if st["error"]:
         text += f" (error: {ERROR_NAMES.get(st['error'], st['error'])})"
+    if st["error"] == 4:
+        # A session timeout wipes the session (resetSession), so the count
+        # reads 0 whatever arrived. Printing "chunks 0" here read as "this
+        # device never heard the stream" and sent a whole diagnosis the
+        # wrong way (2026-09-30).
+        return text
     return f"{text}, chunks {st['chunks']}"
 
 
@@ -342,6 +362,7 @@ def _run_one_channel(ops: OtaOps, cfg: OtaConfig, emit: Callable,
         say(f"[4/8] streaming {total} chunks{pacing} ...")
         t0 = time.monotonic()
         sent = [0, 0]                       # frames sent, tx counter
+        last_tx = [_now()]                  # when a chunk frame last went out
 
         def send_chunk(idx: int) -> None:
             # 480 chunk frames would flood the log, hence log=False. The
@@ -352,9 +373,26 @@ def _run_one_channel(ops: OtaOps, cfg: OtaConfig, emit: Callable,
             sent[1] = (sent[1] + 1) & 0xFFFF
             ops.bcast_regs(REG_CHUNK_FIRST, _chunk_frame(cfg.image, idx, sent[1]),
                            log=False)
+            last_tx[0] = _now()
             sent[0] += 1
             if paced and sent[0] % cfg.resync_every == 0:
                 ops.sleep(cfg.resync_pause_s)
+
+        def keepalive() -> None:
+            """Re-send chunk 0 if the line has carried no chunk for a while.
+
+            Called before every read of the repair and finalize phases: a
+            device that already holds the whole image is otherwise only
+            WAITING there, and its session timer runs out while the master
+            reads its neighbours."""
+            if _now() - last_tx[0] >= KEEPALIVE_S:
+                sent[1] = (sent[1] + 1) & 0xFFFF
+                ops.bcast_regs(REG_CHUNK_FIRST, _chunk_frame(cfg.image, 0, sent[1]),
+                               log=False)
+                last_tx[0] = _now()
+                kept[0] += 1
+
+        kept = [0]
 
         for idx in range(total):
             send_chunk(idx)
@@ -390,11 +428,13 @@ def _run_one_channel(ops: OtaOps, cfg: OtaConfig, emit: Callable,
             for uid in ids:
                 if uid in complete or uid in dropped:
                     continue
+                keepalive()
                 st = read_state(ops, uid)
                 if st is None or st["state"] != 1:
                     dropped[uid] = describe_state(st)
                     say(f"  id {uid}: left the session — {dropped[uid]}", "err")
                     continue
+                keepalive()
                 res = ops.read_regs(uid, REG_BITMAP_FIRST, BITMAP_REGS)
                 if not res.ok:
                     say(f"  id {uid}: bitmap read failed", "err")
@@ -421,8 +461,10 @@ def _run_one_channel(ops: OtaOps, cfg: OtaConfig, emit: Callable,
         # that stayed in the session but never converged — same retry advice.
         for uid in ids:
             if uid not in complete and uid not in dropped:
+                keepalive()
                 st = read_state(ops, uid)
                 if st is not None and st["state"] == 1:
+                    keepalive()
                     res = ops.read_regs(uid, REG_BITMAP_FIRST, BITMAP_REGS)
                     if res.ok:
                         regs = res.value
@@ -440,7 +482,12 @@ def _run_one_channel(ops: OtaOps, cfg: OtaConfig, emit: Callable,
                 return finish(False, "no device completed the image; "
                                      f"dropped: {names}")
 
+        if kept[0]:
+            say(f"  kept the session alive with {kept[0]} re-sent chunk(s) "
+                f"while reading")
+
         # 6. finalize
+        keepalive()
         say("[6/8] finalize (device-side CRC32) ...")
         ops.bcast_coil(COIL_FINALIZE)
         ops.sleep(1.0)
@@ -451,6 +498,12 @@ def _run_one_channel(ops: OtaOps, cfg: OtaConfig, emit: Callable,
                 "ok" if st and st["state"] == 2 else "err")
             if st and st["state"] == 2:
                 verified.append(uid)
+            elif st is not None and st["state"] == 3 and st["error"] == 4:
+                # Held the whole image, then timed out waiting for FINALIZE
+                # (2026-10-01, Queen 32/34). A pacing casualty like any
+                # dropout, so it goes on the retry list too -- it used to be
+                # left behind silently, neither updated nor retried.
+                report.dropped = sorted(set(report.dropped) | {uid})
         if not verified:
             return finish(False, "no device verified the image")
 

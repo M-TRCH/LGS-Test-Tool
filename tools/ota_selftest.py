@@ -48,8 +48,14 @@ class Device:
 class StubBus:
     """OtaOps over a handful of scripted devices on one 'channel'."""
 
-    def __init__(self, devices, hub=False, gateway_map=None):
+    def __init__(self, devices, hub=False, gateway_map=None, read_cost_s=0.0):
         self.devs = {d.uid: d for d in devices}
+        # A fake clock for the keepalive case: every read costs read_cost_s
+        # of it (a first attempt timing out), and a receiving device whose
+        # last chunk frame is 30 s old drops out -- the module's own rule.
+        self.read_cost_s = read_cost_s
+        self.clock = 0.0
+        self.keepalives = 0
         self.meta = [0] * 5
         self.resent: list = []               # chunk idx re-sent after the stream
         self.streaming_done = False
@@ -81,7 +87,17 @@ class StubBus:
                 if self._chan(d.uid) == self.parked]
 
     # ── OtaOps ─────────────────────────────────────────────────────────
+    def _tick(self, seconds):
+        self.clock += seconds
+        for d in self.devs.values():
+            if d.state == 1 and self.clock - getattr(d, "last_rx", 0.0) > 30.0:
+                d.state, d.err = 3, 4
+                d.chunks.clear()                  # resetSession
+
     def read_regs(self, device_id, addr, count):
+        # Only the repair phase is slow in the case being modelled; slow
+        # reads before the stream would expire the devices before it began.
+        self._tick(self.read_cost_s if self.streaming_done else 0.0)
         d = self.devs[device_id]
         self.parked = self._chan(device_id)  # a unicast parks the hub
         if addr == 0:
@@ -104,9 +120,12 @@ class StubBus:
             idx = values[0]
             if self.streaming_done:
                 self.resent.append(idx)
+            if self.streaming_done and idx == 0:
+                self.keepalives += 1
             for d in self._reachable():
                 if d.state != 1:
                     continue                  # dropped devices hear nothing
+                d.last_rx = self.clock        # any chunk frame refreshes the session
                 d.streamed += 1
                 if not self.streaming_done and d.miss_first and \
                         idx >= d.total - d.miss_first:
@@ -128,6 +147,7 @@ class StubBus:
             self.sessions += 1
         for d in self._reachable():
             if addr == ota.COIL_ENTER:
+                d.last_rx = self.clock        # entering starts the session timer
                 d.state, d.err = 1, 0
                 d.chunks.clear()
                 d.total = self.meta[4]
@@ -151,8 +171,9 @@ class StubBus:
         self.sleeps.append(seconds)
 
 
-def run(devices, hub=False, gateway_map=None, **cfg):
-    bus = StubBus(devices, hub=hub, gateway_map=gateway_map)
+def run(devices, hub=False, gateway_map=None, read_cost_s=0.0, **cfg):
+    bus = StubBus(devices, hub=hub, gateway_map=gateway_map, read_cost_s=read_cost_s)
+    ota._now = lambda: bus.clock
     lines: list = []
 
     dones: list = []
@@ -274,6 +295,34 @@ def main() -> int:
     check("a map disagreement is announced",
           any("hub map from the gateway" in l for l in lines_out),
           str([l for l in lines_out if 'hub map' in l]))
+
+    # 6. slow reads in the repair phase (2026-10-01, Queen channel 3: first
+    #    attempts timing out at 8 s each). Eight complete devices, 9 s per
+    #    read: without a keepalive the later ones expire before FINALIZE.
+    devs = [Device(31 + i) for i in range(8)]
+    bus, rep, lines, dones = run(devs, read_cost_s=9.0, retry_dropped=False)
+    check("slow reads: every complete device survives to the new fw",
+          rep.ok and all(d.fw == 30400 for d in devs),
+          f"ok={rep.ok} fw={[d.fw for d in devs]}")
+    check("slow reads: the keepalive actually fired", bus.keepalives > 0,
+          f"keepalives={bus.keepalives}")
+    check("slow reads: the keepalive is reported",
+          any("kept the session alive" in l for l in lines))
+    # 6b. without the keepalive: devices that held the whole image and then
+    #     expired waiting for FINALIZE must land on the retry list, not be
+    #     left behind silently (Queen 32/34 on 2026-10-01 were).
+    saved = ota.KEEPALIVE_S
+    ota.KEEPALIVE_S = 1e9
+    devs = [Device(31 + i) for i in range(8)]
+    bus, rep, lines, dones = run(devs, read_cost_s=9.0)
+    ota.KEEPALIVE_S = saved
+    check("expired at FINALIZE: every device is on the retry list",
+          any("retrying 8 device(s)" in l for l in lines),
+          str([l for l in lines if "retrying" in l]))
+    # and a timed-out device is not described with the wiped chunk count
+    st = {"state": 3, "error": 4, "chunks": 0}
+    check("timeout description drops the wiped chunk count",
+          "chunks" not in ota.describe_state(st), ota.describe_state(st))
 
     print(f"\n{'ALL PASS' if not failures else f'{failures} FAILURES'}")
     return 1 if failures else 0
