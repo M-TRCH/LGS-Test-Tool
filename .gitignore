@@ -7,6 +7,8 @@ data/
 # PyInstaller build output
 build/
 dist/
+dist-uploader/
+build-uploader/
 *.spec
 
 # Windows / OneDrive
