@@ -407,90 +407,157 @@ def _events_table(pdf: _Report, events: Sequence[str]) -> None:
             row.cell(_event_detail(ev, a, p))
 
 
+SOAK_TABLE_ROWS = 15
+
+
+def _when(at) -> str:
+    return f"{at:%m-%d %H:%M:%S}" if at else "—"
+
+
 def _soak_section(pdf: _Report, soak) -> None:
-    """Print a soak_csv.SoakSummary. The one thing this section must get
-    right is the reboot verdict: a scheduled-reset night footers as
-    "reboots=64", and printing that number without its explanation reads as
-    a cabinet fault to anyone who was not watching the run."""
-    n_trouble = min(len(soak.trouble), 15)
-    _ensure_room(pdf, 30 + n_trouble * 4.4)
+    """Print a soak_csv.SoakSummary the way the LGS Soak Monitor reads the
+    same run, so the PDF and the dashboard never disagree:
+
+      * one verdict first — any failed read, any watchdog reset, any reboot
+        no scheduled reset explains — because that is the question the
+        reader came with;
+      * EVERY scheduled reset listed, one line per night: a three-night run
+        footers "reboots=192", and printing that without its explanation
+        reads as a cabinet fault;
+      * the watchdog from all three witnesses on the reboot rows, so a reset
+        whose counter could not be read is still seen;
+      * the slowest reading of the run, the slowest outside the reset windows
+        (modules booting are slow for a reason) and the slowest hub crossing,
+        each with its module — and a table of the modules behind them."""
+    shown = list(soak.trouble[:SOAK_TABLE_ROWS])
+    for which, outside in (("slow", False), ("slow", True), ("cross", False)):
+        best = soak.slowest(which, outside_reset=outside)
+        if best and all(t.device_id != best[0] for t in shown):
+            shown.append(next(t for t in soak.trouble if t.device_id == best[0]))
+    _ensure_room(pdf, 52 + len(shown) * 4.4)
     _section(pdf, "Soak test")
     pdf.font(8)
     dur_h = soak.duration_s / 3600.0
     span = "?"
     if soak.started and soak.ended:
         span = f"{soak.started:%Y-%m-%d %H:%M} - {soak.ended:%Y-%m-%d %H:%M}"
-    pdf.cell(0, 4.6,
-             f"{soak.filename or 'soak CSV'} · {span} ({dur_h:.1f} h) · "
-             f"{soak.module_count} modules · {soak.passes:,} passes · "
-             f"{soak.reads:,} reads"
-             # A pharmacy run also WROTE to the cabinet, and that is the whole
-             # point of it. Saying so here is what stops the section reading
-             # exactly like a plain poll's.
-             + (f" · {soak.writes:,} coil writes ({soak.picks:,} picks)"
-                if soak.writes else ""),
-             new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 4.6,
-             f"fails {soak.fails} · watchdog resets {soak.watchdogs} · "
-             f"worst read {soak.worst_ms:,} ms · "
-             f"{soak.crossings:,} hub crossings (worst {soak.worst_cross_ms:,} ms) · "
-             f"link losses {soak.link_losses}",
-             new_x="LMARGIN", new_y="NEXT")
 
-    # The reboot verdict, with its colour matched to what it means.
+    def line(text: str, *, red: bool = False, bold: bool = False) -> None:
+        # multi_cell: a long line wraps instead of running off the page.
+        pdf.font(8, bold=bold)
+        if red:
+            pdf.set_text_color(*FAIL_RED)
+        pdf.multi_cell(0, 4.4, text, new_x="LMARGIN", new_y="NEXT")
+        pdf.set_text_color(0)
+        pdf.font(8)
+
+    line(f"{soak.filename or 'soak CSV'} · {span} ({dur_h:.1f} h) · "
+         f"{soak.module_count} modules · {soak.passes:,} passes · {soak.reads:,} reads"
+         # A pharmacy run also WROTE to the cabinet, and that is the whole
+         # point of it. Saying so here is what stops the section reading
+         # exactly like a plain poll's.
+         + (f" · {soak.writes:,} coil writes, {soak.write_fails} failed "
+            f"({soak.picks:,} picks, {soak.dropped} dropped)" if soak.writes else ""))
+
+    # The verdict, in the Monitor's words.
+    if soak.problems:
+        line(f"Problems found: fails {soak.fails} · watchdog resets "
+             f"{soak.watchdog_resets} · unexplained reboots "
+             f"{soak.unexplained_reboots}", red=True, bold=True)
+    else:
+        line("No problems: no failed reads, no watchdog resets and no "
+             "unexplained reboots", bold=True)
+    line(f"fails {soak.fails} · link losses {soak.link_losses} · "
+         f"{soak.crossings:,} hub crossings · tool worst read {soak.worst_ms:,} ms, "
+         f"worst crossing {soak.worst_cross_ms:,} ms")
+
+    # Reboots: every scheduled reset, then whatever is left over.
     if soak.reboots == 0:
-        pdf.cell(0, 4.6, "reboots 0 — no module restarted all run",
-                 new_x="LMARGIN", new_y="NEXT")
+        line("reboots 0 — no module restarted all run")
     else:
         causes = " · ".join(f"{c}: {n}" for c, n in
-                            sorted(soak.reboot_causes.items(),
-                                   key=lambda kv: -kv[1]))
-        if soak.unexplained_reboots == 0 and soak.mass_reboots:
-            pdf.cell(0, 4.6,
-                     f"reboots {soak.reboots} — ALL simultaneous at "
-                     f"{soak.mass_when:%H:%M} with watchdog counters "
-                     f"unchanged: the scheduled reset, not a fault "
-                     f"({causes})",
-                     new_x="LMARGIN", new_y="NEXT")
-        else:
-            pdf.set_text_color(*FAIL_RED)
-            pdf.cell(0, 4.6,
-                     f"reboots {soak.reboots} — "
-                     f"{soak.unexplained_reboots} NOT explained by a "
-                     f"scheduled reset ({causes})",
-                     new_x="LMARGIN", new_y="NEXT")
-            pdf.set_text_color(0)
+                            sorted(soak.reboot_causes.items(), key=lambda kv: -kv[1]))
+        if soak.mass_clusters:
+            nights = " · ".join(f"{c['start']:%m-%d %H:%M:%S}-{c['end']:%H:%M:%S} ×{c['n']}"
+                                for c in soak.mass_clusters)
+            k = len(soak.mass_clusters)
+            line(f"{k} scheduled gateway reset{'s' if k > 1 else ''}, "
+                 f"{soak.mass_reboots} reboots in all: {nights} — watchdog "
+                 f"counters unchanged, not a fault")
+        if soak.unexplained_reboots:
+            line(f"{soak.unexplained_reboots} reboot(s) NOT explained by a "
+                 f"scheduled reset", red=True)
+        line(f"reboot causes (reg 8): {causes}")
+    unread = (f" · counter unreadable on {soak.iwdg_unread_rows} reboot row(s): "
+              f"cause unknown" if soak.iwdg_unread_rows else "")
+    line(f"watchdog: {soak.watchdogs} by the counter (reg 410) · "
+         f"{soak.iwdg_moved_rows} reboot row(s) with the counter moved · "
+         f"{soak.iwdg_cause_rows} naming IWDG in reg 8" + unread,
+         red=bool(soak.watchdog_resets or soak.iwdg_unread_rows))
     if not soak.finished:
-        pdf.set_text_color(*FAIL_RED)
-        pdf.cell(0, 4.6,
-                 "run did not finish (no stop row — PC slept or lost power); "
-                 "totals above are the last heartbeat's and undercount the tail",
-                 new_x="LMARGIN", new_y="NEXT")
-        pdf.set_text_color(0)
+        line("run did not finish (no stop row — PC slept or lost power); "
+             "totals above are the last heartbeat's and undercount the tail",
+             red=True)
+
+    # The slowest readings, each with its owner.
+    overall = soak.slowest("slow")
+    if overall:
+        dev, ms, at, rst = overall
+        line(f"slowest in this run: {ms:,} ms · module {dev} · {_when(at)}"
+             + (" (during a scheduled reset)" if rst else ""))
+        if rst:
+            normal = soak.slowest("slow", outside_reset=True)
+            if normal:
+                line(f"slowest outside resets: {normal[1]:,} ms · module "
+                     f"{normal[0]} · {_when(normal[2])}")
+    cross = soak.slowest("cross")
+    if cross:
+        line(f"slowest hub crossing: {cross[1]:,} ms · module {cross[0]} · "
+             f"{_when(cross[2])}" + (" (during a scheduled reset)" if cross[3] else ""))
 
     if soak.trouble:
         pdf.ln(1)
         pdf.font(7.5)
         fail_style = FontFace(color=FAIL_RED)
-        with pdf.table(col_widths=(12, 16, 22, 16),
-                       text_align=("CENTER", "CENTER", "CENTER", "CENTER"),
-                       width=70, **_table_kw()) as table:
-            _headings(table, ("ID", "Slow", "Worst ms", "No reply"))
-            for t in soak.trouble[:15]:
+        top = overall[0] if overall else None
+        hl = FontFace(emphasis="BOLD")
+        with pdf.table(col_widths=(10, 12, 18, 30, 26, 14),
+                       text_align=("CENTER",) * 6,
+                       width=110, **_table_kw()) as table:
+            _headings(table, ("ID", "Slow", "Worst ms", "When", "Crossing (max ms)",
+                              "No reply"))
+            for t in shown:
+                style = hl if t.device_id == top else None
                 row = table.row()
-                row.cell(str(t.device_id))
-                row.cell(str(t.slow))
-                row.cell(f"{t.worst_slow_ms:,}" if t.slow else "—")
+                row.cell(str(t.device_id), style=style)
+                row.cell(str(t.slow), style=style)
+                row.cell(f"{t.worst_slow_ms:,}" if t.worst_slow_ms else "—", style=style)
+                row.cell(_when(t.worst_slow_at)
+                         + (" · reset" if t.worst_slow_in_reset else ""), style=style)
+                row.cell(f"{t.cross} ({t.worst_cross_ms:,})" if t.cross else "0",
+                         style=style)
                 row.cell(str(t.no_reply),
-                         style=fail_style if t.no_reply else None)
-        if len(soak.trouble) > 15:
+                         style=fail_style if t.no_reply else style)
+        rest = len(soak.trouble) - len(shown)
+        if rest > 0:
             pdf.font(7.5)
-            pdf.cell(0, 4.2, f"… and {len(soak.trouble) - 15} more modules "
-                             f"with at least one slow row",
+            pdf.cell(0, 4.2, f"… and {rest} more modules with at least one slow "
+                             f"or missing reply (all of them are in the CSV)",
                      new_x="LMARGIN", new_y="NEXT")
-        _legend(pdf, "a slow row is one read past the soak's slow_ms limit; "
-                     "the retry usually rescued it, so these cost time, not "
-                     "failures · no_reply means both attempts were lost")
+        _legend(pdf, f"every module that was slow or silent, most first; the "
+                     f"run's slowest, slowest-outside-reset and slowest-crossing "
+                     f"modules are always listed; bold = owner of the slowest "
+                     f"reading · slow = an ordinary read past slow_ms, crossing = a "
+                     f"read after a hub-channel change past crossing_slow_ms, "
+                     f"counted apart · a reset window is "
+                     f"{int(soak_csv_reset_margin())} s either side of a "
+                     f"scheduled reset · the retry usually rescued a slow read, so "
+                     f"these cost time, not failures · no reply = both attempts lost")
+
+
+def soak_csv_reset_margin() -> float:
+    from .soak_csv import RESET_MARGIN_S
+    return RESET_MARGIN_S
 
 
 

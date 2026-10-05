@@ -96,6 +96,45 @@ def main() -> int:
     check("spread reboots stay unexplained", s.mass_reboots == 0
           and s.unexplained_reboots == 2)
 
+    # 8. THREE nights: every scheduled reset counts (it used to keep only the
+    #    largest cluster, so nights 2 and 3 came out "unexplained")
+    def night(day, dev0=11):
+        return "".join(f"2026-08-{day} 03:00:{i:02d},{dev0 + i},reboot,boots 10 -> 11 "
+                       f"cause=Power-on NRST pin iwdg 5 unchanged\n" for i in range(6))
+    s = parse_soak_csv(H + START + night(28) + night(29) + night(30) + stop(18, 0))
+    check("three nights = three scheduled resets, nothing unexplained",
+          len(s.mass_clusters) == 3 and s.mass_reboots == 18
+          and s.unexplained_reboots == 0 and not s.problems
+          and "3 scheduled resets" in s.headline(), s.headline())
+
+    # 9. slow reads and hub-crossing reads are counted apart, and a reading
+    #    inside a reset window is tagged; the slowest outside it is kept too
+    body = night(27)
+    body += row("03:00:40", 12, "slow", "6063 ms")                      # in reset
+    body += row("05:00:00", 12, "slow", "1500 ms (counter reg 0)")      # normal
+    body += row("05:10:00", 12, "slow", "4500 ms (hub crossing)")       # crossing
+    body += row("05:20:00", 13, "slow", "2000 ms")
+    s = parse_soak_csv(H + START + body + stop(6, 0))
+    t12 = next(t for t in s.trouble if t.device_id == 12)
+    check("crossing counted apart from slow",
+          t12.slow == 2 and t12.cross == 1 and t12.worst_cross_ms == 4500,
+          f"slow={t12.slow} cross={t12.cross}")
+    check("worst reading inside the reset window is tagged",
+          t12.worst_slow_ms == 6063 and t12.worst_slow_in_reset
+          and t12.normal_worst_ms == 1500, str(t12))
+    over, normal = s.slowest("slow"), s.slowest("slow", outside_reset=True)
+    check("slowest overall vs slowest outside resets",
+          over[:2] == (12, 6063) and over[3] and normal[:2] == (13, 2000),
+          f"{over} {normal}")
+
+    # 10. a watchdog the counter comparison missed is still seen: reg 8 names
+    #     IWDG on a row whose counter was unreadable
+    body = row("04:00:00", 14, "reboot", "boots 10 -> 11 cause=IWDG iwdg unread")
+    s = parse_soak_csv(H + START + body + stop(1, 0))
+    check("IWDG cause with unread counter is a watchdog reset",
+          s.watchdog_resets == 1 and s.iwdg_unread_rows == 1 and s.problems,
+          f"wdt={s.watchdog_resets} unread={s.iwdg_unread_rows}")
+
     # 7. garbage in, error out (not a traceback)
     try:
         parse_soak_csv("hello\nworld")

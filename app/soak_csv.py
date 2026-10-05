@@ -30,18 +30,41 @@ from typing import Optional
 
 _TS = "%Y-%m-%d %H:%M:%S"
 _KV = re.compile(r"(\w+)=(\S+)")
+_IWDG_MOVED = re.compile(r"iwdg \d+ -> \d+")
 
 # The whole-cabinet reset window. The 2026-08-27 scheduled reset landed all
 # 64 reboot rows in 29 seconds; 120 s leaves room for a slower counter pass.
 MASS_WINDOW_S = 120.0
+# Slow readings this close to a scheduled reset (either side of its cluster)
+# are put down to the reset: modules are booting and the bus is waking up.
+# Same rule, same numbers as the LGS Soak Monitor (lgs-monitor/src/worker.js),
+# so the PDF and the dashboard tell the same story about the same run.
+RESET_MARGIN_S = 120.0
 
 
 @dataclass
 class SoakDeviceTrouble:
+    """Every module that was ever slow or silent, as the LGS Soak Monitor's
+    module table counts it: ordinary slow reads and hub-crossing reads apart
+    (the tool judges them against different limits, slow_ms and
+    crossing_slow_ms), each worst reading with its time and whether it fell
+    inside a scheduled-reset window."""
     device_id: int
-    slow: int = 0
+    slow: int = 0                    # slow reads, hub crossings NOT included
     worst_slow_ms: int = 0
+    worst_slow_at: Optional[datetime] = None
+    worst_slow_in_reset: bool = False
+    normal_worst_ms: int = 0         # slowest outside every reset window
+    normal_worst_at: Optional[datetime] = None
+    cross: int = 0                   # slow reads during a hub crossing
+    worst_cross_ms: int = 0
+    worst_cross_at: Optional[datetime] = None
+    worst_cross_in_reset: bool = False
     no_reply: int = 0
+
+    @property
+    def count(self) -> int:
+        return self.slow + self.cross + self.no_reply
 
 
 @dataclass
@@ -68,13 +91,24 @@ class SoakSummary:
 
     # Reboot rows regrouped: cause text -> count.
     reboot_causes: dict = field(default_factory=dict)
-    # Reboots inside a >= half-the-modules simultaneous window (see module
-    # docstring) — near-certainly the scheduled reset, not a fault.
+    # Every scheduled-reset cluster: {"start", "end", "n"}. A run that spans
+    # three nights has three, and each one is the gateway doing its job.
+    mass_clusters: list = field(default_factory=list)
+    # Reboots inside those clusters (their sum) — near-certainly the scheduled
+    # reset, not a fault. mass_when is the first cluster's start.
     mass_reboots: int = 0
     mass_when: Optional[datetime] = None
     module_count: int = 0           # ids= from the start row
 
-    trouble: list = field(default_factory=list)   # SoakDeviceTrouble, worst first
+    # The watchdog, read three independent ways off the reboot rows, because
+    # each can miss what another sees: the counter comparison is lost when
+    # reg 410 could not be read that pass ("iwdg unread"), while reg 8's own
+    # cause bit is read in the same transaction as the boot counter.
+    iwdg_moved_rows: int = 0        # "iwdg A -> B" on the reboot row
+    iwdg_cause_rows: int = 0        # reg 8 says IWDG
+    iwdg_unread_rows: int = 0       # counter unreadable: cause unknown
+
+    trouble: list = field(default_factory=list)   # SoakDeviceTrouble, most first
     link_losses: int = 0
 
     @property
@@ -89,15 +123,46 @@ class SoakSummary:
         # unfinished run makes the footer's reboot count lag the rows.
         return max(0, self.reboots - self.mass_reboots)
 
+    @property
+    def watchdog_resets(self) -> int:
+        """The most any one witness saw. The footer's wdt is the soak's
+        counter comparison; a reboot row can still name IWDG in reg 8 when
+        that comparison was skipped for an unreadable counter."""
+        return max(self.watchdogs, self.iwdg_moved_rows, self.iwdg_cause_rows)
+
+    @property
+    def problems(self) -> bool:
+        """The Soak Monitor's verdict: any failed read, any watchdog reset or
+        any reboot no scheduled reset explains."""
+        return bool(self.fails or self.watchdog_resets or self.unexplained_reboots)
+
+    def slowest(self, which: str = "slow", outside_reset: bool = False):
+        """(device_id, ms, at, in_reset) of the run's slowest reading, from
+        the rows themselves — the footer's worst_ms leaves out the counter
+        reads. which: "slow" (ordinary reads) or "cross" (hub crossings)."""
+        best = None
+        for t in self.trouble:
+            if which == "cross":
+                ms, at, rst = t.worst_cross_ms, t.worst_cross_at, t.worst_cross_in_reset
+            elif outside_reset:
+                ms, at, rst = t.normal_worst_ms, t.normal_worst_at, False
+            else:
+                ms, at, rst = t.worst_slow_ms, t.worst_slow_at, t.worst_slow_in_reset
+            if ms and (best is None or ms > best[1]):
+                best = (t.device_id, ms, at, rst)
+        return best
+
     def headline(self) -> str:
         """One line for the UI label and the report subtitle."""
         h = self.duration_s / 3600.0
         parts = [f"{h:.1f} h", f"{self.reads:,} reads", f"fails {self.fails}",
-                 f"wdt {self.watchdogs}"]
+                 f"wdt {self.watchdog_resets}"]
         if self.reboots:
+            k = len(self.mass_clusters)
             if self.unexplained_reboots == 0:
-                parts.append(f"reboots {self.reboots} (all simultaneous — "
-                             f"scheduled reset)")
+                what = ("all simultaneous — scheduled reset" if k <= 1
+                        else f"{k} scheduled resets")
+                parts.append(f"reboots {self.reboots} ({what})")
             else:
                 parts.append(f"reboots {self.reboots} "
                              f"({self.unexplained_reboots} unexplained)")
@@ -123,6 +188,9 @@ def parse_soak_csv(text: str, filename: str = "") -> SoakSummary:
 
     out = SoakSummary(filename=filename)
     trouble: dict[int, SoakDeviceTrouble] = {}
+    # Every slow reading, kept until the reset windows are known: a module's
+    # worst reading outside the windows can only be picked afterwards.
+    readings: dict[int, list] = {}
     reboot_times: list[datetime] = []
     totals_detail = ""
 
@@ -155,10 +223,18 @@ def parse_soak_csv(text: str, filename: str = "") -> SoakSummary:
                 out.finished = True
         elif kind == "slow":
             t = trouble.setdefault(dev, SoakDeviceTrouble(dev))
-            t.slow += 1
             m = re.match(r"(\d+)", detail)
+            # Crossing reads are allowed longer (crossing_slow_ms) and the
+            # footer reports them apart (worst_cross_ms), so they are counted
+            # apart here too. A counter read IS an ordinary read: its "(counter
+            # reg N)" suffix does not move it out of the slow column.
+            crossing = "crossing" in detail
+            if crossing:
+                t.cross += 1
+            else:
+                t.slow += 1
             if m:
-                t.worst_slow_ms = max(t.worst_slow_ms, int(m.group(1)))
+                readings.setdefault(dev, []).append((int(m.group(1)), when, crossing))
         elif kind == "no_reply":
             trouble.setdefault(dev, SoakDeviceTrouble(dev)).no_reply += 1
         elif kind == "reboot":
@@ -171,6 +247,13 @@ def parse_soak_csv(text: str, filename: str = "") -> SoakSummary:
             m = re.search(r"cause=(.*?)\s+iwdg", detail)
             cause = m.group(1) if m else "unknown"
             out.reboot_causes[cause] = out.reboot_causes.get(cause, 0) + 1
+            # "iwdg A -> B" only: every reboot row also says "boots A -> B".
+            if _IWDG_MOVED.search(detail):
+                out.iwdg_moved_rows += 1
+            if "iwdg unread" in detail:
+                out.iwdg_unread_rows += 1
+            if "IWDG" in cause.upper():
+                out.iwdg_cause_rows += 1
         elif kind == "link_lost":
             out.link_losses += 1
 
@@ -204,26 +287,59 @@ def parse_soak_csv(text: str, filename: str = "") -> SoakSummary:
         out.writes = num("writes")
         out.write_fails = num("write_fails")
 
-    # Mass-reboot detection: slide a window over the reboot rows whose own
-    # iwdg counter held still and take the largest cluster. One cluster is
-    # enough — a nightly reset fires once. Watchdog reboots never qualify.
+    # Mass-reboot detection over the reboot rows whose own iwdg counter held
+    # still (watchdog reboots never qualify): a window of MASS_WINDOW_S from
+    # the first row, at least half the cabinet inside it. EVERY such cluster
+    # counts — this used to keep only the largest ("a nightly reset fires
+    # once"), so a run across two nights called the second night's 64
+    # scheduled reboots unexplained. Same walk as the LGS Soak Monitor.
     clean_times = sorted(t for t, unchanged in reboot_times if unchanged)
     if clean_times and out.module_count:
-        best, best_at = 0, None
-        for i, t0 in enumerate(clean_times):
+        need = max(2, out.module_count // 2)
+        i = 0
+        while i < len(clean_times):
             k = i
             while (k + 1 < len(clean_times)
-                   and (clean_times[k + 1] - t0).total_seconds() <= MASS_WINDOW_S):
+                   and (clean_times[k + 1] - clean_times[i]).total_seconds()
+                   <= MASS_WINDOW_S):
                 k += 1
             size = k - i + 1
-            if size > best:
-                best, best_at = size, t0
-        if best >= max(2, out.module_count // 2):
-            out.mass_reboots = best
-            out.mass_when = best_at
+            if size >= need:
+                out.mass_clusters.append({"start": clean_times[i],
+                                          "end": clean_times[k], "n": size})
+                i = k + 1
+            else:
+                i += 1
+        out.mass_reboots = sum(c["n"] for c in out.mass_clusters)
+        if out.mass_clusters:
+            out.mass_when = out.mass_clusters[0]["start"]
     # The footer can lag the rows (unfinished run): trust whichever saw more.
     out.reboots = max(out.reboots, len(reboot_times))
 
+    # Each module's worst readings, now that the reset windows are known.
+    windows = [(c["start"].timestamp() - RESET_MARGIN_S,
+                c["end"].timestamp() + RESET_MARGIN_S) for c in out.mass_clusters]
+
+    def in_reset(when: datetime) -> bool:
+        ts = when.timestamp()
+        return any(a <= ts <= b for a, b in windows)
+
+    for dev, rows in readings.items():
+        t = trouble[dev]
+        for ms, when, crossing in rows:
+            if crossing:
+                if ms > t.worst_cross_ms:
+                    t.worst_cross_ms, t.worst_cross_at = ms, when
+                    t.worst_cross_in_reset = in_reset(when)
+                continue
+            if ms > t.worst_slow_ms:
+                t.worst_slow_ms, t.worst_slow_at = ms, when
+                t.worst_slow_in_reset = in_reset(when)
+            if ms > t.normal_worst_ms and not in_reset(when):
+                t.normal_worst_ms, t.normal_worst_at = ms, when
+
+    # Most trouble first, then the slowest, then by id: the Monitor's
+    # "by count" order, which is also what a reader scans for first.
     out.trouble = sorted(trouble.values(),
-                         key=lambda t: (t.slow + t.no_reply), reverse=True)
+                         key=lambda t: (-t.count, -t.worst_slow_ms, t.device_id))
     return out
