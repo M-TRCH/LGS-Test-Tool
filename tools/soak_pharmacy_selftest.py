@@ -538,6 +538,32 @@ def case_bus_duty_is_honest():
     return None
 
 
+# ── [16] one dead module must not take every pick ──────────────────────────
+def case_dead_module_does_not_starve():
+    """Std-05, 2026-10-05: id 53 never answered, a failed pick went back on
+    top of the deck, and from then on every pick was dealt to id 53 -- 33
+    picks in 14 h on a cabinet asked for 2,000/day."""
+    from app.soak import _Pharmacy
+    ids = list(range(11, 21))
+    sim = _Pharmacy(ids, 8, 86400, 1.0, now=0.0)       # one pick a second
+    now, landed, to_dead = 0.0, 0, 0
+    for _ in range(400):
+        now += 1.0
+        act = sim.step(now)
+        if act is None:
+            continue
+        dev, coil, on = act
+        ok = dev != 11
+        to_dead += (dev == 11 and on)
+        sim.applied(dev, coil, on, ok)
+        landed += (on and ok)
+    if to_dead > (to_dead + landed) // 5:
+        return f"{to_dead} picks dealt to the dead module, {landed} landed"
+    if landed < 150:
+        return f"only {landed} picks landed on the 9 live modules"
+    return None
+
+
 CASES = (
     ("poll writes nothing", case_poll_writes_nothing),
     ("everything cleared", case_everything_cleared),
@@ -554,6 +580,7 @@ CASES = (
     ("far behind resyncs", case_far_behind_resyncs_without_bursting),
     ("estimate matches reality", case_estimate_matches_reality),
     ("bus duty is honest", case_bus_duty_is_honest),
+    ("dead module no starve", case_dead_module_does_not_starve),
 )
 
 

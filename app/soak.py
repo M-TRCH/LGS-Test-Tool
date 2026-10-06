@@ -361,10 +361,14 @@ class _Pharmacy:
             if ok:
                 self._lit[key] = self._now + self._dwell
                 self.picks += 1
-            else:
-                # The cabinet never lit it, so the pair is still owed its turn
-                # in this cycle -- back on the deck rather than silently spent.
-                self._deck.append(key)
+            # A pick that did not land is SPENT for this cycle, not put back.
+            # It used to go back on the deck -- at the top, since _deal() pops
+            # from the end -- so the very next pick dealt the same pair again,
+            # and a module that never answers then took every pick for the
+            # rest of the run. Std-05 on 2026-10-05: id 53 dead, picks froze
+            # at 33 after 25 min and the next 13 h were 1,132 failed writes
+            # to it while 79 healthy modules sat dark. The pair gets its turn
+            # again at the next shuffle, like everything else.
         else:
             if ok:
                 self._lit.pop(key, None)
