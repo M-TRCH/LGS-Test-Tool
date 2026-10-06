@@ -13,6 +13,13 @@ To add a newer release: copy the asset in, add an entry to
 `app/firmware_bundle.py` (newest first — the first entry of a kind is the one
 its tab offers), and add the hash to `build_exe.ps1`.
 
+## module_g070_v3.5.4_factory.bin / module_g070_v3.5.4_ota.bin
+
+`firmware_stm32g070_v3.5.4_factory_2026-10-02.bin` and
+`firmware_stm32g070_v3.5.4_2026-10-02.bin` from LGS-Standard-Module release
+v3.5.4. Max-on-time is measured from when the slot lit (v3.5.3 fix) and now
+turns off the ring AND the display. The whole lab fleet runs it.
+
 ## gateway_opta_v1.12.2.bin
 
 `gateway_opta_v1.12.2.bin` from LGS-Gateway-Arduino-Opta release v1.12.2.
