@@ -16,6 +16,26 @@ class Release:
 
 
 RELEASES: tuple = (
+    Release("1.9.5", "2026-10-26", (
+        "Bundled module firmware v3.5.5 and gateway firmware v1.13.0 (and "
+        "v3.5.4, which 1.9.4 brought). A module no longer loses its place "
+        "on the RS485 channel after an unanswered request: the libmodbus it "
+        "ships with threw away the frame after any frame for another slave, "
+        "so one dead or stalled id left the rest of the channel silent. "
+        "Gateway v1.13.0 sends one broadcast re-sync after a missing reply "
+        "and retries once, and waits for the first reply byte after the "
+        "transceiver's echo instead of mistaking the echo for the reply. "
+        "The Firmware, New Module and Gateway tabs offer these as the "
+        "default; v3.5.4 and v1.12.4 stay in the bundle for rollback.",
+        "Gateway tab: a new RS485 repair block under Counters (gateway "
+        "1.13 and later) shows first-try misses, re-syncs, retries that "
+        "worked or failed and bad replies, so a flaky module can be told "
+        "from a silent one without the console. Two switches turn the "
+        "re-sync and the immediate Modbus exception 0x0B on and off; both "
+        "are temporary and revert when the gateway reboots.",
+        "Docker image for a server: tzdata and a Thai font for the site "
+        "report PDF, a health check and a compose file.",
+    )),
     Release("1.9.3", "2026-09-30", (
         "The page heals itself. Three nights running, the browser page of a "
         "fleet run was found dead in the morning while the run underneath "
