@@ -13,6 +13,24 @@ To add a newer release: copy the asset in, add an entry to
 `app/firmware_bundle.py` (newest first — the first entry of a kind is the one
 its tab offers), and add the hash to `build_exe.ps1`.
 
+## module_g070_v3.5.5_factory.bin / module_g070_v3.5.5_ota.bin
+
+`firmware_stm32g070_v3.5.5_factory_2026-10-26.bin` and
+`firmware_stm32g070_v3.5.5_2026-10-26.bin` from LGS-Standard-Module release
+v3.5.5. A module no longer loses its place on the channel after an
+unanswered request (libmodbus "confirmation to ignore" cleared after every
+poll). Installed on the 12 bench cabinets; not yet on the Queen or the
+hospital cabinets.
+
+## gateway_opta_v1.13.0.bin
+
+`gateway_opta_v1.13.0.bin` from LGS-Gateway-Arduino-Opta release v1.13.0.
+After a missing RS485 reply the gateway sends one broadcast re-sync and
+retries once (TCP bridge and front panel only), and the first reply byte
+gets its own 150 ms window after the transceiver echo. Schema unchanged
+from v1.12.x: updating keeps the stored settings. Volatile console switches
+`RESYNC` and `EXC`.
+
 ## module_g070_v3.5.4_factory.bin / module_g070_v3.5.4_ota.bin
 
 `firmware_stm32g070_v3.5.4_factory_2026-10-02.bin` and

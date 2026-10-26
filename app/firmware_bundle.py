@@ -50,13 +50,22 @@ class BundledImage:
 # Newest first: the UI offers the first entry of a kind as its default.
 IMAGES: tuple = (
     BundledImage(
+        key="gateway_v1.13.0",
+        kind=KIND_GATEWAY,
+        version="v1.13.0",
+        blob="gateway_opta_v1.13.0.bin",
+        sha256="56cd6a58adc137cdadc4c965b48a780cddd8b6351874cd83ee1563991ebc5d8c",
+        source="LGS-Gateway-Arduino-Opta release v1.13.0",
+        note="re-sync after a missing reply, echo-aware reply window",
+    ),
+    BundledImage(
         key="gateway_v1.12.4",
         kind=KIND_GATEWAY,
         version="v1.12.4",
         blob="gateway_opta_v1.12.4.bin",
         sha256="4f42f4ff75929221ecaaee8a81481b2b3f6545040e526441f39e890cd86af06c",
         source="LGS-Gateway-Arduino-Opta release v1.12.4",
-        note="panel.cabinet 0 = no preset, follow the shape",
+        note="previous release, for rollback",
     ),
     BundledImage(
         key="gateway_v1.12.3",
@@ -77,13 +86,31 @@ IMAGES: tuple = (
         note="previous release, for rollback",
     ),
     BundledImage(
+        key="module_v3.5.5_factory",
+        kind=KIND_MODULE_FACTORY,
+        version="v3.5.5",
+        blob="module_g070_v3.5.5_factory.bin",
+        sha256="9238b657c7455caea0fae1b06f19a281528ffce5aa14616f8f40b97a5af3723e",
+        source="LGS-Standard-Module release v3.5.5 (factory image)",
+        note="keeps its place after an unanswered request, for ST-Link",
+    ),
+    BundledImage(
+        key="module_v3.5.5_ota",
+        kind=KIND_MODULE_OTA,
+        version="v3.5.5",
+        blob="module_g070_v3.5.5_ota.bin",
+        sha256="20c0c0f83b565bfad99c089f95b7da14089a160ef4a8af89284ec36321a4d966",
+        source="LGS-Standard-Module release v3.5.5 (OTA image)",
+        note="keeps its place after an unanswered request, over the bus",
+    ),
+    BundledImage(
         key="module_v3.5.4_factory",
         kind=KIND_MODULE_FACTORY,
         version="v3.5.4",
         blob="module_g070_v3.5.4_factory.bin",
         sha256="804ba05807e48b52f73bb9515dc1bc0231617bfe5401963dad2c0a07c4e4dd63",
         source="LGS-Standard-Module release v3.5.4 (factory image)",
-        note="max-on puts out ring and display, for ST-Link",
+        note="previous release, for rollback (factory)",
     ),
     BundledImage(
         key="module_v3.5.4_ota",
@@ -92,7 +119,7 @@ IMAGES: tuple = (
         blob="module_g070_v3.5.4_ota.bin",
         sha256="a2a5982833507d9b60402b29c6682781159a6d51c1c4f407aac6f489eab35474",
         source="LGS-Standard-Module release v3.5.4 (OTA image)",
-        note="max-on puts out ring and display, over the bus",
+        note="previous release, for rollback",
     ),
     BundledImage(
         key="module_v3.5.0_factory",
