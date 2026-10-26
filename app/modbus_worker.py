@@ -912,6 +912,33 @@ class ModbusWorker:
             return gateway_config.GwActionResult(False, (), str(res))
         return res
 
+    async def gw_toggle(self, port: str, verb: str, on: bool):
+        """Flip one of the gateway's VOLATILE switches (`RESYNC`, `EXC`).
+
+        They are deliberately not stored keys (a new stored key would bump the
+        config schema and wipe the unit), so they are not part of gw_write and
+        they fall back to their defaults — RESYNC 1, EXC 0 — at the next boot.
+        Needs a session, hence the HELLO.
+        """
+        if verb not in ("RESYNC", "EXC"):
+            return gateway_config.GwActionResult(False, (), f"unknown switch {verb}")
+
+        def body(link):
+            hello = link.hello()
+            self._log_gw("HELLO", hello)
+            if not hello.ok:
+                return gateway_config.GwActionResult(False, (), hello.error_text)
+            res = link.command(f"{verb} {1 if on else 0}")
+            self._log_gw(verb, res)
+            link.bye()
+            return gateway_config.GwActionResult(
+                res.ok, tuple(res.lines), "" if res.ok else res.error_text)
+
+        res = await self._run_job(_PRIO_MANUAL, lambda: self._do_gw_session(port, body))
+        if isinstance(res, Exception):
+            return gateway_config.GwActionResult(False, (), str(res))
+        return res
+
     async def gw_read_log(self, port: str, n: int = 30):
         """Newest `n` gateway event-log records (fw >= 1.11.0), formatted one
         per line in `.steps`. Read-only: no HELLO, no DISCARD."""

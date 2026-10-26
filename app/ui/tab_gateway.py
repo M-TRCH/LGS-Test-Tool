@@ -1040,6 +1040,45 @@ def build(ctx: Ctx) -> None:
                              f"timeout {info.get('cnt.rs485_timeout', 0)}").classes("text-sm")
                     ui.label(f"rtt last {info.get('rtt.last_ms', 0)} ms · "
                              f"max {info.get('rtt.max_ms', 0)} ms").classes("text-sm")
+                    # Gateway >= 1.13: what the RS485 repair did. First-try misses
+                    # are the FINAL timeouts plus the ones the retry saved.
+                    if "rtu.heal" in info:
+                        def _n(key: str) -> int:
+                            try:
+                                return int(info.get(key, 0))
+                            except ValueError:
+                                return 0
+                        first_try = _n("cnt.rs485_timeout") + _n("rtu.retry_ok")
+                        ui.separator().classes("my-1")
+                        ui.label(t("gw.rtu.title")).classes("text-xs text-grey")
+                        ui.label(f"first-try misses {first_try} · "
+                                 f"re-syncs {_n('rtu.resync')}").classes("text-sm")
+                        ui.label(f"retry ok {_n('rtu.retry_ok')} · "
+                                 f"failed {_n('rtu.retry_fail')}").classes("text-sm")
+                        ui.label(f"bad crc {_n('rtu.bad_crc')} · "
+                                 f"other {_n('rtu.bad_other')}").classes("text-sm")
+
+                        async def flip(verb: str, on: bool) -> None:
+                            ok, message = usable()
+                            if not ok:
+                                ui.notify(message, type="warning")
+                                return
+                            res = await worker.gw_toggle(ctx.port(), verb, on)
+                            ui.notify(t("gw.rtu.done", verb=verb, val=1 if on else 0)
+                                      if res.ok else (res.note or verb),
+                                      type="positive" if res.ok else "negative")
+                            await do_reload()
+
+                        for verb, key, hint in (
+                                ("RESYNC", "rtu.heal", "gw.rtu.resync_hint"),
+                                ("EXC", "tcp.exc", "gw.rtu.exc_hint")):
+                            sw = ui.switch(
+                                t("gw.rtu.resync" if verb == "RESYNC" else "gw.rtu.exc"),
+                                value=info.get(key) == "1",
+                                on_change=lambda e, v=verb: flip(v, bool(e.value)))
+                            sw.classes("text-xs")
+                            helps(sw, t(hint))
+                        ui.label(t("gw.rtu.volatile")).classes("text-xs text-grey")
 
                 # The one card that answers "is the LAN side actually working?"
                 with ui.card().classes("p-3 grow"):

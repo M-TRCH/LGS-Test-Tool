@@ -771,6 +771,29 @@ TEXTS: dict[str, dict[str, str]] = {
     "gw.card.usb": {"en": "USB bridge", "th": "USB bridge"},
     "gw.card.identity": {"en": "System", "th": "ระบบ"},
     "gw.card.net": {"en": "Network", "th": "เครือข่าย"},
+    "gw.rtu.title": {"en": "RS485 repair", "th": "การซ่อมจังหวะ RS485"},
+    "gw.rtu.resync": {"en": "Re-sync + retry after a missing reply",
+                      "th": "re-sync และถามซ้ำเมื่อไม่มีคำตอบ"},
+    "gw.rtu.resync_hint": {"en": "On a missing RS485 reply the gateway sends one broadcast "
+                                 "read to put every module back in phase, then asks once "
+                                 "more. TCP bridge and front panel only; the USB bridge is "
+                                 "never touched. Firmware 1.13+. Resets to ON at every boot.",
+                           "th": "เมื่อไม่มีคำตอบทาง RS485 เกตเวย์จะส่ง broadcast อ่าน 1 ครั้ง "
+                                 "ให้ทุกโมดูลกลับเข้าจังหวะ แล้วถามซ้ำอีก 1 ครั้ง ใช้กับ TCP "
+                                 "bridge และแผงหน้าตู้เท่านั้น USB bridge ไม่ถูกแตะ "
+                                 "ต้องใช้เฟิร์มแวร์ 1.13 ขึ้นไป และกลับเป็นเปิดทุกครั้งที่บูต"},
+    "gw.rtu.exc": {"en": "Answer a bus timeout with exception 0x0B",
+                   "th": "ตอบ exception 0x0B ทันทีเมื่อบัสไม่ตอบ"},
+    "gw.rtu.exc_hint": {"en": "Instead of letting the master wait out its own timeout, the "
+                              "gateway answers at once with Modbus exception 0x0B. Leave it "
+                              "off unless the site's server handles that exception. Resets "
+                              "to OFF at every boot.",
+                        "th": "แทนที่จะให้ master รอจนหมดเวลาเอง เกตเวย์ตอบ Modbus exception "
+                              "0x0B ทันที ปิดไว้ตามเดิมถ้าเซิร์ฟเวอร์ของไซต์ยังไม่รองรับ "
+                              "exception นี้ และกลับเป็นปิดทุกครั้งที่บูต"},
+    "gw.rtu.volatile": {"en": "temporary: reverts when the gateway reboots",
+                        "th": "ชั่วคราว: กลับค่าเดิมเมื่อเกตเวย์รีบูต"},
+    "gw.rtu.done": {"en": "{verb} set to {val}", "th": "ตั้ง {verb} เป็น {val} แล้ว"},
     "gw.card.counters": {"en": "Counters", "th": "ตัวนับ"},
     "gw.net_hint": {"en": "Address changes take effect after a reboot; the port moves "
                           "immediately.",
