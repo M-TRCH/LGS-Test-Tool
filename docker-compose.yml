@@ -1,0 +1,28 @@
+# LGS Test Tool on a hospital server.
+#
+#   docker compose up -d          start (and on every boot, see restart)
+#   docker compose logs -f        watch
+#   docker compose down           stop
+#
+# Data (config, soak CSVs, reports, logs) lives in ./data beside this file.
+services:
+  lgs-test-tool:
+    image: lgs-test-tool:1.9.5
+    build: .
+    container_name: lgs-test-tool
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Bangkok
+    ports:
+      - "8080:8080"          # web UI: http://<server>:8080
+      # Built-in NTP server for the gateways. Leave commented if the server
+      # already runs chrony/ntpd on 123, or map another host port and set
+      # each gateway's net.ntp_port to it, e.g. "1234:123/udp".
+      # - "123:123/udp"
+    volumes:
+      - ./data:/app/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

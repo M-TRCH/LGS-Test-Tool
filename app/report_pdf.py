@@ -44,14 +44,20 @@ ZEBRA = (240, 244, 249)         # every-other-row fill
 FAIL_RED = (180, 40, 40)
 MUTED = (130, 130, 130)
 
-# Windows ships these; the first pair that exists wins. Fallback to the
-# built-in Helvetica loses Thai glyphs but never loses the report.
+# Windows ships the first three; the Linux ones are what the Docker image
+# installs (fonts-thai-tlwg-ttf), for the hospital-server deployment. The
+# first that exists wins. Fallback to the built-in Helvetica loses Thai
+# glyphs but never loses the report.
 _FONT_REGULAR = (r"C:\Windows\Fonts\LeelawUI.ttf",
                  r"C:\Windows\Fonts\leelawad.ttf",
-                 r"C:\Windows\Fonts\tahoma.ttf")
+                 r"C:\Windows\Fonts\tahoma.ttf",
+                 "/usr/share/fonts/truetype/tlwg/Loma.ttf",
+                 "/usr/share/fonts/truetype/tlwg/Garuda.ttf")
 _FONT_BOLD = (r"C:\Windows\Fonts\LeelaUIb.ttf",
               r"C:\Windows\Fonts\leelawdb.ttf",
-              r"C:\Windows\Fonts\tahomabd.ttf")
+              r"C:\Windows\Fonts\tahomabd.ttf",
+              "/usr/share/fonts/truetype/tlwg/Loma-Bold.ttf",
+              "/usr/share/fonts/truetype/tlwg/Garuda-Bold.ttf")
 
 
 def _first_existing(paths: Sequence[str]) -> Optional[str]:

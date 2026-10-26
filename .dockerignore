@@ -4,3 +4,11 @@ data
 __pycache__
 *.pyc
 .nicegui
+dist
+build
+dist-uploader
+build-uploader
+*.spec
+*.exe
+tools
+docs
