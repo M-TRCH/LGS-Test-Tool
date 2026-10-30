@@ -8,7 +8,7 @@ import socket
 
 from nicegui import app, ui
 
-from . import applog, auth, config_store, i18n, keep_awake, lgs_map, ntp_server
+from . import applog, auth, config_store, event_collector, i18n, keep_awake, lgs_map, ntp_server
 from .modbus_worker import ModbusWorker
 from .txn_log import TxnLog
 
@@ -175,6 +175,7 @@ async def _on_startup() -> None:
     _wake_guard = asyncio.create_task(_hold_awake())
     if cfg.ntp_enabled:
         await ntp_server.server.start(cfg.ntp_port)
+    event_collector.apply(cfg)          # off unless events_enabled
 
 
 def _on_shutdown() -> None:

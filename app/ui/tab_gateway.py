@@ -16,7 +16,7 @@ from ..fw_survey import ReportSurveyDone, SurveyProgress
 from ..i18n import t
 from ..lgs_map import BAUD_WHITELIST
 from ..version import APP_VERSION
-from . import Ctx, access_card, confirm, helps, ntp_card, tab_gateway_fw
+from . import Ctx, access_card, confirm, events_card, helps, ntp_card, tab_gateway_fw
 
 # Which settings each card shows, in display order.
 # sys.wdt_ms only exists on gateway >= 1.8.0; field_row skips what the
@@ -228,6 +228,7 @@ def build(ctx: Ctx) -> None:
                                        if state["snapshot"] else ""),
                    set_ntp=set_ntp_field)
     access_card.build(ctx)
+    events_card.build(ctx)
 
     # ── event log (gateway fw >= 1.11.0) ───────────────────────────────────
     # What happened at the cabinet, months later: boots and their cause,

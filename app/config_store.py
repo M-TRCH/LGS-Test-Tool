@@ -68,6 +68,14 @@ class AppConfig:
     ntp_enabled: bool = False
     ntp_port: int = 123
 
+    # Gateway event collector (app/event_collector.py): pulls each fleet
+    # gateway's event log into data/events/. Off by default -- it opens a
+    # short TCP connection to every gateway each interval, and a gateway has
+    # only two client slots.
+    events_enabled: bool = False
+    events_interval_s: int = 60
+    events_retention_days: int = 90
+
 
 def data_dir() -> Path:
     env = os.environ.get("LGS_TT_DATA_DIR")

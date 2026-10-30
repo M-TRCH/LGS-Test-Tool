@@ -908,6 +908,26 @@ TEXTS: dict[str, dict[str, str]] = {
                                    "ก็ส่งเวลาท้องถิ่นตรงๆ เหมือนเดิม"},
     "sch.ntp": {"en": "NTP: {s}", "th": "NTP: {s}"},
 
+    "evc.card": {"en": "Gateway event collector", "th": "ตัวเก็บเหตุการณ์ของเกตเวย์"},
+    "evc.hint": {"en": "Pulls each fleet gateway's event log (clients connecting, lamp "
+                       "commands, link drops, bus silence...) into dated files on this "
+                       "computer, every minute, kept 90 days. Needs gateway firmware "
+                       "1.14.0 or newer. It opens a short connection to each gateway, "
+                       "and a gateway accepts only two clients.",
+                 "th": "ดึงบันทึกเหตุการณ์ของเกตเวย์ทุกตู้ในรายการ fleet (ใครเชื่อมต่อ "
+                       "สั่งไฟ ลิงก์หลุด บัสเงียบ ฯลฯ) มาเก็บเป็นไฟล์รายวันในคอมเครื่องนี้ "
+                       "ทุก 1 นาที เก็บ 90 วัน ต้องใช้เฟิร์มแวร์เกตเวย์ 1.14.0 ขึ้นไป "
+                       "เปิดการเชื่อมต่อสั้นๆ ไปยังแต่ละเกตเวย์ และเกตเวย์รับได้แค่ 2 client"},
+    "evc.enable": {"en": "Collect events", "th": "เก็บเหตุการณ์"},
+    "evc.enable_tip": {"en": "Remembered; resumes when the tool restarts.",
+                       "th": "จำค่าไว้ เปิดโปรแกรมใหม่แล้วทำงานต่อเอง"},
+    "evc.where": {"en": "files: {path}", "th": "ไฟล์อยู่ที่: {path}"},
+    "evc.off": {"en": "off", "th": "ปิดอยู่"},
+    "evc.waiting": {"en": "waiting for the first poll (uses the fleet list on the Soak tab)",
+                    "th": "รอรอบแรก (ใช้รายการตู้ในแท็บ Soak)"},
+    "evc.ok": {"en": "{name}: {n} new events at {at}", "th": "{name}: ได้ใหม่ {n} รายการ เวลา {at}"},
+    "evc.err": {"en": "{name}: {e}", "th": "{name}: {e}"},
+
     "auth.card": {"en": "Web password", "th": "รหัสผ่านหน้าเว็บ"},
     "auth.hint": {"en": "Anyone on the network can open this page, including Danger "
                         "and firmware updates. Set a password and every browser must "
