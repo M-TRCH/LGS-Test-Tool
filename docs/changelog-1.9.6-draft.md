@@ -64,8 +64,10 @@ cabinets, the danger zone, the gateway site-report PDF.
   read); gateway 1.14.0-rc1 flashed on Std-11 with identical settings afterwards;
   gateway page read/edit round trip, module monitor and coil writes, label
   preview and download, all on Std-11.
-- Simulated only: module OTA and the gateway network update from the v2 page
-  (run against a local fake that cannot take firmware: they fail or stop cleanly
-  as designed). The classic engines they drive are unchanged and proven on the
-  bench, but the v2 pages have not flashed anything yet.
+- Gateway network update from the v2 Firmware page: Chest-Std-11 re-flashed with
+  1.14.0-rc1 (47 s, uploaded .bin, name typed to confirm), settings identical
+  before and after. The reboot also power-cycles the cabinet's modules.
+- Simulated only: module OTA from the v2 page (run against a local fake: it ends
+  "incomplete, did not enter OTA" as designed). The classic engine it drives is
+  unchanged and proven on the bench, but the v2 page has not updated a real module.
 - Not tested: a phone (only a 375 px emulation), the exe build, Docker.
