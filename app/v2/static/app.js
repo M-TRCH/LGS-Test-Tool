@@ -55,6 +55,7 @@ const TXT = {
     cmImage: "ไฟล์ factory (bootloader + แอป)", cmUpload: "หรืออัปโหลดไฟล์ .bin", cmType: "ชนิดตู้", cmTypeAuto: "ให้บอร์ดตัดสินเอง", cmLot: "ล็อต (ไม่บังคับ)",
     cmId: "ID ของโมดูล (1-245)", cmIds: "ID ที่จะแจก เรียงตามลำดับ เช่น 11-18, 21", cmOverwrite: "เขียนทับ ID ที่โมดูลเก็บไว้แล้ว", cmOverwriteNote: "ปิดไว้เป็นค่าเริ่มต้น: โมดูลที่มี ID อยู่แล้วจะไม่ถูกเปลี่ยนเลข", cmOverwriteConfirm: "พิมพ์ ID ใหม่เพื่อยืนยันการเขียนทับ",
     cmStart: "เขียนโมดูล", cmCancel: "ยกเลิก", cmRunning: "กำลังเขียน", cmNeedImage: "เลือกไฟล์ factory ก่อน", cmStartQ: "เขียน {i} ลงโมดูลที่ต่อกับ ST-Link แล้วให้ตอบที่ ID {id}? ย้อนกลับจากหน้านี้ไม่ได้", cmStartBatchQ: "เขียน {i} ลงบอร์ดเปล่าตามลำดับ ID {ids}? สลับบอร์ดตามที่ log บอก ถ้าตัวไหนพลาดคิวจะหยุด", cmLog: "ความคืบหน้า", cmResultOk: "สำเร็จ", cmResultFail: "ไม่สำเร็จ", cmNone: "ยังไม่มีการเขียน",
+    askOk: "ตกลง", askNo: "ยกเลิก",
     g_sys: "ทั่วไป", g_rs485: "บัส RS485", g_usb: "พอร์ต USB", g_net: "เครือข่าย", g_time: "เวลา", g_bus: "ฮับ RS485", g_panel: "ปุ่มและไฟหน้าตู้", g_sched: "รีเซตตามเวลา",
     theme: "ธีม", th_auto: "ตามเครื่อง", th_light: "สว่าง", th_dark: "มืด", th_ocean: "ทะเล", th_forest: "ป่า", th_sand: "ทราย", th_midnight: "เที่ยงคืน", th_contrast: "คอนทราสต์สูง",
     lbPicture: "ตัวอย่างป้าย", lbPicNote: "ภาพจากไฟล์ .lbx ที่จะดาวน์โหลดจริง (ตำแหน่งและข้อความตรงกัน) QR เป็นภาพแทน โปรแกรมพิมพ์ Brother สร้าง QR จริง ฟอนต์อาจต่างเล็กน้อย",
@@ -115,6 +116,7 @@ const TXT = {
     cmImage: "Factory image (bootloader + app)", cmUpload: "Or upload a .bin", cmType: "Cabinet type", cmTypeAuto: "Let the board decide", cmLot: "Lot (optional)",
     cmId: "Module ID (1-245)", cmIds: "IDs to assign, in order, e.g. 11-18, 21", cmOverwrite: "Overwrite an ID the module already stores", cmOverwriteNote: "Off by default: a module that already has an ID keeps it", cmOverwriteConfirm: "Type the new ID to confirm the overwrite",
     cmStart: "Flash module", cmCancel: "Cancel", cmRunning: "Flashing", cmNeedImage: "Choose a factory image first", cmStartQ: "Write {i} to the module on the ST-Link so it answers at ID {id}? This cannot be undone from this page.", cmStartBatchQ: "Write {i} to blank boards, giving IDs {ids} in order? Swap boards when the log says so; the queue stops on any failure.", cmLog: "Progress", cmResultOk: "Done", cmResultFail: "Failed", cmNone: "Nothing flashed yet",
+    askOk: "Confirm", askNo: "Cancel",
     g_sys: "General", g_rs485: "RS485 bus", g_usb: "USB port", g_net: "Network", g_time: "Time", g_bus: "RS485 hub", g_panel: "Panel buttons and lamps", g_sched: "Scheduled reset",
     theme: "Theme", th_auto: "Follow device", th_light: "Light", th_dark: "Dark", th_ocean: "Ocean", th_forest: "Forest", th_sand: "Sand", th_midnight: "Midnight", th_contrast: "High contrast",
     lbPicture: "Label preview", lbPicNote: "Drawn from the .lbx you would download (positions and text match). The QR is a stand-in: Brother's software makes the real one. The font may differ slightly.",
@@ -131,6 +133,15 @@ const $ = (s, r = document) => r.querySelector(s);
 let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: "", days: 1, q: "", types: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, lab: { id: "", ward: "", serial: "", layout: "", plate: "", opts: null, info: null, busy: false }, fw: { images: null, sel: new Set(), image: "", ota: null, gwId: "", gwImage: "", gwConfirm: "", gwFile: null, gwFileName: "", gw: null, timer: null }, soak: { sel: new Set(), mode: "pharmacy", picks: 2000, hours: 12, startAt: "", status: null, runs: [], verdict: "", timer: null, was: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 } };
 let page = (location.hash || "#/cabinets").slice(2) || "cabinets";
 
+/* In-page confirmation: window.confirm() is silently answered "no" when the browser has been told to stop a page's dialogs, which made a write button look dead. */
+function ask(text) {
+  return new Promise((resolve) => {
+    const d = $("#ask"); $("#asktext").textContent = text; $("#askok").textContent = t("askOk"); $("#askno").textContent = t("askNo");
+    const done = (v) => { d.onclose = null; if (d.open) d.close(); resolve(v); };
+    $("#askok").onclick = () => done(true); $("#askno").onclick = () => done(false); d.onclose = () => resolve(false);
+    if (d.showModal) d.showModal(); else d.setAttribute("open", "");
+  });
+}
 async function api(method, url, body, raw) {
   const opt = { method, headers: { "X-LGS": "1" }, credentials: "same-origin" };
   if (body !== undefined) { opt.body = raw ? body : JSON.stringify(body); if (!raw) opt.headers["Content-Type"] = "application/json"; }
@@ -551,12 +562,12 @@ document.addEventListener("click", async (ev) => {
     } else if (act.dataset.act === "gw-clear") { S.gw.edits = {}; render();
     } else if (act.dataset.act === "gw-apply") {
       const n = gwChanged(), g = S.sites.find((x) => x.id === S.gw.id);
-      if (!confirm(t("applyQ", { n, g: g ? g.name : "" }))) return;
+      if (!await ask(t("applyQ", { n, g: g ? g.name : "" }))) return;
       const r = await api("POST", "/api/v2/gw/apply", { id: S.gw.id, changes: S.gw.edits });
       if (!r.ok) throw new Error(r.error || "failed");
       S.gw.edits = {}; await gwRead(); toast(r.pending_reboot ? t("needReboot", { k: r.pending_reboot }) : t("applied"));
     } else if (act.dataset.act === "gw-time") {
-      if (!confirm(t("clockWarn"))) return;
+      if (!await ask(t("clockWarn"))) return;
       const r = await api("POST", "/api/v2/gw/action", { id: S.gw.id, action: "time" }); if (!r.ok) throw new Error(r.error); await gwRead(); toast(t("clockSet"));
     } else if (act.dataset.act === "gw-vol") {
       const on = act.getAttribute("aria-checked") !== "true";
@@ -564,7 +575,7 @@ document.addEventListener("click", async (ev) => {
     } else if (act.dataset.act === "gw-discard") {
       const r = await api("POST", "/api/v2/gw/action", { id: S.gw.id, action: "discard" }); if (!r.ok) throw new Error(r.error); toast(t("doneOk"));
     } else if (act.dataset.act === "gw-reboot") {
-      const g = S.sites.find((x) => x.id === S.gw.id); if (!confirm(t("rebootQ", { n: g ? g.name : "" }))) return;
+      const g = S.sites.find((x) => x.id === S.gw.id); if (!await ask(t("rebootQ", { n: g ? g.name : "" }))) return;
       const r = await api("POST", "/api/v2/gw/action", { id: S.gw.id, action: "reboot" }); if (!r.ok) throw new Error(r.error); toast(t("doneOk"));
     } else if (act.dataset.act === "gw-defaults") {
       const g = S.sites.find((x) => x.id === S.gw.id); const typed = prompt(t("defaultsQ", { n: g ? g.name : "" })); if (typed === null) return;
@@ -586,7 +597,7 @@ document.addEventListener("click", async (ev) => {
       const r = await api("POST", "/api/v2/soak/start", { ids: [...k.sel], mode: k.mode, picks: k.picks, hours: k.hours, start_at: k.startAt });
       toast(t("sStarted", { n: r.count }) + (r.warnings && r.warnings.length ? " · " + r.warnings[0] : "")); await soakRefresh(); render();
     } else if (act.dataset.act === "soak-stop") {
-      if (!confirm(t("sStopQ"))) return; await api("POST", "/api/v2/soak/stop", {}); S.soak.was = true; await soakRefresh();
+      if (!await ask(t("sStopQ"))) return; await api("POST", "/api/v2/soak/stop", {}); S.soak.was = true; await soakRefresh();
     } else if (act.dataset.act === "soak-view") {
       const r = await fetch("/api/v2/soak/file?name=" + encodeURIComponent(act.dataset.name)); S.soak.verdict = await r.text(); render();
     } else if (act.dataset.act === "gw-export") {
@@ -606,10 +617,10 @@ document.addEventListener("click", async (ev) => {
     } else if (act.dataset.act === "fw-start") {
       const f = S.fw, im = (f.images && f.images.module.find((x) => x.key === f.image)); if (!f.sel.size || !im) return;
       const cabs = S.sites.filter((x) => f.sel.has(x.id));
-      if (!confirm(t("fwStartQ", { n: cabs.length, i: im.label }) + "\n\n" + cabs.map((c) => c.name).join(", "))) return;
+      if (!await ask(t("fwStartQ", { n: cabs.length, i: im.label }) + "\n\n" + cabs.map((c) => c.name).join(", "))) return;
       await api("POST", "/api/v2/fw/ota/start", { ids: [...f.sel], image: f.image }); await fwRefresh();
     } else if (act.dataset.act === "fw-cancel") {
-      if (!confirm(t("fwCancelQ"))) return; await api("POST", "/api/v2/fw/ota/cancel", {}); await fwRefresh();
+      if (!await ask(t("fwCancelQ"))) return; await api("POST", "/api/v2/fw/ota/cancel", {}); await fwRefresh();
     } else if (act.dataset.act === "fw-gwstart") {
       const f = S.fw; if (!f.gwId) return;
       const site = S.sites.find((x) => x.id === f.gwId);
@@ -626,7 +637,7 @@ document.addEventListener("click", async (ev) => {
       const im = c.opts && c.opts.images.find((x) => x.key === c.image), label = c.file ? c.fileName : (im ? im.label : "");
       if (!c.file && !im) { toast(t("cmNeedImage")); return; }
       const batch = c.mode === "batch";
-      if (!confirm(batch ? t("cmStartBatchQ", { i: label, ids: c.ids }) : t("cmStartQ", { i: label, id: c.id }))) return;
+      if (!await ask(batch ? t("cmStartBatchQ", { i: label, ids: c.ids }) : t("cmStartQ", { i: label, id: c.id }))) return;
       const body = { mode: c.mode, image: c.file ? "" : c.image, id: c.id, ids: c.ids, lot: c.lot, device_type: c.type, overwrite: !batch && c.overwrite, confirm: c.confirm, confirmed: true };
       if (c.file) { const q = new URLSearchParams({ mode: c.mode, id: c.id, ids: c.ids, lot: c.lot, device_type: c.type, overwrite: body.overwrite ? "1" : "0", confirm: c.confirm, confirmed: "1", name: c.fileName }); await api("POST", "/api/v2/cm/start?" + q, c.file, true); }
       else await api("POST", "/api/v2/cm/start", body);

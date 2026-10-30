@@ -20,7 +20,7 @@
 .sitesrow.dup input[data-f=host]{border-color:var(--warn)}
 .why{display:inline-grid;place-items:center;width:18px;height:18px;margin-left:6px;padding:0;min-height:0;border:1px solid var(--line);border-radius:50%;background:none;color:var(--muted);font-size:12px;line-height:1;cursor:pointer;vertical-align:middle}.why:hover{background:var(--surface2);color:var(--ink)}
 @media (max-width:899px){.nav{display:flex;overflow-x:auto;scrollbar-width:none}.nav button{flex:0 0 auto;min-width:78px;padding:0 12px;font-size:13px;white-space:nowrap}}
-#info,#settings{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);color:var(--ink);padding:18px;width:min(92vw,420px);box-shadow:0 12px 40px rgba(0,0,0,.35)}#info::backdrop,#settings::backdrop{background:rgba(8,12,18,.55)}#info h2,#settings h2{font-size:18px;margin:0}
+#info,#settings,#ask{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);color:var(--ink);padding:18px;width:min(92vw,420px);box-shadow:0 12px 40px rgba(0,0,0,.35)}#info::backdrop,#settings::backdrop,#ask::backdrop{background:rgba(8,12,18,.55)}#info h2,#settings h2{font-size:18px;margin:0}
 </style>
 </head>
 <body>
@@ -40,6 +40,7 @@
   <div class="field"><label id="themelbl"></label><select id="themesel"></select></div></div>
   <div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn primary" id="setclose"></button></div></dialog>
 <dialog id="info"><div id="infobody"></div><div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn primary" id="infoclose"></button></div></dialog>
+<dialog id="ask"><p id="asktext" style="white-space:pre-line;margin:0 0 14px"></p><div class="row" style="justify-content:flex-end"><button class="btn" id="askno"></button><button class="btn primary" id="askok"></button></div></dialog>
 <div class="toast" id="toast" role="status"></div>
 <script src="/v2/static/app.js"></script>
 </body>
