@@ -12,7 +12,7 @@ from starlette.responses import FileResponse, JSONResponse, Response
 
 from .. import auth, config_store, event_collector
 from ..version import APP_VERSION
-from . import events_api, health, sites
+from . import events_api, gateway_api, health, sites
 
 STATIC = Path(__file__).resolve().parent / "static"
 PROBE_PARALLEL = 6            # gateways asked at once; each probe is one short connection
@@ -128,6 +128,61 @@ def install(app, cfg) -> None:
         for part in await asyncio.gather(*(one(a, i) for a, i in by_addr.items())):
             merged.update(part)
         return {"results": merged}
+
+    # ── gateway page ───────────────────────────────────────────────────────
+    def _target(body):
+        """(host, port) for a saved site id, else a raw host given by the page.
+        Only addresses on the saved list are accepted: this API writes to
+        gateways, so it must not be a way to reach arbitrary hosts."""
+        s = sites.find(str(body.get("id", "")))
+        if not s:
+            raise ValueError("unknown cabinet: choose one from the saved list")
+        return s["host"], s["port"], s["name"]
+
+    async def _run(request: Request, fn, *args):
+        if not _mutating(request):
+            return _forbidden()
+        try:
+            return await asyncio.to_thread(fn, *args)
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=422)
+        except Exception as exc:                                 # noqa: BLE001
+            return JSONResponse({"error": f"{type(exc).__name__}: {exc}"[:200]}, status_code=502)
+
+    @app.post("/api/v2/gw/read")
+    async def gw_read(request: Request):
+        body = await request.json()
+        try:
+            host, port, _ = _target(body)
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=422)
+        return await _run(request, gateway_api.read, host, port)
+
+    @app.post("/api/v2/gw/apply")
+    async def gw_apply(request: Request):
+        body = await request.json()
+        try:
+            host, port, _ = _target(body)
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=422)
+        changes = {str(k): str(v) for k, v in (body.get("changes") or {}).items()}
+        if any((" " in k) or ("=" in k) or (" " in v) for k, v in changes.items()):
+            return JSONResponse({"error": "keys and values may not contain spaces or '='"},
+                                status_code=422)
+        return await _run(request, gateway_api.apply, host, port, changes)
+
+    @app.post("/api/v2/gw/action")
+    async def gw_action(request: Request):
+        body = await request.json()
+        try:
+            host, port, name = _target(body)
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=422)
+        act = str(body.get("action", ""))
+        if act == "defaults" and str(body.get("confirm", "")) != name:
+            return JSONResponse({"error": "type the cabinet's name to confirm DEFAULTS"},
+                                status_code=422)
+        return await _run(request, gateway_api.action, host, port, act, body.get("value"))
 
     # ── events ─────────────────────────────────────────────────────────────
     @app.get("/api/v2/events/gateways")

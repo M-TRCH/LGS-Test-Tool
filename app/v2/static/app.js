@@ -16,6 +16,14 @@ const TXT = {
     gateway: "เกตเวย์", days: "ย้อนหลัง", day1: "วันนี้", day7: "7 วัน", day30: "30 วัน", day90: "90 วัน", all: "ทั้งหมด",
     search: "ค้นหา (ชื่อ, ไอพี)", noEvents: "ไม่มีเหตุการณ์ในช่วงนี้", collect: "เก็บเหตุการณ์อัตโนมัติ",
     collectHint: "ดึงบันทึกจากเกตเวย์ทุกตู้ในรายการตู้ทุก 5 นาที เก็บ 90 วัน ต้องใช้เฟิร์มแวร์เกตเวย์ 1.14.0 ขึ้นไป",
+    gateway_page: "เกตเวย์", pick: "เลือกตู้", read: "อ่านค่า", reading: "กำลังอ่าน...", notRead: "เลือกตู้แล้วกดอ่านค่า",
+    setClock: "ตั้งนาฬิกาจากเครื่องนี้", clockWarn: "การตั้งนาฬิกาเป็นการเปิดใช้การรีเซ็ตตามเวลา (เช่น 03:00) ซึ่งตัดไฟชั้นวาง ตั้งเมื่อตั้งใจเท่านั้น",
+    clockSet: "ตั้งนาฬิกาแล้ว", resync: "ซ่อมจังหวะหลังไม่มีคำตอบ (RESYNC)", exc: "ตอบ exception 0x0B ทันทีเมื่อบัสไม่ตอบ (EXC)",
+    volatileNote: "ชั่วคราว: กลับค่าเดิมเมื่อเกตเวย์รีบูต", reboot: "รีบูตเกตเวย์", rebootQ: "รีบูตเกตเวย์ {n}? จะตัดการสื่อสารสักครู่",
+    defaults: "คืนค่าโรงงาน", defaultsQ: "คืนค่าโรงงานของ {n}? Ethernet จะปิดและ hub map หาย ต้องตั้งใหม่ พิมพ์ชื่อตู้เพื่อยืนยัน",
+    discard: "ทิ้งค่าที่ค้างอยู่", danger: "ส่วนอันตราย", changes: "{n} ค่าที่แก้", apply: "บันทึกลงเกตเวย์", applyQ: "บันทึก {n} ค่าลง {g}?",
+    applied: "บันทึกแล้ว", needReboot: "ต้องรีบูตจึงมีผล: {k}", reset: "ล้างที่แก้", ro: "อ่านอย่างเดียว", rebootKey: "ต้องรีบูต",
+    doneOk: "สำเร็จ", sessionHint: "เขียนค่าทุกครั้งผ่านเซสชัน HELLO และบันทึกแบบครบหรือไม่เลย", noPassword: "ยังไม่ตั้งรหัสผ่านหน้าเว็บ ทุกคนในเครือข่ายแก้ค่าเกตเวย์ได้",
     matched: "พบ {n} รายการ", loginAgain: "ต้องเข้าสู่ระบบอีกครั้ง", error: "ผิดพลาด: {e}", d: "วัน", h: "ชม.",
   },
   en: {
@@ -32,6 +40,14 @@ const TXT = {
     gateway: "Gateway", days: "Range", day1: "Today", day7: "7 days", day30: "30 days", day90: "90 days", all: "All",
     search: "Search (name, IP)", noEvents: "No events in this range", collect: "Collect events automatically",
     collectHint: "Pulls every saved cabinet's gateway log every 5 minutes, kept 90 days. Needs gateway firmware 1.14.0 or newer.",
+    gateway_page: "Gateway", pick: "Choose cabinet", read: "Read", reading: "Reading...", notRead: "Choose a cabinet and press Read",
+    setClock: "Set clock from this PC", clockWarn: "Setting the clock also arms the scheduled reset (e.g. 03:00), which cuts the shelf's power. Do it on purpose only.",
+    clockSet: "Clock set", resync: "Re-sync after a missing reply (RESYNC)", exc: "Answer a bus timeout with exception 0x0B at once (EXC)",
+    volatileNote: "Temporary: reverts when the gateway reboots", reboot: "Reboot gateway", rebootQ: "Reboot gateway {n}? It will be unreachable for a moment.",
+    defaults: "Factory defaults", defaultsQ: "Reset {n} to factory defaults? Ethernet goes off and the hub map is lost; both must be set again. Type the cabinet's name to confirm.",
+    discard: "Discard staged edits", danger: "Danger zone", changes: "{n} changed", apply: "Save to gateway", applyQ: "Save {n} value(s) to {g}?",
+    applied: "Saved", needReboot: "Needs a reboot to take effect: {k}", reset: "Clear edits", ro: "read-only", rebootKey: "needs reboot",
+    doneOk: "Done", sessionHint: "Every write goes through a HELLO session and is saved all or nothing.", noPassword: "No web password set: anyone on the network can edit the gateway.",
     matched: "{n} found", loginAgain: "Sign in again", error: "Error: {e}", d: "d", h: "h",
   },
 };
@@ -40,7 +56,7 @@ const t = (k, p) => { let s = (TXT[lang] && TXT[lang][k]) || TXT.en[k] || k; for
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const $ = (s, r = document) => r.querySelector(s);
 
-let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: "", days: 1, q: "", types: new Set() } };
+let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: "", days: 1, q: "", types: new Set() }, gw: { id: "", data: null, edits: {}, busy: false } };
 let page = (location.hash || "#/cabinets").slice(2) || "cabinets";
 
 async function api(method, url, body, raw) {
@@ -121,11 +137,52 @@ function viewEvents() {
       <div class="small muted" id="evcount"></div><div id="evlist"></div></section>`;
 }
 
-const VIEWS = { cabinets: viewCabinets, sites: viewSites, events: viewEvents };
-const NAV = [["cabinets", "▦"], ["sites", "☰"], ["events", "≡"]];
+
+const GWGROUPS = ["sys", "rs485", "usb", "net", "time", "bus", "panel", "sched"];
+function gwChanged() { return Object.keys(S.gw.edits).length; }
+function gwLabel(k) { const tx = k.text && k.text[lang]; return (tx && tx.label) || k.key; }
+function viewGateway() {
+  const g = S.gw, d = g.data;
+  const opts = S.sites.map((x) => `<option value="${esc(x.id)}"${x.id === g.id ? " selected" : ""}>${esc(x.name)} · ${esc(x.host)}</option>`).join("");
+  let body = `<div class="notice info">${t("notRead")}</div>`;
+  if (d && d.ok) {
+    const i = d.info;
+    const groups = {};
+    d.keys.forEach((k) => { const p = k.key.split(".")[0]; (groups[p] = groups[p] || []).push(k); });
+    const order = [...GWGROUPS.filter((x) => groups[x]), ...Object.keys(groups).filter((x) => !GWGROUPS.includes(x))];
+    const sw = (name, on) => `<div class="switch"><div><b>${t(name)}</b><div class="small muted">${t("volatileNote")}</div></div><button class="sw" role="switch" aria-checked="${on}" data-act="gw-vol" data-name="${name}"></button></div>`;
+    const field = (k) => {
+      const ed = k.key in g.edits, val = ed ? g.edits[k.key] : k.value;
+      const hint = k.text && k.text[lang] && k.text[lang].hint;
+      return `<div class="field"><label>${esc(gwLabel(k))} <span class="tiny muted mono">${esc(k.key)}</span>${k.reboot ? ` <span class="chip warn">${t("rebootKey")}</span>` : ""}${k.ro ? ` <span class="chip off">${t("ro")}</span>` : ""}</label>
+        <input data-key="${esc(k.key)}" value="${esc(val)}" ${k.ro ? "disabled" : ""} ${ed ? 'style="border-color:var(--brand)"' : ""}>${hint ? `<span class="hint">${esc(hint)}</span>` : ""}</div>`;
+    };
+    body = `<section class="card"><dl class="kv"><dt>${t("fw")}</dt><dd class="mono">${esc(i.fw)}</dd><dt>${t("uptime")}</dt><dd>${fmtUp(+i["sys.up"] || 0)} (${esc(i["sys.reset"] || "")})</dd>
+        <dt>${t("clients")}</dt><dd>${esc(i["net.client"] || "?")}/2</dd><dt>${t("clock")}</dt><dd>${i["time.set"] === "1" ? esc((i["time.now"] || "").replace("T", " ")) : t("clockUnset")}</dd></dl></section>
+      <section class="card stack"><div class="row"><button class="btn" data-act="gw-time">${t("setClock")}</button></div><p class="small muted">${t("clockWarn")}</p>
+        ${sw("resync", i["rtu.heal"] === "1")}${sw("exc", i["tcp.exc"] === "1")}</section>
+      <section class="card stack">${order.map((grp) => `<details${grp === "rs485" || grp === "net" ? " open" : ""}><summary><b>${esc(grp)}</b> <span class="small muted">${groups[grp].length}</span></summary><div class="fgrid" style="margin-top:8px">${groups[grp].map(field).join("")}</div></details>`).join("")}</section>
+      <section class="card stack"><h3>${t("danger")}</h3><div class="row"><button class="btn" data-act="gw-discard">${t("discard")}</button><button class="btn" data-act="gw-reboot">${t("reboot")}</button><button class="btn" data-act="gw-defaults" style="color:var(--bad)">${t("defaults")}</button></div></section>`;
+  } else if (d && !d.ok) body = `<div class="notice bad">${esc(d.error)}</div>`;
+  return `<div class="row between"><h1>${t("gateway_page")}</h1></div>
+    ${S.me && !S.me.auth ? `<div class="notice">${t("noPassword")}</div>` : ""}
+    <section class="card stack"><div class="row"><div class="field" style="min-width:220px;flex:1"><label>${t("pick")}</label><select id="gwsel"><option value="">—</option>${opts}</select></div>
+      <button class="btn primary" data-act="gw-read">${g.busy ? t("reading") : t("read")}</button></div><p class="small muted">${t("sessionHint")}</p></section>
+    <div class="stack" style="margin-top:12px">${body}</div><div id="gwbar"></div>`;
+}
+function gwBar() {
+  const n = gwChanged(), el = $("#gwbar"); if (!el) return;
+  if (!n) { el.innerHTML = ""; return; }
+  const diffs = Object.entries(S.gw.edits).map(([k, v]) => { const was = S.gw.data.keys.find((x) => x.key === k).value; return `<div class="small mono">${esc(k)}: ${esc(was)} → <b>${esc(v)}</b></div>`; }).join("");
+  el.innerHTML = `<section class="card stack" style="position:sticky;bottom:calc(var(--navh) + 8px);margin-top:12px;border-color:var(--brand)"><b>${t("changes", { n })}</b>${diffs}
+    <div class="row"><button class="btn primary" data-act="gw-apply">${t("apply")}</button><button class="btn" data-act="gw-clear">${t("reset")}</button></div></section>`;
+}
+
+const VIEWS = { cabinets: viewCabinets, gateway: viewGateway, sites: viewSites, events: viewEvents };
+const NAV = [["cabinets", "▦"], ["gateway", "⚙"], ["sites", "☰"], ["events", "≡"]];
 
 function render() {
-  $("#nav").innerHTML = NAV.map(([k, ic]) => `<button data-nav="${k}" ${k === page ? 'aria-current="page"' : ""}><span class="ic">${ic}</span>${t(k)}</button>`).join("")
+  $("#nav").innerHTML = NAV.map(([k, ic]) => `<button data-nav="${k}" ${k === page ? 'aria-current="page"' : ""}><span class="ic">${ic}</span>${t(k === "gateway" ? "gateway_page" : k)}</button>`).join("")
     + `<button data-nav="classic"><span class="ic">↗</span>${t("classic")}</button>`;
   $("#nav").style.gridTemplateColumns = window.innerWidth < 900 ? `repeat(${NAV.length + 1},1fr)` : "";
   $("#main").innerHTML = (VIEWS[page] || viewCabinets)();
@@ -133,6 +190,7 @@ function render() {
   $("#langbtn").textContent = lang.toUpperCase();
   document.documentElement.lang = lang;
   if (page === "events") loadEvents();
+  if (page === "gateway") gwBar();
 }
 
 async function loadEvents() {
@@ -145,6 +203,14 @@ async function loadEvents() {
 }
 
 /* ---------- actions ---------- */
+async function gwRead() {
+  if (!S.gw.id) return;
+  S.gw.busy = true; render();
+  try { S.gw.data = await api("POST", "/api/v2/gw/read", { id: S.gw.id }); S.gw.data.ok = S.gw.data.ok !== false; }
+  catch (e) { S.gw.data = { ok: false, error: e.message }; }
+  S.gw.busy = false; render();
+}
+
 async function loadSites() { const r = await api("GET", "/api/v2/sites"); S.sites = r.sites; S.warnings = r.warnings; S.layouts = r.layouts; }
 function readRows() {
   document.querySelectorAll(".sitesrow").forEach((row) => { const i = +row.dataset.i; row.querySelectorAll("[data-f]").forEach((el) => { S.sites[i][el.dataset.f] = el.value; }); });
@@ -162,14 +228,42 @@ document.addEventListener("click", async (ev) => {
     } else if (act.dataset.act === "add") { readRows(); S.sites.push({ id: "", name: "", host: "", port: 502, cabinet: "", site: "", note: "" }); S.dirty = true; render();
     } else if (act.dataset.act === "del") { readRows(); S.sites.splice(+act.dataset.i, 1); S.dirty = true; render();
     } else if (act.dataset.act === "save") { readRows(); const r = await api("PUT", "/api/v2/sites", { sites: S.sites }); S.sites = r.sites; S.warnings = r.warnings; S.dirty = false; render(); toast(t("saved"));
+    } else if (act.dataset.act === "gw-read") { await gwRead();
+    } else if (act.dataset.act === "gw-clear") { S.gw.edits = {}; render();
+    } else if (act.dataset.act === "gw-apply") {
+      const n = gwChanged(), g = S.sites.find((x) => x.id === S.gw.id);
+      if (!confirm(t("applyQ", { n, g: g ? g.name : "" }))) return;
+      const r = await api("POST", "/api/v2/gw/apply", { id: S.gw.id, changes: S.gw.edits });
+      if (!r.ok) throw new Error(r.error || "failed");
+      S.gw.edits = {}; await gwRead(); toast(r.pending_reboot ? t("needReboot", { k: r.pending_reboot }) : t("applied"));
+    } else if (act.dataset.act === "gw-time") {
+      if (!confirm(t("clockWarn"))) return;
+      const r = await api("POST", "/api/v2/gw/action", { id: S.gw.id, action: "time" }); if (!r.ok) throw new Error(r.error); await gwRead(); toast(t("clockSet"));
+    } else if (act.dataset.act === "gw-vol") {
+      const on = act.getAttribute("aria-checked") !== "true";
+      const r = await api("POST", "/api/v2/gw/action", { id: S.gw.id, action: act.dataset.name, value: on ? "1" : "0" }); if (!r.ok) throw new Error(r.error); await gwRead();
+    } else if (act.dataset.act === "gw-discard") {
+      const r = await api("POST", "/api/v2/gw/action", { id: S.gw.id, action: "discard" }); if (!r.ok) throw new Error(r.error); toast(t("doneOk"));
+    } else if (act.dataset.act === "gw-reboot") {
+      const g = S.sites.find((x) => x.id === S.gw.id); if (!confirm(t("rebootQ", { n: g ? g.name : "" }))) return;
+      const r = await api("POST", "/api/v2/gw/action", { id: S.gw.id, action: "reboot" }); if (!r.ok) throw new Error(r.error); toast(t("doneOk"));
+    } else if (act.dataset.act === "gw-defaults") {
+      const g = S.sites.find((x) => x.id === S.gw.id); const typed = prompt(t("defaultsQ", { n: g ? g.name : "" })); if (typed === null) return;
+      const r = await api("POST", "/api/v2/gw/action", { id: S.gw.id, action: "defaults", confirm: typed }); if (!r.ok) throw new Error(r.error); await gwRead(); toast(t("doneOk"));
     } else if (act.dataset.act === "collector") { const on = act.getAttribute("aria-checked") !== "true"; await api("POST", "/api/v2/collector", { enabled: on }); S.me = await api("GET", "/api/v2/me"); render(); }
   } catch (e) { fail(e); render(); }
 });
 document.addEventListener("input", (ev) => {
   if (ev.target.closest(".sitesrow")) { S.dirty = true; }
+  if (ev.target.dataset && ev.target.dataset.key) {
+    const k = ev.target.dataset.key, orig = S.gw.data.keys.find((x) => x.key === k).value;
+    if (ev.target.value === orig) delete S.gw.edits[k]; else S.gw.edits[k] = ev.target.value;
+    ev.target.style.borderColor = k in S.gw.edits ? "var(--brand)" : ""; gwBar();
+  }
   if (ev.target.id === "evq") { S.ev.q = ev.target.value; clearTimeout(window._evt); window._evt = setTimeout(loadEvents, 300); }
 });
 document.addEventListener("change", async (ev) => {
+  if (ev.target.id === "gwsel") { S.gw.id = ev.target.value; S.gw.data = null; S.gw.edits = {}; if (S.gw.id) gwRead(); else render(); }
   if (ev.target.id === "evgw") { S.ev.gw = ev.target.value; loadEvents(); }
   if (ev.target.id === "evdays") { S.ev.days = +ev.target.value; loadEvents(); }
   if (ev.target.id === "csvfile" && ev.target.files[0]) {
