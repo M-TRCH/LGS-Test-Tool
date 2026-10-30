@@ -31,6 +31,13 @@ const TXT = {
     mUnlockedAgo: "ปลดล่าสุด {s} วินาทีก่อน", mDisplay: "ตัวเลขบนจอ", na: "ไม่มี", presets: "พรีเซ็ตสี", pLight: "ไฟ", pLightDisp: "ไฟ + เลข", pUnlock: "ปลดกลอน", pUnlockDisp: "ปลดกลอน + เลข",
     quick: "คำสั่งด่วน", identify: "ระบุตำแหน่ง (กะพริบ)", allOff: "ดับทั้งหมด", latchSafety: "ปลดกลอน (ปลอดภัย)", latchForce: "ปลดกลอน (บังคับ)", dispPower: "เปิดจอ",
     number: "ตัวเลข (0-9999)", writeNumber: "เขียนตัวเลข", cooldownNote: "กลอนต้องเว้น 2.2 วินาทีระหว่างการปลด", sent: "ส่งแล้ว", fires: "ยิงกลอน {c} ครั้ง · {s} วินาที", count: "ครั้ง", seconds: "วินาที",
+    soak_page: "Soak", sPick: "เลือกตู้ที่จะทดสอบ", sAll: "ทั้งหมด", sMode: "โหมด", sPoll: "อ่านอย่างเดียว", sPharm: "จำลองจ่ายยา",
+    sPicks: "จำนวน pick ต่อวัน", sHours: "ชั่วโมง (0 = จนกว่าจะหยุด)", sStartAt: "เริ่มเวลา (เช่น 21:00 เว้นว่าง = ทันที)", sStart: "เริ่ม Soak",
+    sStop: "หยุด", sStopQ: "หยุด soak ที่กำลังรัน? ข้อมูลถึงตอนนี้ถูกเก็บไว้", sRunning: "กำลังรัน", sArmed: "ตั้งเวลาไว้ เริ่มในอีก {t}", sLeft: "เหลือ {t}",
+    sNoEnd: "ไม่มีเวลาจบ", sCab: "ตู้", sState: "สถานะ", sPass: "รอบ", sReads: "อ่าน", sFails: "พลาด", sRbt: "รีบูต", sWdt: "WDT", sWorst: "ช้าสุด ms", sHeal: "เกตเวย์ซ่อม",
+    sClean: "สะอาด", sWarn: "ควรดู", sNotClean: "ไม่สะอาด", sDidNot: "ไม่ได้รัน", sStarting: "กำลังเริ่ม", sAnoms: "เหตุผิดปกติล่าสุด", sNone: "ไม่มี",
+    sVerdict: "สรุปผลรอบล่าสุด", sHistory: "รอบที่ผ่านมา", sView: "ดูสรุป", sNoRuns: "ยังไม่มีรอบที่ผ่านมา", sFrames: "เฟรมที่ pymodbus ทิ้ง: {n}",
+    sNeedType: "ตู้ที่ไม่ได้กำหนดชนิดจะเริ่มไม่ได้ ตั้งที่หน้า รายการตู้", sStarted: "เริ่มแล้ว {n} ตู้", sCsv: "ไฟล์ CSV", sLongNote: "รันบนเซิร์ฟเวอร์ ปิดหน้านี้ได้ ผลเก็บใน data/exports",
     matched: "พบ {n} รายการ", loginAgain: "ต้องเข้าสู่ระบบอีกครั้ง", error: "ผิดพลาด: {e}", d: "วัน", h: "ชม.",
   },
   en: {
@@ -62,6 +69,13 @@ const TXT = {
     mUnlockedAgo: "last unlock {s} s ago", mDisplay: "Display number", na: "n/a", presets: "Colour presets", pLight: "Light", pLightDisp: "Light + number", pUnlock: "Unlock", pUnlockDisp: "Unlock + number",
     quick: "Quick commands", identify: "Identify (blink)", allOff: "All off", latchSafety: "Unlock (safe)", latchForce: "Unlock (force)", dispPower: "Display on",
     number: "Number (0-9999)", writeNumber: "Write number", cooldownNote: "A latch needs 2.2 s between unlocks", sent: "Sent", fires: "{c} fires · {s} s", count: "count", seconds: "seconds",
+    soak_page: "Soak", sPick: "Choose the cabinets to test", sAll: "All", sMode: "Mode", sPoll: "Read only", sPharm: "Pharmacy simulation",
+    sPicks: "Picks per day", sHours: "Hours (0 = until stopped)", sStartAt: "Start at (e.g. 21:00, empty = now)", sStart: "Start soak",
+    sStop: "Stop", sStopQ: "Stop the running soak? Data up to now is kept.", sRunning: "Running", sArmed: "Armed, starts in {t}", sLeft: "{t} left",
+    sNoEnd: "no end time", sCab: "Cabinet", sState: "State", sPass: "Passes", sReads: "Reads", sFails: "Fails", sRbt: "Reboots", sWdt: "WDT", sWorst: "Worst ms", sHeal: "Gateway repairs",
+    sClean: "clean", sWarn: "look", sNotClean: "not clean", sDidNot: "did not run", sStarting: "starting", sAnoms: "Latest anomalies", sNone: "none",
+    sVerdict: "Latest run verdict", sHistory: "Past runs", sView: "View verdict", sNoRuns: "No past runs yet", sFrames: "Frames pymodbus discarded: {n}",
+    sNeedType: "A cabinet with no type cannot start. Set it on the Sites page.", sStarted: "Started {n} cabinets", sCsv: "CSV files", sLongNote: "Runs on the server: you can close this page. Results go to data/exports.",
     matched: "{n} found", loginAgain: "Sign in again", error: "Error: {e}", d: "d", h: "h",
   },
 };
@@ -70,7 +84,7 @@ const t = (k, p) => { let s = (TXT[lang] && TXT[lang][k]) || TXT.en[k] || k; for
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const $ = (s, r = document) => r.querySelector(s);
 
-let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: "", days: 1, q: "", types: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 } };
+let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: "", days: 1, q: "", types: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, soak: { sel: new Set(), mode: "pharmacy", picks: 2000, hours: 12, startAt: "", status: null, runs: [], verdict: "", timer: null, was: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 } };
 let page = (location.hash || "#/cabinets").slice(2) || "cabinets";
 
 async function api(method, url, body, raw) {
@@ -246,11 +260,57 @@ function modAutoSync() {
   if (S.mod.auto && page === "module") modTimer = setInterval(() => { if (!document.hidden && page === "module") modRead(); }, 2000);
 }
 
-const VIEWS = { cabinets: viewCabinets, gateway: viewGateway, module: viewModule, sites: viewSites, events: viewEvents };
-const NAV = [["cabinets", "▦"], ["gateway", "⚙"], ["module", "◧"], ["sites", "☰"], ["events", "≡"]];
+
+const fmtDur = (sec) => { sec = Math.max(0, Math.round(sec)); const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60); return h ? `${h} ${t("h")} ${m} m` : `${m} m ${sec % 60} s`; };
+function viewSoak() {
+  const k = S.soak, st = k.status || {};
+  const running = !!st.running;
+  const chip = (state) => { const cls = { clean: "ok", warn: "warn", "not clean": "bad", "did not run": "bad", starting: "info" }[state] || "info"; const key = { clean: "sClean", warn: "sWarn", "not clean": "sNotClean", "did not run": "sDidNot", starting: "sStarting" }[state]; return `<span class="chip ${cls}"><i class="dot"></i>${t(key)}</span>`; };
+  let head = "";
+  if (running) {
+    const when = st.starts_in_s != null ? t("sArmed", { t: fmtDur(st.starts_in_s) }) : (st.left_s != null ? t("sLeft", { t: fmtDur(st.left_s) }) : t("sNoEnd"));
+    head = `<section class="card stack"><div class="row between"><div><b>${t("sRunning")}</b> · ${st.count} · ${esc(when)}</div><button class="btn" style="color:var(--bad)" data-act="soak-stop">${t("sStop")}</button></div>
+      <div class="small muted">${t("sLongNote")}${st.frames_discarded ? " · " + t("sFrames", { n: st.frames_discarded }) : ""}</div></section>`;
+  } else {
+    const rows = S.sites.map((x) => `<label class="row" style="min-height:40px"><input type="checkbox" data-pick="${esc(x.id)}"${k.sel.has(x.id) ? " checked" : ""}> <span>${esc(x.name)}</span> <span class="small muted mono">${esc(x.host)} · ${esc(x.cabinet || "?")}</span></label>`).join("");
+    head = `<section class="card stack"><b>${t("sPick")}</b><div class="row"><button class="btn" data-act="soak-all">${t("sAll")}</button></div>${rows || `<p class="muted">${t("noSites")}</p>`}<p class="small muted">${t("sNeedType")}</p></section>
+      <section class="card stack"><div class="fgrid">
+        <div class="field"><label>${t("sMode")}</label><select id="soakmode"><option value="pharmacy"${k.mode === "pharmacy" ? " selected" : ""}>${t("sPharm")}</option><option value="poll"${k.mode === "poll" ? " selected" : ""}>${t("sPoll")}</option></select></div>
+        <div class="field"><label>${t("sPicks")}</label><input id="soakpicks" type="number" min="1" value="${k.picks}"></div>
+        <div class="field"><label>${t("sHours")}</label><input id="soakhours" type="number" min="0" max="336" step="0.5" value="${k.hours}"></div>
+        <div class="field"><label>${t("sStartAt")}</label><input id="soakat" value="${esc(k.startAt)}" placeholder="21:00"></div></div>
+        <div class="row"><button class="btn primary" data-act="soak-start">${t("sStart")}</button></div></section>`;
+  }
+  const cabs = (st.cabinets || []).length ? `<section class="card" style="overflow-x:auto"><table><tr><th>${t("sCab")}</th><th>${t("sState")}</th><th>${t("sPass")}</th><th>${t("sReads")}</th><th>${t("sFails")}</th><th>${t("sRbt")}</th><th>${t("sWdt")}</th><th>${t("sWorst")}</th><th>${t("sHeal")}</th></tr>
+    ${st.cabinets.map((c) => `<tr><td><b>${esc(c.name)}</b>${c.note ? `<div class="tiny" style="color:var(--bad)">${esc(c.note)}</div>` : ""}</td><td>${chip(c.state)}</td><td>${c.passes}</td><td>${c.reads.toLocaleString()}</td><td>${c.fails}</td><td>${c.reboots}</td><td>${c.watchdogs}</td><td>${c.worst_ms}</td>
+      <td>${c.gw_seen ? `${c.gw_healed} (${c.heal_per_h}/h)${c.gw_heal_failed ? ` · ✗${c.gw_heal_failed}` : ""}${c.gw_timeouts ? ` · ⏱${c.gw_timeouts}` : ""}${c.gw_bad_crc ? ` · CRC ${c.gw_bad_crc}` : ""}` : "—"}</td></tr>`).join("")}</table></section>` : "";
+  const an = (st.anomalies || []).length ? `<section class="card stack"><h3>${t("sAnoms")}</h3>${st.anomalies.slice(0, 15).map((a) => `<div class="evrow"><span class="when">${esc(a.at)}</span><span><b>${esc(a.cabinet)}</b> ${a.id ? "id " + a.id + " " : ""}${esc(a.kind)} ${esc(a.detail)}</span></div>`).join("")}</section>` : "";
+  const fin = st.finished && !running ? `<section class="card stack"><h3>${t("sVerdict")}</h3><pre class="mono small" style="white-space:pre-wrap;overflow-x:auto;margin:0">${esc(st.finished.text)}</pre></section>` : "";
+  const hist = `<section class="card stack"><h3>${t("sHistory")}</h3>${(k.runs || []).length ? k.runs.map((r) => `<div class="stack tight" style="padding:8px 0;border-bottom:1px solid var(--line)"><div class="row between"><b>${esc(r.started)}</b>
+      ${r.verdict ? `<button class="btn" data-act="soak-view" data-name="${esc(r.verdict)}">${t("sView")}</button>` : ""}</div>
+      <div class="small">${r.csv.map((c) => `<a href="/api/v2/soak/file?name=${encodeURIComponent(c)}&download=1">${esc(c.replace(/^soak-/, "").replace(/-\d{8}-\d{6}\.csv$/, ""))}</a>`).join(" · ")}</div></div>`).join("") : `<p class="muted">${t("sNoRuns")}</p>`}
+      ${k.verdict ? `<pre class="mono small" style="white-space:pre-wrap;overflow-x:auto;margin:0">${esc(k.verdict)}</pre>` : ""}</section>`;
+  return `<h1>${t("soak_page")}</h1><div class="stack">${head}${cabs}${an}${fin}${hist}</div>`;
+}
+async function soakRefresh() {
+  try {
+    S.soak.status = await api("GET", "/api/v2/soak/status");
+    const running = !!S.soak.status.running;
+    if (S.soak.was && !running) S.soak.runs = (await api("GET", "/api/v2/soak/runs")).runs;
+    S.soak.was = running;
+    if (page === "soak" && !document.activeElement.closest(".fgrid")) { const y = window.scrollY; render(); window.scrollTo(0, y); }
+  } catch (e) { /* transient: next tick */ }
+}
+function soakSync() {
+  clearInterval(S.soak.timer); S.soak.timer = null;
+  if (page === "soak") { soakRefresh(); S.soak.timer = setInterval(() => { if (!document.hidden && page === "soak") soakRefresh(); }, 3000); }
+}
+
+const VIEWS = { cabinets: viewCabinets, gateway: viewGateway, module: viewModule, soak: viewSoak, sites: viewSites, events: viewEvents };
+const NAV = [["cabinets", "▦"], ["gateway", "⚙"], ["module", "◧"], ["soak", "◔"], ["sites", "☰"], ["events", "≡"]];
 
 function render() {
-  $("#nav").innerHTML = NAV.map(([k, ic]) => `<button data-nav="${k}" ${k === page ? 'aria-current="page"' : ""}><span class="ic">${ic}</span>${t(k === "gateway" ? "gateway_page" : k === "module" ? "module_page" : k)}</button>`).join("")
+  $("#nav").innerHTML = NAV.map(([k, ic]) => `<button data-nav="${k}" ${k === page ? 'aria-current="page"' : ""}><span class="ic">${ic}</span>${t(k === "gateway" ? "gateway_page" : k === "module" ? "module_page" : k === "soak" ? "soak_page" : k)}</button>`).join("")
     + `<button data-nav="classic"><span class="ic">↗</span>${t("classic")}</button>`;
   $("#nav").style.gridTemplateColumns = window.innerWidth < 900 ? `repeat(${NAV.length + 1},1fr)` : "";
   $("#main").innerHTML = (VIEWS[page] || viewCabinets)();
@@ -260,6 +320,7 @@ function render() {
   if (page === "events") loadEvents();
   if (page === "gateway") gwBar();
   if (page === "module") modAutoSync();
+  if (page === "soak" && !S.soak.timer) soakSync();
 }
 
 async function loadEvents() {
@@ -286,7 +347,7 @@ function readRows() {
 }
 document.addEventListener("click", async (ev) => {
   const nav = ev.target.closest("[data-nav]");
-  if (nav) { if (nav.dataset.nav === "classic") { location.href = "/"; return; } page = nav.dataset.nav; location.hash = "#/" + page; if (page === "events") S.evGw = (await api("GET", "/api/v2/events/gateways").catch(() => ({}))).gateways || []; render(); return; }
+  if (nav) { if (nav.dataset.nav === "classic") { location.href = "/"; return; } page = nav.dataset.nav; location.hash = "#/" + page; if (page !== "soak") { clearInterval(S.soak.timer); S.soak.timer = null; } if (page === "events") S.evGw = (await api("GET", "/api/v2/events/gateways").catch(() => ({}))).gateways || []; render(); return; }
   const type = ev.target.closest("[data-type]");
   if (type) { const x = type.dataset.type; S.ev.types.has(x) ? S.ev.types.delete(x) : S.ev.types.add(x); type.setAttribute("aria-pressed", S.ev.types.has(x)); loadEvents(); return; }
   const act = ev.target.closest("[data-act]"); if (!act) return;
@@ -330,6 +391,15 @@ document.addEventListener("click", async (ev) => {
       toast(t("sent") + " · " + r.ms + " ms");
     } else if (act.dataset.act === "mod-number") {
       const r = await api("POST", "/api/v2/mod/number", { id: S.mod.id, device_id: S.mod.dev, value: +$("#modnum").value }); if (!r.ok) throw new Error(r.error); toast(t("sent"));
+    } else if (act.dataset.act === "soak-all") { S.sites.forEach((x) => S.soak.sel.add(x.id)); render();
+    } else if (act.dataset.act === "soak-start") {
+      const k = S.soak;
+      const r = await api("POST", "/api/v2/soak/start", { ids: [...k.sel], mode: k.mode, picks: k.picks, hours: k.hours, start_at: k.startAt });
+      toast(t("sStarted", { n: r.count }) + (r.warnings && r.warnings.length ? " · " + r.warnings[0] : "")); await soakRefresh(); render();
+    } else if (act.dataset.act === "soak-stop") {
+      if (!confirm(t("sStopQ"))) return; await api("POST", "/api/v2/soak/stop", {}); S.soak.was = true; await soakRefresh();
+    } else if (act.dataset.act === "soak-view") {
+      const r = await fetch("/api/v2/soak/file?name=" + encodeURIComponent(act.dataset.name)); S.soak.verdict = await r.text(); render();
     } else if (act.dataset.act === "collector") { const on = act.getAttribute("aria-checked") !== "true"; await api("POST", "/api/v2/collector", { enabled: on }); S.me = await api("GET", "/api/v2/me"); render(); }
   } catch (e) { fail(e); render(); }
 });
@@ -348,6 +418,11 @@ document.addEventListener("change", async (ev) => {
   if (ev.target.id === "modstats") { S.mod.stats = ev.target.checked; }
   if (ev.target.id === "modauto") { S.mod.auto = ev.target.checked; modAutoSync(); }
   if (ev.target.id === "gwsel") { S.gw.id = ev.target.value; S.gw.data = null; S.gw.edits = {}; if (S.gw.id) gwRead(); else render(); }
+  if (ev.target.dataset && ev.target.dataset.pick) { ev.target.checked ? S.soak.sel.add(ev.target.dataset.pick) : S.soak.sel.delete(ev.target.dataset.pick); }
+  if (ev.target.id === "soakmode") S.soak.mode = ev.target.value;
+  if (ev.target.id === "soakpicks") S.soak.picks = +ev.target.value;
+  if (ev.target.id === "soakhours") S.soak.hours = +ev.target.value;
+  if (ev.target.id === "soakat") S.soak.startAt = ev.target.value;
   if (ev.target.id === "evgw") { S.ev.gw = ev.target.value; loadEvents(); }
   if (ev.target.id === "evdays") { S.ev.days = +ev.target.value; loadEvents(); }
   if (ev.target.id === "csvfile" && ev.target.files[0]) {
@@ -369,6 +444,7 @@ try { const th = localStorage.getItem("lgs.theme"); if (th) document.documentEle
     await loadSites();
     if (page === "events") S.evGw = (await api("GET", "/api/v2/events/gateways")).gateways || [];
     S.mod.presets = (await api("GET", "/api/v2/mod/presets")).presets;
+    S.soak.runs = (await api("GET", "/api/v2/soak/runs")).runs;
   } catch (e) { fail(e); }
   render();
 })();

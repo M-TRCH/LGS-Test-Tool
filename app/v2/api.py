@@ -12,7 +12,7 @@ from starlette.responses import FileResponse, JSONResponse, Response
 
 from .. import auth, config_store, event_collector
 from ..version import APP_VERSION
-from . import events_api, gateway_api, health, module_api, sites
+from . import events_api, gateway_api, health, module_api, sites, soak_api
 
 STATIC = Path(__file__).resolve().parent / "static"
 PROBE_PARALLEL = 6            # gateways asked at once; each probe is one short connection
@@ -29,7 +29,7 @@ def _forbidden() -> JSONResponse:
     return JSONResponse({"error": "missing X-LGS header"}, status_code=403)
 
 
-def install(app, cfg) -> None:
+def install(app, cfg, worker) -> None:
     @app.get("/v2")
     async def v2_index():
         return FileResponse(STATIC / "index.html", headers={"Cache-Control": "no-cache"})
@@ -218,6 +218,44 @@ def install(app, cfg) -> None:
         except (ValueError, TypeError) as exc:
             return JSONResponse({"error": str(exc)}, status_code=422)
         return await _run(request, module_api.display_number, host, port, dev, val)
+
+    # ── soak ───────────────────────────────────────────────────────────────
+    @app.get("/api/v2/soak/status")
+    async def soak_status():
+        return soak_api.live.snapshot(worker)
+
+    @app.post("/api/v2/soak/start")
+    async def soak_start(request: Request):
+        if not _mutating(request):
+            return _forbidden()
+        body = await request.json()
+        ids = set(body.get("ids") or [])
+        chosen = [s for s in sites.load() if s["id"] in ids]
+        try:
+            return soak_api.start(worker, chosen, body)
+        except (ValueError, TypeError) as exc:
+            return JSONResponse({"error": str(exc)}, status_code=422)
+
+    @app.post("/api/v2/soak/stop")
+    async def soak_stop(request: Request):
+        if not _mutating(request):
+            return _forbidden()
+        worker.cancel_fleet()
+        return {"ok": True}
+
+    @app.get("/api/v2/soak/runs")
+    async def soak_runs():
+        return {"runs": await asyncio.to_thread(soak_api.runs)}
+
+    @app.get("/api/v2/soak/file")
+    async def soak_file(name: str, download: int = 0):
+        try:
+            path, kind = soak_api.read_file(name)
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=404)
+        if kind == "verdict" and not download:
+            return Response(path.read_text(encoding="utf-8"), media_type="text/plain; charset=utf-8")
+        return FileResponse(path, filename=name, media_type="text/csv" if kind == "csv" else "text/plain")
 
     # ── events ─────────────────────────────────────────────────────────────
     @app.get("/api/v2/events/gateways")
