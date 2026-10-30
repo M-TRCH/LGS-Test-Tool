@@ -232,6 +232,10 @@ class Collector:
                             ip = f"{pp >> 8}.{pp & 0xFF}.{pa}.{rec['p']}"
                         elif i + 1 == len(rows) and seq == total:
                             break           # the peer record is not written yet: next poll
+                    if (rec["ev"] == "tcp_peer" and i > 0 and int(rows[i - 1]["i"]) == seq - 1
+                            and rows[i - 1].get("ev") in ("tcp_accept", "tcp_refused")):
+                        consumed_to = seq       # folded into the row before it
+                        continue
                     rec["text"] = describe(rec, ip)
                     if ip:
                         rec["client"] = ip

@@ -73,7 +73,10 @@ class AppConfig:
     # short TCP connection to every gateway each interval, and a gateway has
     # only two client slots.
     events_enabled: bool = False
-    events_interval_s: int = 60
+    # 300 s, not 60: every poll is itself a client the gateway logs (accept,
+    # peer, close = 3 records), so one poll a minute would spend ~4,300 of its
+    # ~98,000 ring records a day on the collector's own visits.
+    events_interval_s: int = 300
     events_retention_days: int = 90
 
 

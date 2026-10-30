@@ -911,12 +911,12 @@ TEXTS: dict[str, dict[str, str]] = {
     "evc.card": {"en": "Gateway event collector", "th": "ตัวเก็บเหตุการณ์ของเกตเวย์"},
     "evc.hint": {"en": "Pulls each fleet gateway's event log (clients connecting, lamp "
                        "commands, link drops, bus silence...) into dated files on this "
-                       "computer, every minute, kept 90 days. Needs gateway firmware "
+                       "computer, every 5 minutes, kept 90 days. Needs gateway firmware "
                        "1.14.0 or newer. It opens a short connection to each gateway, "
                        "and a gateway accepts only two clients.",
                  "th": "ดึงบันทึกเหตุการณ์ของเกตเวย์ทุกตู้ในรายการ fleet (ใครเชื่อมต่อ "
                        "สั่งไฟ ลิงก์หลุด บัสเงียบ ฯลฯ) มาเก็บเป็นไฟล์รายวันในคอมเครื่องนี้ "
-                       "ทุก 1 นาที เก็บ 90 วัน ต้องใช้เฟิร์มแวร์เกตเวย์ 1.14.0 ขึ้นไป "
+                       "ทุก 5 นาที เก็บ 90 วัน ต้องใช้เฟิร์มแวร์เกตเวย์ 1.14.0 ขึ้นไป "
                        "เปิดการเชื่อมต่อสั้นๆ ไปยังแต่ละเกตเวย์ และเกตเวย์รับได้แค่ 2 client"},
     "evc.enable": {"en": "Collect events", "th": "เก็บเหตุการณ์"},
     "evc.enable_tip": {"en": "Remembered; resumes when the tool restarts.",
