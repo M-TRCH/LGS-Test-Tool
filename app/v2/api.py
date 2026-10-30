@@ -12,7 +12,7 @@ from starlette.responses import FileResponse, JSONResponse, Response
 
 from .. import auth, config_store, event_collector
 from ..version import APP_VERSION
-from . import events_api, gateway_api, health, labels_api, module_api, ota_api, sites, soak_api
+from . import commission_api, events_api, gateway_api, health, labels_api, module_api, ota_api, sites, soak_api
 
 STATIC = Path(__file__).resolve().parent / "static"
 PROBE_PARALLEL = 6            # gateways asked at once; each probe is one short connection
@@ -350,6 +350,46 @@ def install(app, cfg, worker) -> None:
             return ota_api.gw_start(site, q.get("confirm", ""), data=data, filename=q.get("name", "upload.bin")[:80])
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=422)
+
+    # ── commission (ST-Link) ───────────────────────────────────────────────
+    @app.get("/api/v2/cm/options")
+    async def cm_options():
+        return commission_api.options(worker)
+
+    @app.post("/api/v2/cm/probe")
+    async def cm_probe(request: Request):
+        return await _run(request, commission_api.probe, worker)
+
+    @app.post("/api/v2/cm/start")
+    async def cm_start(request: Request):
+        """JSON {mode, image, id|ids, lot, device_type, overwrite, confirm, confirmed}; or a raw .bin
+        body with the same fields in the query string (uploaded image, ?name=)."""
+        if not _mutating(request):
+            return _forbidden()
+        try:
+            if "json" in request.headers.get("content-type", ""):
+                return await asyncio.to_thread(commission_api.start, worker, await request.json())
+            q = dict(request.query_params)
+            q["overwrite"] = q.get("overwrite") == "1"
+            q["confirmed"] = q.get("confirmed") == "1"
+            data = await request.body()
+            if len(data) > 1_000_000:
+                raise ValueError("image larger than 1 MB")
+            return await asyncio.to_thread(commission_api.start, worker, q, data=data,
+                                           filename=q.get("name", "upload.bin")[:80])
+        except (ValueError, TypeError) as exc:
+            return JSONResponse({"error": str(exc)}, status_code=422)
+
+    @app.get("/api/v2/cm/events")
+    async def cm_events(since: int = 0):
+        return commission_api.events(worker, since)
+
+    @app.post("/api/v2/cm/cancel")
+    async def cm_cancel(request: Request):
+        if not _mutating(request):
+            return _forbidden()
+        worker.cancel_commission()
+        return {"ok": True}
 
     # ── events ─────────────────────────────────────────────────────────────
     @app.get("/api/v2/events/gateways")

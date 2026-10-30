@@ -49,6 +49,12 @@ const TXT = {
     fwGwStart: "อัปเดตเกตเวย์", fwGwRun: "กำลังอัปเดตเกตเวย์", fwDone: "เสร็จ", fwFail: "ไม่สำเร็จ", fwLog: "บันทึกการทำงาน", fwNone: "—", fwCensus: "ผลตรวจ", fwLeft: "ยังไม่ใช่รุ่นใหม่", fwPhase: "ขั้น",
     explain: "อธิบาย",
     basic: "พื้นฐาน", advanced: "ขั้นสูง", modeNote: "พื้นฐาน = ตรวจ ทดสอบ ดูผล · ขั้นสูง = เพิ่มหน้าที่แก้ค่าหรือเขียนเฟิร์มแวร์ได้", modeLocked: "หน้านี้อยู่ในโหมดขั้นสูง", mode: "โหมด", settings: "ตั้งค่า", language: "ภาษา", noKeys: "ไม่มีค่าในกลุ่มนี้",
+    commission_page: "ลงโมดูลใหม่", cmBanner: "ล้างและเขียนแฟลชของโมดูลใหม่ผ่าน ST-Link แล้วใส่ ID ให้ในครั้งเดียว โมดูลไม่ต้องต่อบัส RS485 ใช้กับโมดูลที่ยังไม่มีเฟิร์มแวร์ (ลงครั้งแรกหลังผลิต)",
+    cmProbe: "ตรวจ ST-Link", cmProbing: "กำลังตรวจ...", cmNoCli: "ยังไม่พบ STM32CubeProgrammer บนเครื่องที่รันโปรแกรมนี้", cmNoProbe: "ไม่พบ ST-Link ตรวจสาย USB และปิดโปรแกรมอื่นที่จับ ST-Link อยู่ (เช่น CubeProgrammer, CubeIDE)",
+    cmProbeOk: "พบ ST-Link {n} ตัว", cmCli: "CubeProgrammer", cmSingle: "ทีละตัว", cmBatch: "ต่อเนื่องทั้งล็อต",
+    cmImage: "ไฟล์ factory (bootloader + แอป)", cmUpload: "หรืออัปโหลดไฟล์ .bin", cmType: "ชนิดตู้", cmTypeAuto: "ให้บอร์ดตัดสินเอง", cmLot: "ล็อต (ไม่บังคับ)",
+    cmId: "ID ของโมดูล (1-245)", cmIds: "ID ที่จะแจก เรียงตามลำดับ เช่น 11-18, 21", cmOverwrite: "เขียนทับ ID ที่โมดูลเก็บไว้แล้ว", cmOverwriteNote: "ปิดไว้เป็นค่าเริ่มต้น: โมดูลที่มี ID อยู่แล้วจะไม่ถูกเปลี่ยนเลข", cmOverwriteConfirm: "พิมพ์ ID ใหม่เพื่อยืนยันการเขียนทับ",
+    cmStart: "เขียนโมดูล", cmCancel: "ยกเลิก", cmRunning: "กำลังเขียน", cmNeedImage: "เลือกไฟล์ factory ก่อน", cmStartQ: "เขียน {i} ลงโมดูลที่ต่อกับ ST-Link แล้วให้ตอบที่ ID {id}? ย้อนกลับจากหน้านี้ไม่ได้", cmStartBatchQ: "เขียน {i} ลงบอร์ดเปล่าตามลำดับ ID {ids}? สลับบอร์ดตามที่ log บอก ถ้าตัวไหนพลาดคิวจะหยุด", cmLog: "ความคืบหน้า", cmResultOk: "สำเร็จ", cmResultFail: "ไม่สำเร็จ", cmNone: "ยังไม่มีการเขียน",
     g_sys: "ทั่วไป", g_rs485: "บัส RS485", g_usb: "พอร์ต USB", g_net: "เครือข่าย", g_time: "เวลา", g_bus: "ฮับ RS485", g_panel: "ปุ่มและไฟหน้าตู้", g_sched: "รีเซตตามเวลา",
     theme: "ธีม", th_auto: "ตามเครื่อง", th_light: "สว่าง", th_dark: "มืด", th_ocean: "ทะเล", th_forest: "ป่า", th_sand: "ทราย", th_midnight: "เที่ยงคืน", th_contrast: "คอนทราสต์สูง",
     lbPicture: "ตัวอย่างป้าย", lbPicNote: "ภาพจากไฟล์ .lbx ที่จะดาวน์โหลดจริง (ตำแหน่งและข้อความตรงกัน) QR เป็นภาพแทน โปรแกรมพิมพ์ Brother สร้าง QR จริง ฟอนต์อาจต่างเล็กน้อย",
@@ -103,6 +109,12 @@ const TXT = {
     fwGwStart: "Update gateway", fwGwRun: "Updating gateway", fwDone: "Done", fwFail: "Failed", fwLog: "Log", fwNone: "—", fwCensus: "Result", fwLeft: "not on the new image", fwPhase: "Phase",
     explain: "info",
     basic: "Basic", advanced: "Advanced", modeNote: "Basic = check, test, read results · Advanced = adds the pages that change settings or write firmware", modeLocked: "That page is in Advanced mode", mode: "Mode", settings: "Settings", language: "Language", noKeys: "No values in this group",
+    commission_page: "Commission", cmBanner: "Erases and rewrites a new module's flash over ST-Link and gives it its ID in one step. The module does not need to be on the RS485 bus. For modules with no firmware yet (first flash after production).",
+    cmProbe: "Check ST-Link", cmProbing: "Checking...", cmNoCli: "STM32CubeProgrammer was not found on the machine running this tool", cmNoProbe: "No ST-Link found. Check the USB cable and close other programs that hold the ST-Link (CubeProgrammer, CubeIDE).",
+    cmProbeOk: "{n} ST-Link found", cmCli: "CubeProgrammer", cmSingle: "One module", cmBatch: "Whole lot",
+    cmImage: "Factory image (bootloader + app)", cmUpload: "Or upload a .bin", cmType: "Cabinet type", cmTypeAuto: "Let the board decide", cmLot: "Lot (optional)",
+    cmId: "Module ID (1-245)", cmIds: "IDs to assign, in order, e.g. 11-18, 21", cmOverwrite: "Overwrite an ID the module already stores", cmOverwriteNote: "Off by default: a module that already has an ID keeps it", cmOverwriteConfirm: "Type the new ID to confirm the overwrite",
+    cmStart: "Flash module", cmCancel: "Cancel", cmRunning: "Flashing", cmNeedImage: "Choose a factory image first", cmStartQ: "Write {i} to the module on the ST-Link so it answers at ID {id}? This cannot be undone from this page.", cmStartBatchQ: "Write {i} to blank boards, giving IDs {ids} in order? Swap boards when the log says so; the queue stops on any failure.", cmLog: "Progress", cmResultOk: "Done", cmResultFail: "Failed", cmNone: "Nothing flashed yet",
     g_sys: "General", g_rs485: "RS485 bus", g_usb: "USB port", g_net: "Network", g_time: "Time", g_bus: "RS485 hub", g_panel: "Panel buttons and lamps", g_sched: "Scheduled reset",
     theme: "Theme", th_auto: "Follow device", th_light: "Light", th_dark: "Dark", th_ocean: "Ocean", th_forest: "Forest", th_sand: "Sand", th_midnight: "Midnight", th_contrast: "High contrast",
     lbPicture: "Label preview", lbPicNote: "Drawn from the .lbx you would download (positions and text match). The QR is a stand-in: Brother's software makes the real one. The font may differ slightly.",
@@ -419,16 +431,72 @@ function fwSync() {
   if (page === "firmware") { fwRefresh(); S.fw.timer = setInterval(() => { if (!document.hidden && page === "firmware") fwRefresh(); }, 3000); }
 }
 
-const VIEWS = { cabinets: viewCabinets, gateway: viewGateway, module: viewModule, soak: viewSoak, firmware: viewFirmware, labels: viewLabels, sites: viewSites, events: viewEvents };
-const NAV = ["cabinets", "gateway", "module", "soak", "firmware", "labels", "sites", "events"];
+/* ---------- commission (ST-Link) ---------- */
+S.cm = { opts: null, probe: null, probing: false, mode: "single", image: "", file: null, fileName: "", id: "", ids: "", lot: "", type: "0", overwrite: false, confirm: "", since: 0, lines: [], running: false, prog: null, boards: {}, done: null, timer: null };
+function cmLog() { return S.cm.lines.length ? S.cm.lines.map((l) => `<div style="${l.level === "err" ? "color:var(--bad)" : l.level === "ok" ? "color:var(--ok)" : l.level === "warn" ? "color:var(--warn)" : ""}">${esc(l.text)}</div>`).join("") : `<span class="muted">${t("cmNone")}</span>`; }
+function cmStatus() {
+  const c = S.cm, parts = [];
+  if (c.running) parts.push(`<span class="chip warn"><i class="dot"></i>${t("cmRunning")}${c.prog ? " " + c.prog.done + "/" + c.prog.total : ""}</span>`);
+  else if (c.done) parts.push(`<span class="chip ${c.done.ok ? "ok" : "bad"}"><i class="dot"></i>${t(c.done.ok ? "cmResultOk" : "cmResultFail")}</span> <span class="small">${esc(c.done.summary)}</span>`);
+  Object.keys(c.boards).forEach((id) => { const b = c.boards[id]; parts.push(`<span class="chip ${b === "next" ? "warn" : b === "ok" ? "ok" : "bad"}">${esc(id)}</span>`); });
+  return parts.join(" ");
+}
+function viewCommission() {
+  const c = S.cm, o = c.opts, pr = c.probe;
+  const imgs = o ? o.images.map((i) => `<option value="${esc(i.key)}"${i.key === c.image ? " selected" : ""}>${esc(i.label)}</option>`).join("") : "";
+  const types = o ? o.device_types.map((d) => `<option value="${d.id}"${String(d.id) === c.type ? " selected" : ""}>${d.id} — ${esc(d.name)}</option>`).join("") : "";
+  let probe = "";
+  if (pr) probe = !pr.cli ? `<div class="notice bad">${t("cmNoCli")}</div>` : pr.probes.length ? `<div class="notice info">${t("cmProbeOk", { n: pr.probes.length })} · ${pr.probes.map((p) => esc(p.serial)).join(", ")} · ${t("cmCli")} ${esc(pr.version || "")}</div>` : `<div class="notice bad">${t("cmNoProbe")}</div>`;
+  const idField = c.mode === "batch"
+    ? `<div class="field"><label>${t("cmIds")}</label><input id="cmids" value="${esc(c.ids)}" placeholder="11-18" autocomplete="off"></div>`
+    : `<div class="field"><label>${t("cmId")}</label><input id="cmid" value="${esc(c.id)}" inputmode="numeric" autocomplete="off"></div>`;
+  const ow = c.mode === "batch" ? "" : `<label class="row" style="min-height:40px"><input type="checkbox" id="cmow"${c.overwrite ? " checked" : ""}> <span>${t("cmOverwrite")}</span></label><span class="small muted">${t("cmOverwriteNote")}</span>`
+    + (c.overwrite ? `<div class="field"><label>${t("cmOverwriteConfirm")}</label><input id="cmconfirm" value="${esc(c.confirm)}" inputmode="numeric" autocomplete="off"></div>` : "");
+  return `<h1>${t("commission_page")}</h1><div class="stack"><div class="notice">${t("cmBanner")}</div>
+    <section class="card stack"><div class="row"><button class="btn" data-act="cm-probe"${c.probing ? " disabled" : ""}>${c.probing ? t("cmProbing") : t("cmProbe")}</button></div>${probe}</section>
+    <section class="card stack"><div class="seg"><button data-cmmode="single" aria-pressed="${c.mode === "single"}">${t("cmSingle")}</button><button data-cmmode="batch" aria-pressed="${c.mode === "batch"}">${t("cmBatch")}</button></div><div class="fgrid">
+      <div class="field"><label>${t("cmImage")}</label><select id="cmimage"><option value="">—</option>${imgs}</select></div>
+      <div class="field"><label>${t("cmUpload")}</label><input type="file" id="cmfile" accept=".bin"><span class="small muted">${esc(c.fileName)}</span></div>
+      <div class="field"><label>${t("cmType")}</label><select id="cmtype"><option value="0">${t("cmTypeAuto")}</option>${types}</select></div>
+      <div class="field"><label>${t("cmLot")}</label><input id="cmlot" value="${esc(c.lot)}" autocomplete="off"></div>${idField}</div>${ow}
+      <div class="row"><button class="btn primary" data-act="cm-start"${c.running ? " disabled" : ""}>${t("cmStart")}</button>${c.running ? `<button class="btn" style="color:var(--bad)" data-act="cm-cancel">${t("cmCancel")}</button>` : ""}</div></section>
+    <section class="card stack"><h3>${t("cmLog")}</h3><div id="cmstat" class="row">${cmStatus()}</div>${c.prog && c.running ? `<progress value="${c.prog.done}" max="${c.prog.total || 1}" style="width:100%"></progress>` : ""}
+      <div id="cmlog" class="mono small" style="max-height:320px;overflow:auto;white-space:pre-wrap">${cmLog()}</div></section></div>`;
+}
+async function cmPoll() {
+  const c = S.cm;
+  try {
+    const r = await api("GET", "/api/v2/cm/events?since=" + c.since);
+    const was = c.running; c.since = r.seq; c.running = r.running;
+    r.events.forEach((e) => {
+      if (e.k === "line") c.lines.push(e); else if (e.k === "progress") c.prog = e;
+      else if (e.k === "done") c.done = e; else if (e.k === "next") c.boards[e.id] = "next"; else if (e.k === "board") c.boards[e.id] = e.ok ? "ok" : "bad";
+    });
+    if (c.lines.length > 400) c.lines = c.lines.slice(-400);
+    if (c.running !== was) { if (page === "commission" && !document.activeElement.matches("input,select")) { const y = window.scrollY; render(); window.scrollTo(0, y); } return; }
+    if (r.events.length && page === "commission") {
+      const lg = $("#cmlog"), st = $("#cmstat"); if (lg) { lg.innerHTML = cmLog(); lg.scrollTop = lg.scrollHeight; } if (st) st.innerHTML = cmStatus();
+      const pg = document.querySelector("progress"); if (pg && c.prog) { pg.max = c.prog.total || 1; pg.value = c.prog.done; }
+    }
+  } catch (e) { /* next tick */ }
+}
+async function cmSync() {
+  const c = S.cm; clearInterval(c.timer); c.timer = null;
+  if (page !== "commission") return;
+  if (!c.opts) { try { c.opts = await api("GET", "/api/v2/cm/options"); if (!c.image && c.opts.images.length) c.image = c.opts.images[0].key; render(); } catch (e) { fail(e); } }
+  cmPoll(); c.timer = setInterval(() => { if (!document.hidden && page === "commission") cmPoll(); }, 1500);
+}
+
+const VIEWS = { commission: viewCommission, cabinets: viewCabinets, gateway: viewGateway, module: viewModule, soak: viewSoak, firmware: viewFirmware, labels: viewLabels, sites: viewSites, events: viewEvents };
+const NAV = ["cabinets", "gateway", "module", "soak", "firmware", "commission", "labels", "sites", "events"];
 /* Basic mode hides the pages that change a gateway's settings, write firmware or edit the cabinet list. It is a convenience for whoever holds the phone, not security: the login is what keeps strangers out. */
-const ADV_PAGES = new Set(["gateway", "firmware", "sites"]);
+const ADV_PAGES = new Set(["gateway", "firmware", "commission", "sites"]);
 let uiMode = "basic"; try { uiMode = localStorage.getItem("lgs.mode") === "advanced" ? "advanced" : "basic"; } catch (e) { /* storage blocked: basic */ }
 const allowed = (k) => uiMode === "advanced" || !ADV_PAGES.has(k);
 
 function render() {
   if (!allowed(page)) { page = "cabinets"; location.hash = "#/cabinets"; toast(t("modeLocked")); }
-  $("#nav").innerHTML = NAV.filter(allowed).map((k) => `<button data-nav="${k}" ${k === page ? 'aria-current="page"' : ""}>${t(k === "gateway" ? "gateway_page" : k === "module" ? "module_page" : k === "soak" ? "soak_page" : k === "firmware" ? "firmware_page" : k === "labels" ? "labels_page" : k)}</button>`).join("")
+  $("#nav").innerHTML = NAV.filter(allowed).map((k) => `<button data-nav="${k}" ${k === page ? 'aria-current="page"' : ""}>${t(k === "gateway" ? "gateway_page" : k === "module" ? "module_page" : k === "soak" ? "soak_page" : k === "firmware" ? "firmware_page" : k === "commission" ? "commission_page" : k === "labels" ? "labels_page" : k)}</button>`).join("")
     + `<button data-nav="classic">${t("classic")}</button>`;
   $("#main").innerHTML = (VIEWS[page] || viewCabinets)();
   const cur = $("#nav [aria-current]"); if (cur && cur.scrollIntoView) cur.scrollIntoView({ inline: "center", block: "nearest" });
@@ -440,6 +508,7 @@ function render() {
   if (page === "module") modAutoSync();
   if (page === "soak" && !S.soak.timer) soakSync();
   if (page === "firmware" && !S.fw.timer) fwSync();
+  if (page === "commission" && !S.cm.timer && !S.cm.syncing) { S.cm.syncing = true; cmSync().finally(() => { S.cm.syncing = false; }); }
 }
 
 async function loadEvents() {
@@ -466,7 +535,8 @@ function readRows() {
 }
 document.addEventListener("click", async (ev) => {
   const nav = ev.target.closest("[data-nav]");
-  if (nav) { if (nav.dataset.nav === "classic") { location.href = "/"; return; } page = nav.dataset.nav; location.hash = "#/" + page; if (page !== "soak") { clearInterval(S.soak.timer); S.soak.timer = null; } if (page !== "firmware") { clearInterval(S.fw.timer); S.fw.timer = null; } if (page === "events") S.evGw = (await api("GET", "/api/v2/events/gateways").catch(() => ({}))).gateways || []; render(); return; }
+  if (nav) { if (nav.dataset.nav === "classic") { location.href = "/"; return; } page = nav.dataset.nav; location.hash = "#/" + page; if (page !== "soak") { clearInterval(S.soak.timer); S.soak.timer = null; } if (page !== "firmware") { clearInterval(S.fw.timer); S.fw.timer = null; } if (page !== "commission") { clearInterval(S.cm.timer); S.cm.timer = null; } if (page === "events") S.evGw = (await api("GET", "/api/v2/events/gateways").catch(() => ({}))).gateways || []; render(); return; }
+  const cmm = ev.target.closest("[data-cmmode]"); if (cmm) { S.cm.mode = cmm.dataset.cmmode; render(); return; }
   const type = ev.target.closest("[data-type]");
   if (type) { const x = type.dataset.type; S.ev.types.has(x) ? S.ev.types.delete(x) : S.ev.types.add(x); type.setAttribute("aria-pressed", S.ev.types.has(x)); loadEvents(); return; }
   const act = ev.target.closest("[data-act]"); if (!act) return;
@@ -546,6 +616,19 @@ document.addEventListener("click", async (ev) => {
       if (f.gwFile) { await api("POST", `/api/v2/fw/gateway/start?id=${encodeURIComponent(f.gwId)}&confirm=${encodeURIComponent(f.gwConfirm)}&name=${encodeURIComponent(f.gwFileName)}`, f.gwFile, true); }
       else { await api("POST", "/api/v2/fw/gateway/start", { id: f.gwId, confirm: f.gwConfirm, image: f.gwImage }); }
       f.gwConfirm = ""; await fwRefresh();
+    } else if (act.dataset.act === "cm-probe") {
+      S.cm.probing = true; render(); try { S.cm.probe = await api("POST", "/api/v2/cm/probe", {}); } finally { S.cm.probing = false; render(); }
+    } else if (act.dataset.act === "cm-cancel") {
+      await api("POST", "/api/v2/cm/cancel", {}); await cmPoll();
+    } else if (act.dataset.act === "cm-start") {
+      const c = S.cm, im = c.opts && c.opts.images.find((x) => x.key === c.image), label = c.file ? c.fileName : (im ? im.label : "");
+      if (!c.file && !im) { toast(t("cmNeedImage")); return; }
+      const batch = c.mode === "batch";
+      if (!confirm(batch ? t("cmStartBatchQ", { i: label, ids: c.ids }) : t("cmStartQ", { i: label, id: c.id }))) return;
+      const body = { mode: c.mode, image: c.file ? "" : c.image, id: c.id, ids: c.ids, lot: c.lot, device_type: c.type, overwrite: !batch && c.overwrite, confirm: c.confirm, confirmed: true };
+      if (c.file) { const q = new URLSearchParams({ mode: c.mode, id: c.id, ids: c.ids, lot: c.lot, device_type: c.type, overwrite: body.overwrite ? "1" : "0", confirm: c.confirm, confirmed: "1", name: c.fileName }); await api("POST", "/api/v2/cm/start?" + q, c.file, true); }
+      else await api("POST", "/api/v2/cm/start", body);
+      c.since = 0; c.lines = []; c.done = null; c.prog = null; c.boards = {}; c.running = true; c.confirm = ""; render(); cmPoll();
     } else if (act.dataset.act === "hint") { showInfo(act.dataset.key);
     } else if (act.dataset.act === "collector") { const on = act.getAttribute("aria-checked") !== "true"; await api("POST", "/api/v2/collector", { enabled: on }); S.me = await api("GET", "/api/v2/me"); render(); }
   } catch (e) { fail(e); render(); }
@@ -576,6 +659,14 @@ document.addEventListener("change", async (ev) => {
   if (ev.target.id === "lblayout") { S.lab.layout = ev.target.value; S.lab.info = null; }
   if (ev.target.id === "lbplate") { S.lab.plate = ev.target.value; S.lab.info = null; }
   if (ev.target.dataset && ev.target.dataset.fwpick) { ev.target.checked ? S.fw.sel.add(ev.target.dataset.fwpick) : S.fw.sel.delete(ev.target.dataset.fwpick); }
+  if (ev.target.id === "cmimage") { S.cm.image = ev.target.value; if (ev.target.value) { S.cm.file = null; S.cm.fileName = ""; render(); } }
+  if (ev.target.id === "cmtype") S.cm.type = ev.target.value;
+  if (ev.target.id === "cmlot") S.cm.lot = ev.target.value;
+  if (ev.target.id === "cmid") S.cm.id = ev.target.value;
+  if (ev.target.id === "cmids") S.cm.ids = ev.target.value;
+  if (ev.target.id === "cmconfirm") S.cm.confirm = ev.target.value;
+  if (ev.target.id === "cmow") { S.cm.overwrite = ev.target.checked; S.cm.confirm = ""; render(); }
+  if (ev.target.id === "cmfile" && ev.target.files[0]) { S.cm.file = await ev.target.files[0].arrayBuffer(); S.cm.fileName = ev.target.files[0].name; S.cm.image = ""; render(); }
   if (ev.target.id === "fwimage") S.fw.image = ev.target.value;
   if (ev.target.id === "fwgwsel") S.fw.gwId = ev.target.value;
   if (ev.target.id === "fwgwimage") { S.fw.gwImage = ev.target.value; if (ev.target.value) { S.fw.gwFile = null; S.fw.gwFileName = ""; } }
