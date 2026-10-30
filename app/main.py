@@ -30,6 +30,7 @@ from .ui import (Ctx, connection_bar, helps, log_pane, page_guard,
                  tab_gateway, tab_install, tab_labels, tab_monitor, tab_ota,
                  tab_soak, theme)
 from .version import APP_VERSION
+from .v2 import api as v2_api
 
 # Shared across browsers: one Modbus worker, one log, one settings file — the
 # bus and the gateway's single TCP slot cannot be shared anyway.
@@ -189,6 +190,8 @@ def _on_shutdown() -> None:
 
 # Web password gate (app/auth.py): open until a password is set.
 auth.install(app)
+# v2.0 API and front end at /v2 (same process, same login, same data folder).
+v2_api.install(app, cfg)
 app.on_startup(_on_startup)
 app.on_shutdown(ntp_server.server.stop)
 app.on_shutdown(_on_shutdown)

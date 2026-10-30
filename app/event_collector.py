@@ -202,6 +202,13 @@ class Collector:
                 if not res.ok:
                     out["error"] = (res.error_text or res.err or "LOG SINCE refused")[:100]
                     break
+                if "next" not in res.data:
+                    # Firmware before 1.14.0 reads "LOG SINCE 5" as "LOG" with a
+                    # junk count and answers with its newest record, which would
+                    # be stored again on every poll.
+                    out["error"] = "gateway firmware too old for LOG SINCE (needs 1.14.0)"
+                    batch = []
+                    break
                 gap = str(res.data.get("gap", "0"))
                 total = int(res.data.get("total", 0))
                 if gap == "2":                       # a seq this board never reached
@@ -295,7 +302,15 @@ _stop: Optional[threading.Event] = None
 
 
 def _roster_from(cfg) -> list[tuple]:
-    """The fleet roster ("name|host|cabinet" strings) as (name, host, 502)."""
+    """The saved sites (v2 sites.json) when there are any, else the fleet
+    roster ("name|host|cabinet" strings), as (name, host, port)."""
+    try:
+        from .v2 import sites
+        saved = sites.load()
+        if saved:
+            return [(s["name"], s["host"], s["port"]) for s in saved]
+    except Exception:  # noqa: BLE001
+        pass
     out = []
     for row in getattr(cfg, "fleet", []) or []:
         parts = str(row).split("|")
