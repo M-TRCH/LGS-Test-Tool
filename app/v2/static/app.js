@@ -445,7 +445,7 @@ function fwSync() {
 }
 
 /* ---------- commission (ST-Link) ---------- */
-S.cm = { opts: null, probe: null, probing: false, mode: "single", image: "", file: null, fileName: "", id: "", ids: "", lot: "", type: "0", overwrite: false, confirm: "", since: 0, lines: [], running: false, prog: null, boards: {}, done: null, timer: null, sel: new Set() };
+S.cm = { opts: null, probe: null, probing: false, mode: "single", image: "", file: null, fileName: "", id: "", ids: "", lot: "", type: "0", overwrite: false, confirm: "", since: 0, lines: [], running: false, prog: null, boards: {}, done: null, timer: null, sel: new Set(), gridOpen: false };
 function cmLog() { return S.cm.lines.length ? S.cm.lines.map((l) => `<div style="${l.level === "err" ? "color:var(--bad)" : l.level === "ok" ? "color:var(--ok)" : l.level === "warn" ? "color:var(--warn)" : ""}">${esc(l.text)}</div>`).join("") : `<span class="muted">${t("cmNone")}</span>`; }
 function cmStatus() {
   const c = S.cm, parts = [];
@@ -477,7 +477,7 @@ function viewCommission() {
   const idField = c.mode === "batch"
     ? `<div class="field" style="grid-column:1/-1"><label>${t("cmGrid")}</label><span class="small muted">${t("cmGridMany")}</span>
         <div class="row"><select id="cmpreset"><option value="">${t("cmPreset")}</option>${presets}</select><button class="btn" data-act="cm-clear">${t("cmClear")}</button><span class="small muted">${t("cmSelected", { n: c.sel.size })}</span></div>${cmGridHtml()}</div>`
-    : `<div class="field" style="grid-column:1/-1"><label>${t("cmId")}</label><input id="cmid" value="${esc(c.id)}" inputmode="numeric" autocomplete="off" style="max-width:140px"><span class="small muted">${t("cmGridOne")}</span>${cmGridHtml()}</div>`;
+    : `<div class="field" style="grid-column:1/-1"><label>${t("cmId")}</label><div class="row"><input id="cmid" value="${esc(c.id)}" inputmode="numeric" autocomplete="off" style="max-width:140px"><button class="btn" type="button" data-act="cm-grid" aria-label="${t("cmGrid")}" title="${t("cmGrid")}">▦</button></div><div id="cmgridbox"${c.gridOpen ? "" : " hidden"}><span class="small muted">${t("cmGridOne")}</span>${cmGridHtml()}</div></div>`;
   const ow = c.mode === "batch" ? "" : `<label class="row" style="min-height:40px"><input type="checkbox" id="cmow"${c.overwrite ? " checked" : ""}> <span>${t("cmOverwrite")}</span></label><span class="small muted">${t("cmOverwriteNote")}</span>`
     + (c.overwrite ? `<div class="field"><label>${t("cmOverwriteConfirm")}</label><input id="cmconfirm" value="${esc(c.confirm)}" inputmode="numeric" autocomplete="off"></div>` : "");
   return `<h1>${t("commission_page")}</h1><div class="stack"><div class="notice">${t("cmBanner")}</div>${c.err ? `<div class="notice bad">${esc(c.err)}</div>` : ""}
@@ -565,8 +565,10 @@ function readRows() {
 document.addEventListener("click", async (ev) => {
   const nav = ev.target.closest("[data-nav]");
   if (nav) { if (nav.dataset.nav === "classic") { location.href = "/"; return; } page = nav.dataset.nav; location.hash = "#/" + page; if (page !== "soak") { clearInterval(S.soak.timer); S.soak.timer = null; } if (page !== "firmware") { clearInterval(S.fw.timer); S.fw.timer = null; } if (page !== "commission") { clearInterval(S.cm.timer); S.cm.timer = null; } if (page === "events") S.evGw = (await api("GET", "/api/v2/events/gateways").catch(() => ({}))).gateways || []; render(); return; }
+  if (S.cm.gridOpen && !ev.target.closest("#cmgridbox, #cmid, [data-act=cm-grid]")) { S.cm.gridOpen = false; const bx = $("#cmgridbox"); if (bx) bx.hidden = true; }
+  if (ev.target.id === "cmid") { S.cm.gridOpen = true; const bx = $("#cmgridbox"); if (bx) bx.hidden = false; return; }
   const cell = ev.target.closest("[data-cmcell]");
-  if (cell) { const id = +cell.dataset.cmcell, c = S.cm; if (c.mode === "batch") { c.sel.has(id) ? c.sel.delete(id) : c.sel.add(id); } else { c.id = String(id); } render(); return; }
+  if (cell) { const id = +cell.dataset.cmcell, c = S.cm; if (c.mode === "batch") { c.sel.has(id) ? c.sel.delete(id) : c.sel.add(id); } else { c.id = String(id); c.gridOpen = false; } render(); return; }
   const crow = ev.target.closest("[data-cmrow]");
   if (crow) { const r = +crow.dataset.cmrow, g = (S.cm.opts && S.cm.opts.grid) || { cols: 8 }, ids = Array.from({ length: g.cols }, (_, k) => r * 10 + k + 1); const all = ids.every((i) => S.cm.sel.has(i)); ids.forEach((i) => (all ? S.cm.sel.delete(i) : S.cm.sel.add(i))); render(); return; }
   const cmm = ev.target.closest("[data-cmmode]"); if (cmm) { S.cm.mode = cmm.dataset.cmmode; render(); return; }
@@ -651,6 +653,7 @@ document.addEventListener("click", async (ev) => {
       f.gwConfirm = ""; await fwRefresh();
     } else if (act.dataset.act === "cm-probe") {
       S.cm.probing = true; render(); try { S.cm.probe = await api("POST", "/api/v2/cm/probe", {}); } finally { S.cm.probing = false; render(); }
+    } else if (act.dataset.act === "cm-grid") { const bx = $("#cmgridbox"); S.cm.gridOpen = !S.cm.gridOpen; if (bx) bx.hidden = !S.cm.gridOpen;
     } else if (act.dataset.act === "cm-clear") { S.cm.sel.clear(); render();
     } else if (act.dataset.act === "cm-cancel") {
       await api("POST", "/api/v2/cm/cancel", {}); await cmPoll();
