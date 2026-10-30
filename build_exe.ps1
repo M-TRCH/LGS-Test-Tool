@@ -71,7 +71,8 @@ if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: bundled firmware images did not ve
 
 & ".venv\Scripts\nicegui-pack.exe" --onefile --name $name `
     --add-data "app\docs;app/docs" `
-    --add-data "app\blobs;app/blobs" run.py
+    --add-data "app\blobs;app/blobs" `
+    --add-data "app\v2\static;app/v2/static" run.py
 if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: nicegui-pack failed"; exit 1 }
 
 if (Test-Path "dist\$name.exe") {
