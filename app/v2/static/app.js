@@ -601,7 +601,7 @@ document.addEventListener("keydown", (e) => { if ((e.key === " " || e.key === "E
 $("#infoclose").onclick = () => $("#info").close();
 $("#info").addEventListener("click", (e) => { if (e.target.id === "info") $("#info").close(); });
 function settingsText() {
-  $("#setbtn").textContent = t("settings"); $("#settitle").textContent = t("settings"); $("#setclose").textContent = t("close");
+  $("#setbtn").textContent = "⚙"; $("#setbtn").setAttribute("aria-label", t("settings")); $("#setbtn").title = t("settings"); $("#settitle").textContent = t("settings"); $("#setclose").textContent = t("close");
   $("#langlbl").textContent = t("language"); $("#modelbl").textContent = t("mode"); $("#themelbl").textContent = t("theme"); $("#modehint").textContent = t("modeNote");
   $("#langsel").value = lang;
 }
