@@ -12,7 +12,7 @@ from starlette.responses import FileResponse, JSONResponse, Response
 
 from .. import auth, config_store, event_collector
 from ..version import APP_VERSION
-from . import events_api, gateway_api, health, sites
+from . import events_api, gateway_api, health, module_api, sites
 
 STATIC = Path(__file__).resolve().parent / "static"
 PROBE_PARALLEL = 6            # gateways asked at once; each probe is one short connection
@@ -183,6 +183,41 @@ def install(app, cfg) -> None:
             return JSONResponse({"error": "type the cabinet's name to confirm DEFAULTS"},
                                 status_code=422)
         return await _run(request, gateway_api.action, host, port, act, body.get("value"))
+
+    # ── module page ────────────────────────────────────────────────────────
+    @app.get("/api/v2/mod/presets")
+    async def mod_presets():
+        return {"presets": module_api.presets()}
+
+    @app.post("/api/v2/mod/monitor")
+    async def mod_monitor(request: Request):
+        body = await request.json()
+        try:
+            host, port, _ = _target(body)
+            dev = int(body.get("device_id", 0))
+        except (ValueError, TypeError) as exc:
+            return JSONResponse({"error": str(exc)}, status_code=422)
+        return await _run(request, module_api.monitor, host, port, dev, bool(body.get("stats")))
+
+    @app.post("/api/v2/mod/coil")
+    async def mod_coil(request: Request):
+        body = await request.json()
+        try:
+            host, port, _ = _target(body)
+            dev, addr = int(body.get("device_id", 0)), int(body.get("addr", -1))
+        except (ValueError, TypeError) as exc:
+            return JSONResponse({"error": str(exc)}, status_code=422)
+        return await _run(request, module_api.coil, host, port, dev, addr, bool(body.get("value")))
+
+    @app.post("/api/v2/mod/number")
+    async def mod_number(request: Request):
+        body = await request.json()
+        try:
+            host, port, _ = _target(body)
+            dev, val = int(body.get("device_id", 0)), int(body.get("value", -1))
+        except (ValueError, TypeError) as exc:
+            return JSONResponse({"error": str(exc)}, status_code=422)
+        return await _run(request, module_api.display_number, host, port, dev, val)
 
     # ── events ─────────────────────────────────────────────────────────────
     @app.get("/api/v2/events/gateways")

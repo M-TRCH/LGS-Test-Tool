@@ -3,7 +3,7 @@
 
 const TXT = {
   th: {
-    stage: "v2 ขั้นแรก", classic: "หน้าแบบเดิม", cabinets: "ตู้", sites: "รายการตู้", events: "เหตุการณ์",
+    stage: "v2 ขั้นแรก", classic: "แบบเดิม", cabinets: "ตู้", sites: "รายการตู้", events: "เหตุการณ์",
     checkAll: "ตรวจทุกตู้", checking: "กำลังตรวจ...", checkedAt: "ตรวจล่าสุด {at}", notChecked: "ยังไม่ได้ตรวจ",
     noSites: "ยังไม่มีตู้ในรายการ เพิ่มได้ที่หน้า รายการตู้", ok: "ปกติ", warn: "ควรดู", bad: "ผิดปกติ",
     fw: "เฟิร์มแวร์", uptime: "เปิดมาแล้ว", clients: "client", clock: "นาฬิกา", rtu: "ซ่อม RS485 (สะสม)",
@@ -24,6 +24,13 @@ const TXT = {
     discard: "ทิ้งค่าที่ค้างอยู่", danger: "ส่วนอันตราย", changes: "{n} ค่าที่แก้", apply: "บันทึกลงเกตเวย์", applyQ: "บันทึก {n} ค่าลง {g}?",
     applied: "บันทึกแล้ว", needReboot: "ต้องรีบูตจึงมีผล: {k}", reset: "ล้างที่แก้", ro: "อ่านอย่างเดียว", rebootKey: "ต้องรีบูต",
     doneOk: "สำเร็จ", sessionHint: "เขียนค่าทุกครั้งผ่านเซสชัน HELLO และบันทึกแบบครบหรือไม่เลย", noPassword: "ยังไม่ตั้งรหัสผ่านหน้าเว็บ ทุกคนในเครือข่ายแก้ค่าเกตเวย์ได้",
+    module_page: "โมดูล", devId: "รหัสโมดูล (ID)", withStats: "รวมสถิติ", auto: "อ่านอัตโนมัติทุก 2 วินาที", modNotRead: "เลือกตู้ ใส่ ID โมดูล แล้วกดอ่านค่า",
+    cDevice: "อุปกรณ์", cRuntime: "การทำงาน", cHealth: "สุขภาพระบบ", cReset: "สาเหตุรีเซ็ตล่าสุด", cTemp: "อุณหภูมิ", cLatch: "กลอน / จอ", cStats: "สถิติ",
+    mType: "ชนิด", mFw: "เฟิร์มแวร์", mHw: "ฮาร์ดแวร์", mBaud: "Baud", mUid: "หมายเลขชิป", mUptime: "เปิดมาแล้ว", mBoots: "จำนวนครั้งที่บูต", mMode: "โหมด",
+    mPreset: "พรีเซ็ตที่ใช้อยู่", mButton: "กดยืนยันแล้ว", mRoom: "ในห้อง", mBoard: "บนบอร์ด", mCurrent: "กระแสขาเข้า", mLatch: "กลอน", mLocked: "ล็อก", mUnlocked: "ปลดแล้ว",
+    mUnlockedAgo: "ปลดล่าสุด {s} วินาทีก่อน", mDisplay: "ตัวเลขบนจอ", na: "ไม่มี", presets: "พรีเซ็ตสี", pLight: "ไฟ", pLightDisp: "ไฟ + เลข", pUnlock: "ปลดกลอน", pUnlockDisp: "ปลดกลอน + เลข",
+    quick: "คำสั่งด่วน", identify: "ระบุตำแหน่ง (กะพริบ)", allOff: "ดับทั้งหมด", latchSafety: "ปลดกลอน (ปลอดภัย)", latchForce: "ปลดกลอน (บังคับ)", dispPower: "เปิดจอ",
+    number: "ตัวเลข (0-9999)", writeNumber: "เขียนตัวเลข", cooldownNote: "กลอนต้องเว้น 2.2 วินาทีระหว่างการปลด", sent: "ส่งแล้ว", fires: "ยิงกลอน {c} ครั้ง · {s} วินาที", count: "ครั้ง", seconds: "วินาที",
     matched: "พบ {n} รายการ", loginAgain: "ต้องเข้าสู่ระบบอีกครั้ง", error: "ผิดพลาด: {e}", d: "วัน", h: "ชม.",
   },
   en: {
@@ -48,6 +55,13 @@ const TXT = {
     discard: "Discard staged edits", danger: "Danger zone", changes: "{n} changed", apply: "Save to gateway", applyQ: "Save {n} value(s) to {g}?",
     applied: "Saved", needReboot: "Needs a reboot to take effect: {k}", reset: "Clear edits", ro: "read-only", rebootKey: "needs reboot",
     doneOk: "Done", sessionHint: "Every write goes through a HELLO session and is saved all or nothing.", noPassword: "No web password set: anyone on the network can edit the gateway.",
+    module_page: "Module", devId: "Module ID", withStats: "Include statistics", auto: "Read automatically every 2 s", modNotRead: "Choose a cabinet, enter a module ID, press Read",
+    cDevice: "Device", cRuntime: "Runtime", cHealth: "Health", cReset: "Last reset cause", cTemp: "Temperatures", cLatch: "Latch / display", cStats: "Statistics",
+    mType: "Type", mFw: "Firmware", mHw: "Hardware", mBaud: "Baud", mUid: "Chip serial", mUptime: "Uptime", mBoots: "Boots", mMode: "Mode",
+    mPreset: "Active preset", mButton: "Confirm presses", mRoom: "Room", mBoard: "Board", mCurrent: "Input current", mLatch: "Latch", mLocked: "locked", mUnlocked: "unlocked",
+    mUnlockedAgo: "last unlock {s} s ago", mDisplay: "Display number", na: "n/a", presets: "Colour presets", pLight: "Light", pLightDisp: "Light + number", pUnlock: "Unlock", pUnlockDisp: "Unlock + number",
+    quick: "Quick commands", identify: "Identify (blink)", allOff: "All off", latchSafety: "Unlock (safe)", latchForce: "Unlock (force)", dispPower: "Display on",
+    number: "Number (0-9999)", writeNumber: "Write number", cooldownNote: "A latch needs 2.2 s between unlocks", sent: "Sent", fires: "{c} fires · {s} s", count: "count", seconds: "seconds",
     matched: "{n} found", loginAgain: "Sign in again", error: "Error: {e}", d: "d", h: "h",
   },
 };
@@ -56,7 +70,7 @@ const t = (k, p) => { let s = (TXT[lang] && TXT[lang][k]) || TXT.en[k] || k; for
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const $ = (s, r = document) => r.querySelector(s);
 
-let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: "", days: 1, q: "", types: new Set() }, gw: { id: "", data: null, edits: {}, busy: false } };
+let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: "", days: 1, q: "", types: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 } };
 let page = (location.hash || "#/cabinets").slice(2) || "cabinets";
 
 async function api(method, url, body, raw) {
@@ -178,11 +192,65 @@ function gwBar() {
     <div class="row"><button class="btn primary" data-act="gw-apply">${t("apply")}</button><button class="btn" data-act="gw-clear">${t("reset")}</button></div></section>`;
 }
 
-const VIEWS = { cabinets: viewCabinets, gateway: viewGateway, sites: viewSites, events: viewEvents };
-const NAV = [["cabinets", "▦"], ["gateway", "⚙"], ["sites", "☰"], ["events", "≡"]];
+
+const PCOL = { 1: "#ff3232", 2: "#32ff32", 3: "#3264ff", 4: "#ffd700", 5: "#00e5e5", 6: "#ff32ff", 7: "#ff5a1e", 8: "#fff096" };
+function viewModule() {
+  const m = S.mod, d = m.data;
+  const opts = S.sites.map((x) => `<option value="${esc(x.id)}"${x.id === m.id ? " selected" : ""}>${esc(x.name)} · ${esc(x.host)}</option>`).join("");
+  const kv = (rows) => `<dl class="kv">${rows.filter(Boolean).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join("")}</dl>`;
+  let cards = `<div class="notice info">${t("modNotRead")}</div>`;
+  if (d && d.ok === false && !d.device) cards = `<div class="notice bad">${esc((d.errors || [d.error || ""]).join(" · "))}</div>`;
+  else if (d && d.device) {
+    const dv = d.device, rt = d.runtime, tp = d.temps, lt = d.latch;
+    const hc = (d.health || []).map((h) => `<span class="chip ${h.ok === null ? "off" : h.ok ? "ok" : "bad"}"><i class="dot"></i>${esc(h.name)}${h.ok === null ? " " + t("na") : ""}</span>`).join(" ");
+    const st = d.stats ? `<section class="card stack"><h3>${t("cStats")}</h3><div class="small">${t("fires", { c: d.stats.fires, s: d.stats.seconds })}</div>
+      <table><tr><th>#</th><th>${t("count")}</th><th>${t("seconds")}</th></tr>${d.stats.presets.map((p) => `<tr><td>${p.p}</td><td>${p.count}</td><td>${p.seconds}</td></tr>`).join("")}</table></section>` : "";
+    cards = `<div class="cabs">
+      <section class="card stack"><h3>${t("cDevice")}</h3>${kv([[t("mType"), esc(dv.type)], [t("mFw"), esc(dv.fw)], [t("mHw"), esc(dv.hw)], [t("mBaud"), esc(dv.baud) + " · ID " + dv.id], dv.uid ? [t("mUid"), `<span class="mono">${esc(dv.uid)}</span>`] : null])}</section>
+      <section class="card stack"><h3>${t("cRuntime")}</h3>${kv([[t("mUptime"), esc(rt.uptime)], [t("mBoots"), rt.boots], [t("mMode"), esc(rt.mode)], [t("mPreset"), esc(rt.preset)], rt.button !== undefined && rt.button !== null ? [t("mButton"), rt.button + (rt.held ? " ●" : "")] : null])}</section>
+      <section class="card stack"><h3>${t("cHealth")}</h3><div class="row">${hc}</div>${d.reset ? `<div class="small muted">${t("cReset")}: ${esc(d.reset)}</div>` : ""}</section>
+      ${tp ? `<section class="card stack"><h3>${t("cTemp")}</h3>${kv([[t("mRoom"), `<span style="${tp.fault ? "color:var(--bad)" : ""}">${esc(tp.room)}</span>`], [t("mBoard"), `<span style="${tp.fault ? "color:var(--bad)" : ""}">${esc(tp.board)}</span>`], tp.current ? [t("mCurrent"), esc(tp.current)] : null])}</section>` : ""}
+      ${lt ? `<section class="card stack"><h3>${t("cLatch")}</h3>${kv([[t("mLatch"), lt.state ? t(lt.state === "locked" ? "mLocked" : "mUnlocked") : "—"], [t("mUnlockedAgo", { s: lt.unlocked_ago_s }), ""], d.display !== undefined ? [t("mDisplay"), d.display] : null].map((r) => (r && r[1] === "" ? [r[0], ""] : r)))}</section>` : ""}
+      ${st}</div>
+      <p class="small muted">${t("checkedAt", { at: esc(d.at) })} · ${d.ms} ms</p>`;
+  }
+  const lb = (addr, label, cls) => `<button class="btn ${cls || ""}" data-act="mod-coil" data-addr="${addr}" data-val="1"${cls === "latch" ? " data-latch=1" : ""}>${label}</button>`;
+  const presets = (m.presets || []).map((p) => `<section class="card stack"><div class="row"><i class="dot" style="color:${PCOL[p.n]};width:14px;height:14px"></i><b>${t("presets")} ${p.n}</b></div>
+      <div class="stack tight">${lb(p.enable, t("pLight"))}${lb(p.display, t("pLightDisp"))}${lb(p.latch, t("pUnlock"), "latch")}${lb(p.latch_display, t("pUnlockDisp"), "latch")}</div></section>`).join("");
+  return `<h1>${t("module_page")}</h1>
+    <section class="card stack"><div class="row"><div class="field" style="min-width:220px;flex:1"><label>${t("pick")}</label><select id="modsel"><option value="">—</option>${opts}</select></div>
+      <div class="field" style="width:140px"><label>${t("devId")}</label><input id="moddev" type="number" min="1" max="247" value="${m.dev}"></div>
+      <button class="btn primary" data-act="mod-read">${m.busy ? t("reading") : t("read")}</button></div>
+      <div class="row"><label class="row"><input type="checkbox" id="modstats"${m.stats ? " checked" : ""}> ${t("withStats")}</label>
+      <label class="row"><input type="checkbox" id="modauto"${m.auto ? " checked" : ""}> ${t("auto")}</label></div></section>
+    <div class="stack" style="margin-top:12px">${cards}
+      <h2>${t("quick")}</h2><section class="card stack"><div class="row">${lb(509, t("identify"))}${lb(511, t("allOff"))}${lb(1020, t("latchSafety"), "latch")}${lb(1019, t("latchForce"), "latch")}
+        <button class="btn" data-act="mod-coil" data-addr="1010" data-val="1">${t("dispPower")}</button><button class="btn" data-act="mod-coil" data-addr="1010" data-val="0">OFF</button></div>
+        <div class="row"><div class="field" style="width:160px"><label>${t("number")}</label><input id="modnum" type="number" min="0" max="9999" value="45"></div><button class="btn" data-act="mod-number">${t("writeNumber")}</button></div>
+        <p class="small muted">${t("cooldownNote")}</p></section>
+      <h2>${t("presets")}</h2><div class="cabs">${presets}</div></div>`;
+}
+let modTimer = null;
+async function modRead() {
+  const m = S.mod; if (!m.id || !(m.dev >= 1)) return;
+  if (m.busy) return;
+  m.busy = true;
+  try { m.data = await api("POST", "/api/v2/mod/monitor", { id: m.id, device_id: m.dev, stats: m.stats }); }
+  catch (e) { m.data = { ok: false, error: e.message }; }
+  m.busy = false; if (page === "module") renderKeep();
+}
+/* re-render without losing a typed value or the scroll position */
+function renderKeep() { const y = window.scrollY, num = $("#modnum") && $("#modnum").value; render(); if ($("#modnum") && num) $("#modnum").value = num; window.scrollTo(0, y); }
+function modAutoSync() {
+  clearInterval(modTimer); modTimer = null;
+  if (S.mod.auto && page === "module") modTimer = setInterval(() => { if (!document.hidden && page === "module") modRead(); }, 2000);
+}
+
+const VIEWS = { cabinets: viewCabinets, gateway: viewGateway, module: viewModule, sites: viewSites, events: viewEvents };
+const NAV = [["cabinets", "▦"], ["gateway", "⚙"], ["module", "◧"], ["sites", "☰"], ["events", "≡"]];
 
 function render() {
-  $("#nav").innerHTML = NAV.map(([k, ic]) => `<button data-nav="${k}" ${k === page ? 'aria-current="page"' : ""}><span class="ic">${ic}</span>${t(k === "gateway" ? "gateway_page" : k)}</button>`).join("")
+  $("#nav").innerHTML = NAV.map(([k, ic]) => `<button data-nav="${k}" ${k === page ? 'aria-current="page"' : ""}><span class="ic">${ic}</span>${t(k === "gateway" ? "gateway_page" : k === "module" ? "module_page" : k)}</button>`).join("")
     + `<button data-nav="classic"><span class="ic">↗</span>${t("classic")}</button>`;
   $("#nav").style.gridTemplateColumns = window.innerWidth < 900 ? `repeat(${NAV.length + 1},1fr)` : "";
   $("#main").innerHTML = (VIEWS[page] || viewCabinets)();
@@ -191,6 +259,7 @@ function render() {
   document.documentElement.lang = lang;
   if (page === "events") loadEvents();
   if (page === "gateway") gwBar();
+  if (page === "module") modAutoSync();
 }
 
 async function loadEvents() {
@@ -250,6 +319,17 @@ document.addEventListener("click", async (ev) => {
     } else if (act.dataset.act === "gw-defaults") {
       const g = S.sites.find((x) => x.id === S.gw.id); const typed = prompt(t("defaultsQ", { n: g ? g.name : "" })); if (typed === null) return;
       const r = await api("POST", "/api/v2/gw/action", { id: S.gw.id, action: "defaults", confirm: typed }); if (!r.ok) throw new Error(r.error); await gwRead(); toast(t("doneOk"));
+    } else if (act.dataset.act === "mod-read") { await modRead();
+    } else if (act.dataset.act === "mod-coil") {
+      if (!S.mod.id) return;
+      const latch = !!act.dataset.latch && act.dataset.val === "1";
+      if (latch && Date.now() < S.mod.lockUntil) { toast(t("cooldownNote")); return; }
+      const r = await api("POST", "/api/v2/mod/coil", { id: S.mod.id, device_id: S.mod.dev, addr: +act.dataset.addr, value: act.dataset.val === "1" });
+      if (!r.ok) throw new Error(r.error || "failed");
+      if (latch) { S.mod.lockUntil = Date.now() + 2300; document.querySelectorAll("[data-latch]").forEach((b) => { b.disabled = true; setTimeout(() => { b.disabled = false; }, 2300); }); }
+      toast(t("sent") + " · " + r.ms + " ms");
+    } else if (act.dataset.act === "mod-number") {
+      const r = await api("POST", "/api/v2/mod/number", { id: S.mod.id, device_id: S.mod.dev, value: +$("#modnum").value }); if (!r.ok) throw new Error(r.error); toast(t("sent"));
     } else if (act.dataset.act === "collector") { const on = act.getAttribute("aria-checked") !== "true"; await api("POST", "/api/v2/collector", { enabled: on }); S.me = await api("GET", "/api/v2/me"); render(); }
   } catch (e) { fail(e); render(); }
 });
@@ -263,6 +343,10 @@ document.addEventListener("input", (ev) => {
   if (ev.target.id === "evq") { S.ev.q = ev.target.value; clearTimeout(window._evt); window._evt = setTimeout(loadEvents, 300); }
 });
 document.addEventListener("change", async (ev) => {
+  if (ev.target.id === "modsel") { S.mod.id = ev.target.value; S.mod.data = null; if (S.mod.id) modRead(); }
+  if (ev.target.id === "moddev") { S.mod.dev = Math.max(1, Math.min(247, +ev.target.value || 1)); S.mod.data = null; }
+  if (ev.target.id === "modstats") { S.mod.stats = ev.target.checked; }
+  if (ev.target.id === "modauto") { S.mod.auto = ev.target.checked; modAutoSync(); }
   if (ev.target.id === "gwsel") { S.gw.id = ev.target.value; S.gw.data = null; S.gw.edits = {}; if (S.gw.id) gwRead(); else render(); }
   if (ev.target.id === "evgw") { S.ev.gw = ev.target.value; loadEvents(); }
   if (ev.target.id === "evdays") { S.ev.days = +ev.target.value; loadEvents(); }
@@ -284,6 +368,7 @@ try { const th = localStorage.getItem("lgs.theme"); if (th) document.documentEle
     S.me = await api("GET", "/api/v2/me"); $("#ver").textContent = "v" + S.me.version;
     await loadSites();
     if (page === "events") S.evGw = (await api("GET", "/api/v2/events/gateways")).gateways || [];
+    S.mod.presets = (await api("GET", "/api/v2/mod/presets")).presets;
   } catch (e) { fail(e); }
   render();
 })();
