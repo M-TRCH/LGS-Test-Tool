@@ -307,11 +307,11 @@ function soakSync() {
 }
 
 const VIEWS = { cabinets: viewCabinets, gateway: viewGateway, module: viewModule, soak: viewSoak, sites: viewSites, events: viewEvents };
-const NAV = [["cabinets", "▦"], ["gateway", "⚙"], ["module", "◧"], ["soak", "◔"], ["sites", "☰"], ["events", "≡"]];
+const NAV = ["cabinets", "gateway", "module", "soak", "sites", "events"];
 
 function render() {
-  $("#nav").innerHTML = NAV.map(([k, ic]) => `<button data-nav="${k}" ${k === page ? 'aria-current="page"' : ""}><span class="ic">${ic}</span>${t(k === "gateway" ? "gateway_page" : k === "module" ? "module_page" : k === "soak" ? "soak_page" : k)}</button>`).join("")
-    + `<button data-nav="classic"><span class="ic">↗</span>${t("classic")}</button>`;
+  $("#nav").innerHTML = NAV.map((k) => `<button data-nav="${k}" ${k === page ? 'aria-current="page"' : ""}>${t(k === "gateway" ? "gateway_page" : k === "module" ? "module_page" : k === "soak" ? "soak_page" : k)}</button>`).join("")
+    + `<button data-nav="classic">${t("classic")}</button>`;
   $("#nav").style.gridTemplateColumns = window.innerWidth < 900 ? `repeat(${NAV.length + 1},1fr)` : "";
   $("#main").innerHTML = (VIEWS[page] || viewCabinets)();
   $("#stagechip").textContent = t("stage");
