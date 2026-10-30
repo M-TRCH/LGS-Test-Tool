@@ -31,12 +31,12 @@ const TXT = {
     mUnlockedAgo: "ปลดล่าสุด {s} วินาทีก่อน", mDisplay: "ตัวเลขบนจอ", na: "ไม่มี", presets: "พรีเซ็ตสี", pLight: "ไฟ", pLightDisp: "ไฟ + เลข", pUnlock: "ปลดกลอน", pUnlockDisp: "ปลดกลอน + เลข",
     quick: "คำสั่งด่วน", identify: "ระบุตำแหน่ง (กะพริบ)", allOff: "ดับทั้งหมด", latchSafety: "ปลดกลอน (ปลอดภัย)", latchForce: "ปลดกลอน (บังคับ)", dispPower: "เปิดจอ",
     number: "ตัวเลข (0-9999)", writeNumber: "เขียนตัวเลข", cooldownNote: "กลอนต้องเว้น 2.2 วินาทีระหว่างการปลด", sent: "ส่งแล้ว", fires: "ยิงกลอน {c} ครั้ง · {s} วินาที", count: "ครั้ง", seconds: "วินาที",
-    soak_page: "Soak", sPick: "เลือกตู้ที่จะทดสอบ", sAll: "ทั้งหมด", sMode: "โหมด", sPoll: "อ่านอย่างเดียว", sPharm: "จำลองจ่ายยา",
-    sPicks: "จำนวน pick ต่อวัน", sHours: "ชั่วโมง (0 = จนกว่าจะหยุด)", sStartAt: "เริ่มเวลา (เช่น 21:00 เว้นว่าง = ทันที)", sStart: "เริ่ม Soak",
-    sStop: "หยุด", sStopQ: "หยุด soak ที่กำลังรัน? ข้อมูลถึงตอนนี้ถูกเก็บไว้", sRunning: "กำลังรัน", sArmed: "ตั้งเวลาไว้ เริ่มในอีก {t}", sLeft: "เหลือ {t}",
-    sNoEnd: "ไม่มีเวลาจบ", sCab: "ตู้", sState: "สถานะ", sPass: "รอบ", sReads: "อ่าน", sFails: "พลาด", sRbt: "รีบูต", sWdt: "WDT", sWorst: "ช้าสุด ms", sHeal: "เกตเวย์ซ่อม",
+    soak_page: "ทดสอบต่อเนื่อง", sPick: "เลือกตู้ที่จะทดสอบ", sAll: "ทั้งหมด", sMode: "โหมด", sPoll: "อ่านอย่างเดียว", sPharm: "จำลองการจ่ายยา",
+    sPicks: "จำนวนครั้งที่จ่ายต่อวัน", sHours: "ชั่วโมง (0 = จนกว่าจะหยุด)", sStartAt: "เริ่มเวลา (เช่น 21:00 เว้นว่าง = ทันที)", sStart: "เริ่มทดสอบ",
+    sStop: "หยุด", sStopQ: "หยุดการทดสอบที่กำลังรัน? ข้อมูลถึงตอนนี้ถูกเก็บไว้", sRunning: "กำลังรัน", sArmed: "ตั้งเวลาไว้ เริ่มในอีก {t}", sLeft: "เหลือ {t}",
+    sNoEnd: "ไม่มีเวลาจบ", sCab: "ตู้", sState: "สถานะ", sPass: "รอบ", sReads: "อ่าน", sFails: "พลาด", sRbt: "รีบูต", sWdt: "วอตช์ด็อก", sWorst: "ช้าสุด (ms)", sHeal: "เกตเวย์ซ่อมบัส",
     sClean: "สะอาด", sWarn: "ควรดู", sNotClean: "ไม่สะอาด", sDidNot: "ไม่ได้รัน", sStarting: "กำลังเริ่ม", sAnoms: "เหตุผิดปกติล่าสุด", sNone: "ไม่มี",
-    sVerdict: "สรุปผลรอบล่าสุด", sHistory: "รอบที่ผ่านมา", sView: "ดูสรุป", sNoRuns: "ยังไม่มีรอบที่ผ่านมา", sFrames: "เฟรมที่ pymodbus ทิ้ง: {n}",
+    sVerdict: "สรุปผลรอบล่าสุด", sHistory: "รอบที่ผ่านมา", sView: "ดูสรุป", sNoRuns: "ยังไม่มีรอบที่ผ่านมา", sFrames: "เฟรมที่ถูกทิ้ง: {n}",
     sNeedType: "ตู้ที่ไม่ได้กำหนดชนิดจะเริ่มไม่ได้ ตั้งที่หน้า รายการตู้", sStarted: "เริ่มแล้ว {n} ตู้", sCsv: "ไฟล์ CSV", sLongNote: "รันบนเซิร์ฟเวอร์ ปิดหน้านี้ได้ ผลเก็บใน data/exports",
     labels_page: "ป้าย", firmware_page: "เฟิร์มแวร์", lbWard: "ชื่อวอร์ด (พิมพ์บนป้าย)", lbSerial: "ซีเรียลจากคลัง (ไม่เก็บ)", lbLayout: "แบบป้าย", lbPlate: "กรอบ",
     lbPreview: "ดูตัวอย่างข้อมูล", lbDownload: "ดาวน์โหลด .lbx", lbInfo: "{name} · {ip} · {mac} · {rows} แถว", lbReady: "ยาว {mm} มม. · QR {qr} ไบต์ ({ecc}, กู้ได้ {rec}%, เหลือ {spare} ไบต์) · ไฟล์ {size} ไบต์",
@@ -48,6 +48,11 @@ const TXT = {
     fwGw: "อัปเดตเกตเวย์ผ่านเครือข่าย (ทีละตู้)", fwGwNote: "เกตเวย์รีบูตตอนจบ และตัดไฟชั้นวางชั่วครู่ (โมดูลทุกตัวรีบูตด้วย) พิมพ์ชื่อตู้เพื่อยืนยัน", fwUpload: "หรือเลือกไฟล์ .bin เอง", fwConfirm: "พิมพ์ชื่อตู้เพื่อยืนยัน",
     fwGwStart: "อัปเดตเกตเวย์", fwGwRun: "กำลังอัปเดตเกตเวย์", fwDone: "เสร็จ", fwFail: "ไม่สำเร็จ", fwLog: "บันทึกการทำงาน", fwNone: "—", fwCensus: "ผลตรวจ", fwLeft: "ยังไม่ใช่รุ่นใหม่", fwPhase: "ขั้น",
     explain: "อธิบาย",
+    basic: "พื้นฐาน", advanced: "ขั้นสูง", modeNote: "พื้นฐาน = ค่าที่ต้องตั้งตอนติดตั้ง · ขั้นสูง = ค่าจูนทั้งหมด", noKeys: "ไม่มีค่าในกลุ่มนี้",
+    g_sys: "ทั่วไป", g_rs485: "บัส RS485", g_usb: "พอร์ต USB", g_net: "เครือข่าย", g_time: "เวลา", g_bus: "ฮับ RS485", g_panel: "ปุ่มและไฟหน้าตู้", g_sched: "รีเซตตามเวลา",
+    theme: "ธีม", th_auto: "ตามเครื่อง", th_light: "สว่าง", th_dark: "มืด", th_ocean: "ทะเล", th_forest: "ป่า", th_sand: "ทราย", th_midnight: "เที่ยงคืน", th_contrast: "คอนทราสต์สูง",
+    lbPicture: "ตัวอย่างป้าย", lbPicNote: "ภาพจากไฟล์ .lbx ที่จะดาวน์โหลดจริง (ตำแหน่งและข้อความตรงกัน) QR เป็นภาพแทน โปรแกรมพิมพ์ Brother สร้าง QR จริง ฟอนต์อาจต่างเล็กน้อย",
+    sCsvFiles: "ไฟล์ข้อมูล", sColLegend: "คอลัมน์: mod = โมดูล · pass = รอบ · reads = อ่าน · fail = พลาด · rbt = รีบูต · wdt = วอตช์ด็อก · cross = ข้ามช่องฮับ · worst = ช้าสุด (ms) · drop = ตกหล่น · silent = เงียบ",
     close: "ปิด", noExplain: "ยังไม่มีคำอธิบายสำหรับค่านี้", curValue: "ค่าปัจจุบัน", newValue: "ค่าที่กำลังแก้",
     matched: "พบ {n} รายการ", loginAgain: "ต้องเข้าสู่ระบบอีกครั้ง", error: "ผิดพลาด: {e}", d: "วัน", h: "ชม.",
   },
@@ -97,6 +102,11 @@ const TXT = {
     fwGw: "Gateway update over the network (one at a time)", fwGwNote: "The gateway reboots at the end and cuts the shelf's power for a moment (every module reboots too). Type the cabinet's name to confirm.", fwUpload: "or choose a .bin file", fwConfirm: "Type the cabinet's name to confirm",
     fwGwStart: "Update gateway", fwGwRun: "Updating gateway", fwDone: "Done", fwFail: "Failed", fwLog: "Log", fwNone: "—", fwCensus: "Result", fwLeft: "not on the new image", fwPhase: "Phase",
     explain: "info",
+    basic: "Basic", advanced: "Advanced", modeNote: "Basic = what an install needs · Advanced = every tuning value", noKeys: "No values in this group",
+    g_sys: "General", g_rs485: "RS485 bus", g_usb: "USB port", g_net: "Network", g_time: "Time", g_bus: "RS485 hub", g_panel: "Panel buttons and lamps", g_sched: "Scheduled reset",
+    theme: "Theme", th_auto: "Follow device", th_light: "Light", th_dark: "Dark", th_ocean: "Ocean", th_forest: "Forest", th_sand: "Sand", th_midnight: "Midnight", th_contrast: "High contrast",
+    lbPicture: "Label preview", lbPicNote: "Drawn from the .lbx you would download (positions and text match). The QR is a stand-in: Brother's software makes the real one. The font may differ slightly.",
+    sCsvFiles: "Data files", sColLegend: "",
     close: "Close", noExplain: "No explanation for this setting yet", curValue: "Current value", newValue: "Value being edited",
     matched: "{n} found", loginAgain: "Sign in again", error: "Error: {e}", d: "d", h: "h",
   },
@@ -166,7 +176,7 @@ function viewSites() {
     <p class="small muted">${t("sitesHint")}</p>
     ${S.dirty ? `<div class="notice">${t("unsaved")}</div>` : ""}
     ${S.warnings.map((w) => `<div class="notice">${esc(w)}</div>`).join("")}
-    <section class="card" id="sitelist">${S.sites.map(siteRow).join("") || `<p class="muted">${t("noSites")}</p>`}</section>
+    <section class="card" id="sitelist">${S.sites.length ? `<div class="sitesrow siteshead tiny muted"><span>${t("name")}</span><span>${t("host")}</span><span>${t("port")}</span><span>${t("cabinet")}</span><span>${t("site")}</span><span>${t("note")}</span><span></span></div>` : ""}${S.sites.map(siteRow).join("") || `<p class="muted">${t("noSites")}</p>`}</section>
     <section class="card stack"><div class="row"><a class="btn" href="/api/v2/sites.csv" download>${t("exportCsv")}</a>
       <label class="btn">${t("importCsv")}<input type="file" id="csvfile" accept=".csv,text/csv" hidden></label>
       <select id="csvmode" aria-label="import mode"><option value="merge">${t("importMerge")}</option><option value="replace">${t("importReplace")}</option></select></div></section>`;
@@ -188,6 +198,10 @@ function viewEvents() {
 }
 
 
+/* Basic = what an install touches; everything else is tuning and stays behind Advanced. */
+const BASIC = new Set(["sys.name", "net.enabled", "net.dhcp", "net.ip", "net.mask", "net.gw", "net.dns", "net.port", "net.mac", "net.ntp", "time.tz_min", "bus.hub_map",
+  "panel.enabled", "panel.cabinet", "panel.shape", "sched.reset_enabled", "sched.reset_hhmm", "sched.reset_hhmm2", "sched.reset_hhmm3", "sched.reset_hhmm4"]);
+let gwMode = "basic"; try { gwMode = localStorage.getItem("lgs.gwmode") === "advanced" ? "advanced" : "basic"; } catch (e) { /* storage blocked: basic */ }
 const GWGROUPS = ["sys", "rs485", "usb", "net", "time", "bus", "panel", "sched"];
 function gwChanged() { return Object.keys(S.gw.edits).length; }
 function gwLabel(k) { const tx = k.text && k.text[lang]; return (tx && tx.label) || k.key; }
@@ -209,7 +223,7 @@ function viewGateway() {
   if (d && d.ok) {
     const i = d.info;
     const groups = {};
-    d.keys.forEach((k) => { const p = k.key.split(".")[0]; (groups[p] = groups[p] || []).push(k); });
+    d.keys.forEach((k) => { if (gwMode === "basic" && !BASIC.has(k.key) && !(k.key in g.edits)) return; const p = k.key.split(".")[0]; (groups[p] = groups[p] || []).push(k); });
     const order = [...GWGROUPS.filter((x) => groups[x]), ...Object.keys(groups).filter((x) => !GWGROUPS.includes(x))];
     const sw = (name, on) => `<div class="switch"><div><b>${t(name)}</b><div class="small muted">${t("volatileNote")}</div></div><button class="sw" role="switch" aria-checked="${on}" data-act="gw-vol" data-name="${name}"></button></div>`;
     const field = (k) => {
@@ -222,7 +236,8 @@ function viewGateway() {
         <dt>${t("clients")}</dt><dd>${esc(i["net.client"] || "?")}/2</dd><dt>${t("clock")}</dt><dd>${i["time.set"] === "1" ? esc((i["time.now"] || "").replace("T", " ")) : t("clockUnset")}</dd></dl></section>
       <section class="card stack"><div class="row"><button class="btn" data-act="gw-time">${t("setClock")}</button></div><p class="small muted">${t("clockWarn")}</p>
         ${sw("resync", i["rtu.heal"] === "1")}${sw("exc", i["tcp.exc"] === "1")}</section>
-      <section class="card stack">${order.map((grp) => `<details${grp === "rs485" || grp === "net" ? " open" : ""}><summary><b>${esc(grp)}</b> <span class="small muted">${groups[grp].length}</span></summary><div class="fgrid" style="margin-top:8px">${groups[grp].map(field).join("")}</div></details>`).join("")}</section>
+      <section class="card stack"><div class="row between"><div class="seg" role="group" aria-label="mode">${["basic", "advanced"].map((m) => `<button data-act="gw-mode" data-mode="${m}" aria-pressed="${gwMode === m}">${t(m)}</button>`).join("")}</div><span class="small muted">${t("modeNote")}</span></div>
+        ${order.map((grp) => `<details${gwMode === "basic" || grp === "rs485" || grp === "net" ? " open" : ""}><summary><b>${esc(TXT[lang]["g_" + grp] || grp)}</b> <span class="small muted mono">${esc(grp)} · ${groups[grp].length}</span></summary><div class="fgrid" style="margin-top:8px">${groups[grp].map(field).join("")}</div></details>`).join("") || `<p class="muted">${t("noKeys")}</p>`}</section>
       <section class="card stack"><div class="row"><button class="btn" data-act="gw-export">${t("expCfg")}</button><label class="btn">${t("impCfg")}<input type="file" id="gwimport" accept=".json,application/json" hidden></label></div></section>
       <section class="card stack"><h3>${t("danger")}</h3><div class="row"><button class="btn" data-act="gw-discard">${t("discard")}</button><button class="btn" data-act="gw-reboot">${t("reboot")}</button><button class="btn" data-act="gw-defaults" style="color:var(--bad)">${t("defaults")}</button></div></section>`;
   } else if (d && !d.ok) body = `<div class="notice bad">${esc(d.error)}</div>`;
@@ -296,6 +311,19 @@ function modAutoSync() {
 
 
 const fmtDur = (sec) => { sec = Math.max(0, Math.round(sec)); const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60); return h ? `${h} ${t("h")} ${m} m` : `${m} m ${sec % 60} s`; };
+/* The verdict is a plain-text report written by the engine (and kept as a file for the classic tool), so it stays English on disk; in Thai mode the prose lines are translated here and the fixed-width table is left alone. */
+function verdictText(txt) {
+  if (lang !== "th") return txt;
+  const map = [[/^fleet soak /, "ทดสอบต่อเนื่องทุกตู้ "], [/ran for ([\d.]+) h/, "รันนาน $1 ชม."], [/client timeout/, "timeout ฝั่ง client"],
+    [/^(\d+) of (\d+) cabinets completely clean/, "สะอาดสมบูรณ์ $1 จาก $2 ตู้"],
+    [/^gateway RS485 counters over the run.*$/, "ตัวนับ RS485 ของเกตเวย์ตลอดรอบ (พลาดครั้งแรกที่ซ่อมได้ และที่ซ่อมไม่ได้):"],
+    [/repair failed/, "ซ่อมไม่ได้"], [/repaired/, "ซ่อมได้"], [/final timeouts/, "timeout สุดท้าย"], [/bad crc/, "CRC เสีย"], [/other /, "อื่นๆ "],
+    [/^reply frames discarded as the wrong unit id: none/, "เฟรมตอบที่ถูกทิ้งเพราะ unit id ผิด: ไม่มี"], [/^reply frames discarded as the wrong unit id:/, "เฟรมตอบที่ถูกทิ้งเพราะ unit id ผิด:"]];
+  const out = txt.split("\n").map((ln) => { if (/^\s*(cabinet|-{5,})/.test(ln)) return ln; let o = ln; for (const [re, to] of map) o = o.replace(re, to); return o; });
+  const i = out.findIndex((l) => /^cabinet\s/.test(l));
+  if (i >= 0) out.splice(i, 0, t("sColLegend"), "");
+  return out.join("\n");
+}
 function viewSoak() {
   const k = S.soak, st = k.status || {};
   const running = !!st.running;
@@ -319,12 +347,12 @@ function viewSoak() {
     ${st.cabinets.map((c) => `<tr><td><b>${esc(c.name)}</b>${c.note ? `<div class="tiny" style="color:var(--bad)">${esc(c.note)}</div>` : ""}</td><td>${chip(c.state)}</td><td>${c.passes}</td><td>${c.reads.toLocaleString()}</td><td>${c.fails}</td><td>${c.reboots}</td><td>${c.watchdogs}</td><td>${c.worst_ms}</td>
       <td>${c.gw_seen ? `${c.gw_healed} (${c.heal_per_h}/h)${c.gw_heal_failed ? ` · ✗${c.gw_heal_failed}` : ""}${c.gw_timeouts ? ` · ⏱${c.gw_timeouts}` : ""}${c.gw_bad_crc ? ` · CRC ${c.gw_bad_crc}` : ""}` : "—"}</td></tr>`).join("")}</table></section>` : "";
   const an = (st.anomalies || []).length ? `<section class="card stack"><h3>${t("sAnoms")}</h3>${st.anomalies.slice(0, 15).map((a) => `<div class="evrow"><span class="when">${esc(a.at)}</span><span><b>${esc(a.cabinet)}</b> ${a.id ? "id " + a.id + " " : ""}${esc(a.kind)} ${esc(a.detail)}</span></div>`).join("")}</section>` : "";
-  const fin = st.finished && !running ? `<section class="card stack"><h3>${t("sVerdict")}</h3><pre class="mono small" style="white-space:pre-wrap;overflow-x:auto;margin:0">${esc(st.finished.text)}</pre></section>` : "";
+  const fin = st.finished && !running ? `<section class="card stack"><h3>${t("sVerdict")}</h3><pre class="mono small" style="white-space:pre-wrap;overflow-x:auto;margin:0">${esc(verdictText(st.finished.text))}</pre></section>` : "";
   const hist = `<section class="card stack"><h3>${t("sHistory")}</h3>${(k.runs || []).length ? k.runs.map((r) => `<div class="stack tight" style="padding:8px 0;border-bottom:1px solid var(--line)"><div class="row between"><b>${esc(r.started)}</b>
       ${r.verdict ? `<button class="btn" data-act="soak-view" data-name="${esc(r.verdict)}">${t("sView")}</button>` : ""}</div>
-      <div class="small">${r.csv.map((c) => `<a href="/api/v2/soak/file?name=${encodeURIComponent(c)}&download=1">${esc(c.replace(/^soak-/, "").replace(/-\d{8}-\d{6}\.csv$/, ""))}</a>`).join(" · ")}</div></div>`).join("") : `<p class="muted">${t("sNoRuns")}</p>`}
-      ${k.verdict ? `<pre class="mono small" style="white-space:pre-wrap;overflow-x:auto;margin:0">${esc(k.verdict)}</pre>` : ""}</section>`;
-  return `<h1>${t("soak_page")}</h1><div class="stack">${head}${cabs}${an}${fin}${hist}</div>`;
+      <div class="small">${r.csv.length ? t("sCsvFiles") + ": " : ""}${r.csv.map((c) => `<a href="/api/v2/soak/file?name=${encodeURIComponent(c)}&download=1">${esc(c.replace(/^soak-/, "").replace(/-\d{8}-\d{6}\.csv$/, ""))}</a>`).join(" · ")}</div></div>`).join("") : `<p class="muted">${t("sNoRuns")}</p>`}
+      ${k.verdict ? `<pre class="mono small" style="white-space:pre-wrap;overflow-x:auto;margin:0">${esc(verdictText(k.verdict))}</pre>` : ""}</section>`;
+  return `<h1>${t("soak_page")}${lang === "th" ? " (Soak)" : ""}</h1><div class="stack">${head}${cabs}${an}${fin}${hist}</div>`;
 }
 async function soakRefresh() {
   try {
@@ -346,6 +374,7 @@ function viewLabels() {
   const opts = S.sites.map((x) => `<option value="${esc(x.id)}"${x.id === l.id ? " selected" : ""}>${esc(x.name)} · ${esc(x.host)}</option>`).join("");
   const info = l.info ? `<div class="notice info">${t("lbInfo", { name: esc(l.info.name), ip: esc(l.info.ip), mac: esc(l.info.mac), rows: l.info.rows })}<br>${t("lbReady", { mm: l.info.mm, qr: l.info.qr_bytes, ecc: l.info.ecc, rec: l.info.recover_pct, spare: l.info.spare_bytes, size: l.info.size })}
       <details style="margin-top:6px"><summary class="small">QR</summary><pre class="mono tiny" style="white-space:pre-wrap;margin:0">${esc(l.info.payload)}</pre></details></div>` : "";
+  const pic = l.info && l.info.svg ? `<section class="card stack"><h3>${t("lbPicture")}</h3><div style="overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:#fff;padding:6px"><div style="min-width:420px">${l.info.svg}</div></div><p class="small muted">${t("lbPicNote")}</p></section>` : "";
   return `<h1>${t("labels_page")}</h1><p class="small muted">${t("lbNote")}</p>
     <section class="card stack"><div class="fgrid">
       <div class="field"><label>${t("pick")}</label><select id="lbsel"><option value="">—</option>${opts}</select></div>
@@ -353,7 +382,7 @@ function viewLabels() {
       <div class="field"><label>${t("lbSerial")}</label><input id="lbserial" value="${esc(l.serial)}"></div>
       <div class="field"><label>${t("lbLayout")}</label><select id="lblayout">${o ? o.layouts.map((x) => `<option value="${esc(x.key)}"${x.key === l.layout ? " selected" : ""}>${esc(x.title)}</option>`).join("") : ""}</select></div>
       <div class="field"><label>${t("lbPlate")}</label><select id="lbplate">${o ? o.plates.map((x) => `<option value="${esc(x.key)}"${x.key === l.plate ? " selected" : ""}>${esc(x.text[lang] || x.key)}</option>`).join("") : ""}</select></div></div>
-      <div class="row"><button class="btn" data-act="lb-preview">${l.busy ? t("reading") : t("lbPreview")}</button><button class="btn primary" data-act="lb-file">${t("lbDownload")}</button></div>${info}</section>`;
+      <div class="row"><button class="btn" data-act="lb-preview">${l.busy ? t("reading") : t("lbPreview")}</button><button class="btn primary" data-act="lb-file">${t("lbDownload")}</button></div>${info}</section>${pic}`;
 }
 
 function fwRows(rows) {
@@ -404,7 +433,7 @@ function render() {
   $("#main").innerHTML = (VIEWS[page] || viewCabinets)();
   const cur = $("#nav [aria-current]"); if (cur && cur.scrollIntoView) cur.scrollIntoView({ inline: "center", block: "nearest" });
   $("#stagechip").textContent = t("stage"); $("#infoclose").textContent = t("close");
-  $("#langbtn").textContent = lang.toUpperCase();
+  $("#langbtn").textContent = lang.toUpperCase(); themeSelect();
   document.documentElement.lang = lang;
   if (page === "events") loadEvents();
   if (page === "gateway") gwBar();
@@ -448,6 +477,7 @@ document.addEventListener("click", async (ev) => {
     } else if (act.dataset.act === "add") { readRows(); S.sites.push({ id: "", name: "", host: "", port: 502, cabinet: "", site: "", note: "" }); S.dirty = true; render();
     } else if (act.dataset.act === "del") { readRows(); S.sites.splice(+act.dataset.i, 1); S.dirty = true; render();
     } else if (act.dataset.act === "save") { readRows(); const r = await api("PUT", "/api/v2/sites", { sites: S.sites }); S.sites = r.sites; S.warnings = r.warnings; S.dirty = false; render(); toast(t("saved"));
+    } else if (act.dataset.act === "gw-mode") { gwMode = act.dataset.mode; try { localStorage.setItem("lgs.gwmode", gwMode); } catch (e) { /* not remembered */ } render();
     } else if (act.dataset.act === "gw-read") { await gwRead();
     } else if (act.dataset.act === "gw-clear") { S.gw.edits = {}; render();
     } else if (act.dataset.act === "gw-apply") {
@@ -572,8 +602,16 @@ document.addEventListener("keydown", (e) => { if ((e.key === " " || e.key === "E
 $("#infoclose").onclick = () => $("#info").close();
 $("#info").addEventListener("click", (e) => { if (e.target.id === "info") $("#info").close(); });
 $("#langbtn").onclick = () => { lang = lang === "th" ? "en" : "th"; localStorage.setItem("lgs.lang", lang); render(); };
-$("#themebtn").onclick = () => { const r = document.documentElement, dark = r.dataset.theme === "dark"; r.dataset.theme = dark ? "light" : "dark"; localStorage.setItem("lgs.theme", r.dataset.theme); };
-try { const th = localStorage.getItem("lgs.theme"); if (th) document.documentElement.dataset.theme = th; } catch (e) { /* storage blocked: default theme */ }
+const THEMES = ["auto", "light", "dark", "ocean", "forest", "sand", "midnight", "contrast"];
+function setTheme(name) {
+  const r = document.documentElement;
+  if (name === "auto" || !THEMES.includes(name)) r.removeAttribute("data-theme"); else r.dataset.theme = name;
+  try { localStorage.setItem("lgs.theme", THEMES.includes(name) ? name : "auto"); } catch (e) { /* not remembered */ }
+}
+function themeSelect() { const el = $("#themesel"); el.setAttribute("aria-label", t("theme")); el.innerHTML = THEMES.map((n) => `<option value="${n}"${n === themeNow ? " selected" : ""}>${t("th_" + n)}</option>`).join(""); }
+let themeNow = "auto"; try { const th = localStorage.getItem("lgs.theme"); if (THEMES.includes(th)) themeNow = th; } catch (e) { /* storage blocked: follow the device */ }
+setTheme(themeNow);
+$("#themesel").onchange = (e) => { themeNow = e.target.value; setTheme(themeNow); };
 
 (async () => {
   try {

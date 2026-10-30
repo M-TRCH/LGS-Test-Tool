@@ -9,7 +9,7 @@
   --mono:"IBM Plex Mono",ui-monospace,Consolas,"Courier New",monospace;
 }
 @media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
+  :root:not([data-theme]){
     --bg:#0f141b; --surface:#18202b; --surface2:#202a37; --ink:#e8eef6; --muted:#9aa8ba; --line:#2c3848;
     --brand:#5b9dff; --brand-ink:#08111f; --ok:#4cd08a; --ok-bg:#12372a; --warn:#f1c24d; --warn-bg:#3a2f0d;
     --bad:#ff8a8a; --bad-bg:#3d1a1a; --off:#8997aa; --off-bg:#243040; --shadow:none;
@@ -20,6 +20,17 @@
   --brand:#5b9dff; --brand-ink:#08111f; --ok:#4cd08a; --ok-bg:#12372a; --warn:#f1c24d; --warn-bg:#3a2f0d;
   --bad:#ff8a8a; --bad-bg:#3d1a1a; --off:#8997aa; --off-bg:#243040; --shadow:none;
 }
+
+/* Extra themes. Light ones keep the default status colours; dark ones carry their own. */
+:root[data-theme="ocean"]{--bg:#e6f2f7; --surface:#ffffff; --surface2:#d9ebf3; --ink:#0d2b3a; --muted:#46697a; --line:#bcd6e2; --brand:#0a7ea4; --brand-ink:#ffffff}
+:root[data-theme="forest"]{--bg:#eef4eb; --surface:#ffffff; --surface2:#e0ebdc; --ink:#18291a; --muted:#566b58; --line:#c8d9c3; --brand:#2e7d32; --brand-ink:#ffffff}
+:root[data-theme="sand"]{--bg:#f6efe4; --surface:#fffdf8; --surface2:#eee3d1; --ink:#2b2117; --muted:#76664f; --line:#dfd0b8; --brand:#b45309; --brand-ink:#ffffff}
+:root[data-theme="midnight"]{--bg:#0a0f1f; --surface:#121a33; --surface2:#1a2444; --ink:#e6ebff; --muted:#93a0c9; --line:#26325c; --brand:#7c9cff; --brand-ink:#0a0f1f; --ok:#4cd08a; --ok-bg:#12372a; --warn:#f1c24d; --warn-bg:#3a2f0d; --bad:#ff8a8a; --bad-bg:#3d1a1a; --off:#8997aa; --off-bg:#243040; --shadow:none;}
+:root[data-theme="contrast"]{--bg:#000000; --surface:#000000; --surface2:#1a1a1a; --ink:#ffffff; --muted:#d6d6d6; --line:#ffffff; --brand:#ffe600; --brand-ink:#000000; --ok:#3dff9a; --ok-bg:#00381d; --warn:#ffd400; --warn-bg:#3d3300; --bad:#ff7a7a; --bad-bg:#4a0000; --off:#d6d6d6; --off-bg:#2a2a2a; --shadow:none}
+:root[data-theme="contrast"] .card,:root[data-theme="contrast"] .btn,:root[data-theme="contrast"] .top,:root[data-theme="contrast"] .nav{border-width:2px}
+.themesel{min-height:40px;max-width:150px;border-radius:10px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);padding:0 8px;font-size:14px}
+:root[data-theme="light"],:root[data-theme="ocean"],:root[data-theme="forest"],:root[data-theme="sand"]{color-scheme:light}
+:root[data-theme="dark"],:root[data-theme="midnight"],:root[data-theme="contrast"]{color-scheme:dark}
 *{box-sizing:border-box}
 html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font:16px/1.5 var(--sans);-webkit-text-size-adjust:100%}
@@ -48,9 +59,11 @@ h1{font-size:22px;margin:2px 0 10px}h2{font-size:17px;margin:0}h3{font-size:15px
 .card{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
 .stack{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}.stack.tight{gap:8px}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.row.between{justify-content:space-between}
-.btn{min-height:var(--tap);padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);font-weight:600}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:var(--tap);padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font-weight:600;line-height:1.2;text-decoration:none;text-align:center;cursor:pointer}
 .btn.primary{background:var(--brand);color:var(--brand-ink);border-color:transparent}
 .btn.danger{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+select{min-height:var(--tap);border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:0 10px;max-width:100%}select option{background:var(--surface);color:var(--ink)}
+input[type=checkbox]{width:20px;height:20px;accent-color:var(--brand);flex:none}
 .btn.sm{min-height:38px;padding:0 12px;font-size:14px}
 .btn.block{width:100%}.btn[disabled]{opacity:.5;cursor:not-allowed}
 .seg{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;margin:0 -2px;scrollbar-width:thin}
