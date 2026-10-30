@@ -48,7 +48,7 @@ const TXT = {
     fwGw: "อัปเดตเกตเวย์ผ่านเครือข่าย (ทีละตู้)", fwGwNote: "เกตเวย์รีบูตตอนจบ และตัดไฟชั้นวางชั่วครู่ (โมดูลทุกตัวรีบูตด้วย) พิมพ์ชื่อตู้เพื่อยืนยัน", fwUpload: "หรือเลือกไฟล์ .bin เอง", fwConfirm: "พิมพ์ชื่อตู้เพื่อยืนยัน",
     fwGwStart: "อัปเดตเกตเวย์", fwGwRun: "กำลังอัปเดตเกตเวย์", fwDone: "เสร็จ", fwFail: "ไม่สำเร็จ", fwLog: "บันทึกการทำงาน", fwNone: "—", fwCensus: "ผลตรวจ", fwLeft: "ยังไม่ใช่รุ่นใหม่", fwPhase: "ขั้น",
     explain: "อธิบาย",
-    basic: "พื้นฐาน", advanced: "ขั้นสูง", modeNote: "พื้นฐาน = ค่าที่ต้องตั้งตอนติดตั้ง · ขั้นสูง = ค่าจูนทั้งหมด", noKeys: "ไม่มีค่าในกลุ่มนี้",
+    basic: "พื้นฐาน", advanced: "ขั้นสูง", modeNote: "พื้นฐาน = ตรวจ ทดสอบ ดูผล · ขั้นสูง = เพิ่มหน้าที่แก้ค่าหรือเขียนเฟิร์มแวร์ได้", modeLocked: "หน้านี้อยู่ในโหมดขั้นสูง", mode: "โหมด", noKeys: "ไม่มีค่าในกลุ่มนี้",
     g_sys: "ทั่วไป", g_rs485: "บัส RS485", g_usb: "พอร์ต USB", g_net: "เครือข่าย", g_time: "เวลา", g_bus: "ฮับ RS485", g_panel: "ปุ่มและไฟหน้าตู้", g_sched: "รีเซตตามเวลา",
     theme: "ธีม", th_auto: "ตามเครื่อง", th_light: "สว่าง", th_dark: "มืด", th_ocean: "ทะเล", th_forest: "ป่า", th_sand: "ทราย", th_midnight: "เที่ยงคืน", th_contrast: "คอนทราสต์สูง",
     lbPicture: "ตัวอย่างป้าย", lbPicNote: "ภาพจากไฟล์ .lbx ที่จะดาวน์โหลดจริง (ตำแหน่งและข้อความตรงกัน) QR เป็นภาพแทน โปรแกรมพิมพ์ Brother สร้าง QR จริง ฟอนต์อาจต่างเล็กน้อย",
@@ -102,7 +102,7 @@ const TXT = {
     fwGw: "Gateway update over the network (one at a time)", fwGwNote: "The gateway reboots at the end and cuts the shelf's power for a moment (every module reboots too). Type the cabinet's name to confirm.", fwUpload: "or choose a .bin file", fwConfirm: "Type the cabinet's name to confirm",
     fwGwStart: "Update gateway", fwGwRun: "Updating gateway", fwDone: "Done", fwFail: "Failed", fwLog: "Log", fwNone: "—", fwCensus: "Result", fwLeft: "not on the new image", fwPhase: "Phase",
     explain: "info",
-    basic: "Basic", advanced: "Advanced", modeNote: "Basic = what an install needs · Advanced = every tuning value", noKeys: "No values in this group",
+    basic: "Basic", advanced: "Advanced", modeNote: "Basic = check, test, read results · Advanced = adds the pages that change settings or write firmware", modeLocked: "That page is in Advanced mode", mode: "Mode", noKeys: "No values in this group",
     g_sys: "General", g_rs485: "RS485 bus", g_usb: "USB port", g_net: "Network", g_time: "Time", g_bus: "RS485 hub", g_panel: "Panel buttons and lamps", g_sched: "Scheduled reset",
     theme: "Theme", th_auto: "Follow device", th_light: "Light", th_dark: "Dark", th_ocean: "Ocean", th_forest: "Forest", th_sand: "Sand", th_midnight: "Midnight", th_contrast: "High contrast",
     lbPicture: "Label preview", lbPicNote: "Drawn from the .lbx you would download (positions and text match). The QR is a stand-in: Brother's software makes the real one. The font may differ slightly.",
@@ -198,10 +198,6 @@ function viewEvents() {
 }
 
 
-/* Basic = what an install touches; everything else is tuning and stays behind Advanced. */
-const BASIC = new Set(["sys.name", "net.enabled", "net.dhcp", "net.ip", "net.mask", "net.gw", "net.dns", "net.port", "net.mac", "net.ntp", "time.tz_min", "bus.hub_map",
-  "panel.enabled", "panel.cabinet", "panel.shape", "sched.reset_enabled", "sched.reset_hhmm", "sched.reset_hhmm2", "sched.reset_hhmm3", "sched.reset_hhmm4"]);
-let gwMode = "basic"; try { gwMode = localStorage.getItem("lgs.gwmode") === "advanced" ? "advanced" : "basic"; } catch (e) { /* storage blocked: basic */ }
 const GWGROUPS = ["sys", "rs485", "usb", "net", "time", "bus", "panel", "sched"];
 function gwChanged() { return Object.keys(S.gw.edits).length; }
 function gwLabel(k) { const tx = k.text && k.text[lang]; return (tx && tx.label) || k.key; }
@@ -223,7 +219,7 @@ function viewGateway() {
   if (d && d.ok) {
     const i = d.info;
     const groups = {};
-    d.keys.forEach((k) => { if (gwMode === "basic" && !BASIC.has(k.key) && !(k.key in g.edits)) return; const p = k.key.split(".")[0]; (groups[p] = groups[p] || []).push(k); });
+    d.keys.forEach((k) => { const p = k.key.split(".")[0]; (groups[p] = groups[p] || []).push(k); });
     const order = [...GWGROUPS.filter((x) => groups[x]), ...Object.keys(groups).filter((x) => !GWGROUPS.includes(x))];
     const sw = (name, on) => `<div class="switch"><div><b>${t(name)}</b><div class="small muted">${t("volatileNote")}</div></div><button class="sw" role="switch" aria-checked="${on}" data-act="gw-vol" data-name="${name}"></button></div>`;
     const field = (k) => {
@@ -236,8 +232,7 @@ function viewGateway() {
         <dt>${t("clients")}</dt><dd>${esc(i["net.client"] || "?")}/2</dd><dt>${t("clock")}</dt><dd>${i["time.set"] === "1" ? esc((i["time.now"] || "").replace("T", " ")) : t("clockUnset")}</dd></dl></section>
       <section class="card stack"><div class="row"><button class="btn" data-act="gw-time">${t("setClock")}</button></div><p class="small muted">${t("clockWarn")}</p>
         ${sw("resync", i["rtu.heal"] === "1")}${sw("exc", i["tcp.exc"] === "1")}</section>
-      <section class="card stack"><div class="row between"><div class="seg" role="group" aria-label="mode">${["basic", "advanced"].map((m) => `<button data-act="gw-mode" data-mode="${m}" aria-pressed="${gwMode === m}">${t(m)}</button>`).join("")}</div><span class="small muted">${t("modeNote")}</span></div>
-        ${order.map((grp) => `<details${gwMode === "basic" || grp === "rs485" || grp === "net" ? " open" : ""}><summary><b>${esc(TXT[lang]["g_" + grp] || grp)}</b> <span class="small muted mono">${esc(grp)} · ${groups[grp].length}</span></summary><div class="fgrid" style="margin-top:8px">${groups[grp].map(field).join("")}</div></details>`).join("") || `<p class="muted">${t("noKeys")}</p>`}</section>
+      <section class="card stack">${order.map((grp) => `<details${grp === "rs485" || grp === "net" ? " open" : ""}><summary><b>${esc(TXT[lang]["g_" + grp] || grp)}</b> <span class="small muted mono">${esc(grp)} · ${groups[grp].length}</span></summary><div class="fgrid" style="margin-top:8px">${groups[grp].map(field).join("")}</div></details>`).join("") || `<p class="muted">${t("noKeys")}</p>`}</section>
       <section class="card stack"><div class="row"><button class="btn" data-act="gw-export">${t("expCfg")}</button><label class="btn">${t("impCfg")}<input type="file" id="gwimport" accept=".json,application/json" hidden></label></div></section>
       <section class="card stack"><h3>${t("danger")}</h3><div class="row"><button class="btn" data-act="gw-discard">${t("discard")}</button><button class="btn" data-act="gw-reboot">${t("reboot")}</button><button class="btn" data-act="gw-defaults" style="color:var(--bad)">${t("defaults")}</button></div></section>`;
   } else if (d && !d.ok) body = `<div class="notice bad">${esc(d.error)}</div>`;
@@ -426,14 +421,19 @@ function fwSync() {
 
 const VIEWS = { cabinets: viewCabinets, gateway: viewGateway, module: viewModule, soak: viewSoak, firmware: viewFirmware, labels: viewLabels, sites: viewSites, events: viewEvents };
 const NAV = ["cabinets", "gateway", "module", "soak", "firmware", "labels", "sites", "events"];
+/* Basic mode hides the pages that change a gateway's settings, write firmware or edit the cabinet list. It is a convenience for whoever holds the phone, not security: the login is what keeps strangers out. */
+const ADV_PAGES = new Set(["gateway", "firmware", "sites"]);
+let uiMode = "basic"; try { uiMode = localStorage.getItem("lgs.mode") === "advanced" ? "advanced" : "basic"; } catch (e) { /* storage blocked: basic */ }
+const allowed = (k) => uiMode === "advanced" || !ADV_PAGES.has(k);
 
 function render() {
-  $("#nav").innerHTML = NAV.map((k) => `<button data-nav="${k}" ${k === page ? 'aria-current="page"' : ""}>${t(k === "gateway" ? "gateway_page" : k === "module" ? "module_page" : k === "soak" ? "soak_page" : k === "firmware" ? "firmware_page" : k === "labels" ? "labels_page" : k)}</button>`).join("")
+  if (!allowed(page)) { page = "cabinets"; location.hash = "#/cabinets"; toast(t("modeLocked")); }
+  $("#nav").innerHTML = NAV.filter(allowed).map((k) => `<button data-nav="${k}" ${k === page ? 'aria-current="page"' : ""}>${t(k === "gateway" ? "gateway_page" : k === "module" ? "module_page" : k === "soak" ? "soak_page" : k === "firmware" ? "firmware_page" : k === "labels" ? "labels_page" : k)}</button>`).join("")
     + `<button data-nav="classic">${t("classic")}</button>`;
   $("#main").innerHTML = (VIEWS[page] || viewCabinets)();
   const cur = $("#nav [aria-current]"); if (cur && cur.scrollIntoView) cur.scrollIntoView({ inline: "center", block: "nearest" });
   $("#stagechip").textContent = t("stage"); $("#infoclose").textContent = t("close");
-  $("#langbtn").textContent = lang.toUpperCase(); themeSelect();
+  $("#langbtn").textContent = lang.toUpperCase(); themeSelect(); modeSelect();
   document.documentElement.lang = lang;
   if (page === "events") loadEvents();
   if (page === "gateway") gwBar();
@@ -477,7 +477,6 @@ document.addEventListener("click", async (ev) => {
     } else if (act.dataset.act === "add") { readRows(); S.sites.push({ id: "", name: "", host: "", port: 502, cabinet: "", site: "", note: "" }); S.dirty = true; render();
     } else if (act.dataset.act === "del") { readRows(); S.sites.splice(+act.dataset.i, 1); S.dirty = true; render();
     } else if (act.dataset.act === "save") { readRows(); const r = await api("PUT", "/api/v2/sites", { sites: S.sites }); S.sites = r.sites; S.warnings = r.warnings; S.dirty = false; render(); toast(t("saved"));
-    } else if (act.dataset.act === "gw-mode") { gwMode = act.dataset.mode; try { localStorage.setItem("lgs.gwmode", gwMode); } catch (e) { /* not remembered */ } render();
     } else if (act.dataset.act === "gw-read") { await gwRead();
     } else if (act.dataset.act === "gw-clear") { S.gw.edits = {}; render();
     } else if (act.dataset.act === "gw-apply") {
@@ -611,6 +610,8 @@ function setTheme(name) {
 function themeSelect() { const el = $("#themesel"); el.setAttribute("aria-label", t("theme")); el.innerHTML = THEMES.map((n) => `<option value="${n}"${n === themeNow ? " selected" : ""}>${t("th_" + n)}</option>`).join(""); }
 let themeNow = "auto"; try { const th = localStorage.getItem("lgs.theme"); if (THEMES.includes(th)) themeNow = th; } catch (e) { /* storage blocked: follow the device */ }
 setTheme(themeNow);
+function modeSelect() { const el = $("#modesel"); el.setAttribute("aria-label", t("mode")); el.title = t("modeNote"); el.innerHTML = ["basic", "advanced"].map((m) => `<option value="${m}"${m === uiMode ? " selected" : ""}>${t(m)}</option>`).join(""); }
+$("#modesel").onchange = (e) => { uiMode = e.target.value; try { localStorage.setItem("lgs.mode", uiMode); } catch (x) { /* not remembered */ } clearInterval(S.fw.timer); S.fw.timer = null; render(); };
 $("#themesel").onchange = (e) => { themeNow = e.target.value; setTheme(themeNow); };
 
 (async () => {
