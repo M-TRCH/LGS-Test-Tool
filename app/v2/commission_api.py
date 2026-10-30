@@ -21,7 +21,9 @@ def options(worker) -> dict:
     return {"images": [{"key": i.key, "version": i.version, "label": i.label, "note": i.note,
                         "sha256": i.sha256[:12]}
                        for i in firmware_bundle.for_kind(firmware_bundle.KIND_MODULE_FACTORY)],
-            "device_types": [{"id": k, "name": v} for k, v in ci.DEVICE_TYPES.items()]}
+            "device_types": [{"id": k, "name": v} for k, v in ci.DEVICE_TYPES.items()],
+            "grid": {"rows": lgs_map.GRID_ROWS, "cols": lgs_map.GRID_COLS},
+            "layouts": [{"key": l.key, "label": l.label, "ids": list(l.ids)} for l in lgs_map.CABINET_LAYOUTS]}
 
 
 def probe(worker) -> dict:

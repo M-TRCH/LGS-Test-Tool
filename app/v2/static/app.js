@@ -56,6 +56,7 @@ const TXT = {
     cmId: "ID ของโมดูล (1-245)", cmIds: "ID ที่จะแจก เรียงตามลำดับ เช่น 11-18, 21", cmOverwrite: "เขียนทับ ID ที่โมดูลเก็บไว้แล้ว", cmOverwriteNote: "ปิดไว้เป็นค่าเริ่มต้น: โมดูลที่มี ID อยู่แล้วจะไม่ถูกเปลี่ยนเลข", cmOverwriteConfirm: "พิมพ์ ID ใหม่เพื่อยืนยันการเขียนทับ",
     cmStart: "เขียนโมดูล", cmCancel: "ยกเลิก", cmRunning: "กำลังเขียน", cmNeedImage: "เลือกไฟล์ factory ก่อน", cmStartQ: "เขียน {i} ลงโมดูลที่ต่อกับ ST-Link แล้วให้ตอบที่ ID {id}? ย้อนกลับจากหน้านี้ไม่ได้", cmStartBatchQ: "เขียน {i} ลงบอร์ดเปล่าตามลำดับ ID {ids}? สลับบอร์ดตามที่ log บอก ถ้าตัวไหนพลาดคิวจะหยุด", cmLog: "ความคืบหน้า", cmResultOk: "สำเร็จ", cmResultFail: "ไม่สำเร็จ", cmNone: "ยังไม่มีการเขียน",
     askOk: "ตกลง", askNo: "ยกเลิก",
+    cmGrid: "เลือก ID จากผัง", cmGridOne: "แตะช่องเพื่อเลือก ID ของโมดูลนี้", cmGridMany: "แตะช่องเพื่อเลือก (เรียงตามเลข) กด R1-R10 เลือกทั้งแถว", cmClear: "ล้างที่เลือก", cmPreset: "ตามแบบตู้", cmSelected: "เลือกแล้ว {n} ช่อง", cmPickFirst: "เลือก ID อย่างน้อย 1 ช่องก่อน",
     g_sys: "ทั่วไป", g_rs485: "บัส RS485", g_usb: "พอร์ต USB", g_net: "เครือข่าย", g_time: "เวลา", g_bus: "ฮับ RS485", g_panel: "ปุ่มและไฟหน้าตู้", g_sched: "รีเซตตามเวลา",
     theme: "ธีม", th_auto: "ตามเครื่อง", th_light: "สว่าง", th_dark: "มืด", th_ocean: "ทะเล", th_forest: "ป่า", th_sand: "ทราย", th_midnight: "เที่ยงคืน", th_contrast: "คอนทราสต์สูง",
     lbPicture: "ตัวอย่างป้าย", lbPicNote: "ภาพจากไฟล์ .lbx ที่จะดาวน์โหลดจริง (ตำแหน่งและข้อความตรงกัน) QR เป็นภาพแทน โปรแกรมพิมพ์ Brother สร้าง QR จริง ฟอนต์อาจต่างเล็กน้อย",
@@ -117,6 +118,7 @@ const TXT = {
     cmId: "Module ID (1-245)", cmIds: "IDs to assign, in order, e.g. 11-18, 21", cmOverwrite: "Overwrite an ID the module already stores", cmOverwriteNote: "Off by default: a module that already has an ID keeps it", cmOverwriteConfirm: "Type the new ID to confirm the overwrite",
     cmStart: "Flash module", cmCancel: "Cancel", cmRunning: "Flashing", cmNeedImage: "Choose a factory image first", cmStartQ: "Write {i} to the module on the ST-Link so it answers at ID {id}? This cannot be undone from this page.", cmStartBatchQ: "Write {i} to blank boards, giving IDs {ids} in order? Swap boards when the log says so; the queue stops on any failure.", cmLog: "Progress", cmResultOk: "Done", cmResultFail: "Failed", cmNone: "Nothing flashed yet",
     askOk: "Confirm", askNo: "Cancel",
+    cmGrid: "Pick the ID on the grid", cmGridOne: "Tap a cell to choose this module's ID", cmGridMany: "Tap cells to choose (assigned in number order); R1-R10 picks a whole row", cmClear: "Clear", cmPreset: "From cabinet type", cmSelected: "{n} selected", cmPickFirst: "Pick at least one ID first",
     g_sys: "General", g_rs485: "RS485 bus", g_usb: "USB port", g_net: "Network", g_time: "Time", g_bus: "RS485 hub", g_panel: "Panel buttons and lamps", g_sched: "Scheduled reset",
     theme: "Theme", th_auto: "Follow device", th_light: "Light", th_dark: "Dark", th_ocean: "Ocean", th_forest: "Forest", th_sand: "Sand", th_midnight: "Midnight", th_contrast: "High contrast",
     lbPicture: "Label preview", lbPicNote: "Drawn from the .lbx you would download (positions and text match). The QR is a stand-in: Brother's software makes the real one. The font may differ slightly.",
@@ -443,7 +445,7 @@ function fwSync() {
 }
 
 /* ---------- commission (ST-Link) ---------- */
-S.cm = { opts: null, probe: null, probing: false, mode: "single", image: "", file: null, fileName: "", id: "", ids: "", lot: "", type: "0", overwrite: false, confirm: "", since: 0, lines: [], running: false, prog: null, boards: {}, done: null, timer: null };
+S.cm = { opts: null, probe: null, probing: false, mode: "single", image: "", file: null, fileName: "", id: "", ids: "", lot: "", type: "0", overwrite: false, confirm: "", since: 0, lines: [], running: false, prog: null, boards: {}, done: null, timer: null, sel: new Set() };
 function cmLog() { return S.cm.lines.length ? S.cm.lines.map((l) => `<div style="${l.level === "err" ? "color:var(--bad)" : l.level === "ok" ? "color:var(--ok)" : l.level === "warn" ? "color:var(--warn)" : ""}">${esc(l.text)}</div>`).join("") : `<span class="muted">${t("cmNone")}</span>`; }
 function cmStatus() {
   const c = S.cm, parts = [];
@@ -452,15 +454,30 @@ function cmStatus() {
   Object.keys(c.boards).forEach((id) => { const b = c.boards[id]; parts.push(`<span class="chip ${b === "next" ? "warn" : b === "ok" ? "ok" : "bad"}">${esc(id)}</span>`); });
   return parts.join(" ");
 }
+function cmIdsText() { return [...S.cm.sel].sort((a, b) => a - b).join(","); }
+function cmGridHtml() {
+  const c = S.cm, g = (c.opts && c.opts.grid) || { rows: 10, cols: 8 }, batch = c.mode === "batch";
+  let h = `<div class="cmgrid" style="grid-template-columns:auto repeat(${g.cols},minmax(0,1fr))">`;
+  for (let r = 1; r <= g.rows; r++) {
+    h += batch ? `<button class="cmrow" data-cmrow="${r}" aria-label="R${r}">R${r}</button>` : `<span class="cmrow tiny muted">R${r}</span>`;
+    for (let k = 1; k <= g.cols; k++) {
+      const id = r * 10 + k, st = c.boards[id], on = batch ? c.sel.has(id) : String(c.id) === String(id);
+      h += `<button class="cmcell${on ? " on" : ""}${st ? " " + st : ""}" data-cmcell="${id}" aria-pressed="${on}">${id}</button>`;
+    }
+  }
+  return h + "</div>";
+}
 function viewCommission() {
   const c = S.cm, o = c.opts, pr = c.probe;
   const imgs = o ? o.images.map((i) => `<option value="${esc(i.key)}"${i.key === c.image ? " selected" : ""}>${esc(i.label)}</option>`).join("") : "";
   const types = o ? o.device_types.map((d) => `<option value="${d.id}"${String(d.id) === c.type ? " selected" : ""}>${d.id} — ${esc(d.name)}</option>`).join("") : "";
   let probe = "";
   if (pr) probe = !pr.cli ? `<div class="notice bad">${t("cmNoCli")}</div>` : pr.probes.length ? `<div class="notice info">${t("cmProbeOk", { n: pr.probes.length })} · ${pr.probes.map((p) => esc(p.serial)).join(", ")} · ${t("cmCli")} ${esc(pr.version || "")}</div>` : `<div class="notice bad">${t("cmNoProbe")}</div>`;
+  const presets = o ? o.layouts.map((l) => `<option value="${esc(l.key)}">${esc(l.label)} (${l.ids.length})</option>`).join("") : "";
   const idField = c.mode === "batch"
-    ? `<div class="field"><label>${t("cmIds")}</label><input id="cmids" value="${esc(c.ids)}" placeholder="11-18" autocomplete="off"></div>`
-    : `<div class="field"><label>${t("cmId")}</label><input id="cmid" value="${esc(c.id)}" inputmode="numeric" autocomplete="off"></div>`;
+    ? `<div class="field" style="grid-column:1/-1"><label>${t("cmGrid")}</label><span class="small muted">${t("cmGridMany")}</span>
+        <div class="row"><select id="cmpreset"><option value="">${t("cmPreset")}</option>${presets}</select><button class="btn" data-act="cm-clear">${t("cmClear")}</button><span class="small muted">${t("cmSelected", { n: c.sel.size })}</span></div>${cmGridHtml()}</div>`
+    : `<div class="field" style="grid-column:1/-1"><label>${t("cmId")}</label><input id="cmid" value="${esc(c.id)}" inputmode="numeric" autocomplete="off" style="max-width:140px"><span class="small muted">${t("cmGridOne")}</span>${cmGridHtml()}</div>`;
   const ow = c.mode === "batch" ? "" : `<label class="row" style="min-height:40px"><input type="checkbox" id="cmow"${c.overwrite ? " checked" : ""}> <span>${t("cmOverwrite")}</span></label><span class="small muted">${t("cmOverwriteNote")}</span>`
     + (c.overwrite ? `<div class="field"><label>${t("cmOverwriteConfirm")}</label><input id="cmconfirm" value="${esc(c.confirm)}" inputmode="numeric" autocomplete="off"></div>` : "");
   return `<h1>${t("commission_page")}</h1><div class="stack"><div class="notice">${t("cmBanner")}</div>${c.err ? `<div class="notice bad">${esc(c.err)}</div>` : ""}
@@ -486,6 +503,7 @@ async function cmPoll() {
     if (c.lines.length > 400) c.lines = c.lines.slice(-400);
     if (c.running !== was) { if (page === "commission" && !document.activeElement.matches("input,select")) { const y = window.scrollY; render(); window.scrollTo(0, y); } return; }
     if (r.events.length && page === "commission") {
+      document.querySelectorAll(".cmcell").forEach((el) => { const st = c.boards[el.dataset.cmcell]; el.classList.toggle("next", st === "next"); el.classList.toggle("ok", st === "ok"); el.classList.toggle("bad", st === "bad"); });
       const lg = $("#cmlog"), st = $("#cmstat"); if (lg) { lg.innerHTML = cmLog(); lg.scrollTop = lg.scrollHeight; } if (st) st.innerHTML = cmStatus();
       const pg = document.querySelector("progress"); if (pg && c.prog) { pg.max = c.prog.total || 1; pg.value = c.prog.done; }
     }
@@ -547,6 +565,10 @@ function readRows() {
 document.addEventListener("click", async (ev) => {
   const nav = ev.target.closest("[data-nav]");
   if (nav) { if (nav.dataset.nav === "classic") { location.href = "/"; return; } page = nav.dataset.nav; location.hash = "#/" + page; if (page !== "soak") { clearInterval(S.soak.timer); S.soak.timer = null; } if (page !== "firmware") { clearInterval(S.fw.timer); S.fw.timer = null; } if (page !== "commission") { clearInterval(S.cm.timer); S.cm.timer = null; } if (page === "events") S.evGw = (await api("GET", "/api/v2/events/gateways").catch(() => ({}))).gateways || []; render(); return; }
+  const cell = ev.target.closest("[data-cmcell]");
+  if (cell) { const id = +cell.dataset.cmcell, c = S.cm; if (c.mode === "batch") { c.sel.has(id) ? c.sel.delete(id) : c.sel.add(id); } else { c.id = String(id); } render(); return; }
+  const crow = ev.target.closest("[data-cmrow]");
+  if (crow) { const r = +crow.dataset.cmrow, g = (S.cm.opts && S.cm.opts.grid) || { cols: 8 }, ids = Array.from({ length: g.cols }, (_, k) => r * 10 + k + 1); const all = ids.every((i) => S.cm.sel.has(i)); ids.forEach((i) => (all ? S.cm.sel.delete(i) : S.cm.sel.add(i))); render(); return; }
   const cmm = ev.target.closest("[data-cmmode]"); if (cmm) { S.cm.mode = cmm.dataset.cmmode; render(); return; }
   const type = ev.target.closest("[data-type]");
   if (type) { const x = type.dataset.type; S.ev.types.has(x) ? S.ev.types.delete(x) : S.ev.types.add(x); type.setAttribute("aria-pressed", S.ev.types.has(x)); loadEvents(); return; }
@@ -629,11 +651,13 @@ document.addEventListener("click", async (ev) => {
       f.gwConfirm = ""; await fwRefresh();
     } else if (act.dataset.act === "cm-probe") {
       S.cm.probing = true; render(); try { S.cm.probe = await api("POST", "/api/v2/cm/probe", {}); } finally { S.cm.probing = false; render(); }
+    } else if (act.dataset.act === "cm-clear") { S.cm.sel.clear(); render();
     } else if (act.dataset.act === "cm-cancel") {
       await api("POST", "/api/v2/cm/cancel", {}); await cmPoll();
     } else if (act.dataset.act === "cm-start") {
       S.cm.err = "";
-      const c = S.cm; ["cmid", "cmids", "cmlot", "cmconfirm"].forEach((k) => { const el = $("#" + k); if (el) c[k.slice(2)] = el.value; });
+      const c = S.cm; ["cmid", "cmlot", "cmconfirm"].forEach((k) => { const el = $("#" + k); if (el) c[k.slice(2)] = el.value; });
+      if (c.mode === "batch") { c.ids = cmIdsText(); if (!c.sel.size) { toast(t("cmPickFirst")); return; } }
       const im = c.opts && c.opts.images.find((x) => x.key === c.image), label = c.file ? c.fileName : (im ? im.label : "");
       if (!c.file && !im) { toast(t("cmNeedImage")); return; }
       const batch = c.mode === "batch";
@@ -676,7 +700,7 @@ document.addEventListener("change", async (ev) => {
   if (ev.target.id === "cmtype") S.cm.type = ev.target.value;
   if (ev.target.id === "cmlot") S.cm.lot = ev.target.value;
   if (ev.target.id === "cmid") S.cm.id = ev.target.value;
-  if (ev.target.id === "cmids") S.cm.ids = ev.target.value;
+  if (ev.target.id === "cmpreset" && ev.target.value && S.cm.opts) { const l = S.cm.opts.layouts.find((x) => x.key === ev.target.value); if (l) { S.cm.sel = new Set(l.ids); render(); } }
   if (ev.target.id === "cmconfirm") S.cm.confirm = ev.target.value;
   if (ev.target.id === "cmow") { S.cm.overwrite = ev.target.checked; S.cm.confirm = ""; render(); }
   if (ev.target.id === "cmfile" && ev.target.files[0]) { S.cm.file = await ev.target.files[0].arrayBuffer(); S.cm.fileName = ev.target.files[0].name; S.cm.image = ""; render(); }
