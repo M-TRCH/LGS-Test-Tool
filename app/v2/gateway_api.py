@@ -13,7 +13,7 @@ import threading
 import time
 from datetime import datetime
 
-from .. import i18n
+from .. import i18n, lgs_map
 
 _locks: dict = {}
 _locks_guard = threading.Lock()
@@ -79,7 +79,36 @@ def _label(key: str) -> dict:
     return out
 
 
-def read(host: str, port: int = 502) -> dict:
+def shape_check(settings: dict, layout_key: str) -> dict:
+    """Does the gateway's cabinet setting agree with the cabinet type saved for
+    this site? Same rule as the classic Gateway tab: a catalogue cabinet wants
+    its `panel.cabinet` code and no `panel.shape`; any other wants its row
+    widths as `panel.shape` (gateway >= 1.9.0). `fix` is what to STAGE, never
+    something written here."""
+    if not layout_key:
+        return {}
+    layout = lgs_map.layout_by_key(layout_key)
+    has_shape = "panel.shape" in settings
+    cab = str(settings.get("panel.cabinet", ""))
+    shape = str(settings.get("panel.shape", "0"))
+    if layout.panel_cabinet:
+        agreed = (not has_shape or lgs_map.same_shape(shape, "0")) and cab == layout.panel_cabinet
+        fix = {"panel.cabinet": layout.panel_cabinet}
+        if has_shape:
+            fix["panel.shape"] = "0"
+        stray = has_shape and not lgs_map.same_shape(shape, "0")
+        why = ("a stray panel.shape overrides the cabinet code" if stray
+               else f"gateway has panel.cabinet={cab or '?'}")
+    else:
+        want = lgs_map.format_custom_widths(lgs_map.layout_widths(layout))
+        agreed = has_shape and lgs_map.same_shape(shape, want)
+        fix = {"panel.shape": want} if has_shape else {}
+        why = f"gateway shape is {shape}, this cabinet needs {want}"
+    return {"layout": layout.key, "label": layout.label, "agreed": bool(agreed),
+            "fix": fix if not agreed else {}, "fixable": bool(fix), "why": "" if agreed else why}
+
+
+def read(host: str, port: int = 502, cabinet: str = "") -> dict:
     """Snapshot (INFO + GET) plus per-key flags from HELP and bilingual labels."""
     with _Session(host, port) as link:
         snap = link.snapshot()
@@ -96,7 +125,7 @@ def read(host: str, port: int = 502) -> dict:
         keys.append({"key": k, "value": v, "staged": snap.staged.get(k),
                      "ro": bool(f.get("ro")), "reboot": bool(f.get("reboot")),
                      "text": _label(k)})
-    return {"ok": True, "info": snap.info, "keys": keys,
+    return {"ok": True, "info": snap.info, "keys": keys, "shape": shape_check(snap.settings, cabinet),
             "verbs": (helped.rows[0].get("verbs", "") if helped.ok and helped.rows else "")}
 
 

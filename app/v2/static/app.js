@@ -38,6 +38,15 @@ const TXT = {
     sClean: "สะอาด", sWarn: "ควรดู", sNotClean: "ไม่สะอาด", sDidNot: "ไม่ได้รัน", sStarting: "กำลังเริ่ม", sAnoms: "เหตุผิดปกติล่าสุด", sNone: "ไม่มี",
     sVerdict: "สรุปผลรอบล่าสุด", sHistory: "รอบที่ผ่านมา", sView: "ดูสรุป", sNoRuns: "ยังไม่มีรอบที่ผ่านมา", sFrames: "เฟรมที่ pymodbus ทิ้ง: {n}",
     sNeedType: "ตู้ที่ไม่ได้กำหนดชนิดจะเริ่มไม่ได้ ตั้งที่หน้า รายการตู้", sStarted: "เริ่มแล้ว {n} ตู้", sCsv: "ไฟล์ CSV", sLongNote: "รันบนเซิร์ฟเวอร์ ปิดหน้านี้ได้ ผลเก็บใน data/exports",
+    labels_page: "ป้าย", firmware_page: "เฟิร์มแวร์", lbWard: "ชื่อวอร์ด (พิมพ์บนป้าย)", lbSerial: "ซีเรียลจากคลัง (ไม่เก็บ)", lbLayout: "แบบป้าย", lbPlate: "กรอบ",
+    lbPreview: "ดูตัวอย่างข้อมูล", lbDownload: "ดาวน์โหลด .lbx", lbInfo: "{name} · {ip} · {mac} · {rows} แถว", lbReady: "ยาว {mm} มม. · QR {qr} ไบต์ ({ecc}, กู้ได้ {rec}%, เหลือ {spare} ไบต์) · ไฟล์ {size} ไบต์",
+    lbNote: "อ่านชื่อ ไอพี MAC และแผนผังแถวจากเกตเวย์ตอนกด ป้ายจึงไม่ใช่ของเก่า ซีเรียลเป็นของฐานข้อมูลคลัง ไม่เก็บในโปรแกรม",
+    expCfg: "ส่งออก config (JSON)", impCfg: "นำเข้า config (JSON)", impDone: "นำเข้า {n} ค่า (ยังไม่บันทึก ตรวจแล้วกดบันทึกลงเกตเวย์)", impNone: "ไม่มีค่าที่ต่างจากเกตเวย์",
+    shapeBad: "ชนิดตู้ใน รายการตู้ ({l}) ไม่ตรงกับเกตเวย์: {w}", shapeFix: "ตั้งค่าที่ตรงให้ (ยังไม่บันทึก)", shapeNoFix: "เกตเวย์รุ่นนี้แก้เองไม่ได้ (ไม่มี panel.shape)",
+    fwOta: "อัปเดตโมดูลผ่าน OTA (หลายตู้)", fwImage: "อิมเมจ", fwStart: "เริ่มอัปเดต", fwCancel: "ยกเลิก", fwCancelQ: "ยกเลิกการอัปเดต? โมดูลที่ค้างอยู่ในเซสชันอาจต้องอัปเดตซ้ำ",
+    fwStartQ: "อัปเดตเฟิร์มแวร์โมดูลทุกตัวใน {n} ตู้ด้วย {i}? ทำย้อนจากหน้านี้ไม่ได้ ตู้ที่ใช้งานอยู่จะใช้ไม่ได้ระหว่างอัปเดต", fwRun: "กำลังอัปเดต", fwNoOta: "ยังไม่มีอิมเมจ OTA ในโปรแกรมนี้",
+    fwGw: "อัปเดตเกตเวย์ผ่านเครือข่าย (ทีละตู้)", fwGwNote: "เกตเวย์รีบูตตอนจบ และตัดไฟชั้นวางชั่วครู่ (โมดูลทุกตัวรีบูตด้วย) พิมพ์ชื่อตู้เพื่อยืนยัน", fwUpload: "หรือเลือกไฟล์ .bin เอง", fwConfirm: "พิมพ์ชื่อตู้เพื่อยืนยัน",
+    fwGwStart: "อัปเดตเกตเวย์", fwGwRun: "กำลังอัปเดตเกตเวย์", fwDone: "เสร็จ", fwFail: "ไม่สำเร็จ", fwLog: "บันทึกการทำงาน", fwNone: "—", fwCensus: "ผลตรวจ", fwLeft: "ยังไม่ใช่รุ่นใหม่", fwPhase: "ขั้น",
     matched: "พบ {n} รายการ", loginAgain: "ต้องเข้าสู่ระบบอีกครั้ง", error: "ผิดพลาด: {e}", d: "วัน", h: "ชม.",
   },
   en: {
@@ -76,6 +85,15 @@ const TXT = {
     sClean: "clean", sWarn: "look", sNotClean: "not clean", sDidNot: "did not run", sStarting: "starting", sAnoms: "Latest anomalies", sNone: "none",
     sVerdict: "Latest run verdict", sHistory: "Past runs", sView: "View verdict", sNoRuns: "No past runs yet", sFrames: "Frames pymodbus discarded: {n}",
     sNeedType: "A cabinet with no type cannot start. Set it on the Sites page.", sStarted: "Started {n} cabinets", sCsv: "CSV files", sLongNote: "Runs on the server: you can close this page. Results go to data/exports.",
+    labels_page: "Labels", firmware_page: "Firmware", lbWard: "Ward name (printed)", lbSerial: "Serial from the warehouse (not stored)", lbLayout: "Label layout", lbPlate: "Frame",
+    lbPreview: "Preview data", lbDownload: "Download .lbx", lbInfo: "{name} · {ip} · {mac} · {rows} rows", lbReady: "{mm} mm long · QR {qr} bytes ({ecc}, recovers {rec}%, {spare} bytes spare) · file {size} bytes",
+    lbNote: "Name, IP, MAC and the row map are read from the gateway when you press the button, so a sticker is never stale. The serial belongs to the warehouse database and is not kept here.",
+    expCfg: "Export config (JSON)", impCfg: "Import config (JSON)", impDone: "Imported {n} values (not saved yet: review, then Save to gateway)", impNone: "Nothing differs from the gateway",
+    shapeBad: "The cabinet type on the Sites page ({l}) does not match the gateway: {w}", shapeFix: "Stage the matching values (not saved yet)", shapeNoFix: "This firmware cannot be told (no panel.shape)",
+    fwOta: "Module update over OTA (several cabinets)", fwImage: "Image", fwStart: "Start update", fwCancel: "Cancel", fwCancelQ: "Cancel the update? Modules left in a session may need updating again.",
+    fwStartQ: "Update the firmware of every module in {n} cabinets with {i}? This cannot be undone from this page, and cabinets in use are unusable during the update.", fwRun: "Updating", fwNoOta: "No OTA image is bundled in this build",
+    fwGw: "Gateway update over the network (one at a time)", fwGwNote: "The gateway reboots at the end and cuts the shelf's power for a moment (every module reboots too). Type the cabinet's name to confirm.", fwUpload: "or choose a .bin file", fwConfirm: "Type the cabinet's name to confirm",
+    fwGwStart: "Update gateway", fwGwRun: "Updating gateway", fwDone: "Done", fwFail: "Failed", fwLog: "Log", fwNone: "—", fwCensus: "Result", fwLeft: "not on the new image", fwPhase: "Phase",
     matched: "{n} found", loginAgain: "Sign in again", error: "Error: {e}", d: "d", h: "h",
   },
 };
@@ -84,7 +102,7 @@ const t = (k, p) => { let s = (TXT[lang] && TXT[lang][k]) || TXT.en[k] || k; for
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const $ = (s, r = document) => r.querySelector(s);
 
-let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: "", days: 1, q: "", types: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, soak: { sel: new Set(), mode: "pharmacy", picks: 2000, hours: 12, startAt: "", status: null, runs: [], verdict: "", timer: null, was: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 } };
+let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: "", days: 1, q: "", types: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, lab: { id: "", ward: "", serial: "", layout: "", plate: "", opts: null, info: null, busy: false }, fw: { images: null, sel: new Set(), image: "", ota: null, gwId: "", gwImage: "", gwConfirm: "", gwFile: null, gwFileName: "", gw: null, timer: null }, soak: { sel: new Set(), mode: "pharmacy", picks: 2000, hours: 12, startAt: "", status: null, runs: [], verdict: "", timer: null, was: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 } };
 let page = (location.hash || "#/cabinets").slice(2) || "cabinets";
 
 async function api(method, url, body, raw) {
@@ -185,11 +203,13 @@ function viewGateway() {
       return `<div class="field"><label>${esc(gwLabel(k))} <span class="tiny muted mono">${esc(k.key)}</span>${k.reboot ? ` <span class="chip warn">${t("rebootKey")}</span>` : ""}${k.ro ? ` <span class="chip off">${t("ro")}</span>` : ""}</label>
         <input data-key="${esc(k.key)}" value="${esc(val)}" ${k.ro ? "disabled" : ""} ${ed ? 'style="border-color:var(--brand)"' : ""}>${hint ? `<span class="hint">${esc(hint)}</span>` : ""}</div>`;
     };
-    body = `<section class="card"><dl class="kv"><dt>${t("fw")}</dt><dd class="mono">${esc(i.fw)}</dd><dt>${t("uptime")}</dt><dd>${fmtUp(+i["sys.up"] || 0)} (${esc(i["sys.reset"] || "")})</dd>
+    const sh = d.shape && d.shape.layout && !d.shape.agreed ? `<div class="notice">${t("shapeBad", { l: esc(d.shape.label), w: esc(d.shape.why) })}<div class="row" style="margin-top:8px">${d.shape.fixable ? `<button class="btn" data-act="gw-shape">${t("shapeFix")}</button>` : `<span class="small">${t("shapeNoFix")}</span>`}</div></div>` : "";
+    body = sh + `<section class="card"><dl class="kv"><dt>${t("fw")}</dt><dd class="mono">${esc(i.fw)}</dd><dt>${t("uptime")}</dt><dd>${fmtUp(+i["sys.up"] || 0)} (${esc(i["sys.reset"] || "")})</dd>
         <dt>${t("clients")}</dt><dd>${esc(i["net.client"] || "?")}/2</dd><dt>${t("clock")}</dt><dd>${i["time.set"] === "1" ? esc((i["time.now"] || "").replace("T", " ")) : t("clockUnset")}</dd></dl></section>
       <section class="card stack"><div class="row"><button class="btn" data-act="gw-time">${t("setClock")}</button></div><p class="small muted">${t("clockWarn")}</p>
         ${sw("resync", i["rtu.heal"] === "1")}${sw("exc", i["tcp.exc"] === "1")}</section>
       <section class="card stack">${order.map((grp) => `<details${grp === "rs485" || grp === "net" ? " open" : ""}><summary><b>${esc(grp)}</b> <span class="small muted">${groups[grp].length}</span></summary><div class="fgrid" style="margin-top:8px">${groups[grp].map(field).join("")}</div></details>`).join("")}</section>
+      <section class="card stack"><div class="row"><button class="btn" data-act="gw-export">${t("expCfg")}</button><label class="btn">${t("impCfg")}<input type="file" id="gwimport" accept=".json,application/json" hidden></label></div></section>
       <section class="card stack"><h3>${t("danger")}</h3><div class="row"><button class="btn" data-act="gw-discard">${t("discard")}</button><button class="btn" data-act="gw-reboot">${t("reboot")}</button><button class="btn" data-act="gw-defaults" style="color:var(--bad)">${t("defaults")}</button></div></section>`;
   } else if (d && !d.ok) body = `<div class="notice bad">${esc(d.error)}</div>`;
   return `<div class="row between"><h1>${t("gateway_page")}</h1></div>
@@ -306,14 +326,69 @@ function soakSync() {
   if (page === "soak") { soakRefresh(); S.soak.timer = setInterval(() => { if (!document.hidden && page === "soak") soakRefresh(); }, 3000); }
 }
 
-const VIEWS = { cabinets: viewCabinets, gateway: viewGateway, module: viewModule, soak: viewSoak, sites: viewSites, events: viewEvents };
-const NAV = ["cabinets", "gateway", "module", "soak", "sites", "events"];
+
+function viewLabels() {
+  const l = S.lab, o = l.opts;
+  const opts = S.sites.map((x) => `<option value="${esc(x.id)}"${x.id === l.id ? " selected" : ""}>${esc(x.name)} · ${esc(x.host)}</option>`).join("");
+  const info = l.info ? `<div class="notice info">${t("lbInfo", { name: esc(l.info.name), ip: esc(l.info.ip), mac: esc(l.info.mac), rows: l.info.rows })}<br>${t("lbReady", { mm: l.info.mm, qr: l.info.qr_bytes, ecc: l.info.ecc, rec: l.info.recover_pct, spare: l.info.spare_bytes, size: l.info.size })}
+      <details style="margin-top:6px"><summary class="small">QR</summary><pre class="mono tiny" style="white-space:pre-wrap;margin:0">${esc(l.info.payload)}</pre></details></div>` : "";
+  return `<h1>${t("labels_page")}</h1><p class="small muted">${t("lbNote")}</p>
+    <section class="card stack"><div class="fgrid">
+      <div class="field"><label>${t("pick")}</label><select id="lbsel"><option value="">—</option>${opts}</select></div>
+      <div class="field"><label>${t("lbWard")}</label><input id="lbward" value="${esc(l.ward)}"></div>
+      <div class="field"><label>${t("lbSerial")}</label><input id="lbserial" value="${esc(l.serial)}"></div>
+      <div class="field"><label>${t("lbLayout")}</label><select id="lblayout">${o ? o.layouts.map((x) => `<option value="${esc(x.key)}"${x.key === l.layout ? " selected" : ""}>${esc(x.title)}</option>`).join("") : ""}</select></div>
+      <div class="field"><label>${t("lbPlate")}</label><select id="lbplate">${o ? o.plates.map((x) => `<option value="${esc(x.key)}"${x.key === l.plate ? " selected" : ""}>${esc(x.text[lang] || x.key)}</option>`).join("") : ""}</select></div></div>
+      <div class="row"><button class="btn" data-act="lb-preview">${l.busy ? t("reading") : t("lbPreview")}</button><button class="btn primary" data-act="lb-file">${t("lbDownload")}</button></div>${info}</section>`;
+}
+
+function fwRows(rows) {
+  return rows.length ? `<section class="card" style="overflow-x:auto"><table><tr><th>${t("sCab")}</th><th>${t("sState")}</th><th>${t("fwPhase")}</th><th>%</th><th>${t("fwLeft")}</th><th>${t("fwCensus")}</th></tr>
+    ${rows.map((r) => `<tr><td><b>${esc(r.name)}</b> <span class="tiny muted">${r.modules}</span></td><td>${esc(r.state)}${r.channels ? ` <span class="tiny muted">${r.channel}/${r.channels}</span>` : ""}</td><td>${esc(r.phase)}</td><td>${r.pct}</td><td>${r.left.length ? esc(r.left.join(",")) : t("fwNone")}</td><td class="small">${esc(r.census || r.note)}</td></tr>`).join("")}</table></section>` : "";
+}
+function viewFirmware() {
+  const f = S.fw, im = f.images, ota = f.ota || {}, gw = f.gw || {};
+  const sitesRows = S.sites.map((x) => `<label class="row" style="min-height:40px"><input type="checkbox" data-fwpick="${esc(x.id)}"${f.sel.has(x.id) ? " checked" : ""}> <span>${esc(x.name)}</span> <span class="small muted mono">${esc(x.host)} · ${esc(x.cabinet || "?")}</span></label>`).join("");
+  const modImgs = im ? im.module.map((i) => `<option value="${esc(i.key)}"${i.key === f.image ? " selected" : ""}>${esc(i.label)}</option>`).join("") : "";
+  const gwImgs = im ? im.gateway.map((i) => `<option value="${esc(i.key)}"${i.key === f.gwImage ? " selected" : ""}>${esc(i.label)}</option>`).join("") : "";
+  const gsite = S.sites.map((x) => `<option value="${esc(x.id)}"${x.id === f.gwId ? " selected" : ""}>${esc(x.name)} · ${esc(x.host)}</option>`).join("");
+  const otaBlock = ota.running
+    ? `<section class="card stack"><div class="row between"><b>${t("fwRun")}</b><button class="btn" style="color:var(--bad)" data-act="fw-cancel">${t("fwCancel")}</button></div></section>`
+    : `<section class="card stack"><b>${t("fwOta")}</b>${sitesRows || `<p class="muted">${t("noSites")}</p>`}
+        <div class="field"><label>${t("fwImage")}</label><select id="fwimage">${modImgs || `<option value="">${t("fwNoOta")}</option>`}</select></div>
+        <div class="row"><button class="btn primary" data-act="fw-start">${t("fwStart")}</button></div></section>`;
+  const log = (ota.log || []).length ? `<section class="card stack"><h3>${t("fwLog")}</h3><div style="max-height:260px;overflow:auto">${ota.log.slice(-60).map((l) => `<div class="evrow"><span class="when">${esc(l.at)}</span><span><b>${esc(l.cabinet)}</b> ${esc(l.text)}</span></div>`).join("")}</div></section>` : "";
+  const outcome = ota.outcome && !ota.running ? `<section class="card stack"><pre class="mono small" style="white-space:pre-wrap;overflow-x:auto;margin:0">${esc(ota.outcome.text)}</pre></section>` : "";
+  const gwStat = gw.name ? `<div class="notice ${gw.done ? (gw.ok ? "info" : "bad") : ""}">${gw.running ? t("fwGwRun") + " " + gw.pct + "%" : gw.done ? (gw.ok ? t("fwDone") : t("fwFail")) + " · " + esc(gw.summary) : ""}
+      <div class="mono tiny" style="white-space:pre-wrap;margin-top:6px">${esc((gw.lines || []).join("\n"))}</div></div>` : "";
+  return `<h1>${t("firmware_page")}</h1><div class="stack">${otaBlock}${fwRows(ota.rows || [])}${log}${outcome}
+    <section class="card stack"><b>${t("fwGw")}</b><p class="small muted">${t("fwGwNote")}</p><div class="fgrid">
+      <div class="field"><label>${t("pick")}</label><select id="fwgwsel"><option value="">—</option>${gsite}</select></div>
+      <div class="field"><label>${t("fwImage")}</label><select id="fwgwimage"><option value="">—</option>${gwImgs}</select></div>
+      <div class="field"><label>${t("fwUpload")}</label><input type="file" id="fwgwfile" accept=".bin"><span class="hint">${esc(f.gwFileName || "")}</span></div>
+      <div class="field"><label>${t("fwConfirm")}</label><input id="fwgwconfirm" value="${esc(f.gwConfirm)}" autocomplete="off"></div></div>
+      <div class="row"><button class="btn" style="color:var(--bad)" data-act="fw-gwstart"${gw.running ? " disabled" : ""}>${t("fwGwStart")}</button></div>${gwStat}</section></div>`;
+}
+async function fwRefresh() {
+  try {
+    S.fw.ota = await api("GET", "/api/v2/fw/ota/status");
+    S.fw.gw = await api("GET", "/api/v2/fw/gateway/status");
+    if (page === "firmware" && !document.activeElement.matches("input,select")) { const y = window.scrollY; render(); window.scrollTo(0, y); }
+  } catch (e) { /* next tick */ }
+}
+function fwSync() {
+  clearInterval(S.fw.timer); S.fw.timer = null;
+  if (page === "firmware") { fwRefresh(); S.fw.timer = setInterval(() => { if (!document.hidden && page === "firmware") fwRefresh(); }, 3000); }
+}
+
+const VIEWS = { cabinets: viewCabinets, gateway: viewGateway, module: viewModule, soak: viewSoak, firmware: viewFirmware, labels: viewLabels, sites: viewSites, events: viewEvents };
+const NAV = ["cabinets", "gateway", "module", "soak", "firmware", "labels", "sites", "events"];
 
 function render() {
-  $("#nav").innerHTML = NAV.map((k) => `<button data-nav="${k}" ${k === page ? 'aria-current="page"' : ""}>${t(k === "gateway" ? "gateway_page" : k === "module" ? "module_page" : k === "soak" ? "soak_page" : k)}</button>`).join("")
+  $("#nav").innerHTML = NAV.map((k) => `<button data-nav="${k}" ${k === page ? 'aria-current="page"' : ""}>${t(k === "gateway" ? "gateway_page" : k === "module" ? "module_page" : k === "soak" ? "soak_page" : k === "firmware" ? "firmware_page" : k === "labels" ? "labels_page" : k)}</button>`).join("")
     + `<button data-nav="classic">${t("classic")}</button>`;
-  $("#nav").style.gridTemplateColumns = window.innerWidth < 900 ? `repeat(${NAV.length + 1},1fr)` : "";
   $("#main").innerHTML = (VIEWS[page] || viewCabinets)();
+  const cur = $("#nav [aria-current]"); if (cur && cur.scrollIntoView) cur.scrollIntoView({ inline: "center", block: "nearest" });
   $("#stagechip").textContent = t("stage");
   $("#langbtn").textContent = lang.toUpperCase();
   document.documentElement.lang = lang;
@@ -321,6 +396,7 @@ function render() {
   if (page === "gateway") gwBar();
   if (page === "module") modAutoSync();
   if (page === "soak" && !S.soak.timer) soakSync();
+  if (page === "firmware" && !S.fw.timer) fwSync();
 }
 
 async function loadEvents() {
@@ -347,7 +423,7 @@ function readRows() {
 }
 document.addEventListener("click", async (ev) => {
   const nav = ev.target.closest("[data-nav]");
-  if (nav) { if (nav.dataset.nav === "classic") { location.href = "/"; return; } page = nav.dataset.nav; location.hash = "#/" + page; if (page !== "soak") { clearInterval(S.soak.timer); S.soak.timer = null; } if (page === "events") S.evGw = (await api("GET", "/api/v2/events/gateways").catch(() => ({}))).gateways || []; render(); return; }
+  if (nav) { if (nav.dataset.nav === "classic") { location.href = "/"; return; } page = nav.dataset.nav; location.hash = "#/" + page; if (page !== "soak") { clearInterval(S.soak.timer); S.soak.timer = null; } if (page !== "firmware") { clearInterval(S.fw.timer); S.fw.timer = null; } if (page === "events") S.evGw = (await api("GET", "/api/v2/events/gateways").catch(() => ({}))).gateways || []; render(); return; }
   const type = ev.target.closest("[data-type]");
   if (type) { const x = type.dataset.type; S.ev.types.has(x) ? S.ev.types.delete(x) : S.ev.types.add(x); type.setAttribute("aria-pressed", S.ev.types.has(x)); loadEvents(); return; }
   const act = ev.target.closest("[data-act]"); if (!act) return;
@@ -400,6 +476,33 @@ document.addEventListener("click", async (ev) => {
       if (!confirm(t("sStopQ"))) return; await api("POST", "/api/v2/soak/stop", {}); S.soak.was = true; await soakRefresh();
     } else if (act.dataset.act === "soak-view") {
       const r = await fetch("/api/v2/soak/file?name=" + encodeURIComponent(act.dataset.name)); S.soak.verdict = await r.text(); render();
+    } else if (act.dataset.act === "gw-export") {
+      const d = S.gw.data; const out = { format: "lgs-gateway-config", version: 2, gateway: d.info["sys.name"] || "", fw: d.info.fw, exported: new Date().toISOString(), settings: {} };
+      d.keys.forEach((k) => { if (!k.ro) out.settings[k.key] = k.value; });
+      const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: "application/json" })); a.download = (out.gateway || "gateway") + "-config.json"; a.click();
+    } else if (act.dataset.act === "gw-shape") {
+      Object.entries(S.gw.data.shape.fix).forEach(([k, v]) => { const cur = S.gw.data.keys.find((x) => x.key === k); if (cur && cur.value !== v) S.gw.edits[k] = v; }); render();
+    } else if (act.dataset.act === "lb-preview") {
+      const l = S.lab; if (!l.id) return; l.busy = true; render();
+      try { l.info = (await api("POST", "/api/v2/labels/preview", { id: l.id, ward: l.ward, serial: l.serial, layout: l.layout, plate: l.plate })).info; } finally { l.busy = false; render(); }
+    } else if (act.dataset.act === "lb-file") {
+      const l = S.lab; if (!l.id) return;
+      const r = await fetch("/api/v2/labels/file", { method: "POST", headers: { "X-LGS": "1", "Content-Type": "application/json" }, body: JSON.stringify({ id: l.id, ward: l.ward, serial: l.serial, layout: l.layout, plate: l.plate }) });
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
+      const name = (r.headers.get("content-disposition") || "").match(/filename="([^"]+)"/); const a = document.createElement("a"); a.href = URL.createObjectURL(await r.blob()); a.download = name ? name[1] : "label.lbx"; a.click();
+    } else if (act.dataset.act === "fw-start") {
+      const f = S.fw, im = (f.images && f.images.module.find((x) => x.key === f.image)); if (!f.sel.size || !im) return;
+      const cabs = S.sites.filter((x) => f.sel.has(x.id));
+      if (!confirm(t("fwStartQ", { n: cabs.length, i: im.label }) + "\n\n" + cabs.map((c) => c.name).join(", "))) return;
+      await api("POST", "/api/v2/fw/ota/start", { ids: [...f.sel], image: f.image }); await fwRefresh();
+    } else if (act.dataset.act === "fw-cancel") {
+      if (!confirm(t("fwCancelQ"))) return; await api("POST", "/api/v2/fw/ota/cancel", {}); await fwRefresh();
+    } else if (act.dataset.act === "fw-gwstart") {
+      const f = S.fw; if (!f.gwId) return;
+      const site = S.sites.find((x) => x.id === f.gwId);
+      if (f.gwFile) { await api("POST", `/api/v2/fw/gateway/start?id=${encodeURIComponent(f.gwId)}&confirm=${encodeURIComponent(f.gwConfirm)}&name=${encodeURIComponent(f.gwFileName)}`, f.gwFile, true); }
+      else { await api("POST", "/api/v2/fw/gateway/start", { id: f.gwId, confirm: f.gwConfirm, image: f.gwImage }); }
+      f.gwConfirm = ""; await fwRefresh();
     } else if (act.dataset.act === "collector") { const on = act.getAttribute("aria-checked") !== "true"; await api("POST", "/api/v2/collector", { enabled: on }); S.me = await api("GET", "/api/v2/me"); render(); }
   } catch (e) { fail(e); render(); }
 });
@@ -423,6 +526,24 @@ document.addEventListener("change", async (ev) => {
   if (ev.target.id === "soakpicks") S.soak.picks = +ev.target.value;
   if (ev.target.id === "soakhours") S.soak.hours = +ev.target.value;
   if (ev.target.id === "soakat") S.soak.startAt = ev.target.value;
+  if (ev.target.id === "lbsel") { S.lab.id = ev.target.value; S.lab.info = null; }
+  if (ev.target.id === "lbward") S.lab.ward = ev.target.value;
+  if (ev.target.id === "lbserial") S.lab.serial = ev.target.value;
+  if (ev.target.id === "lblayout") { S.lab.layout = ev.target.value; S.lab.info = null; }
+  if (ev.target.id === "lbplate") { S.lab.plate = ev.target.value; S.lab.info = null; }
+  if (ev.target.dataset && ev.target.dataset.fwpick) { ev.target.checked ? S.fw.sel.add(ev.target.dataset.fwpick) : S.fw.sel.delete(ev.target.dataset.fwpick); }
+  if (ev.target.id === "fwimage") S.fw.image = ev.target.value;
+  if (ev.target.id === "fwgwsel") S.fw.gwId = ev.target.value;
+  if (ev.target.id === "fwgwimage") { S.fw.gwImage = ev.target.value; if (ev.target.value) { S.fw.gwFile = null; S.fw.gwFileName = ""; } }
+  if (ev.target.id === "fwgwconfirm") S.fw.gwConfirm = ev.target.value;
+  if (ev.target.id === "fwgwfile" && ev.target.files[0]) { S.fw.gwFile = await ev.target.files[0].arrayBuffer(); S.fw.gwFileName = ev.target.files[0].name; S.fw.gwImage = ""; render(); }
+  if (ev.target.id === "gwimport" && ev.target.files[0]) {
+    try {
+      const j = JSON.parse(await ev.target.files[0].text()); const src = j.settings || j; let n = 0;
+      S.gw.data.keys.forEach((k) => { if (!k.ro && k.key in src && String(src[k.key]) !== k.value) { S.gw.edits[k.key] = String(src[k.key]); n++; } });
+      render(); toast(n ? t("impDone", { n }) : t("impNone"));
+    } catch (e) { fail(e); }
+  }
   if (ev.target.id === "evgw") { S.ev.gw = ev.target.value; loadEvents(); }
   if (ev.target.id === "evdays") { S.ev.days = +ev.target.value; loadEvents(); }
   if (ev.target.id === "csvfile" && ev.target.files[0]) {
@@ -435,7 +556,6 @@ document.addEventListener("change", async (ev) => {
 document.addEventListener("keydown", (e) => { if ((e.key === " " || e.key === "Enter") && e.target.matches && e.target.matches(".sw")) { e.preventDefault(); e.target.click(); } });
 $("#langbtn").onclick = () => { lang = lang === "th" ? "en" : "th"; localStorage.setItem("lgs.lang", lang); render(); };
 $("#themebtn").onclick = () => { const r = document.documentElement, dark = r.dataset.theme === "dark"; r.dataset.theme = dark ? "light" : "dark"; localStorage.setItem("lgs.theme", r.dataset.theme); };
-window.addEventListener("resize", () => { $("#nav").style.gridTemplateColumns = window.innerWidth < 900 ? `repeat(${NAV.length + 1},1fr)` : ""; });
 try { const th = localStorage.getItem("lgs.theme"); if (th) document.documentElement.dataset.theme = th; } catch (e) { /* storage blocked: default theme */ }
 
 (async () => {
@@ -445,6 +565,8 @@ try { const th = localStorage.getItem("lgs.theme"); if (th) document.documentEle
     if (page === "events") S.evGw = (await api("GET", "/api/v2/events/gateways")).gateways || [];
     S.mod.presets = (await api("GET", "/api/v2/mod/presets")).presets;
     S.soak.runs = (await api("GET", "/api/v2/soak/runs")).runs;
+    S.lab.opts = await api("GET", "/api/v2/labels/options"); S.lab.layout = S.lab.opts.default_layout; S.lab.plate = S.lab.opts.default_plate;
+    S.fw.images = await api("GET", "/api/v2/fw/images"); S.fw.image = (S.fw.images.module[0] || {}).key || "";
   } catch (e) { fail(e); }
   render();
 })();

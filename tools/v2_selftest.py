@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app import auth, event_collector as ec            # noqa: E402
 from app.gateway_config import parse_response_lines    # noqa: E402
-from app.v2 import events_api, health, sites, soak_api  # noqa: E402
+from app.v2 import events_api, gateway_api, health, labels_api, ota_api, sites, soak_api  # noqa: E402
 
 _results: list = []
 
@@ -36,9 +36,9 @@ def case(name):
     return deco
 
 
-def raises(exc_type, fn, *a):
+def raises(exc_type, fn, *a, **kw):
     try:
-        fn(*a)
+        fn(*a, **kw)
     except exc_type:
         return True
     raise AssertionError(f"expected {exc_type.__name__}")
@@ -239,6 +239,35 @@ def _():
     assert soak_api.read_file("fleet-20261030-100000.txt")[1] == "verdict"
     for bad in ("../x.txt", "..\\x.txt", "config.json", "fleet-1.txt", "auth.json"):
         raises(ValueError, soak_api.read_file, bad)
+
+
+# ── shape check, labels options, firmware guards ─────────────────────────────
+@case("shape check: catalogue cabinet, fridge shape, stray shape, no shape support")
+def _():
+    sc = gateway_api.shape_check
+    assert sc({"panel.cabinet": "40"}, "lgs40")["agreed"]
+    assert sc({}, "") == {}
+    fr = sc({"panel.cabinet": "40", "panel.shape": "0"}, "lgs40r")
+    assert not fr["agreed"] and fr["fix"] == {"panel.shape": "8,8,8,8,8"}
+    assert sc({"panel.cabinet": "0", "panel.shape": "8,8,8,8,8"}, "lgs40r")["agreed"]
+    stray = sc({"panel.cabinet": "80", "panel.shape": "8,8,4"}, "lgs80")
+    assert not stray["agreed"] and stray["fix"] == {"panel.cabinet": "80", "panel.shape": "0"}
+    old = sc({"panel.cabinet": "40"}, "lgs40r")           # firmware before panel.shape
+    assert not old["agreed"] and not old["fixable"]
+
+
+@case("labels/firmware: options listed, images verified-kind only, gateway update needs the name")
+def _():
+    o = labels_api.options()
+    assert {x["key"] for x in o["layouts"]} >= {"standard", "minimal", "rowmap"} and o["plates"]
+    raises(ValueError, labels_api.build, "h", 502, "", "", "nope", o["default_plate"])
+    im = ota_api.images()
+    assert im["module"] and im["gateway"]
+    assert not {i["key"] for i in im["module"]} & {i["key"] for i in im["gateway"]}
+    site = {"name": "Chest-X", "host": "127.0.0.1", "port": 1}
+    raises(ValueError, ota_api.gw_start, site, "wrong", image_key=im["gateway"][0]["key"])
+    raises(ValueError, ota_api.gw_start, site, "Chest-X", image_key=im["module"][0]["key"])
+    raises(ValueError, ota_api.gw_start, site, "Chest-X")
 
 
 def main() -> int:

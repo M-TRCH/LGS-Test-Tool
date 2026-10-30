@@ -12,7 +12,7 @@ from starlette.responses import FileResponse, JSONResponse, Response
 
 from .. import auth, config_store, event_collector
 from ..version import APP_VERSION
-from . import events_api, gateway_api, health, module_api, sites, soak_api
+from . import events_api, gateway_api, health, labels_api, module_api, ota_api, sites, soak_api
 
 STATIC = Path(__file__).resolve().parent / "static"
 PROBE_PARALLEL = 6            # gateways asked at once; each probe is one short connection
@@ -156,7 +156,8 @@ def install(app, cfg, worker) -> None:
             host, port, _ = _target(body)
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=422)
-        return await _run(request, gateway_api.read, host, port)
+        site = sites.find(str(body.get("id", ""))) or {}
+        return await _run(request, gateway_api.read, host, port, site.get("cabinet", ""))
 
     @app.post("/api/v2/gw/apply")
     async def gw_apply(request: Request):
@@ -256,6 +257,99 @@ def install(app, cfg, worker) -> None:
         if kind == "verdict" and not download:
             return Response(path.read_text(encoding="utf-8"), media_type="text/plain; charset=utf-8")
         return FileResponse(path, filename=name, media_type="text/csv" if kind == "csv" else "text/plain")
+
+    # ── labels ─────────────────────────────────────────────────────────────
+    @app.get("/api/v2/labels/options")
+    async def label_options():
+        return labels_api.options()
+
+    async def _label(request: Request):
+        body = await request.json()
+        host, port, _ = _target(body)
+        return await asyncio.to_thread(labels_api.build, host, port, str(body.get("ward", "")),
+                                       str(body.get("serial", "")), str(body.get("layout", "")),
+                                       str(body.get("plate", "")))
+
+    @app.post("/api/v2/labels/preview")
+    async def label_preview(request: Request):
+        if not _mutating(request):
+            return _forbidden()
+        try:
+            info, _blob, name = await _label(request)
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=422)
+        except Exception as exc:                                 # noqa: BLE001
+            return JSONResponse({"error": f"{type(exc).__name__}: {exc}"[:200]}, status_code=502)
+        return {"info": info, "file": name}
+
+    @app.post("/api/v2/labels/file")
+    async def label_file(request: Request):
+        if not _mutating(request):
+            return _forbidden()
+        try:
+            _info, blob, name = await _label(request)
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=422)
+        except Exception as exc:                                 # noqa: BLE001
+            return JSONResponse({"error": f"{type(exc).__name__}: {exc}"[:200]}, status_code=502)
+        return Response(blob, media_type="application/octet-stream",
+                        headers={"Content-Disposition": f'attachment; filename="{name}"'})
+
+    # ── firmware ───────────────────────────────────────────────────────────
+    @app.get("/api/v2/fw/images")
+    async def fw_images():
+        return ota_api.images()
+
+    @app.get("/api/v2/fw/ota/status")
+    async def fw_ota_status():
+        return ota_api.ota_status(worker)
+
+    @app.post("/api/v2/fw/ota/start")
+    async def fw_ota_start(request: Request):
+        if not _mutating(request):
+            return _forbidden()
+        body = await request.json()
+        ids = set(body.get("ids") or [])
+        chosen = [s for s in sites.load() if s["id"] in ids]
+        try:
+            return await asyncio.to_thread(ota_api.ota_start, worker, chosen, str(body.get("image", "")))
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=422)
+
+    @app.post("/api/v2/fw/ota/cancel")
+    async def fw_ota_cancel(request: Request):
+        if not _mutating(request):
+            return _forbidden()
+        worker.cancel_fleet_ota()
+        return {"ok": True}
+
+    @app.get("/api/v2/fw/gateway/status")
+    async def fw_gw_status():
+        return ota_api.gw_status()
+
+    @app.post("/api/v2/fw/gateway/start")
+    async def fw_gw_start(request: Request):
+        """JSON {id, confirm, image} for a bundled image; or a raw .bin body with
+        ?id=&confirm=&name= for an uploaded one."""
+        if not _mutating(request):
+            return _forbidden()
+        try:
+            if "json" in request.headers.get("content-type", ""):
+                body = await request.json()
+                site = sites.find(str(body.get("id", "")))
+                if not site:
+                    raise ValueError("unknown cabinet: choose one from the saved list")
+                return ota_api.gw_start(site, str(body.get("confirm", "")), image_key=str(body.get("image", "")))
+            q = request.query_params
+            site = sites.find(q.get("id", ""))
+            if not site:
+                raise ValueError("unknown cabinet: choose one from the saved list")
+            data = await request.body()
+            if len(data) > 1_000_000:
+                raise ValueError("image larger than 1 MB")
+            return ota_api.gw_start(site, q.get("confirm", ""), data=data, filename=q.get("name", "upload.bin")[:80])
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=422)
 
     # ── events ─────────────────────────────────────────────────────────────
     @app.get("/api/v2/events/gateways")
