@@ -452,7 +452,7 @@ function viewCommission() {
     : `<div class="field"><label>${t("cmId")}</label><input id="cmid" value="${esc(c.id)}" inputmode="numeric" autocomplete="off"></div>`;
   const ow = c.mode === "batch" ? "" : `<label class="row" style="min-height:40px"><input type="checkbox" id="cmow"${c.overwrite ? " checked" : ""}> <span>${t("cmOverwrite")}</span></label><span class="small muted">${t("cmOverwriteNote")}</span>`
     + (c.overwrite ? `<div class="field"><label>${t("cmOverwriteConfirm")}</label><input id="cmconfirm" value="${esc(c.confirm)}" inputmode="numeric" autocomplete="off"></div>` : "");
-  return `<h1>${t("commission_page")}</h1><div class="stack"><div class="notice">${t("cmBanner")}</div>
+  return `<h1>${t("commission_page")}</h1><div class="stack"><div class="notice">${t("cmBanner")}</div>${c.err ? `<div class="notice bad">${esc(c.err)}</div>` : ""}
     <section class="card stack"><div class="row"><button class="btn" data-act="cm-probe"${c.probing ? " disabled" : ""}>${c.probing ? t("cmProbing") : t("cmProbe")}</button></div>${probe}</section>
     <section class="card stack"><div class="seg"><button data-cmmode="single" aria-pressed="${c.mode === "single"}">${t("cmSingle")}</button><button data-cmmode="batch" aria-pressed="${c.mode === "batch"}">${t("cmBatch")}</button></div><div class="fgrid">
       <div class="field"><label>${t("cmImage")}</label><select id="cmimage"><option value="">—</option>${imgs}</select></div>
@@ -621,7 +621,9 @@ document.addEventListener("click", async (ev) => {
     } else if (act.dataset.act === "cm-cancel") {
       await api("POST", "/api/v2/cm/cancel", {}); await cmPoll();
     } else if (act.dataset.act === "cm-start") {
-      const c = S.cm, im = c.opts && c.opts.images.find((x) => x.key === c.image), label = c.file ? c.fileName : (im ? im.label : "");
+      S.cm.err = "";
+      const c = S.cm; ["cmid", "cmids", "cmlot", "cmconfirm"].forEach((k) => { const el = $("#" + k); if (el) c[k.slice(2)] = el.value; });
+      const im = c.opts && c.opts.images.find((x) => x.key === c.image), label = c.file ? c.fileName : (im ? im.label : "");
       if (!c.file && !im) { toast(t("cmNeedImage")); return; }
       const batch = c.mode === "batch";
       if (!confirm(batch ? t("cmStartBatchQ", { i: label, ids: c.ids }) : t("cmStartQ", { i: label, id: c.id }))) return;
@@ -631,7 +633,7 @@ document.addEventListener("click", async (ev) => {
       c.since = 0; c.lines = []; c.done = null; c.prog = null; c.boards = {}; c.running = true; c.confirm = ""; render(); cmPoll();
     } else if (act.dataset.act === "hint") { showInfo(act.dataset.key);
     } else if (act.dataset.act === "collector") { const on = act.getAttribute("aria-checked") !== "true"; await api("POST", "/api/v2/collector", { enabled: on }); S.me = await api("GET", "/api/v2/me"); render(); }
-  } catch (e) { fail(e); render(); }
+  } catch (e) { if (String(act.dataset.act).startsWith("cm-")) S.cm.err = e.message; fail(e); render(); }
 });
 document.addEventListener("input", (ev) => {
   if (ev.target.closest(".sitesrow")) { S.dirty = true; }
