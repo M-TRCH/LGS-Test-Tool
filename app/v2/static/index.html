@@ -16,9 +16,9 @@
 @media (min-width:900px){.sitesrow{grid-template-columns:1.3fr 1.1fr 70px 100px 1fr 1fr auto;align-items:center}}
 .sitesrow input,.sitesrow select{width:100%;min-height:40px;padding:0 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
 .sitesrow.dup input[data-f=host]{border-color:var(--warn)}
-.field .hint{display:none}.field.showhint .hint{display:block}
-.why{display:inline-grid;place-items:center;width:18px;height:18px;margin-left:6px;padding:0;min-height:0;border:1px solid var(--line);border-radius:50%;background:none;color:var(--muted);font-size:12px;line-height:1;cursor:pointer;vertical-align:middle}.why:hover,.field.showhint .why{background:var(--surface2);color:var(--ink)}
+.why{display:inline-grid;place-items:center;width:18px;height:18px;margin-left:6px;padding:0;min-height:0;border:1px solid var(--line);border-radius:50%;background:none;color:var(--muted);font-size:12px;line-height:1;cursor:pointer;vertical-align:middle}.why:hover{background:var(--surface2);color:var(--ink)}
 @media (max-width:899px){.nav{display:flex;overflow-x:auto;scrollbar-width:none}.nav button{flex:0 0 auto;min-width:78px;padding:0 12px;font-size:13px;white-space:nowrap}}
+#info{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);color:var(--ink);padding:18px;width:min(92vw,460px);box-shadow:0 12px 40px rgba(0,0,0,.35)}#info::backdrop{background:rgba(8,12,18,.55)}#info h2{font-size:18px;margin:0}
 </style>
 </head>
 <body>
@@ -33,6 +33,7 @@
   <main id="main"></main>
   <nav class="nav" id="nav"></nav>
 </div>
+<dialog id="info"><div id="infobody"></div><div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn primary" id="infoclose"></button></div></dialog>
 <div class="toast" id="toast" role="status"></div>
 <script src="/v2/static/app.js"></script>
 </body>

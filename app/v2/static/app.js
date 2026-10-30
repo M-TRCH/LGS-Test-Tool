@@ -48,6 +48,7 @@ const TXT = {
     fwGw: "อัปเดตเกตเวย์ผ่านเครือข่าย (ทีละตู้)", fwGwNote: "เกตเวย์รีบูตตอนจบ และตัดไฟชั้นวางชั่วครู่ (โมดูลทุกตัวรีบูตด้วย) พิมพ์ชื่อตู้เพื่อยืนยัน", fwUpload: "หรือเลือกไฟล์ .bin เอง", fwConfirm: "พิมพ์ชื่อตู้เพื่อยืนยัน",
     fwGwStart: "อัปเดตเกตเวย์", fwGwRun: "กำลังอัปเดตเกตเวย์", fwDone: "เสร็จ", fwFail: "ไม่สำเร็จ", fwLog: "บันทึกการทำงาน", fwNone: "—", fwCensus: "ผลตรวจ", fwLeft: "ยังไม่ใช่รุ่นใหม่", fwPhase: "ขั้น",
     explain: "อธิบาย",
+    close: "ปิด", noExplain: "ยังไม่มีคำอธิบายสำหรับค่านี้", curValue: "ค่าปัจจุบัน", newValue: "ค่าที่กำลังแก้",
     matched: "พบ {n} รายการ", loginAgain: "ต้องเข้าสู่ระบบอีกครั้ง", error: "ผิดพลาด: {e}", d: "วัน", h: "ชม.",
   },
   en: {
@@ -96,6 +97,7 @@ const TXT = {
     fwGw: "Gateway update over the network (one at a time)", fwGwNote: "The gateway reboots at the end and cuts the shelf's power for a moment (every module reboots too). Type the cabinet's name to confirm.", fwUpload: "or choose a .bin file", fwConfirm: "Type the cabinet's name to confirm",
     fwGwStart: "Update gateway", fwGwRun: "Updating gateway", fwDone: "Done", fwFail: "Failed", fwLog: "Log", fwNone: "—", fwCensus: "Result", fwLeft: "not on the new image", fwPhase: "Phase",
     explain: "info",
+    close: "Close", noExplain: "No explanation for this setting yet", curValue: "Current value", newValue: "Value being edited",
     matched: "{n} found", loginAgain: "Sign in again", error: "Error: {e}", d: "d", h: "h",
   },
 };
@@ -189,6 +191,17 @@ function viewEvents() {
 const GWGROUPS = ["sys", "rs485", "usb", "net", "time", "bus", "panel", "sched"];
 function gwChanged() { return Object.keys(S.gw.edits).length; }
 function gwLabel(k) { const tx = k.text && k.text[lang]; return (tx && tx.label) || k.key; }
+
+function showInfo(key) {
+  const k = S.gw.data && S.gw.data.keys.find((x) => x.key === key); if (!k) return;
+  const tx = (k.text && k.text[lang]) || {};
+  const flags = [k.reboot ? t("rebootKey") : "", k.ro ? t("ro") : ""].filter(Boolean).map((f) => `<span class="chip ${f === t("ro") ? "off" : "warn"}">${esc(f)}</span>`).join(" ");
+  $("#infobody").innerHTML = `<h2>${esc(gwLabel(k))}</h2><div class="mono small muted" style="margin:2px 0 10px">${esc(k.key)}</div>
+    <p style="margin:0 0 12px;white-space:pre-line">${esc(tx.hint || t("noExplain"))}</p>
+    <dl class="kv"><dt>${t("curValue")}</dt><dd class="mono">${esc(k.value)}</dd>${k.key in S.gw.edits ? `<dt>${t("newValue")}</dt><dd class="mono">${esc(S.gw.edits[k.key])}</dd>` : ""}</dl>${flags ? `<div class="row" style="margin-top:10px">${flags}</div>` : ""}`;
+  const d = $("#info"); if (d.showModal) d.showModal(); else d.setAttribute("open", "");
+}
+
 function viewGateway() {
   const g = S.gw, d = g.data;
   const opts = S.sites.map((x) => `<option value="${esc(x.id)}"${x.id === g.id ? " selected" : ""}>${esc(x.name)} · ${esc(x.host)}</option>`).join("");
@@ -201,10 +214,8 @@ function viewGateway() {
     const sw = (name, on) => `<div class="switch"><div><b>${t(name)}</b><div class="small muted">${t("volatileNote")}</div></div><button class="sw" role="switch" aria-checked="${on}" data-act="gw-vol" data-name="${name}"></button></div>`;
     const field = (k) => {
       const ed = k.key in g.edits, val = ed ? g.edits[k.key] : k.value;
-      const hint = k.text && k.text[lang] && k.text[lang].hint;
-      return `<div class="field"><label>${esc(gwLabel(k))}${k.reboot ? ` <span class="chip warn">${t("rebootKey")}</span>` : ""}${k.ro ? ` <span class="chip off">${t("ro")}</span>` : ""}<button class="why" data-act="hint" type="button" aria-label="${t("explain")}">?</button></label>
-        <input data-key="${esc(k.key)}" value="${esc(val)}" ${k.ro ? "disabled" : ""} ${ed ? 'style="border-color:var(--brand)"' : ""}>
-        <span class="hint"><span class="mono">${esc(k.key)}</span>${hint ? " · " + esc(hint) : ""}</span></div>`;
+      return `<div class="field"><label>${esc(gwLabel(k))}${k.reboot ? ` <span class="chip warn">${t("rebootKey")}</span>` : ""}${k.ro ? ` <span class="chip off">${t("ro")}</span>` : ""}<button class="why" data-act="hint" data-key="${esc(k.key)}" type="button" aria-label="${t("explain")}">?</button></label>
+        <input data-key="${esc(k.key)}" value="${esc(val)}" ${k.ro ? "disabled" : ""} ${ed ? 'style="border-color:var(--brand)"' : ""}></div>`;
     };
     const sh = d.shape && d.shape.layout && !d.shape.agreed ? `<div class="notice">${t("shapeBad", { l: esc(d.shape.label), w: esc(d.shape.why) })}<div class="row" style="margin-top:8px">${d.shape.fixable ? `<button class="btn" data-act="gw-shape">${t("shapeFix")}</button>` : `<span class="small">${t("shapeNoFix")}</span>`}</div></div>` : "";
     body = sh + `<section class="card"><dl class="kv"><dt>${t("fw")}</dt><dd class="mono">${esc(i.fw)}</dd><dt>${t("uptime")}</dt><dd>${fmtUp(+i["sys.up"] || 0)} (${esc(i["sys.reset"] || "")})</dd>
@@ -392,7 +403,7 @@ function render() {
     + `<button data-nav="classic">${t("classic")}</button>`;
   $("#main").innerHTML = (VIEWS[page] || viewCabinets)();
   const cur = $("#nav [aria-current]"); if (cur && cur.scrollIntoView) cur.scrollIntoView({ inline: "center", block: "nearest" });
-  $("#stagechip").textContent = t("stage");
+  $("#stagechip").textContent = t("stage"); $("#infoclose").textContent = t("close");
   $("#langbtn").textContent = lang.toUpperCase();
   document.documentElement.lang = lang;
   if (page === "events") loadEvents();
@@ -506,7 +517,7 @@ document.addEventListener("click", async (ev) => {
       if (f.gwFile) { await api("POST", `/api/v2/fw/gateway/start?id=${encodeURIComponent(f.gwId)}&confirm=${encodeURIComponent(f.gwConfirm)}&name=${encodeURIComponent(f.gwFileName)}`, f.gwFile, true); }
       else { await api("POST", "/api/v2/fw/gateway/start", { id: f.gwId, confirm: f.gwConfirm, image: f.gwImage }); }
       f.gwConfirm = ""; await fwRefresh();
-    } else if (act.dataset.act === "hint") { const f = act.closest(".field"); if (f) f.classList.toggle("showhint");
+    } else if (act.dataset.act === "hint") { showInfo(act.dataset.key);
     } else if (act.dataset.act === "collector") { const on = act.getAttribute("aria-checked") !== "true"; await api("POST", "/api/v2/collector", { enabled: on }); S.me = await api("GET", "/api/v2/me"); render(); }
   } catch (e) { fail(e); render(); }
 });
@@ -558,6 +569,8 @@ document.addEventListener("change", async (ev) => {
   }
 });
 document.addEventListener("keydown", (e) => { if ((e.key === " " || e.key === "Enter") && e.target.matches && e.target.matches(".sw")) { e.preventDefault(); e.target.click(); } });
+$("#infoclose").onclick = () => $("#info").close();
+$("#info").addEventListener("click", (e) => { if (e.target.id === "info") $("#info").close(); });
 $("#langbtn").onclick = () => { lang = lang === "th" ? "en" : "th"; localStorage.setItem("lgs.lang", lang); render(); };
 $("#themebtn").onclick = () => { const r = document.documentElement, dark = r.dataset.theme === "dark"; r.dataset.theme = dark ? "light" : "dark"; localStorage.setItem("lgs.theme", r.dataset.theme); };
 try { const th = localStorage.getItem("lgs.theme"); if (th) document.documentElement.dataset.theme = th; } catch (e) { /* storage blocked: default theme */ }
