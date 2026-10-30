@@ -8,7 +8,7 @@ import socket
 
 from nicegui import app, ui
 
-from . import applog, config_store, i18n, keep_awake, lgs_map, ntp_server
+from . import applog, auth, config_store, i18n, keep_awake, lgs_map, ntp_server
 from .modbus_worker import ModbusWorker
 from .txn_log import TxnLog
 
@@ -186,6 +186,8 @@ def _on_shutdown() -> None:
     applog.note("shutdown complete")
 
 
+# Web password gate (app/auth.py): open until a password is set.
+auth.install(app)
 app.on_startup(_on_startup)
 app.on_shutdown(ntp_server.server.stop)
 app.on_shutdown(_on_shutdown)

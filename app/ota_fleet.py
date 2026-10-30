@@ -26,7 +26,7 @@ from . import ota
 from .lgs_map import INTER_TXN_S, hub_channel, parse_hub_map
 from .soak_fleet import (FleetCabinet, _ClientOps, _Txn, _other_master,
                          duplicate_hosts, safe_stem)
-from .transports import HUB_SAFE_TIMEOUT_S, TcpSettings
+from .transports import OTA_TIMEOUT_S, TcpSettings
 
 BUS_BAUD = 9600                 # what the worker assumes behind a gateway too
 BROADCAST_IDLE_S = 0.100        # same hold as ModbusWorker.BROADCAST_IDLE_S
@@ -253,7 +253,7 @@ def _census(ops, ids: Sequence[int]) -> str:
 def run_fleet_ota(cabinets: Sequence[FleetCabinet], image: bytes, filename: str,
                   emit: Callable, cancel: threading.Event, log_dir: Path, *,
                   board: Optional[StatusBoard] = None,
-                  timeout_s: float = HUB_SAFE_TIMEOUT_S,
+                  timeout_s: float = OTA_TIMEOUT_S,
                   allow_shared: bool = False,
                   repair_rounds: int = 8,
                   ops_factory: Optional[Callable] = None) -> Optional[FleetOtaOutcome]:

@@ -62,6 +62,13 @@ def pick_bus_duty(picks_per_day: float) -> float:
     return max(0.0, float(picks_per_day)) * PICK_BUS_COST_S / 86400.0
 
 
+# How often the gateway's own counters are read during a run, and which ones.
+# Keys are the short names an ops binder's gateway_counters() returns; "up" is
+# the gateway's uptime, used only to notice a restart.
+GW_SAMPLE_S = 600.0
+_GW_KEYS = ("retry_ok", "retry_fail", "timeout", "bad_crc", "bad_other")
+
+
 class SoakOps(Protocol):
     def read_regs(self, device_id: int, addr: int, count: int): ...
     def sleep(self, seconds: float) -> None: ...
@@ -107,6 +114,11 @@ class SoakConfig:
     # top of the same poll: the cabinet is also being USED while it is
     # watched, which is the one traffic shape no soak here has ever applied.
     mode: str = "poll"               # poll | pharmacy
+    # time.monotonic() value at which THIS run must stop by itself; 0 = never.
+    # A fleet sets it so the end of a run never depends on one thread's
+    # cancel signal alone: two overnight runs (2026-10-28/30) were still
+    # polling 31 and 49 minutes after their deadline with no stop row.
+    stop_at_mono: float = 0.0
     # Activations per cabinet per day. A ward is not a stress test -- the
     # point is the shape of real use, not the maximum the bus can take.
     picks_per_day: int = 2000
@@ -152,6 +164,16 @@ class SoakTick:
     lit: int = 0                 # windows lit at this instant
     elapsed_s: float = 0.0
     seq: int = 0
+    # The gateway's own RS485 counters, as DELTAS over this run (see
+    # _GW_KEYS). `gw_seen` False = the ops binder or the firmware cannot say,
+    # which must read as "unknown", never as "zero misses".
+    gw_seen: bool = False
+    gw_healed: int = 0           # first-try misses the gateway repaired (rtu.retry_ok)
+    gw_heal_failed: int = 0      # repairs that did not work (rtu.retry_fail)
+    gw_timeouts: int = 0         # final RS485 timeouts, healed or not counted out (cnt.rs485_timeout)
+    gw_bad_crc: int = 0
+    gw_bad_other: int = 0
+    gw_rebooted: int = 0         # times the gateway restarted during the run
 
 
 @dataclass
@@ -527,6 +549,65 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
     tick = report.tick
     channel_of = channel_resolver(cfg)     # the crossing accounting's wiring
     link_state = {"down": False, "since": 0.0, "missed": 0}
+    deadline_noted = [False]
+
+    def stopped() -> bool:
+        """cancel OR this run's own deadline. Reaching the deadline here sets
+        `cancel` too, so ops.sleep() and every other loop wake up, and writes
+        one file-only row (not an anomaly: ending on time is not a finding).
+        A lag well above a second means the fleet's own clock did not fire,
+        which is what the two overruns above never recorded."""
+        if cancel.is_set():
+            return True
+        if cfg.stop_at_mono and time.monotonic() >= cfg.stop_at_mono:
+            if not deadline_noted[0]:
+                deadline_noted[0] = True
+                csv("deadline", f"reached by the run itself {time.monotonic() - cfg.stop_at_mono:.1f} s after the deadline")
+                cancel.set()
+            return True
+        return False
+
+    # The gateway's RS485 counters, sampled through the ops binder when it has
+    # them (the TCP fleet does; a COM-port run has no console). A run can
+    # report zero failed reads over a bus the gateway kept repairing, so the
+    # repairs are measured too: first at the start, every GW_SAMPLE_S, and
+    # once more at the end. Only DELTAS are kept -- the counters run from the
+    # gateway's boot, long before this run.
+    gw = {"last": None, "t": 0.0}
+
+    def gw_sample() -> None:
+        fn = getattr(ops, "gateway_counters", None)
+        if fn is None:
+            return
+        gw["t"] = time.monotonic()
+        try:
+            cur = fn()
+        except Exception:                                        # noqa: BLE001
+            cur = None
+        if not cur:
+            return
+        last = gw["last"]
+        if last is None:
+            tick.gw_seen = True
+        else:
+            # A gateway that restarted counts from zero again: take the new
+            # values whole instead of a negative difference.
+            rebooted = cur.get("up", 0) < last.get("up", 0)
+            if rebooted:
+                tick.gw_rebooted += 1
+            step = {k: (cur[k] if rebooted else max(0, cur[k] - last[k]))
+                    for k in _GW_KEYS if k in cur and k in last}
+            tick.gw_healed += step.get("retry_ok", 0)
+            tick.gw_heal_failed += step.get("retry_fail", 0)
+            tick.gw_timeouts += step.get("timeout", 0)
+            tick.gw_bad_crc += step.get("bad_crc", 0)
+            tick.gw_bad_other += step.get("bad_other", 0)
+        gw["last"] = cur
+        csv("gw", f"healed={tick.gw_healed} heal_failed={tick.gw_heal_failed} "
+                  f"timeouts={tick.gw_timeouts} bad_crc={tick.gw_bad_crc} "
+                  f"bad_other={tick.gw_bad_other} gw_reboots={tick.gw_rebooted}")
+
+    gw_sample()
 
     # Baseline: what every module says before we start leaning on the bus.
     baseline: dict = {}
@@ -675,12 +756,12 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
         tick.lit = pharmacy.lit_count()
         csv(what, f"window {coil - 1000}", dev)
 
-    while not cancel.is_set():
+    while not stopped():
         tick.passes += 1
         check_counters = (tick.passes % max(1, cfg.counter_every) == 0)
 
         for device_id in ids:
-            if cancel.is_set():
+            if stopped():
                 break
             # The very first read counts as a crossing too: nobody knows which
             # channel the hub is parked on, and letting that one 2.2 s wait
@@ -731,9 +812,9 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
             ops.sleep(INTER_TXN_S)
             pharmacy_step()
 
-        if check_counters and not cancel.is_set():
+        if check_counters and not stopped():
             for device_id in ids:
-                if cancel.is_set():
+                if stopped():
                     break
                 # This loop walks the same ids in the same order, so it
                 # crosses the hub exactly as the main pass does and needs the
@@ -816,6 +897,11 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
         # inference: the last heartbeat is the last moment the tool was
         # certainly alive and the cabinet certainly answering.
         csv("heartbeat", _totals(tick))
+        if time.monotonic() - gw["t"] >= GW_SAMPLE_S:
+            gw_sample()
         ops.sleep(cfg.pass_gap_s)
 
+    gw_sample()                      # the closing reading, after the last pass
+    tick.elapsed_s = time.monotonic() - t0
+    emit(replace(tick))
     return True

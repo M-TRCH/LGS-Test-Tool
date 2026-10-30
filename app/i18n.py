@@ -908,6 +908,31 @@ TEXTS: dict[str, dict[str, str]] = {
                                    "ก็ส่งเวลาท้องถิ่นตรงๆ เหมือนเดิม"},
     "sch.ntp": {"en": "NTP: {s}", "th": "NTP: {s}"},
 
+    "auth.card": {"en": "Web password", "th": "รหัสผ่านหน้าเว็บ"},
+    "auth.hint": {"en": "Anyone on the network can open this page, including Danger "
+                        "and firmware updates. Set a password and every browser must "
+                        "sign in first. Stored only as a hash. Forgotten? Run the "
+                        "program with --clear-password on this computer.",
+                  "th": "ตอนนี้ใครในเครือข่ายก็เปิดหน้านี้ได้ รวมถึงโซนอันตรายและการอัปเดต"
+                        "เฟิร์มแวร์ ตั้งรหัสผ่านแล้วทุกเบราว์เซอร์ต้องเข้าสู่ระบบก่อน "
+                        "เก็บเป็นค่าแฮชเท่านั้น ลืมรหัส: รันโปรแกรมด้วย --clear-password "
+                        "บนคอมเครื่องนี้"},
+    "auth.on": {"en": "Password is ON: sign-in required", "th": "เปิดรหัสผ่านอยู่: ต้องเข้าสู่ระบบ"},
+    "auth.off": {"en": "No password: open to everyone on the network",
+                 "th": "ยังไม่ตั้งรหัสผ่าน: ทุกคนในเครือข่ายเข้าได้"},
+    "auth.new": {"en": "New password", "th": "รหัสผ่านใหม่"},
+    "auth.repeat": {"en": "Repeat", "th": "พิมพ์ซ้ำ"},
+    "auth.set": {"en": "Set password", "th": "ตั้งรหัสผ่าน"},
+    "auth.remove": {"en": "Remove password", "th": "ลบรหัสผ่าน"},
+    "auth.logout": {"en": "Sign out", "th": "ออกจากระบบ"},
+    "auth.cancel": {"en": "Cancel", "th": "ยกเลิก"},
+    "auth.remove_q": {"en": "Remove the password? The page becomes open to everyone on the network.",
+                      "th": "ลบรหัสผ่าน? หน้าเว็บจะเปิดให้ทุกคนในเครือข่ายเข้าได้"},
+    "auth.mismatch": {"en": "The two entries differ", "th": "สองช่องไม่ตรงกัน"},
+    "auth.short": {"en": "At least {n} characters", "th": "อย่างน้อย {n} ตัวอักษร"},
+    "auth.saved": {"en": "Password set. Sign in again.", "th": "ตั้งรหัสผ่านแล้ว กรุณาเข้าสู่ระบบอีกครั้ง"},
+    "auth.removed": {"en": "Password removed", "th": "ลบรหัสผ่านแล้ว"},
+
     "ntp.card": {"en": "NTP server (this computer)", "th": "NTP server (คอมเครื่องนี้)"},
     "ntp.hint": {"en": "Serve time to gateways from this computer's clock. Meant for "
                        "the site's server, where this tool is left running: the "
@@ -1032,10 +1057,22 @@ TEXTS: dict[str, dict[str, str]] = {
                        "นาฬิกาเก็บเวลาท้องถิ่น ไม่ใช่ UTC ดังนั้น 03:00 คือตีสามที่นี่"},
     "sch.now": {"en": "gateway clock: {now}", "th": "นาฬิกาเกตเวย์: {now}"},
     "sch.sync": {"en": "SET FROM THIS PC", "th": "ตั้งจากเครื่องนี้"},
-    "sch.sync_hint": {"en": "Sends this PC's wall clock. Done automatically "
-                            "whenever the gateway's clock is unset.",
-                      "th": "ส่งเวลาของเครื่องนี้ไปให้ ระบบจะตั้งให้เองทุกครั้ง"
-                            "ที่พบว่าเกตเวย์ยังไม่มีเวลา"},
+    "sch.sync_hint": {"en": "Sends this PC's wall clock. Setting the clock also "
+                            "arms the gateway's scheduled reset. The tool asks "
+                            "first when it finds the clock unset; it no longer "
+                            "sets it by itself.",
+                      "th": "ส่งเวลาของเครื่องนี้ไปให้ การตั้งเวลายังเป็นการเปิดใช้"
+                            "การรีเซ็ตตามเวลาของเกตเวย์ด้วย เมื่อพบว่ายังไม่มีเวลา"
+                            "โปรแกรมจะถามก่อน ไม่ตั้งให้เองเงียบๆ อีกแล้ว"},
+    "sch.ask_title": {"en": "The gateway has no clock", "th": "เกตเวย์ยังไม่มีเวลา"},
+    "sch.ask_body": {"en": "It lost its time (usually a power cut). Set it from this "
+                           "PC? This also arms the scheduled reset (e.g. 03:00), "
+                           "which cuts the shelf's power at that time. Say no if "
+                           "you only came to look.",
+                     "th": "เกตเวย์ทำเวลาหาย (มักเกิดจากไฟดับ) ตั้งเวลาจากเครื่องนี้ไหม? "
+                           "การตั้งเวลาเป็นการเปิดใช้การรีเซ็ตตามเวลา (เช่น 03:00) "
+                           "ซึ่งจะตัดไฟชั้นวางตามเวลานั้น ถ้าแค่เข้ามาดูให้กดไม่ตั้ง"},
+    "sch.ask_ok": {"en": "Set the clock", "th": "ตั้งเวลา"},
     "sch.synced": {"en": "gateway clock set from this PC",
                    "th": "ตั้งนาฬิกาเกตเวย์จากเครื่องนี้แล้ว"},
     "sch.last": {"en": "last scheduled reset: {when}",
