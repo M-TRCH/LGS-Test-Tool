@@ -48,7 +48,7 @@ const TXT = {
     fwGw: "อัปเดตเกตเวย์ผ่านเครือข่าย (ทีละตู้)", fwGwNote: "เกตเวย์รีบูตตอนจบ และตัดไฟชั้นวางชั่วครู่ (โมดูลทุกตัวรีบูตด้วย) พิมพ์ชื่อตู้เพื่อยืนยัน", fwUpload: "หรือเลือกไฟล์ .bin เอง", fwConfirm: "พิมพ์ชื่อตู้เพื่อยืนยัน",
     fwGwStart: "อัปเดตเกตเวย์", fwGwRun: "กำลังอัปเดตเกตเวย์", fwDone: "เสร็จ", fwFail: "ไม่สำเร็จ", fwLog: "บันทึกการทำงาน", fwNone: "—", fwCensus: "ผลตรวจ", fwLeft: "ยังไม่ใช่รุ่นใหม่", fwPhase: "ขั้น",
     explain: "อธิบาย",
-    basic: "พื้นฐาน", advanced: "ขั้นสูง", modeNote: "พื้นฐาน = ตรวจ ทดสอบ ดูผล · ขั้นสูง = เพิ่มหน้าที่แก้ค่าหรือเขียนเฟิร์มแวร์ได้", modeLocked: "หน้านี้อยู่ในโหมดขั้นสูง", mode: "โหมด", noKeys: "ไม่มีค่าในกลุ่มนี้",
+    basic: "พื้นฐาน", advanced: "ขั้นสูง", modeNote: "พื้นฐาน = ตรวจ ทดสอบ ดูผล · ขั้นสูง = เพิ่มหน้าที่แก้ค่าหรือเขียนเฟิร์มแวร์ได้", modeLocked: "หน้านี้อยู่ในโหมดขั้นสูง", mode: "โหมด", settings: "ตั้งค่า", language: "ภาษา", noKeys: "ไม่มีค่าในกลุ่มนี้",
     g_sys: "ทั่วไป", g_rs485: "บัส RS485", g_usb: "พอร์ต USB", g_net: "เครือข่าย", g_time: "เวลา", g_bus: "ฮับ RS485", g_panel: "ปุ่มและไฟหน้าตู้", g_sched: "รีเซตตามเวลา",
     theme: "ธีม", th_auto: "ตามเครื่อง", th_light: "สว่าง", th_dark: "มืด", th_ocean: "ทะเล", th_forest: "ป่า", th_sand: "ทราย", th_midnight: "เที่ยงคืน", th_contrast: "คอนทราสต์สูง",
     lbPicture: "ตัวอย่างป้าย", lbPicNote: "ภาพจากไฟล์ .lbx ที่จะดาวน์โหลดจริง (ตำแหน่งและข้อความตรงกัน) QR เป็นภาพแทน โปรแกรมพิมพ์ Brother สร้าง QR จริง ฟอนต์อาจต่างเล็กน้อย",
@@ -102,7 +102,7 @@ const TXT = {
     fwGw: "Gateway update over the network (one at a time)", fwGwNote: "The gateway reboots at the end and cuts the shelf's power for a moment (every module reboots too). Type the cabinet's name to confirm.", fwUpload: "or choose a .bin file", fwConfirm: "Type the cabinet's name to confirm",
     fwGwStart: "Update gateway", fwGwRun: "Updating gateway", fwDone: "Done", fwFail: "Failed", fwLog: "Log", fwNone: "—", fwCensus: "Result", fwLeft: "not on the new image", fwPhase: "Phase",
     explain: "info",
-    basic: "Basic", advanced: "Advanced", modeNote: "Basic = check, test, read results · Advanced = adds the pages that change settings or write firmware", modeLocked: "That page is in Advanced mode", mode: "Mode", noKeys: "No values in this group",
+    basic: "Basic", advanced: "Advanced", modeNote: "Basic = check, test, read results · Advanced = adds the pages that change settings or write firmware", modeLocked: "That page is in Advanced mode", mode: "Mode", settings: "Settings", language: "Language", noKeys: "No values in this group",
     g_sys: "General", g_rs485: "RS485 bus", g_usb: "USB port", g_net: "Network", g_time: "Time", g_bus: "RS485 hub", g_panel: "Panel buttons and lamps", g_sched: "Scheduled reset",
     theme: "Theme", th_auto: "Follow device", th_light: "Light", th_dark: "Dark", th_ocean: "Ocean", th_forest: "Forest", th_sand: "Sand", th_midnight: "Midnight", th_contrast: "High contrast",
     lbPicture: "Label preview", lbPicNote: "Drawn from the .lbx you would download (positions and text match). The QR is a stand-in: Brother's software makes the real one. The font may differ slightly.",
@@ -433,7 +433,7 @@ function render() {
   $("#main").innerHTML = (VIEWS[page] || viewCabinets)();
   const cur = $("#nav [aria-current]"); if (cur && cur.scrollIntoView) cur.scrollIntoView({ inline: "center", block: "nearest" });
   $("#stagechip").textContent = t("stage"); $("#infoclose").textContent = t("close");
-  $("#langbtn").textContent = lang.toUpperCase(); themeSelect(); modeSelect();
+  settingsText(); themeSelect(); modeSelect();
   document.documentElement.lang = lang;
   if (page === "events") loadEvents();
   if (page === "gateway") gwBar();
@@ -600,7 +600,15 @@ document.addEventListener("change", async (ev) => {
 document.addEventListener("keydown", (e) => { if ((e.key === " " || e.key === "Enter") && e.target.matches && e.target.matches(".sw")) { e.preventDefault(); e.target.click(); } });
 $("#infoclose").onclick = () => $("#info").close();
 $("#info").addEventListener("click", (e) => { if (e.target.id === "info") $("#info").close(); });
-$("#langbtn").onclick = () => { lang = lang === "th" ? "en" : "th"; localStorage.setItem("lgs.lang", lang); render(); };
+function settingsText() {
+  $("#setbtn").textContent = t("settings"); $("#settitle").textContent = t("settings"); $("#setclose").textContent = t("close");
+  $("#langlbl").textContent = t("language"); $("#modelbl").textContent = t("mode"); $("#themelbl").textContent = t("theme"); $("#modehint").textContent = t("modeNote");
+  $("#langsel").value = lang;
+}
+$("#setbtn").onclick = () => { const d = $("#settings"); if (d.showModal) d.showModal(); else d.setAttribute("open", ""); };
+$("#setclose").onclick = () => $("#settings").close();
+$("#settings").addEventListener("click", (e) => { if (e.target.id === "settings") $("#settings").close(); });
+$("#langsel").onchange = (e) => { lang = e.target.value; try { localStorage.setItem("lgs.lang", lang); } catch (x) { /* not remembered */ } render(); };
 const THEMES = ["auto", "light", "dark", "ocean", "forest", "sand", "midnight", "contrast"];
 function setTheme(name) {
   const r = document.documentElement;
@@ -610,7 +618,7 @@ function setTheme(name) {
 function themeSelect() { const el = $("#themesel"); el.setAttribute("aria-label", t("theme")); el.innerHTML = THEMES.map((n) => `<option value="${n}"${n === themeNow ? " selected" : ""}>${t("th_" + n)}</option>`).join(""); }
 let themeNow = "auto"; try { const th = localStorage.getItem("lgs.theme"); if (THEMES.includes(th)) themeNow = th; } catch (e) { /* storage blocked: follow the device */ }
 setTheme(themeNow);
-function modeSelect() { const el = $("#modesel"); el.setAttribute("aria-label", t("mode")); el.title = t("modeNote"); el.innerHTML = ["basic", "advanced"].map((m) => `<option value="${m}"${m === uiMode ? " selected" : ""}>${t(m)}</option>`).join(""); }
+function modeSelect() { const el = $("#modesel"); el.setAttribute("aria-label", t("mode")); el.innerHTML = ["basic", "advanced"].map((m) => `<option value="${m}"${m === uiMode ? " selected" : ""}>${t(m)}</option>`).join(""); }
 $("#modesel").onchange = (e) => { uiMode = e.target.value; try { localStorage.setItem("lgs.mode", uiMode); } catch (x) { /* not remembered */ } clearInterval(S.fw.timer); S.fw.timer = null; render(); };
 $("#themesel").onchange = (e) => { themeNow = e.target.value; setTheme(themeNow); };
 

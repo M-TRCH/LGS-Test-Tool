@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="/v2/static/fonts.css">
 <link rel="stylesheet" href="/v2/static/app.css">
 <style>
-.cab{display:grid;gap:8px}.cab h3{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.cab{display:grid;gap:8px}.card.cab{grid-template-columns:minmax(0,1fr)}.cab h3{display:flex;gap:8px;align-items:center;justify-content:space-between}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:14px}.kv dt{color:var(--muted)}.kv dd{margin:0;overflow-wrap:anywhere}
 .cabs{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr))}
 .evrow{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
@@ -20,21 +20,25 @@
 .sitesrow.dup input[data-f=host]{border-color:var(--warn)}
 .why{display:inline-grid;place-items:center;width:18px;height:18px;margin-left:6px;padding:0;min-height:0;border:1px solid var(--line);border-radius:50%;background:none;color:var(--muted);font-size:12px;line-height:1;cursor:pointer;vertical-align:middle}.why:hover{background:var(--surface2);color:var(--ink)}
 @media (max-width:899px){.nav{display:flex;overflow-x:auto;scrollbar-width:none}.nav button{flex:0 0 auto;min-width:78px;padding:0 12px;font-size:13px;white-space:nowrap}}
-#info{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);color:var(--ink);padding:18px;width:min(92vw,460px);box-shadow:0 12px 40px rgba(0,0,0,.35)}#info::backdrop{background:rgba(8,12,18,.55)}#info h2{font-size:18px;margin:0}
+#info,#settings{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);color:var(--ink);padding:18px;width:min(92vw,420px);box-shadow:0 12px 40px rgba(0,0,0,.35)}#info::backdrop,#settings::backdrop{background:rgba(8,12,18,.55)}#info h2,#settings h2{font-size:18px;margin:0}
 </style>
 </head>
 <body>
 <div class="app">
   <header class="top">
+    <button class="btn sm" id="setbtn" type="button" aria-haspopup="dialog"></button>
     <div class="logo">LGS Test Tool<small id="ver"></small></div>
     <span class="chip warn" id="stagechip"></span>
     <div class="spacer"></div>
-    <button class="iconbtn" id="langbtn" aria-label="language">TH</button>
-    <select id="modesel" class="themesel"></select><select id="themesel" class="themesel"></select>
   </header>
   <main id="main"></main>
   <nav class="nav" id="nav"></nav>
 </div>
+<dialog id="settings"><h2 id="settitle"></h2><div class="stack" style="margin-top:12px">
+  <div class="field"><label id="langlbl"></label><select id="langsel"><option value="th">ไทย</option><option value="en">English</option></select></div>
+  <div class="field"><label id="modelbl"></label><select id="modesel"></select><span class="hint" id="modehint"></span></div>
+  <div class="field"><label id="themelbl"></label><select id="themesel"></select></div></div>
+  <div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn primary" id="setclose"></button></div></dialog>
 <dialog id="info"><div id="infobody"></div><div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn primary" id="infoclose"></button></div></dialog>
 <div class="toast" id="toast" role="status"></div>
 <script src="/v2/static/app.js"></script>
