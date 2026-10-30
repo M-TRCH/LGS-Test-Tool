@@ -393,6 +393,13 @@ def _other_master(client, gateway_host: str) -> Optional[str]:
                     dropped_self = True      # this is us; every other one is not
                     continue
                 others.append(peer)
+            if not dropped_self and len(others) == 1:
+                # Our own address is not in the list and exactly ONE client is:
+                # that client is this very connection seen through a router or
+                # a VPN (the tool reached over Tailscale shows up as the
+                # relay's address). A second master would make it two. Without
+                # this the guard refused every run started from behind NAT.
+                return None
             return ", ".join(others) if others else None
     except Exception:                                            # noqa: BLE001
         return None                      # never let the guard break the run

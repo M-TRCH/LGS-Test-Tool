@@ -61,6 +61,11 @@ def index() -> None:
     page_guard.install()
     theme.init(cfg.theme)
     connection_bar.build(ctx)
+    # The way back to the v2 pages: the classic UI had no link to them, and a
+    # browser opened here had no way to return except typing the address.
+    ui.link(i18n.t("hdr.v2"), "/v2").classes(
+        "fixed text-sm font-bold bg-primary text-white rounded px-3 py-1 z-50 no-underline"
+    ).style("right: 12px; bottom: 12px")
 
     with ui.row(align_items="center").classes("w-full no-wrap"):
         with ui.tabs().classes("grow") as tabs:
