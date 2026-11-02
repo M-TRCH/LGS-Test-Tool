@@ -39,7 +39,7 @@ const TXT = {
     sVerdict: "สรุปผลรอบล่าสุด", sHistory: "รอบที่ผ่านมา", sView: "ดูสรุป", sNoRuns: "ยังไม่มีรอบที่ผ่านมา", sFrames: "เฟรมที่ถูกทิ้ง: {n}",
     sNeedType: "ตู้ที่ไม่ได้กำหนดชนิดจะเริ่มไม่ได้ ตั้งที่หน้า รายการตู้", sStarted: "เริ่มแล้ว {n} ตู้", sCsv: "ไฟล์ CSV", sLongNote: "รันบนเซิร์ฟเวอร์ ปิดหน้านี้ได้ ผลเก็บใน data/exports",
     labels_page: "ป้าย", firmware_page: "เฟิร์มแวร์", lbWard: "ชื่อวอร์ด (พิมพ์บนป้าย)", lbSerial: "ซีเรียลจากคลัง (ไม่เก็บ)", lbLayout: "แบบป้าย", lbPlate: "กรอบ",
-    lbPreview: "ดูตัวอย่างข้อมูล", lbDownload: "ดาวน์โหลด .lbx", lbInfo: "{name} · {ip} · {mac} · {rows} แถว", lbReady: "ยาว {mm} มม. · QR {qr} ไบต์ ({ecc}, กู้ได้ {rec}%, เหลือ {spare} ไบต์) · ไฟล์ {size} ไบต์",
+    lbPreview: "ดูตัวอย่างข้อมูล", lbDownload: "ดาวน์โหลด .lbx", lbInfo: "{name} · {ip} · {mac} · {rows} แถว", lbReady: "ยาว {mm} มม. · QR {qr} ไบต์ ({ecc}, กู้ได้ {rec}, เหลือ {spare} ไบต์) · ไฟล์ {size} ไบต์",
     lbNote: "อ่านชื่อ ไอพี MAC และแผนผังแถวจากเกตเวย์ตอนกด ป้ายจึงไม่ใช่ของเก่า ซีเรียลเป็นของฐานข้อมูลคลัง ไม่เก็บในโปรแกรม",
     expCfg: "ส่งออก config (JSON)", impCfg: "นำเข้า config (JSON)", impDone: "นำเข้า {n} ค่า (ยังไม่บันทึก ตรวจแล้วกดบันทึกลงเกตเวย์)", impNone: "ไม่มีค่าที่ต่างจากเกตเวย์",
     shapeBad: "ชนิดตู้ใน รายการตู้ ({l}) ไม่ตรงกับเกตเวย์: {w}", shapeFix: "ตั้งค่าที่ตรงให้ (ยังไม่บันทึก)", shapeNoFix: "เกตเวย์รุ่นนี้แก้เองไม่ได้ (ไม่มี panel.shape)",
@@ -100,7 +100,7 @@ const TXT = {
     sVerdict: "Latest run verdict", sHistory: "Past runs", sView: "View verdict", sNoRuns: "No past runs yet", sFrames: "Frames pymodbus discarded: {n}",
     sNeedType: "A cabinet with no type cannot start. Set it on the Sites page.", sStarted: "Started {n} cabinets", sCsv: "CSV files", sLongNote: "Runs on the server: you can close this page. Results go to data/exports.",
     labels_page: "Labels", firmware_page: "Firmware", lbWard: "Ward name (printed)", lbSerial: "Serial from the warehouse (not stored)", lbLayout: "Label layout", lbPlate: "Frame",
-    lbPreview: "Preview data", lbDownload: "Download .lbx", lbInfo: "{name} · {ip} · {mac} · {rows} rows", lbReady: "{mm} mm long · QR {qr} bytes ({ecc}, recovers {rec}%, {spare} bytes spare) · file {size} bytes",
+    lbPreview: "Preview data", lbDownload: "Download .lbx", lbInfo: "{name} · {ip} · {mac} · {rows} rows", lbReady: "{mm} mm long · QR {qr} bytes ({ecc}, recovers {rec}, {spare} bytes spare) · file {size} bytes",
     lbNote: "Name, IP, MAC and the row map are read from the gateway when you press the button, so a sticker is never stale. The serial belongs to the warehouse database and is not kept here.",
     expCfg: "Export config (JSON)", impCfg: "Import config (JSON)", impDone: "Imported {n} values (not saved yet: review, then Save to gateway)", impNone: "Nothing differs from the gateway",
     shapeBad: "The cabinet type on the Sites page ({l}) does not match the gateway: {w}", shapeFix: "Stage the matching values (not saved yet)", shapeNoFix: "This firmware cannot be told (no panel.shape)",
@@ -392,7 +392,7 @@ function viewLabels() {
   const opts = S.sites.map((x) => `<option value="${esc(x.id)}"${x.id === l.id ? " selected" : ""}>${esc(x.name)} · ${esc(x.host)}</option>`).join("");
   const info = l.info ? `<div class="notice info">${t("lbInfo", { name: esc(l.info.name), ip: esc(l.info.ip), mac: esc(l.info.mac), rows: l.info.rows })}<br>${t("lbReady", { mm: l.info.mm, qr: l.info.qr_bytes, ecc: l.info.ecc, rec: l.info.recover_pct, spare: l.info.spare_bytes, size: l.info.size })}
       <details style="margin-top:6px"><summary class="small">QR</summary><pre class="mono tiny" style="white-space:pre-wrap;margin:0">${esc(l.info.payload)}</pre></details></div>` : "";
-  const pic = l.info && l.info.svg ? `<section class="card stack"><h3>${t("lbPicture")}</h3><div style="overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:#fff;padding:6px"><div style="min-width:420px">${l.info.svg}</div></div><p class="small muted">${t("lbPicNote")}</p></section>` : "";
+  const pic = l.info && l.info.svg ? `<section class="card stack"><h3>${t("lbPicture")}</h3><div style="border:1px solid var(--line);border-radius:8px;background:#fff;padding:6px">${l.info.svg}</div><p class="small muted">${t("lbPicNote")}</p></section>` : "";
   return `<h1>${t("labels_page")}</h1><p class="small muted">${t("lbNote")}</p>
     <section class="card stack"><div class="fgrid">
       <div class="field"><label>${t("pick")}</label><select id="lbsel"><option value="">—</option>${opts}</select></div>
