@@ -14,7 +14,7 @@ const TXT = {
     dupWarn: "ไอพีซ้ำกับแถวอื่น", unsaved: "มีการแก้ที่ยังไม่บันทึก", gateway: "เกตเวย์", days: "ย้อนหลัง", day1: "วันนี้", day7: "7 วัน", day30: "30 วัน", day90: "90 วัน", all: "ทั้งหมด",
     search: "ค้นหา (ชื่อ, ไอพี)", noEvents: "ไม่มีเหตุการณ์ในช่วงนี้", noEventsOff: "ยังไม่มีข้อมูล เพราะยังไม่ได้เปิด \"เก็บเหตุการณ์อัตโนมัติ\" ด้านบน (เปิดแล้วรอประมาณ 5 นาทีให้ดึงรอบแรก) ตู้ที่ใช้เฟิร์มแวร์ต่ำกว่า 1.14.0 จะไม่มีข้อมูล", collect: "เก็บเหตุการณ์อัตโนมัติ",
     collectHint: "ดึงบันทึกจากเกตเวย์ทุกตู้ในรายการตู้ทุก 5 นาที เก็บ 90 วัน ต้องใช้เฟิร์มแวร์เกตเวย์ 1.14.0 ขึ้นไป",
-    gateway_page: "เกตเวย์", pick: "เลือกตู้", read: "อ่านค่า", reading: "กำลังอ่าน...", notRead: "เลือกตู้แล้วกดอ่านค่า",
+    gateway_page: "เกตเวย์", pick: "เลือกตู้", read: "อ่านค่า", reading: "กำลังอ่าน...",
     setClock: "ตั้งนาฬิกาจากเครื่องนี้", clockWarn: "การตั้งนาฬิกาเป็นการเปิดใช้การรีเซ็ตตามเวลา (เช่น 03:00) ซึ่งตัดไฟชั้นวาง ตั้งเมื่อตั้งใจเท่านั้น",
     clockSet: "ตั้งนาฬิกาแล้ว", resync: "ซ่อมจังหวะหลังไม่มีคำตอบ (RESYNC)", exc: "ตอบ exception 0x0B ทันทีเมื่อบัสไม่ตอบ (EXC)",
     volatileNote: "ชั่วคราว: กลับค่าเดิมเมื่อเกตเวย์รีบูต", reboot: "รีบูตเกตเวย์", rebootQ: "รีบูตเกตเวย์ {n}? จะตัดการสื่อสารสักครู่",
@@ -72,7 +72,7 @@ const TXT = {
     dupWarn: "same address as another row", unsaved: "Unsaved changes", gateway: "Gateway", days: "Range", day1: "Today", day7: "7 days", day30: "30 days", day90: "90 days", all: "All",
     search: "Search (name, IP)", noEvents: "No events in this range", noEventsOff: "No data yet because \"Collect events automatically\" above is off (turn it on and wait about 5 minutes for the first pull). Cabinets below firmware 1.14.0 have no events.", collect: "Collect events automatically",
     collectHint: "Pulls every saved cabinet's gateway log every 5 minutes, kept 90 days. Needs gateway firmware 1.14.0 or newer.",
-    gateway_page: "Gateway", pick: "Choose cabinet", read: "Read", reading: "Reading...", notRead: "Choose a cabinet and press Read",
+    gateway_page: "Gateway", pick: "Choose cabinet", read: "Read", reading: "Reading...",
     setClock: "Set clock from this PC", clockWarn: "Setting the clock also arms the scheduled reset (e.g. 03:00), which cuts the shelf's power. Do it on purpose only.",
     clockSet: "Clock set", resync: "Re-sync after a missing reply (RESYNC)", exc: "Answer a bus timeout with exception 0x0B at once (EXC)",
     volatileNote: "Temporary: reverts when the gateway reboots", reboot: "Reboot gateway", rebootQ: "Reboot gateway {n}? It will be unreachable for a moment.",
@@ -260,7 +260,7 @@ function showInfo(key) {
 function viewGateway() {
   const g = S.gw, d = g.data;
   const opts = S.sites.map((x) => `<option value="${esc(x.id)}"${x.id === g.id ? " selected" : ""}>${esc(x.name)} · ${esc(x.host)}</option>`).join("");
-  let body = `<div class="notice info">${t("notRead")}</div>`;
+  let body = "";
   if (d && d.ok) {
     const i = d.info;
     const groups = {};
