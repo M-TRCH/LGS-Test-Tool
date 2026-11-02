@@ -48,7 +48,7 @@ const TXT = {
     fwGw: "อัปเดตเกตเวย์ผ่านเครือข่าย (ทีละตู้)", fwGwNote: "เกตเวย์รีบูตตอนจบ และตัดไฟชั้นวางชั่วครู่ (โมดูลทุกตัวรีบูตด้วย) พิมพ์ชื่อตู้เพื่อยืนยัน", fwUpload: "หรือเลือกไฟล์ .bin เอง", fwConfirm: "พิมพ์ชื่อตู้เพื่อยืนยัน",
     fwGwStart: "อัปเดตเกตเวย์", fwGwRun: "กำลังอัปเดตเกตเวย์", fwDone: "เสร็จ", fwFail: "ไม่สำเร็จ", fwLog: "บันทึกการทำงาน", fwNone: "—", fwCensus: "ผลตรวจ", fwLeft: "ยังไม่ใช่รุ่นใหม่", fwPhase: "ขั้น",
     explain: "อธิบาย",
-    basic: "พื้นฐาน", advanced: "ขั้นสูง", modeNote: "พื้นฐาน = ตรวจ ทดสอบ ดูผล · ขั้นสูง = เพิ่มหน้าที่แก้ค่าหรือเขียนเฟิร์มแวร์ได้", modeLocked: "หน้านี้อยู่ในโหมดขั้นสูง", mode: "โหมด", settings: "ตั้งค่า", language: "ภาษา", noKeys: "ไม่มีค่าในกลุ่มนี้",
+    basic: "พื้นฐาน", advanced: "ขั้นสูง", modeLocked: "หน้านี้อยู่ในโหมดขั้นสูง", mode: "โหมด", settings: "ตั้งค่า", language: "ภาษา", noKeys: "ไม่มีค่าในกลุ่มนี้",
     commission_page: "ลงโมดูลใหม่", cmProbe: "ตรวจ ST-Link", cmProbing: "กำลังตรวจ...", cmNoCli: "ยังไม่พบ STM32CubeProgrammer บนเครื่องที่รันโปรแกรมนี้", cmNoProbe: "ไม่พบ ST-Link ตรวจสาย USB และปิดโปรแกรมอื่นที่จับ ST-Link อยู่ (เช่น CubeProgrammer, CubeIDE)",
     cmProbeOk: "พบ ST-Link {n} ตัว", cmCli: "CubeProgrammer", cmSingle: "ทีละตัว", cmBatch: "ต่อเนื่อง",
     cmImage: "ไฟล์เฟิร์มแวร์", cmChoose: "เลือกไฟล์", cmWhat: "รายละเอียดไฟล์นี้", cmNoteLbl: "หมายเหตุ", cmShaLbl: "SHA-256 (12 ตัวแรก)", cmVerLbl: "เวอร์ชัน", cmNoFile: "ยังไม่ได้เลือกไฟล์", cmUpload: "หรืออัปโหลดไฟล์ .bin", cmType: "ชนิดตู้", cmTypeAuto: "ให้บอร์ดตัดสินเอง", cmLot: "ล็อต (ไม่บังคับ)",
@@ -109,7 +109,7 @@ const TXT = {
     fwGw: "Gateway update over the network (one at a time)", fwGwNote: "The gateway reboots at the end and cuts the shelf's power for a moment (every module reboots too). Type the cabinet's name to confirm.", fwUpload: "or choose a .bin file", fwConfirm: "Type the cabinet's name to confirm",
     fwGwStart: "Update gateway", fwGwRun: "Updating gateway", fwDone: "Done", fwFail: "Failed", fwLog: "Log", fwNone: "—", fwCensus: "Result", fwLeft: "not on the new image", fwPhase: "Phase",
     explain: "info",
-    basic: "Basic", advanced: "Advanced", modeNote: "Basic = check, test, read results · Advanced = adds the pages that change settings or write firmware", modeLocked: "That page is in Advanced mode", mode: "Mode", settings: "Settings", language: "Language", noKeys: "No values in this group",
+    basic: "Basic", advanced: "Advanced", modeLocked: "That page is in Advanced mode", mode: "Mode", settings: "Settings", language: "Language", noKeys: "No values in this group",
     commission_page: "Commission", cmProbe: "Check ST-Link", cmProbing: "Checking...", cmNoCli: "STM32CubeProgrammer was not found on the machine running this tool", cmNoProbe: "No ST-Link found. Check the USB cable and close other programs that hold the ST-Link (CubeProgrammer, CubeIDE).",
     cmProbeOk: "{n} ST-Link found", cmCli: "CubeProgrammer", cmSingle: "One module", cmBatch: "Continuous",
     cmImage: "Firmware file", cmChoose: "Choose file", cmWhat: "About this file", cmNoteLbl: "Note", cmShaLbl: "SHA-256 (first 12)", cmVerLbl: "Version", cmNoFile: "No file chosen", cmUpload: "Or upload a .bin", cmType: "Cabinet type", cmTypeAuto: "Let the board decide", cmLot: "Lot (optional)",
@@ -814,7 +814,7 @@ $("#infoclose").onclick = () => $("#info").close();
 $("#info").addEventListener("click", (e) => { if (e.target.id === "info") $("#info").close(); });
 function settingsText() {
   $("#setbtn").textContent = "⚙"; $("#setbtn").setAttribute("aria-label", t("settings")); $("#setbtn").title = t("settings"); $("#settitle").textContent = t("settings"); $("#setclose").textContent = t("close");
-  $("#langlbl").textContent = t("language"); $("#modelbl").textContent = t("mode"); $("#themelbl").textContent = t("theme"); $("#modehint").textContent = t("modeNote");
+  $("#langlbl").textContent = t("language"); $("#modelbl").textContent = t("mode"); $("#themelbl").textContent = t("theme");
   $("#langsel").value = lang;
 }
 $("#setbtn").onclick = () => { const d = $("#settings"); if (d.showModal) d.showModal(); else d.setAttribute("open", ""); };
