@@ -27,14 +27,17 @@ class _Bus:
     """One client on the cabinet's gateway, serialised with the console
     sessions (gateway_api) so the page never interleaves two of its own."""
 
-    def __init__(self, host: str, port: int) -> None:
-        self.host, self.port = host, port
+    def __init__(self, host: str, port: int, wait: float = 8.0) -> None:
+        self.host, self.port, self.wait = host, port, wait
         self._lock = gateway_api._lock(host, port)
         self.client = None
 
     def __enter__(self):
         from ..transports import TcpSettings, make_client
-        self._lock.acquire()
+        # A long run (the installation check) holds the gateway: say so rather
+        # than leave a page request hanging behind it.
+        if not self._lock.acquire(timeout=self.wait):
+            raise ConnectionError("the cabinet's gateway is busy (a check is running)")
         try:
             self.client = make_client(TcpSettings(host=self.host, port=self.port,
                                                   timeout_s=INTERACTIVE_TIMEOUT_S), retries=0)

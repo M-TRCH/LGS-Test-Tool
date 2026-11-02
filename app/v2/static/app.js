@@ -15,7 +15,7 @@ const TXT = {
     search: "ค้นหา (ชื่อ, ไอพี)", noEvents: "ไม่มีเหตุการณ์ในช่วงนี้", noEventsOff: "ยังไม่มีข้อมูล เพราะยังไม่ได้เปิด \"เก็บเหตุการณ์อัตโนมัติ\" ด้านบน (เปิดแล้วรอประมาณ 5 นาทีให้ดึงรอบแรก) ตู้ที่ใช้เฟิร์มแวร์ต่ำกว่า 1.14.0 จะไม่มีข้อมูล", collect: "เก็บเหตุการณ์อัตโนมัติ",
     collectHint: "ดึงบันทึกจากเกตเวย์ทุกตู้ในรายการตู้ทุก 5 นาที เก็บ 90 วัน ต้องใช้เฟิร์มแวร์เกตเวย์ 1.14.0 ขึ้นไป",
     gateway_page: "เกตเวย์", pick: "เลือกตู้", read: "อ่านค่า", reading: "กำลังอ่าน...",
-    setClock: "ซิงค์เวลาจากเครื่องนี้", hubRow: "แถว {n}", hubDirect: "ต่อตรง", hubCh: "ช่อง {n}", cabCustom: "กำหนดเอง", cabSlots: "{n} ช่อง", cabNone: "ไม่มี", cabEmpty: "รูปทรงตู้แบบกำหนดเองต้องมีอย่างน้อยหนึ่งแถวที่มีช่อง", schDays: "วันที่รีเซ็ต", schTimes: "เวลารีเซ็ต", schSlot: "ช่วงที่ {n}", schEvery: "ทุกวัน", schNoTime: "ไม่ได้เปิดช่วงเวลาใด", schName: "ตารางรีเซ็ต", schDay: ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"], schDayS: ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"],
+    setClock: "ซิงค์เวลาจากเครื่องนี้", hubRow: "แถว {n}", hubDirect: "ต่อตรง", hubCh: "ช่อง {n}", cabCustom: "กำหนดเอง", cabSlots: "{n} ช่อง", cabNone: "ไม่มี", insTitle: "ตรวจการติดตั้ง", insPickCab: "เลือกตู้ด้านบนก่อน", insMods: "โมดูลที่จะตรวจ", insSel: "เลือกแล้ว {n}", insWhole: "ทั้งตู้", insClear: "ล้าง", insModeCheck: "ตรวจทั่วไป", insModePick: "ทดสอบลำดับหยิบยา", insWhat: "จะทำอะไรกับแต่ละโมดูล", insA_skip: "ข้าม (แค่ตรวจว่าตอบสนอง)", insA_light: "เปิดไฟ", insA_light_display: "เปิดไฟ+จอ", insHold: "ค้างแต่ละขั้น (วินาที)", insIdentify: "ระบุตัวตน (กะพริบสีขาว ~5 วินาที)", insUnlock: "ปลดกลอนด้วย (กลอนจะทำงานจริง)", insCoil: "จะส่ง coil {coil} ({what})", insWarnUnlock: "รอบนี้จะปลดล็อก {n} โมดูล", insPreset: "พรีเซ็ตสี", insBatch: "จุดพร้อมกัน (ช่อง)", insTimeout: "รอสูงสุดต่อชุด (วินาที)", insPDisplay: "โชว์เลขช่องบนจอ", insPUnlock: "ปลดกลอน (กลอนจะทำงานจริง)", insPClosed: "รอปิดลิ้นชักก่อนดับไฟ", insPBych: "หนึ่งชุดอยู่ช่องฮับเดียว", insRun: "เริ่มตรวจ", insPickRun: "เริ่มเดินทดสอบ", insCancel: "ยกเลิก", insCsv: "บันทึก CSV", insIdle: "ว่าง", insStarting: "กำลังเริ่ม...", insProg: "โมดูล {id} ({i}/{total})", insPrep: "กำลังเปิดไฟช่อง {id} ({i}/{total})", insWaiting: "ไฟติด {n} ช่อง กดปุ่มหน้าช่อง หยิบช่องไหนก่อนก็ได้", insClosing: "รอปิดลิ้นชัก {n} ช่อง, ไฟยังติดอีก {lit} ช่อง", insDone: "เสร็จ {n} โมดูล", insAnswered: "ตอบสนอง {n}/{total}", insMissing: "ไม่ตอบสนอง: {ids}", insFailedIds: "ทำบางขั้นไม่ผ่าน: {ids}", insPass: "✓ ผ่าน", insNoAns: "✗ ไม่ตอบสนอง", insFail: "✗ ไม่ผ่าน", insType: "ชนิด", insResult: "ผล", insDetail: "รายละเอียด", insB_run: "กำลังทำงาน", insB_pass: "ผ่านทั้งหมด", insB_issues: "พบปัญหา", insB_cancelled: "ยกเลิกแล้ว", insPickOne: "เลือกอย่างน้อยหนึ่งโมดูล", insUnlockQ: "รอบนี้จะปลดล็อก {n} โมดูล กลอนจะทำงานจริง ดำเนินการต่อไหม?", cabEmpty: "รูปทรงตู้แบบกำหนดเองต้องมีอย่างน้อยหนึ่งแถวที่มีช่อง", schDays: "วันที่รีเซ็ต", schTimes: "เวลารีเซ็ต", schSlot: "ช่วงที่ {n}", schEvery: "ทุกวัน", schNoTime: "ไม่ได้เปิดช่วงเวลาใด", schName: "ตารางรีเซ็ต", schDay: ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"], schDayS: ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"],
     resyncInfo: "เมื่อโมดูลไม่ตอบ เกตเวย์ส่งสัญญาณปรับจังหวะให้โมดูลทั้งบัสแล้วลองถามซ้ำอีกครั้ง เป็นการตั้งค่าชั่วคราวจะกลับมาเปิดเองหลังรีบูต",
     excInfo: "เมื่อบัส RS485 ไม่ตอบ ให้ตอบไคลเอนต์ด้วย exception 0x0B ทันที แทนที่จะปล่อยให้หมดเวลา เป็นการตั้งค่าชั่วคราวจะกลับมาปิดเองหลังรีบูต", clockWarn: "การตั้งนาฬิกาเป็นการเปิดใช้การรีเซ็ตตามเวลา (เช่น 03:00) ซึ่งตัดไฟเลี้ยงโมดูล ตั้งเมื่อตั้งใจเท่านั้น",
     clockSet: "ตั้งนาฬิกาแล้ว", resync: "ซ่อมจังหวะหลังไม่มีคำตอบ (RESYNC)", exc: "ตอบ exception 0x0B ทันทีเมื่อบัสไม่ตอบ (EXC)",
@@ -28,7 +28,7 @@ const TXT = {
     cDevice: "อุปกรณ์", cRuntime: "การทำงาน", cHealth: "สุขภาพระบบ", cReset: "สาเหตุรีเซ็ตล่าสุด", cTemp: "อุณหภูมิ", cLatch: "กลอน / จอ", cStats: "สถิติ",
     mType: "ชนิด", mFw: "เฟิร์มแวร์", mHw: "ฮาร์ดแวร์", mBaud: "Baud", mUid: "หมายเลขชิป", mUptime: "เปิดมาแล้ว", mBoots: "จำนวนครั้งที่บูต", mMode: "โหมด",
     mPreset: "พรีเซ็ตที่ใช้อยู่", mButton: "กดยืนยันแล้ว", mRoom: "ในห้อง", mBoard: "บนบอร์ด", mCurrent: "กระแสขาเข้า", mLatch: "กลอน", mLocked: "ล็อก", mUnlocked: "ปลดแล้ว",
-    mUnlockedAgo: "ปลดล่าสุด {s} วินาทีก่อน", mDisplay: "ตัวเลขบนจอ", na: "ไม่มี", presets: "พรีเซ็ตสี", pLight: "ไฟ", pLightDisp: "ไฟ + เลข", pUnlock: "ปลดกลอน", pUnlockDisp: "ปลดกลอน + เลข",
+    mUnlockedAgo: "ปลดล่าสุด {s} วินาทีก่อน", mDisplay: "ตัวเลขบนจอ", na: "ไม่มี", presets: "พรีเซ็ตสี", pLight: "ไฟ", pLightDisp: "ไฟ + เลข", pUnlock: "ปลดกลอน", pUnlockDisp: "ปลดกลอน + เลข", grpLight: "ไฟ", grpLatch: "กลอน", grpOther: "จอและอื่น ๆ", cLight: "เปิดไฟ", cLightNum: "เปิดไฟ + เลข", dispOff: "ปิดจอ", colorTitle: "{c} · เลือกสี", colorN: "สี {n}",
     quick: "คำสั่งด่วน", identify: "ระบุตำแหน่ง (กะพริบ)", allOff: "ดับทั้งหมด", latchSafety: "ปลดกลอน (ปลอดภัย)", latchForce: "ปลดกลอน (บังคับ)", dispPower: "เปิดจอ",
     number: "ตัวเลข (0-9999)", writeNumber: "เขียนตัวเลข", cooldownNote: "กลอนต้องเว้น 2.2 วินาทีระหว่างการปลด", sent: "ส่งแล้ว", fires: "ยิงกลอน {c} ครั้ง · {s} วินาที", count: "ครั้ง", seconds: "วินาที",
     soak_page: "ทดสอบต่อเนื่อง", sPick: "เลือกตู้ที่จะทดสอบ", sAll: "ทั้งหมด", sMode: "โหมด", sPoll: "อ่านอย่างเดียว", sPharm: "จำลองการจ่ายยา",
@@ -75,7 +75,7 @@ const TXT = {
     search: "Search (name, IP)", noEvents: "No events in this range", noEventsOff: "No data yet because \"Collect events automatically\" above is off (turn it on and wait about 5 minutes for the first pull). Cabinets below firmware 1.14.0 have no events.", collect: "Collect events automatically",
     collectHint: "Pulls every saved cabinet's gateway log every 5 minutes, kept 90 days. Needs gateway firmware 1.14.0 or newer.",
     gateway_page: "Gateway", pick: "Choose cabinet", read: "Read", reading: "Reading...",
-    setClock: "Sync time from this PC", hubRow: "Row {n}", hubDirect: "Direct", hubCh: "Channel {n}", cabCustom: "Custom", cabSlots: "{n} slots", cabNone: "None", cabEmpty: "A custom cabinet shape needs at least one row with slots", schDays: "Reset days", schTimes: "Reset times", schSlot: "Time {n}", schEvery: "Every day", schNoTime: "No time switched on", schName: "Reset schedule", schDay: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], schDayS: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    setClock: "Sync time from this PC", hubRow: "Row {n}", hubDirect: "Direct", hubCh: "Channel {n}", cabCustom: "Custom", cabSlots: "{n} slots", cabNone: "None", insTitle: "Installation check", insPickCab: "Pick a cabinet above first", insMods: "Modules to check", insSel: "{n} selected", insWhole: "Whole cabinet", insClear: "Clear", insModeCheck: "General check", insModePick: "Pick walkthrough", insWhat: "What to do on each module", insA_skip: "Skip (only check it answers)", insA_light: "Light", insA_light_display: "Light + display", insHold: "Hold each step (s)", insIdentify: "Identify (blink white ~5 s)", insUnlock: "Also throw the latch (it really moves)", insCoil: "will send coil {coil} ({what})", insWarnUnlock: "this run will unlock {n} module(s)", insPreset: "Colour preset", insBatch: "Light together (slots)", insTimeout: "Timeout per batch (s)", insPDisplay: "Show the slot number", insPUnlock: "Release the latch (it really moves)", insPClosed: "Wait for the drawer to close", insPBych: "Keep a batch on one hub channel", insRun: "Run check", insPickRun: "Start walkthrough", insCancel: "Cancel", insCsv: "Export CSV", insIdle: "idle", insStarting: "starting...", insProg: "module {id} ({i}/{total})", insPrep: "lighting slot {id} ({i}/{total})", insWaiting: "{n} slots lit: press each slot's button, in any order", insClosing: "{n} waiting to be closed, {lit} still lit", insDone: "done: {n} module(s)", insAnswered: "answered {n}/{total}", insMissing: "no answer: {ids}", insFailedIds: "failed a step: {ids}", insPass: "✓ pass", insNoAns: "✗ no answer", insFail: "✗ fail", insType: "type", insResult: "result", insDetail: "detail", insB_run: "RUNNING", insB_pass: "ALL PASS", insB_issues: "ISSUES FOUND", insB_cancelled: "CANCELLED", insPickOne: "select at least one module", insUnlockQ: "This run will unlock {n} module(s); the latches really move. Continue?", cabEmpty: "A custom cabinet shape needs at least one row with slots", schDays: "Reset days", schTimes: "Reset times", schSlot: "Time {n}", schEvery: "Every day", schNoTime: "No time switched on", schName: "Reset schedule", schDay: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], schDayS: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
     resyncInfo: "After a missing reply the gateway re-syncs every module on the bus and retries once. Temporary: returns to on when the gateway reboots.",
     excInfo: "When the RS485 bus does not answer, reply to the client with exception 0x0B at once instead of letting it time out. Temporary: returns to off when the gateway reboots.", clockWarn: "Setting the clock also arms the scheduled reset (e.g. 03:00), which cuts the shelf's power. Do it on purpose only.",
     clockSet: "Clock set", resync: "Re-sync after a missing reply (RESYNC)", exc: "Answer a bus timeout with exception 0x0B at once (EXC)",
@@ -88,7 +88,7 @@ const TXT = {
     cDevice: "Device", cRuntime: "Runtime", cHealth: "Health", cReset: "Last reset cause", cTemp: "Temperatures", cLatch: "Latch / display", cStats: "Statistics",
     mType: "Type", mFw: "Firmware", mHw: "Hardware", mBaud: "Baud", mUid: "Chip serial", mUptime: "Uptime", mBoots: "Boots", mMode: "Mode",
     mPreset: "Active preset", mButton: "Confirm presses", mRoom: "Room", mBoard: "Board", mCurrent: "Input current", mLatch: "Latch", mLocked: "locked", mUnlocked: "unlocked",
-    mUnlockedAgo: "last unlock {s} s ago", mDisplay: "Display number", na: "n/a", presets: "Colour presets", pLight: "Light", pLightDisp: "Light + number", pUnlock: "Unlock", pUnlockDisp: "Unlock + number",
+    mUnlockedAgo: "last unlock {s} s ago", mDisplay: "Display number", na: "n/a", presets: "Colour presets", pLight: "Light", pLightDisp: "Light + number", pUnlock: "Unlock", pUnlockDisp: "Unlock + number", grpLight: "Light", grpLatch: "Latch", grpOther: "Display and more", cLight: "Light", cLightNum: "Light + number", dispOff: "Display off", colorTitle: "{c} · pick a colour", colorN: "Colour {n}",
     quick: "Quick commands", identify: "Identify (blink)", allOff: "All off", latchSafety: "Unlock (safe)", latchForce: "Unlock (force)", dispPower: "Display on",
     number: "Number (0-9999)", writeNumber: "Write number", cooldownNote: "A latch needs 2.2 s between unlocks", sent: "Sent", fires: "{c} fires · {s} s", count: "count", seconds: "seconds",
     soak_page: "Soak", sPick: "Choose the cabinets to test", sAll: "All", sMode: "Mode", sPoll: "Read only", sPharm: "Pharmacy simulation",
@@ -128,7 +128,8 @@ const t = (k, p) => { let s = (TXT[lang] && TXT[lang][k]) || TXT.en[k] || k; for
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const $ = (s, r = document) => r.querySelector(s);
 
-let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: "", days: 1, q: "", types: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, lab: { id: "", ward: "", serial: "", layout: "", plate: "", opts: null, info: null, busy: false }, fw: { images: null, sel: new Set(), image: "", ota: null, gwId: "", gwImage: "", gwConfirm: "", gwFile: null, gwFileName: "", gw: null, timer: null }, soak: { sel: new Set(), mode: "pharmacy", picks: 2000, hours: 12, startAt: "", status: null, runs: [], verdict: "", timer: null, was: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 } };
+let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: "", days: 1, q: "", types: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, lab: { id: "", ward: "", serial: "", layout: "", plate: "", opts: null, info: null, busy: false }, fw: { images: null, sel: new Set(), image: "", ota: null, gwId: "", gwImage: "", gwConfirm: "", gwFile: null, gwFileName: "", gw: null, timer: null }, soak: { sel: new Set(), mode: "pharmacy", picks: 2000, hours: 12, startAt: "", status: null, runs: [], verdict: "", timer: null, was: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 },
+  ins: { id: "", layout: null, sel: new Set(), mode: "check", action: "light", unlock: false, identify: false, hold: 1, preset: 1, batch: 4, timeout: 60, display: true, punlock: true, closed: true, bych: true, running: false, since: 0, res: {}, rows: [], lit: new Set(), closing: new Set(), testing: null, text: "", banner: "", summary: "", csv: false, err: "", timer: null, resumed: false } };
 let page = (location.hash || "#/cabinets").slice(2) || "cabinets";
 
 /* In-page confirmation: window.confirm() is silently answered "no" when the browser has been told to stop a page's dialogs, which made a write button look dead. */
@@ -446,8 +447,7 @@ function viewModule() {
       <p class="small muted">${t("checkedAt", { at: esc(d.at) })} · ${d.ms} ms</p>`;
   }
   const lb = (addr, label, cls) => `<button class="btn ${cls || ""}" data-act="mod-coil" data-addr="${addr}" data-val="1"${cls === "latch" ? " data-latch=1" : ""}>${label}</button>`;
-  const presets = (m.presets || []).map((p) => `<section class="card stack"><div class="row"><i class="dot" style="color:${PCOL[p.n]};width:14px;height:14px"></i><b>${t("presets")} ${p.n}</b></div>
-      <div class="pgrid">${lb(p.enable, t("pLight"))}${lb(p.display, t("pLightDisp"))}${lb(p.latch, t("pUnlock"), "latch")}${lb(p.latch_display, t("pUnlockDisp"), "latch")}</div></section>`).join("");
+  const cb = (kind, label, latch) => `<button class="btn" data-act="mod-color" data-kind="${kind}"${latch ? " data-latch=1" : ""}>${label}</button>`;
   return `<h1>${t("module_page")}</h1>
     <section class="card stack"><div class="row" style="align-items:flex-end"><div class="field" style="min-width:220px;flex:1"><label>${t("pick")}</label><select id="modsel"><option value="">—</option>${opts}</select></div>
       <div class="field" style="width:140px"><label>${t("devId")}</label><input id="moddev" type="number" min="1" max="247" value="${m.dev}"></div>
@@ -455,16 +455,39 @@ function viewModule() {
       <div class="row"><label class="row"><input type="checkbox" id="modstats"${m.stats ? " checked" : ""}> ${t("withStats")}</label>
       <label class="row"><input type="checkbox" id="modauto"${m.auto ? " checked" : ""}> ${t("auto")}</label></div></section>
     <div class="stack" style="margin-top:12px">${cards}
-      <h2>${t("quick")}</h2><section class="card stack"><div class="qgrid">${lb(509, t("identify"))}${lb(511, t("allOff"))}${lb(1020, t("latchSafety"), "latch")}${lb(1019, t("latchForce"), "latch")}
-        <button class="btn" data-act="mod-coil" data-addr="1010" data-val="1">${t("dispPower")}</button><button class="btn" data-act="mod-coil" data-addr="1010" data-val="0">OFF</button></div>
+      <h2>${t("quick")}</h2><section class="card stack">
+        <div class="stack tight"><b class="small muted">${t("grpLight")}</b><div class="qgrid">${cb("enable", t("cLight"))}${cb("display", t("cLightNum"))}</div></div>
+        <div class="stack tight"><b class="small muted">${t("grpLatch")}</b><div class="qgrid">${cb("latch", t("pUnlock"), 1)}${cb("latch_display", t("pUnlockDisp"), 1)}${lb(1020, t("latchSafety"), "latch")}${lb(1019, t("latchForce"), "latch")}</div></div>
+        <div class="stack tight"><b class="small muted">${t("grpOther")}</b><div class="qgrid">${lb(509, t("identify"))}${lb(511, t("allOff"))}
+          <button class="btn" data-act="mod-coil" data-addr="1010" data-val="1">${t("dispPower")}</button><button class="btn" data-act="mod-coil" data-addr="1010" data-val="0">${t("dispOff")}</button></div></div>
         <div class="row" style="align-items:flex-end"><div class="field" style="width:160px"><label>${t("number")}</label><input id="modnum" type="number" min="0" max="9999" value="45"></div><button class="btn" data-act="mod-number">${t("writeNumber")}</button></div>
         <p class="small muted">${t("cooldownNote")}</p></section>
-      <h2>${t("presets")}</h2><div class="cabs">${presets}</div></div>`;
+      <h2>${t("insTitle")}</h2><section class="card stack">${insView()}</section></div>`;
 }
 let modTimer = null;
+async function modCoil(addr, on, latch) {
+  if (!S.mod.id) return;
+  if (latch && Date.now() < S.mod.lockUntil) { toast(t("cooldownNote")); return; }
+  const r = await api("POST", "/api/v2/mod/coil", { id: S.mod.id, device_id: S.mod.dev, addr, value: on });
+  if (!r.ok) throw new Error(r.error || "failed");
+  if (latch) { S.mod.lockUntil = Date.now() + 2300; document.querySelectorAll("[data-latch]").forEach((b) => { b.disabled = true; setTimeout(() => { b.disabled = false; }, 2300); }); }
+  toast(t("sent") + " · " + r.ms + " ms");
+}
+/* One popup for "which colour": the command is chosen first, the preset (1-8) second. Resolves with the preset number, or 0 if cancelled. */
+function pickColor(command) {
+  return new Promise((resolve) => {
+    const d = $("#colorpick"); $("#colortitle").textContent = t("colorTitle", { c: command });
+    $("#colorgrid").innerHTML = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => `<button class="btn colbtn" type="button" data-col="${n}"><i class="dot" style="color:${PCOL[n]};width:16px;height:16px"></i>${t("colorN", { n })}</button>`).join("");
+    $("#colorno").textContent = t("insCancel");
+    const done = (v) => { d.onclose = null; if (d.open) d.close(); resolve(v); };
+    $("#colorgrid").onclick = (e) => { const b = e.target.closest("[data-col]"); if (b) done(+b.dataset.col); };
+    $("#colorno").onclick = () => done(0); d.onclose = () => resolve(0);
+    if (d.showModal) d.showModal(); else d.setAttribute("open", "");
+  });
+}
 async function modRead() {
   const m = S.mod; if (!m.id || !(m.dev >= 1)) return;
-  if (m.busy) return;
+  if (m.busy || S.ins.running) return;
   m.busy = true;
   try { m.data = await api("POST", "/api/v2/mod/monitor", { id: m.id, device_id: m.dev, stats: m.stats }); }
   catch (e) { m.data = { ok: false, error: e.message }; }
@@ -477,6 +500,141 @@ function modAutoSync() {
   if (S.mod.auto && page === "module") modTimer = setInterval(() => { if (!document.hidden && page === "module") modRead(); }, 2000);
 }
 
+
+/* ---------- installation check (module page) ----------
+   Runs on the server (app/v2/install_api.py); this page picks the slots, starts it and paints the events it polls. Everything it shows lives in S.ins, so a full render() (the module auto-read does one) loses nothing. */
+const INS_INFO = {
+  pick: ["ซ้อมขั้นตอนจ่ายยาจริง: ไฟติดพร้อมกันเป็นชุด เหมือนตอนใบสั่งยาสั่งงานจริง คนที่หน้าตู้หยิบช่องไหนก่อนก็ได้ ไฟแต่ละช่องจะดับเมื่อกดปุ่มหน้าช่องนั้น ครบชุดแล้วชุดถัดไปจะติดต่อ พิสูจน์ไฟ ปุ่ม และวงจรยืนยันครบในรอบเดียว ต้องใช้เฟิร์มแวร์โมดูล v3.2.0",
+    "The dispensing flow as a rehearsal: a batch of slots lights up together, just as a prescription lights them, and someone at the cabinet picks them in any order; each light goes out as its front button is pressed. When the batch is done the next one lights. Needs module firmware v3.2.0."],
+  action: ["หนึ่งคำสั่งต่อโมดูล ใช้ชุดเดียวกับที่เฟิร์มแวร์มีให้ เปิดไฟวงแหวน หรือเปิดไฟพร้อมโชว์เลขประจำช่อง ถ้าติ๊กปลดกลอนจะยกระดับคำสั่งนั้นให้ปลดกลอนด้วย จอแสดง Slave ID ถ้าเกิน 99 จะแสดงเลขช่องแทน เพราะจอรองรับสองหลัก",
+    "One command per module, the same combinations the firmware offers: the ring, or the ring with the module's number. Ticking the latch upgrades whichever is chosen. The display shows the slave ID; IDs above 99 show the column number, because it holds two digits."],
+  unlock: ["แต่ละโมดูลมีเวลาพัก 2 วินาทีของตัวเอง การไล่ทดสอบข้ามโมดูลจึงไม่ถูกหน่วง กลอนที่เปิดอยู่แล้วจะปล่อยพัลส์ไม่ได้ ให้ปิดลิ้นชักแล้วตรวจใหม่",
+    "Each module keeps its own 2 s cooldown, so a sweep across different modules is not slowed down. A latch that is already open cannot be pulsed: close the drawer and run it again."],
+  batch: ["จำนวนช่องที่ไฟติดพร้อมกัน หนึ่งชุดจะอยู่ในแถวเดียวเสมอ เพราะฮับ RS485 ต้องเงียบราว 2 วินาทีเพื่อสลับช่อง การเฝ้าสองแถวพร้อมกันจึงหน่วงหลายวินาทีกว่าจะเห็นการกด ใส่ 0 = จุดทุกช่องที่เลือกพร้อมกัน",
+    "How many slots light at once. A batch never spans rows: the RS485 hub needs about two seconds of silence to change channel. 0 lights everything selected at once."],
+  closed: ["การหยิบยายังไม่จบตอนกดปุ่ม แต่จบเมื่อปิดลิ้นชักแล้ว เปิดตัวเลือกนี้ ช่องนั้นต้องปิดอยู่ก่อนเริ่ม และไฟจะติดค้างจนโมดูลรายงานว่ากลอนล็อก ช่องที่เปิดค้างไว้จึงผ่านไม่ได้",
+    "The pick is not over when the button is pressed but when the drawer is shut again. With this on, the slot must start closed and the light stays on until the module reports its latch locked."],
+  bych: ["เปิด: ช่องที่อยู่คนละช่องฮับจะติดเป็นคนละชุดต่อกันไป ทำให้ยืนยันได้เร็ว ปิด: หนึ่งชุดจะจุดครบตามจำนวนที่ตั้งไม่ว่าอยู่ช่องใด เหมือนใบสั่งยาจริง แต่ไฟจะดับช้าลงราว 2 วินาทีต่อรอบ",
+    "On: slots either side of a channel boundary light one batch after the other. Off: the batch holds as many slots as asked for wherever they are, as a real prescription does, but each light takes about two seconds longer to go out."],
+};
+const insSelText = () => `${S.ins.layout.label} · ${t("insSel", { n: S.ins.sel.size })}`;
+const insInfoBtn = (k) => `<button class="why" data-act="ins-info" data-k="${k}" type="button" aria-label="${t("explain")}">?</button>`;
+function insReset() { Object.assign(S.ins, { res: {}, rows: [], lit: new Set(), closing: new Set(), testing: null, text: "", banner: "", summary: "", csv: false, err: "", since: 0 }); }
+async function insLayout() {
+  const i = S.ins; if (!S.mod.id) { i.layout = null; i.id = ""; return; }
+  if (i.id === S.mod.id) return;                         /* loaded, loading or failed for this cabinet already */
+  i.id = S.mod.id; i.layout = null; i.sel = new Set(); insReset();
+  try { i.layout = await api("GET", "/api/v2/ins/layout?id=" + encodeURIComponent(S.mod.id)); } catch (e) { i.layout = null; i.err = e.message; }
+  if (page === "module") renderKeep();
+}
+/* The page may be opened while a check the server started is still running (another tab, a reload): pick it up. */
+async function insResume() {
+  const i = S.ins; if (i.resumed) return; i.resumed = true;
+  try {
+    const r = await api("GET", "/api/v2/ins/events?since=0");
+    if (!r.running && !r.events.length) return;
+    const site = S.sites.find((x) => x.name === r.cabinet); if (site) { S.mod.id = site.id; await insLayout(); }
+    i.mode = r.mode || i.mode; insReset(); r.events.forEach(insFold); i.since = r.seq; i.running = r.running; i.csv = r.csv;
+    if (i.running) insSync(); if (page === "module") renderKeep();
+  } catch (e) { /* no check to resume */ }
+}
+const insCoil = () => { const i = S.ins; return 1001 + (i.action === "light_display" ? 10 : 0) + (i.unlock ? 20 : 0); };
+function insCaption() {
+  const i = S.ins, el = $("#inscap"); if (!el) return;
+  const what = ["light"].concat(i.action === "light_display" ? ["display"] : [], i.unlock ? ["latch"] : []).join(" + ");
+  el.innerHTML = (i.action !== "skip" ? `<div class="small muted">${t("insCoil", { coil: insCoil(), what })}</div>` : "")
+    + (i.unlock && i.action !== "skip" ? `<div class="small" style="color:var(--bad)">${t("insWarnUnlock", { n: i.sel.size })}</div>` : "");
+}
+function insCls(id) {
+  const i = S.ins, r = i.res[id];
+  if (r) return r; if (i.closing.has(id)) return "closing"; if (i.testing === id || i.lit.has(id)) return "next"; return i.sel.has(id) ? "on" : "";
+}
+function insGridHtml() {
+  const L = S.ins.layout; if (!L) return "";
+  const have = new Set(L.ids), cols = 8;
+  let h = `<div class="cmgrid" style="grid-template-columns:auto repeat(${cols},minmax(0,1fr))">`;
+  for (const row of L.rows) {
+    h += `<button class="cmrow" data-act="ins-row" data-r="${row.r}" aria-label="R${row.r}">R${row.r}</button>`;
+    for (let k = 1; k <= cols; k++) { const id = row.r * 10 + k; h += have.has(id) ? `<button class="cmcell ${insCls(id)}" data-act="ins-cell" data-id="${id}">${id}</button>` : "<span></span>"; }
+  }
+  return h + "</div>";
+}
+function insDyn() {
+  const i = S.ins, b = i.banner;
+  const chip = b ? `<span class="chip ${b === "pass" ? "ok" : b === "run" ? "warn" : b === "issues" ? "bad" : "off"}">${t("insB_" + b)}</span>` : "";
+  const resText = (r) => (r.ok ? t("insPass") : !r.responded ? t("insNoAns") : t("insFail"));
+  const rows = i.rows.map((r) => `<tr><td>${r.id}</td><td>${esc(r.type || "—")}</td><td style="color:var(${r.ok ? "--ok" : "--bad"})">${resText(r)}</td><td>${esc(r.steps.map((s) => `${s.label}: ${s.ok ? "ok" : "FAIL"}${s.note && !s.ok ? ` (${s.note})` : ""}`).join("; "))}</td></tr>`).join("");
+  return `<div class="row" style="gap:10px">${chip}<span class="small mono">${esc(i.text || t("insIdle"))}</span></div>${i.err ? `<div class="notice bad">${esc(i.err)}</div>` : ""}
+    ${insGridHtml()}${i.summary ? `<div class="small">${esc(i.summary)}</div>` : ""}
+    ${rows ? `<div style="overflow-x:auto"><table><tr><th>ID</th><th>${t("insType")}</th><th>${t("insResult")}</th><th>${t("insDetail")}</th></tr>${rows}</table></div>` : ""}`;
+}
+function insPaint() {
+  const el = $("#insdyn"); if (el) el.innerHTML = insDyn();
+  const run = $("#insrun"), stop = $("#insstop"); if (run) run.disabled = S.ins.running; if (stop) stop.disabled = !S.ins.running;
+  const csv = $("#inscsv"); if (csv) csv.hidden = !S.ins.csv;
+}
+function insFold(ev) {
+  const i = S.ins, pick = i.mode === "pick";
+  if (ev.t === "start") { i.testing = ev.id; i.text = t(pick ? "insPrep" : "insProg", { id: ev.id, i: ev.index, total: ev.total }); i.banner = "run"; }
+  else if (ev.t === "done") {
+    i.testing = null; i.lit.delete(ev.id); i.closing.delete(ev.id); i.res[ev.id] = ev.ok ? "ok" : "bad"; i.rows.push(ev);
+    if (pick && (i.lit.size || i.closing.size)) i.text = i.closing.size ? t("insClosing", { n: i.closing.size, lit: i.lit.size }) : t("insWaiting", { n: i.lit.size });
+  } else if (ev.t === "lit") { i.testing = null; i.lit = new Set(ev.ids); i.closing = new Set(); i.text = t("insWaiting", { n: ev.ids.length }); }
+  else if (ev.t === "pressed") { i.lit.delete(ev.id); i.closing.add(ev.id); i.text = t("insClosing", { n: i.closing.size, lit: i.lit.size }); }
+  else if (ev.t === "end") {
+    i.testing = null; i.lit = new Set(); i.closing = new Set(); i.text = t("insDone", { n: ev.total });
+    i.banner = ev.cancelled ? "cancelled" : ev.passed ? "pass" : "issues";
+    const parts = [t("insAnswered", { n: ev.answered, total: ev.total })];
+    if (ev.missing.length) parts.push(t("insMissing", { ids: ev.missing.join(", ") }));
+    if (ev.failed.length) parts.push(t("insFailedIds", { ids: ev.failed.join(", ") }));
+    i.summary = parts.join(" · ");
+  }
+}
+async function insPoll() {
+  const i = S.ins;
+  try {
+    const r = await api("GET", "/api/v2/ins/events?since=" + i.since);
+    i.since = r.seq; r.events.forEach(insFold); i.running = r.running; i.csv = r.csv; if (r.error) i.err = r.error;
+  } catch (e) { /* a missed poll is only a late repaint */ }
+  insPaint();
+  if (!i.running) { clearInterval(i.timer); i.timer = null; if (page === "module") renderKeep(); }
+}
+function insSync() { if (!S.ins.timer) S.ins.timer = setInterval(insPoll, 700); }
+async function insStart() {
+  const i = S.ins; if (!S.mod.id || i.running) return;
+  if (!i.sel.size) { toast(t("insPickOne")); return; }
+  const pick = i.mode === "pick", unlock = pick ? i.punlock : (i.unlock && i.action !== "skip");
+  if (unlock && !await ask(t("insUnlockQ", { n: i.sel.size }))) return;
+  insReset(); i.running = true; i.banner = "run"; i.text = t("insStarting"); insPaint();
+  try {
+    await api("POST", "/api/v2/ins/start", { id: S.mod.id, mode: i.mode, ids: [...i.sel].sort((a, b) => a - b), action: i.action, unlock: pick ? i.punlock : i.unlock, identify: i.identify, hold_s: i.hold,
+      preset: i.preset, display: i.display, require_locked: i.closed, timeout_s: i.timeout, batch: i.batch, by_channel: i.bych });
+    insSync();
+  } catch (e) { i.running = false; i.banner = ""; i.err = e.message; insPaint(); }
+}
+function insView() {
+  const i = S.ins;
+  if (!S.mod.id) return `<div class="notice info">${t("insPickCab")}</div>`;
+  if (!i.layout) return i.err ? `<div class="notice bad">${esc(i.err)}</div>` : `<p class="muted">${t("reading")}</p>`;
+  const num = (k, lo, hi, step) => `<input type="number" data-ins="${k}" min="${lo}" max="${hi}" step="${step || 1}" value="${i[k]}">`;
+  const chk = (k, label, info) => `<div class="field"><label class="chk"><input type="checkbox" data-ins="${k}"${i[k] ? " checked" : ""}>${t(label)}${info ? insInfoBtn(info) : ""}</label></div>`;
+  const modes = ["check", "pick"].map((m) => `<button class="btn${i.mode === m ? " primary" : ""}" data-act="ins-mode" data-m="${m}" aria-pressed="${i.mode === m}">${t(m === "check" ? "insModeCheck" : "insModePick")}</button>`).join("");
+  const opts = i.mode === "check"
+    ? `<div class="field"><label>${t("insWhat")}${insInfoBtn("action")}</label><select data-ins="action">${["skip", "light", "light_display"].map((a) => `<option value="${a}"${i.action === a ? " selected" : ""}>${t("insA_" + a)}</option>`).join("")}</select></div>
+       <div class="field"><label>${t("insHold")}</label>${num("hold", 0.2, 5, 0.1)}</div>
+       ${chk("identify", "insIdentify")}${chk("unlock", "insUnlock", "unlock")}<div id="inscap"></div>`
+    : `<div class="field"><label>${t("insPreset")}</label><select data-ins="preset">${[1, 2, 3, 4, 5, 6, 7, 8].map((n) => `<option value="${n}"${i.preset === n ? " selected" : ""}>${t("presets")} ${n}</option>`).join("")}</select></div>
+       <div class="field"><label>${t("insBatch")}${insInfoBtn("batch")}</label>${num("batch", 0, 16)}</div>
+       <div class="field"><label>${t("insTimeout")}</label>${num("timeout", 0, 600)}</div>
+       ${chk("display", "insPDisplay")}${chk("punlock", "insPUnlock")}${chk("closed", "insPClosed", "closed")}${chk("bych", "insPBych", "bych")}`;
+  return `<div class="row" style="gap:8px;align-items:center">${modes}${insInfoBtn("pick")}</div>
+    <div class="row" style="gap:8px"><b>${t("insMods")}</b><span class="small muted" id="inssel">${insSelText()}</span></div>
+    <div class="row" style="gap:8px"><button class="btn" data-act="ins-whole">${t("insWhole")}</button><button class="btn" data-act="ins-none">${t("insClear")}</button></div>
+    <div class="${i.mode === "check" ? "fgrid" : "fgrid"}">${opts}</div>
+    <div class="row" style="gap:8px"><button class="btn primary" id="insrun" data-act="ins-run"${i.running ? " disabled" : ""}>${t(i.mode === "check" ? "insRun" : "insPickRun")}</button><button class="btn" id="insstop" data-act="ins-stop"${i.running ? "" : " disabled"}>${t("insCancel")}</button>
+      <a class="btn" id="inscsv" href="/api/v2/ins/csv" download${i.csv ? "" : " hidden"}>${t("insCsv")}</a></div>
+    <div id="insdyn" class="stack">${insDyn()}</div>`;
+}
 
 const fmtDur = (sec) => { sec = Math.max(0, Math.round(sec)); const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60); return h ? `${h} ${t("h")} ${m} m` : `${m} m ${sec % 60} s`; };
 /* The verdict is a plain-text report written by the engine (and kept as a file for the classic tool), so it stays English on disk; in Thai mode the prose lines are translated here and the fixed-width table is left alone. */
@@ -763,7 +921,7 @@ function render() {
   document.documentElement.lang = lang;
   if (page === "events") loadEvents();
   if (page === "gateway") gwBar();
-  if (page === "module") modAutoSync();
+  if (page === "module") { modAutoSync(); insCaption(); insLayout(); insResume(); }
   if (page === "soak" && !S.soak.timer) soakSync();
   if (page === "firmware" && !S.fw.timer) fwSync();
   if (page === "commission" && !S.cm.timer && !S.cm.syncing) { S.cm.syncing = true; cmSync().finally(() => { S.cm.syncing = false; }); }
@@ -836,13 +994,13 @@ document.addEventListener("click", async (ev) => {
       const r = await api("POST", "/api/v2/gw/action", { id: S.gw.id, action: "defaults", confirm: typed }); if (!r.ok) throw new Error(r.error); await gwRead(); toast(t("doneOk"));
     } else if (act.dataset.act === "mod-read") { await modRead();
     } else if (act.dataset.act === "mod-coil") {
+      await modCoil(+act.dataset.addr, act.dataset.val === "1", !!act.dataset.latch && act.dataset.val === "1");
+    } else if (act.dataset.act === "mod-color") {
       if (!S.mod.id) return;
-      const latch = !!act.dataset.latch && act.dataset.val === "1";
+      const kind = act.dataset.kind, latch = !!act.dataset.latch;
       if (latch && Date.now() < S.mod.lockUntil) { toast(t("cooldownNote")); return; }
-      const r = await api("POST", "/api/v2/mod/coil", { id: S.mod.id, device_id: S.mod.dev, addr: +act.dataset.addr, value: act.dataset.val === "1" });
-      if (!r.ok) throw new Error(r.error || "failed");
-      if (latch) { S.mod.lockUntil = Date.now() + 2300; document.querySelectorAll("[data-latch]").forEach((b) => { b.disabled = true; setTimeout(() => { b.disabled = false; }, 2300); }); }
-      toast(t("sent") + " · " + r.ms + " ms");
+      const n = await pickColor(act.textContent.trim()); if (!n) return;
+      await modCoil({ enable: 1000, display: 1010, latch: 1020, latch_display: 1030 }[kind] + n, true, latch);
     } else if (act.dataset.act === "mod-number") {
       const r = await api("POST", "/api/v2/mod/number", { id: S.mod.id, device_id: S.mod.dev, value: +$("#modnum").value }); if (!r.ok) throw new Error(r.error); toast(t("sent"));
     } else if (act.dataset.act === "soak-all") { S.sites.forEach((x) => S.soak.sel.add(x.id)); render();
@@ -906,6 +1064,16 @@ document.addEventListener("click", async (ev) => {
       if (c.file) { const q = new URLSearchParams({ mode: c.mode, id: c.id, ids: c.ids, lot: c.lot, device_type: c.type, overwrite: body.overwrite ? "1" : "0", confirmed: "1", name: c.fileName }); await api("POST", "/api/v2/cm/start?" + q, c.file, true); }
       else await api("POST", "/api/v2/cm/start", body);
       c.since = 0; c.lines = []; c.done = null; c.prog = null; c.boards = {}; c.running = true; render(); cmPoll();
+    } else if (act.dataset.act === "ins-mode") { S.ins.mode = act.dataset.m; render();
+    } else if (act.dataset.act === "ins-cell" || act.dataset.act === "ins-row" || act.dataset.act === "ins-whole" || act.dataset.act === "ins-none") {
+      const i = S.ins; if (i.running || !i.layout) return;
+      if (act.dataset.act === "ins-cell") { const id = +act.dataset.id; i.sel.has(id) ? i.sel.delete(id) : i.sel.add(id); delete i.res[id]; }
+      else if (act.dataset.act === "ins-row") { const ids = i.layout.ids.filter((x) => Math.floor(x / 10) === +act.dataset.r), all = ids.every((x) => i.sel.has(x)); ids.forEach((x) => { all ? i.sel.delete(x) : i.sel.add(x); delete i.res[x]; }); }
+      else { i.sel = act.dataset.act === "ins-whole" ? new Set(i.layout.ids) : new Set(); i.res = {}; i.rows = []; i.summary = ""; i.banner = ""; i.text = ""; }
+      insPaint(); insCaption(); const se = $("#inssel"); if (se) se.textContent = insSelText();
+    } else if (act.dataset.act === "ins-run") { await insStart();
+    } else if (act.dataset.act === "ins-stop") { await api("POST", "/api/v2/ins/cancel", {});
+    } else if (act.dataset.act === "ins-info") { const x = INS_INFO[act.dataset.k]; $("#infobody").innerHTML = `<p style="margin:0;white-space:pre-line">${esc(x[lang === "th" ? 0 : 1])}</p>`; const d = $("#info"); if (d.showModal) d.showModal(); else d.setAttribute("open", "");
     } else if (act.dataset.act === "hint") { showInfo(act.dataset.key);
     } else if (act.dataset.act === "collector") { const on = act.getAttribute("aria-checked") !== "true"; await api("POST", "/api/v2/collector", { enabled: on }); S.me = await api("GET", "/api/v2/me"); render(); }
   } catch (e) { if (String(act.dataset.act).startsWith("cm-")) S.cm.err = e.message; fail(e); render(); }
@@ -967,7 +1135,8 @@ document.addEventListener("input", (ev) => {
   if (ev.target.id === "evq") { S.ev.q = ev.target.value; clearTimeout(window._evt); window._evt = setTimeout(loadEvents, 300); }
 });
 document.addEventListener("change", async (ev) => {
-  if (ev.target.id === "modsel") { S.mod.id = ev.target.value; S.mod.data = null; if (S.mod.id) modRead(); }
+  if (ev.target.id === "modsel") { S.mod.id = ev.target.value; S.mod.data = null; if (S.mod.id) modRead(); else render(); insLayout(); }
+  if (ev.target.dataset && ev.target.dataset.ins) { const k = ev.target.dataset.ins, el = ev.target; S.ins[k] = el.type === "checkbox" ? el.checked : el.type === "number" ? +el.value : (k === "preset" ? +el.value : el.value); insCaption(); }
   if (ev.target.id === "moddev") { S.mod.dev = Math.max(1, Math.min(247, +ev.target.value || 1)); S.mod.data = null; }
   if (ev.target.id === "modstats") { S.mod.stats = ev.target.checked; }
   if (ev.target.id === "modauto") { S.mod.auto = ev.target.checked; modAutoSync(); }

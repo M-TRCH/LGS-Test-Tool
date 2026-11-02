@@ -12,7 +12,7 @@ from starlette.responses import FileResponse, JSONResponse, Response
 
 from .. import auth, config_store, event_collector
 from ..version import APP_VERSION
-from . import commission_api, events_api, gateway_api, health, labels_api, module_api, ota_api, sites, soak_api
+from . import commission_api, events_api, gateway_api, health, install_api, labels_api, module_api, ota_api, sites, soak_api
 
 STATIC = Path(__file__).resolve().parent / "static"
 PROBE_PARALLEL = 6            # gateways asked at once; each probe is one short connection
@@ -219,6 +219,41 @@ def install(app, cfg, worker) -> None:
         except (ValueError, TypeError) as exc:
             return JSONResponse({"error": str(exc)}, status_code=422)
         return await _run(request, module_api.display_number, host, port, dev, val)
+
+    # -- installation check (module page) --------------------------------------
+    @app.get("/api/v2/ins/layout")
+    async def ins_layout(id: str = ""):
+        return install_api.layout(id)
+
+    @app.post("/api/v2/ins/start")
+    async def ins_start(request: Request):
+        body = await request.json()
+        try:
+            host, port, name = _target(body)
+            ids = install_api._ids(body.get("ids"))
+        except (ValueError, TypeError) as exc:
+            return JSONResponse({"error": str(exc)}, status_code=422)
+        site = {"host": host, "port": port, "name": name}
+        return await _run(request, install_api.run.start, site, str(body.get("mode", "check")), ids, body)
+
+    @app.get("/api/v2/ins/events")
+    async def ins_events(since: int = 0):
+        return install_api.run.snapshot(since)
+
+    @app.post("/api/v2/ins/cancel")
+    async def ins_cancel(request: Request):
+        if not _mutating(request):
+            return _forbidden()
+        install_api.run.cancel()
+        return {"ok": True}
+
+    @app.get("/api/v2/ins/csv")
+    async def ins_csv():
+        r = install_api.run
+        if not r.csv_bytes:
+            return JSONResponse({"error": "no finished run"}, status_code=404)
+        return Response(r.csv_bytes, media_type="text/csv",
+                        headers={"Content-Disposition": f'attachment; filename="{r.csv_name}"'})
 
     # ── soak ───────────────────────────────────────────────────────────────
     @app.get("/api/v2/soak/status")
