@@ -15,8 +15,8 @@ const TXT = {
     search: "ค้นหา (ชื่อ, ไอพี)", noEvents: "ไม่มีเหตุการณ์ในช่วงนี้", noEventsOff: "ยังไม่มีข้อมูล เพราะยังไม่ได้เปิด \"เก็บเหตุการณ์อัตโนมัติ\" ด้านบน (เปิดแล้วรอประมาณ 5 นาทีให้ดึงรอบแรก) ตู้ที่ใช้เฟิร์มแวร์ต่ำกว่า 1.14.0 จะไม่มีข้อมูล", collect: "เก็บเหตุการณ์อัตโนมัติ",
     collectHint: "ดึงบันทึกจากเกตเวย์ทุกตู้ในรายการตู้ทุก 5 นาที เก็บ 90 วัน ต้องใช้เฟิร์มแวร์เกตเวย์ 1.14.0 ขึ้นไป",
     gateway_page: "เกตเวย์", pick: "เลือกตู้", read: "อ่านค่า", reading: "กำลังอ่าน...",
-    setClock: "ตั้งนาฬิกาจากเครื่องนี้",
-    clockInfo: "การตั้งนาฬิกาเป็นการเปิดใช้การรีเซ็ตตามเวลา (เช่น 03:00) ซึ่งตัดไฟชั้นวาง ตั้งเมื่อตั้งใจเท่านั้น เมื่อตั้งแล้วปิดกลับไม่ได้ นาฬิกาหายเองเมื่อไฟดับจริงเท่านั้น",
+    setClock: "ซิงค์เวลาจากเครื่องนี้",
+    clockInfo: "การตั้งนาฬิกาเป็นการเปิดใช้การรีเซ็ตตามเวลา (เช่น 03:00) ซึ่งตัดไฟชั้นวาง ตั้งเมื่อตั้งใจเท่านั้น กดซ้ำได้เมื่อเวลาคลาด นาฬิกาหายเมื่อไฟดับจริง ต้องซิงค์ใหม่",
     resyncInfo: "เมื่อโมดูลไม่ตอบ เกตเวย์ส่งสัญญาณปรับจังหวะให้โมดูลทั้งบัสแล้วลองถามซ้ำอีกครั้ง ชั่วคราว: กลับเป็นเปิดเมื่อเกตเวย์รีบูต",
     excInfo: "เมื่อบัส RS485 ไม่ตอบ ให้ตอบไคลเอนต์ด้วย exception 0x0B ทันที แทนที่จะปล่อยให้หมดเวลา ชั่วคราว: กลับเป็นปิดเมื่อเกตเวย์รีบูต", clockWarn: "การตั้งนาฬิกาเป็นการเปิดใช้การรีเซ็ตตามเวลา (เช่น 03:00) ซึ่งตัดไฟชั้นวาง ตั้งเมื่อตั้งใจเท่านั้น",
     clockSet: "ตั้งนาฬิกาแล้ว", resync: "ซ่อมจังหวะหลังไม่มีคำตอบ (RESYNC)", exc: "ตอบ exception 0x0B ทันทีเมื่อบัสไม่ตอบ (EXC)",
@@ -76,8 +76,8 @@ const TXT = {
     search: "Search (name, IP)", noEvents: "No events in this range", noEventsOff: "No data yet because \"Collect events automatically\" above is off (turn it on and wait about 5 minutes for the first pull). Cabinets below firmware 1.14.0 have no events.", collect: "Collect events automatically",
     collectHint: "Pulls every saved cabinet's gateway log every 5 minutes, kept 90 days. Needs gateway firmware 1.14.0 or newer.",
     gateway_page: "Gateway", pick: "Choose cabinet", read: "Read", reading: "Reading...",
-    setClock: "Set clock from this PC",
-    clockInfo: "Setting the clock arms the scheduled reset (e.g. 03:00), which cuts the shelf's power. Do it on purpose only. Once set it cannot be turned off; the clock is lost only on a real power cut.",
+    setClock: "Sync time from this PC",
+    clockInfo: "Setting the clock arms the scheduled reset (e.g. 03:00), which cuts the shelf's power. Do it on purpose only. Press again to correct drift. The clock is lost on a real power cut and must be synced again.",
     resyncInfo: "After a missing reply the gateway re-syncs every module on the bus and retries once. Temporary: returns to on when the gateway reboots.",
     excInfo: "When the RS485 bus does not answer, reply to the client with exception 0x0B at once instead of letting it time out. Temporary: returns to off when the gateway reboots.", clockWarn: "Setting the clock also arms the scheduled reset (e.g. 03:00), which cuts the shelf's power. Do it on purpose only.",
     clockSet: "Clock set", resync: "Re-sync after a missing reply (RESYNC)", exc: "Answer a bus timeout with exception 0x0B at once (EXC)",
@@ -281,7 +281,7 @@ function viewGateway() {
     const sh = d.shape && d.shape.layout && !d.shape.agreed ? `<div class="notice">${t("shapeBad", { l: esc(d.shape.label), w: esc(d.shape.why) })}<div class="row" style="margin-top:8px">${d.shape.fixable ? `<button class="btn" data-act="gw-shape">${t("shapeFix")}</button>` : `<span class="small">${t("shapeNoFix")}</span>`}</div></div>` : "";
     body = sh + `<section class="card"><dl class="kv"><dt>${t("fw")}</dt><dd class="mono">${esc(i.fw)}</dd><dt>${t("uptime")}</dt><dd>${fmtUp(+i["sys.up"] || 0)} (${esc(i["sys.reset"] || "")})</dd>
         <dt>${t("clients")}</dt><dd>${esc(i["net.client"] || "?")}/2</dd><dt>${t("clock")}</dt><dd>${i["time.set"] === "1" ? esc((i["time.now"] || "").replace("T", " ")) : t("clockUnset")}</dd></dl></section>
-      <section class="card stack">${sw("setClock", i["time.set"] === "1", "gw-time", "clockInfo", i["time.set"] === "1")}${sw("resync", i["rtu.heal"] === "1", "", "resyncInfo")}${sw("exc", i["tcp.exc"] === "1", "", "excInfo")}</section>
+      <section class="card stack"><div class="row"><button class="btn" data-act="gw-time">${t("setClock")}</button><button class="why" data-act="sw-info" data-info="clockInfo" type="button" aria-label="${t("explain")}">?</button></div>${sw("resync", i["rtu.heal"] === "1", "", "resyncInfo")}${sw("exc", i["tcp.exc"] === "1", "", "excInfo")}</section>
       <section class="card stack">${order.map((grp) => `<details${grp === "rs485" || grp === "net" ? " open" : ""}><summary><b>${esc(TXT[lang]["g_" + grp] || grp)}</b> <span class="small muted mono">${esc(grp)} · ${groups[grp].length}</span></summary><div class="fgrid" style="margin-top:8px">${groups[grp].map(field).join("")}</div></details>`).join("") || `<p class="muted">${t("noKeys")}</p>`}</section>
       <section class="card stack"><div class="row"><button class="btn" data-act="gw-export">${t("expCfg")}</button><label class="btn">${t("impCfg")}<input type="file" id="gwimport" accept=".json,application/json" hidden></label></div></section>
       <section class="card stack"><h3>${t("danger")}</h3><div class="row"><button class="btn" data-act="gw-discard">${t("discard")}</button><button class="btn" data-act="gw-reboot">${t("reboot")}</button><button class="btn" data-act="gw-defaults" style="color:var(--bad)">${t("defaults")}</button></div></section>`;
@@ -695,7 +695,8 @@ document.addEventListener("click", async (ev) => {
       if (!r.ok) throw new Error(r.error || "failed");
       S.gw.edits = {}; await gwRead(); toast(r.pending_reboot ? t("needReboot", { k: r.pending_reboot }) : t("applied"));
     } else if (act.dataset.act === "gw-time") {
-      if (!await ask(t("clockWarn"))) return;
+      const wasSet = S.gw.data && S.gw.data.info && S.gw.data.info["time.set"] === "1";
+      if (!wasSet && !await ask(t("clockWarn"))) return;
       const r = await api("POST", "/api/v2/gw/action", { id: S.gw.id, action: "time" }); if (!r.ok) throw new Error(r.error); await gwRead(); toast(t("clockSet"));
     } else if (act.dataset.act === "sw-info") { await ask(t(act.dataset.info), true);
     } else if (act.dataset.act === "gw-vol") {
