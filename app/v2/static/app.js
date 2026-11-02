@@ -447,17 +447,17 @@ function viewModule() {
   }
   const lb = (addr, label, cls) => `<button class="btn ${cls || ""}" data-act="mod-coil" data-addr="${addr}" data-val="1"${cls === "latch" ? " data-latch=1" : ""}>${label}</button>`;
   const presets = (m.presets || []).map((p) => `<section class="card stack"><div class="row"><i class="dot" style="color:${PCOL[p.n]};width:14px;height:14px"></i><b>${t("presets")} ${p.n}</b></div>
-      <div class="stack tight">${lb(p.enable, t("pLight"))}${lb(p.display, t("pLightDisp"))}${lb(p.latch, t("pUnlock"), "latch")}${lb(p.latch_display, t("pUnlockDisp"), "latch")}</div></section>`).join("");
+      <div class="pgrid">${lb(p.enable, t("pLight"))}${lb(p.display, t("pLightDisp"))}${lb(p.latch, t("pUnlock"), "latch")}${lb(p.latch_display, t("pUnlockDisp"), "latch")}</div></section>`).join("");
   return `<h1>${t("module_page")}</h1>
-    <section class="card stack"><div class="row"><div class="field" style="min-width:220px;flex:1"><label>${t("pick")}</label><select id="modsel"><option value="">—</option>${opts}</select></div>
+    <section class="card stack"><div class="row" style="align-items:flex-end"><div class="field" style="min-width:220px;flex:1"><label>${t("pick")}</label><select id="modsel"><option value="">—</option>${opts}</select></div>
       <div class="field" style="width:140px"><label>${t("devId")}</label><input id="moddev" type="number" min="1" max="247" value="${m.dev}"></div>
-      <button class="btn primary" data-act="mod-read">${m.busy ? t("reading") : t("read")}</button></div>
+      <button class="btn primary" data-act="mod-read" style="flex:none;min-width:112px;white-space:nowrap">${m.busy ? t("reading") : t("read")}</button></div>
       <div class="row"><label class="row"><input type="checkbox" id="modstats"${m.stats ? " checked" : ""}> ${t("withStats")}</label>
       <label class="row"><input type="checkbox" id="modauto"${m.auto ? " checked" : ""}> ${t("auto")}</label></div></section>
     <div class="stack" style="margin-top:12px">${cards}
-      <h2>${t("quick")}</h2><section class="card stack"><div class="row">${lb(509, t("identify"))}${lb(511, t("allOff"))}${lb(1020, t("latchSafety"), "latch")}${lb(1019, t("latchForce"), "latch")}
+      <h2>${t("quick")}</h2><section class="card stack"><div class="qgrid">${lb(509, t("identify"))}${lb(511, t("allOff"))}${lb(1020, t("latchSafety"), "latch")}${lb(1019, t("latchForce"), "latch")}
         <button class="btn" data-act="mod-coil" data-addr="1010" data-val="1">${t("dispPower")}</button><button class="btn" data-act="mod-coil" data-addr="1010" data-val="0">OFF</button></div>
-        <div class="row"><div class="field" style="width:160px"><label>${t("number")}</label><input id="modnum" type="number" min="0" max="9999" value="45"></div><button class="btn" data-act="mod-number">${t("writeNumber")}</button></div>
+        <div class="row" style="align-items:flex-end"><div class="field" style="width:160px"><label>${t("number")}</label><input id="modnum" type="number" min="0" max="9999" value="45"></div><button class="btn" data-act="mod-number">${t("writeNumber")}</button></div>
         <p class="small muted">${t("cooldownNote")}</p></section>
       <h2>${t("presets")}</h2><div class="cabs">${presets}</div></div>`;
 }
