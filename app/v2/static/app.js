@@ -15,7 +15,7 @@ const TXT = {
     search: "ค้นหา (ชื่อ, ไอพี)", noEvents: "ไม่มีเหตุการณ์ในช่วงนี้", noEventsOff: "ยังไม่มีข้อมูล เพราะยังไม่ได้เปิด \"เก็บเหตุการณ์อัตโนมัติ\" ด้านบน (เปิดแล้วรอประมาณ 5 นาทีให้ดึงรอบแรก) ตู้ที่ใช้เฟิร์มแวร์ต่ำกว่า 1.14.0 จะไม่มีข้อมูล", collect: "เก็บเหตุการณ์อัตโนมัติ",
     collectHint: "ดึงบันทึกจากเกตเวย์ทุกตู้ในรายการตู้ทุก 5 นาที เก็บ 90 วัน ต้องใช้เฟิร์มแวร์เกตเวย์ 1.14.0 ขึ้นไป",
     gateway_page: "เกตเวย์", pick: "เลือกตู้", read: "อ่านค่า", reading: "กำลังอ่าน...",
-    setClock: "ซิงค์เวลาจากเครื่องนี้", hubRow: "แถว {n}", hubDirect: "ต่อตรง", hubCh: "ช่อง {n}", cabCustom: "กำหนดเอง", cabSlots: "{n} ช่อง", cabNone: "ไม่มี",
+    setClock: "ซิงค์เวลาจากเครื่องนี้", hubRow: "แถว {n}", hubDirect: "ต่อตรง", hubCh: "ช่อง {n}", cabCustom: "กำหนดเอง", cabSlots: "{n} ช่อง", cabNone: "ไม่มี", schDays: "วันที่รีเซ็ต", schTimes: "เวลารีเซ็ต (ติ๊กช่วงที่ใช้)", schSlot: "ช่วงที่ {n}", schEvery: "ทุกวัน", schNoTime: "ไม่ได้เปิดช่วงเวลาใด", schName: "ตารางรีเซ็ต", schDay: ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"],
     resyncInfo: "เมื่อโมดูลไม่ตอบ เกตเวย์ส่งสัญญาณปรับจังหวะให้โมดูลทั้งบัสแล้วลองถามซ้ำอีกครั้ง เป็นการตั้งค่าชั่วคราวจะกลับมาเปิดเองหลังรีบูต",
     excInfo: "เมื่อบัส RS485 ไม่ตอบ ให้ตอบไคลเอนต์ด้วย exception 0x0B ทันที แทนที่จะปล่อยให้หมดเวลา เป็นการตั้งค่าชั่วคราวจะกลับมาปิดเองหลังรีบูต", clockWarn: "การตั้งนาฬิกาเป็นการเปิดใช้การรีเซ็ตตามเวลา (เช่น 03:00) ซึ่งตัดไฟชั้นวาง ตั้งเมื่อตั้งใจเท่านั้น",
     clockSet: "ตั้งนาฬิกาแล้ว", resync: "ซ่อมจังหวะหลังไม่มีคำตอบ (RESYNC)", exc: "ตอบ exception 0x0B ทันทีเมื่อบัสไม่ตอบ (EXC)",
@@ -75,7 +75,7 @@ const TXT = {
     search: "Search (name, IP)", noEvents: "No events in this range", noEventsOff: "No data yet because \"Collect events automatically\" above is off (turn it on and wait about 5 minutes for the first pull). Cabinets below firmware 1.14.0 have no events.", collect: "Collect events automatically",
     collectHint: "Pulls every saved cabinet's gateway log every 5 minutes, kept 90 days. Needs gateway firmware 1.14.0 or newer.",
     gateway_page: "Gateway", pick: "Choose cabinet", read: "Read", reading: "Reading...",
-    setClock: "Sync time from this PC", hubRow: "Row {n}", hubDirect: "Direct", hubCh: "Channel {n}", cabCustom: "Custom", cabSlots: "{n} slots", cabNone: "None",
+    setClock: "Sync time from this PC", hubRow: "Row {n}", hubDirect: "Direct", hubCh: "Channel {n}", cabCustom: "Custom", cabSlots: "{n} slots", cabNone: "None", schDays: "Reset days", schTimes: "Reset times (tick the ones in use)", schSlot: "Time {n}", schEvery: "Every day", schNoTime: "No time switched on", schName: "Reset schedule", schDay: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
     resyncInfo: "After a missing reply the gateway re-syncs every module on the bus and retries once. Temporary: returns to on when the gateway reboots.",
     excInfo: "When the RS485 bus does not answer, reply to the client with exception 0x0B at once instead of letting it time out. Temporary: returns to off when the gateway reboots.", clockWarn: "Setting the clock also arms the scheduled reset (e.g. 03:00), which cuts the shelf's power. Do it on purpose only.",
     clockSet: "Clock set", resync: "Re-sync after a missing reply (RESYNC)", exc: "Answer a bus timeout with exception 0x0B at once (EXC)",
@@ -284,7 +284,7 @@ const GWENUM = (() => {
   for (let n = 1; n <= 4; n++) m["panel.out" + n] = out;
   return m;
 })();
-function gwChanged() { const e = S.gw.edits; return Object.keys(e).length - ("panel.cabinet" in e && "panel.shape" in e ? 1 : 0); }
+function gwChanged() { return new Set(Object.keys(S.gw.edits).map(gwUnit)).size; }
 /* Keys the gateway names but i18n has no label for (the Classic tool draws them with a custom widget). Same wording as the PDF report. */
 const GWNAMES = {
   "panel.btn1": ["ปุ่มสีแดงทำอะไร", "Red button does"], "panel.btn2": ["ปุ่มสีเขียวทำอะไร", "Green button does"], "panel.btn3": ["ปุ่มสีน้ำเงินทำอะไร", "Blue button does"],
@@ -311,6 +311,22 @@ function cabSet(cab, shape) {
   const norm = (k, v) => (k === "panel.shape" ? hubRows(v).join(",") : String(v));
   for (const [k, v] of [["panel.cabinet", cab], ["panel.shape", shape]]) { if (norm(k, v) === norm(k, cabSaved(k))) delete S.gw.edits[k]; else S.gw.edits[k] = String(v); }
 }
+/* The reset schedule is five numbers in the gateway (days mask, slots mask, four HHMM) but one idea for the person: which days, and which times.
+   Days: bit0 = Sunday ... bit6 = Saturday, 0 = every day (never all-unticked). Slots: bit0 = time 1 ... bit3 = time 4. HHMM: 300 = 03:00. */
+const SCH_KEYS = ["sched.reset_days", "sched.reset_slots", "sched.reset_hhmm", "sched.reset_hhmm2", "sched.reset_hhmm3", "sched.reset_hhmm4"];
+const schHhmmKey = (i) => SCH_KEYS[2 + i];
+const schCur = (key) => +cabCur(key), schSaved = (key) => +cabSaved(key);
+const schSet = (key, v) => { if (+v === schSaved(key)) delete S.gw.edits[key]; else S.gw.edits[key] = String(v); };
+const hhmmText = (n) => String(Math.floor(n / 100)).padStart(2, "0") + ":" + String(n % 100).padStart(2, "0");
+function schDesc(get) {
+  const days = get("sched.reset_days"), names = t("schDay"), slots = get("sched.reset_slots");
+  const d = days === 0 || days === 127 ? t("schEvery") : names.filter((_, i) => days & (1 << i)).join(",");
+  const times = [0, 1, 2, 3].filter((i) => slots & (1 << i)).map((i) => hhmmText(get(schHhmmKey(i)))).join(", ");
+  return times ? d + " " + times : t("schNoTime");
+}
+/* Keys shown inside another key's widget: not fields of their own, not counted. */
+const GWMERGED = { "panel.shape": "panel.cabinet", "sched.reset_slots": "sched.reset_days", "sched.reset_hhmm": "sched.reset_days", "sched.reset_hhmm2": "sched.reset_days", "sched.reset_hhmm3": "sched.reset_days", "sched.reset_hhmm4": "sched.reset_days" };
+const gwUnit = (k) => (k === "panel.shape" ? "panel.cabinet" : SCH_KEYS.includes(k) ? "sched.reset_days" : k);
 /* The "?" button, only where there is something to say: no button when the name says it all, or when there is no explanation text. */
 const GWNOINFO = new Set(["sys.name", "net.enabled", "net.dhcp", "net.ip", "net.mask", "net.gw", "net.dns", "net.port", "net.ntp", "net.ntp_port", "time.tz_min", "rs485.baud", "usb.max_ms", "panel.enabled", "sched.reset_enabled"]);
 function whyBtn(k) {
@@ -341,7 +357,7 @@ function viewGateway() {
   if (d && d.ok) {
     const i = d.info;
     const groups = {};
-    d.keys.forEach((k) => { if (GWHIDE.has(k.key) || (k.key === "panel.shape" && d.keys.some((x) => x.key === "panel.cabinet"))) return; const p = k.key.split(".")[0]; (groups[p] = groups[p] || []).push(k); });
+    d.keys.forEach((k) => { if (GWHIDE.has(k.key) || (GWMERGED[k.key] && d.keys.some((x) => x.key === GWMERGED[k.key]))) return; const p = k.key.split(".")[0]; (groups[p] = groups[p] || []).push(k); });
     Object.values(groups).forEach((g) => g.sort((a, b) => gwRank(a.key) - gwRank(b.key)));
     const order = [...GWGROUPS.filter((x) => groups[x]), ...Object.keys(groups).filter((x) => !GWGROUPS.includes(x))];
     const sw = (name, on, act, info, locked) => `<div class="switch"><div><b>${t(name)}</b><button class="why" data-act="sw-info" data-info="${info}" type="button" aria-label="${t("explain")}">?</button></div><button class="sw" role="switch" aria-checked="${on}" data-act="${act || "gw-vol"}" data-name="${name}"${locked ? " disabled" : ""}></button></div>`;
@@ -362,6 +378,13 @@ function viewGateway() {
           + [0, 1, 2, 3, 4, 5, 6, 7, 8].map((c) => `<option value="${c}"${v === c ? " selected" : ""}>${c ? c : t("cabNone")}</option>`).join("") + `</select></div>`).join("");
         return `<div class="field" style="grid-column:1/-1"><label>${esc(gwLabel(k))}</label><select data-cabmode${edited ? mark : ""}>${mode}</select>
           <div class="hubgrid" data-cabgrid style="margin-top:8px"${custom ? "" : " hidden"}>${cells}</div></div>`;
+      }
+      if (k.key === "sched.reset_days" && SCH_KEYS.every((x) => d.keys.some((y) => y.key === x))) {
+        const days = schCur("sched.reset_days"), slots = schCur("sched.reset_slots"), mark = ' style="border-color:var(--brand)"', names = t("schDay");
+        const chips = names.map((n, i) => `<label class="chk"><input type="checkbox" data-schday="${i}"${days === 0 || days & (1 << i) ? " checked" : ""}>${esc(n)}</label>`).join("");
+        const rows = [0, 1, 2, 3].map((i) => { const kk = schHhmmKey(i), on = !!(slots & (1 << i));
+          return `<div class="schrow"><label class="chk"><input type="checkbox" data-schslot="${i}"${on ? " checked" : ""}>${t("schSlot", { n: i + 1 })}</label><input type="time" data-schtime="${i}" value="${hhmmText(schCur(kk))}"${kk in g.edits ? mark : ""}${on ? "" : ' class="off"'}></div>`; }).join("");
+        return `<div class="field" style="grid-column:1/-1"><label>${t("schDays")}</label><div class="schdays">${chips}</div></div><div class="field" style="grid-column:1/-1"><label>${t("schTimes")}</label><div class="schgrid">${rows}</div></div>`;
       }
       if (GWENUM[k.key] && !k.ro) {
         const L = GWENUM[k.key], i18 = lang === "th" ? 0 : 1, vals = Object.keys(L).sort((x, y) => x - y), cur = String(val);
@@ -390,6 +413,7 @@ function gwBar() {
   const shown = (k, v) => { const e = GWENUM[k] && GWENUM[k][v]; return e ? e[lang === "th" ? 0 : 1] : v; };
   const diffs = n ? `<b>${t("changes", { n })}</b>` + Object.entries(S.gw.edits).map(([k, v]) => {
     if (k === "panel.shape" && "panel.cabinet" in S.gw.edits) return "";
+    if (SCH_KEYS.includes(k)) { if (k !== Object.keys(S.gw.edits).find((x) => SCH_KEYS.includes(x))) return ""; return `<div class="small">${t("schName")}: ${esc(schDesc(schSaved))} → <b>${esc(schDesc(schCur))}</b></div>`; }
     if (k === "panel.cabinet" || k === "panel.shape") { const c = d.keys.find((x) => x.key === "panel.cabinet"); return `<div class="small">${esc(gwLabel(c))}: ${esc(cabDesc(cabSaved("panel.cabinet"), cabSaved("panel.shape")))} → <b>${esc(cabDesc(cabCur("panel.cabinet"), cabCur("panel.shape")))}</b></div>`; }
     const kk = d.keys.find((x) => x.key === k); return `<div class="small">${esc(gwLabel(kk))}: ${esc(shown(k, kk.value))} → <b>${esc(shown(k, v))}</b></div>`; }).join("") : "";
   /* Always there: save, and the JSON file buttons. The list of changed values only while something has changed. */
@@ -910,6 +934,21 @@ document.addEventListener("input", (ev) => {
     const saved = hubRows(cabSaved("panel.shape")), edited = "panel.cabinet" in S.gw.edits || "panel.shape" in S.gw.edits;
     cells.forEach((x, i) => { x.style.borderColor = +x.value !== saved[i] ? "var(--brand)" : ""; });
     document.querySelector("[data-cabmode]").style.borderColor = edited ? "var(--brand)" : "";
+    gwBar(); return;
+  }
+  if (ev.target.dataset && (ev.target.dataset.schday !== undefined || ev.target.dataset.schslot !== undefined || ev.target.dataset.schtime !== undefined)) {
+    const q = (sel) => [...document.querySelectorAll(sel)], el = ev.target, mark = (x, on) => { x.style.borderColor = on ? "var(--brand)" : ""; };
+    if (el.dataset.schday !== undefined) {
+      const boxes = q("[data-schday]"), on = boxes.map((x) => x.checked);
+      if (!on.some(Boolean)) { el.checked = true; return; }              /* no day ticked would mean "every day": keep one */
+      const mask = on.reduce((m, v, i) => m | (v ? 1 << i : 0), 0), saved = schSaved("sched.reset_days");
+      schSet("sched.reset_days", mask === 127 ? (saved === 0 || saved === 127 ? saved : 0) : mask);
+    } else if (el.dataset.schslot !== undefined) {
+      schSet("sched.reset_slots", q("[data-schslot]").reduce((m, x, i) => m | (x.checked ? 1 << i : 0), 0));
+      q("[data-schtime]")[+el.dataset.schslot].classList.toggle("off", !el.checked);
+    } else if (/^\d\d:\d\d$/.test(el.value)) {
+      const i = +el.dataset.schtime, kk = schHhmmKey(i); schSet(kk, +el.value.slice(0, 2) * 100 + +el.value.slice(3)); mark(el, kk in S.gw.edits);
+    }
     gwBar(); return;
   }
   if (ev.target.dataset && ev.target.dataset.hubrow !== undefined) {
