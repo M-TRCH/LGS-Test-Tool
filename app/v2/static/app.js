@@ -296,7 +296,7 @@ const GWNAMES = {
   "net.console": ["เปิดช่องคอนโซลผ่านเครือข่าย", "Console over the network"],
 };
 /* Thai wording for this page that differs from the shared i18n table the Classic tool also reads. */
-const GWTH = { "sys.name": "ชื่อเกตเวย์", "sys.wdt_ms": "Watchdog (ms)", "net.ip": "ไอพีเกตเวย์", "net.ntp": "ไอพีเซิร์ฟเวอร์เวลา NTP", "time.tz_min": "โซนเวลา (UTC)", "panel.cabinet": "รูปทรงตู้",
+const GWTH = { "sys.name": "ชื่อเกตเวย์", "sys.wdt_ms": "Watchdog (ms)", "net.ip": "ไอพีเกตเวย์", "net.ntp": "ไอพีเซิร์ฟเวอร์เวลา NTP", "time.tz_min": "โซนเวลา (UTC)", "panel.cabinet": "รูปทรงตู้", "sched.reset_enabled": "รีเซตไฟเลี้ยงโมดูลตามเวลา",
   "rs485.t2_ms": "เวลาเงียบที่ถือว่าจบคำตอบ (ms)", "usb.gap_ms": "เวลาเงียบที่ถือว่าจบคำสั่ง (ms)", "panel.preset": "พรีเซ็ตไฟที่ปุ่มสั่ง", "bus.hub_map": "แผนที่ช่อง", "bus.hub_retry": "จำนวนยิงกระตุ้นเมื่อข้ามช่อง", "bus.hub_gap_ms": "เผื่อเวลาเพิ่ม (ms)" };
 /* bus.hub_map is ten numbers, one per row (slave IDs 11-108): which hub channel the row hangs on, 0 = wired straight. */
 const hubRows = (str) => { const a = String(str || "").split(",").map((x) => parseInt(x, 10) || 0); while (a.length < 10) a.push(0); return a.slice(0, 10); };
