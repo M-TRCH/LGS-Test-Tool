@@ -59,6 +59,10 @@ h1{font-size:22px;margin:2px 0 10px}h2{font-size:17px;margin:0}h3{font-size:15px
 .card{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
 .stack{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}.stack.tight{gap:8px}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.row.between{justify-content:space-between}
+/* A class that sets display (.btn) would otherwise beat the browser rule for the hidden attribute. */
+[hidden]{display:none!important}
+/* Same box model and height for every control in a field row (a select was 2px taller than its neighbours). */
+.field select,.field input:not([type=checkbox]){box-sizing:border-box;height:var(--tap)}
 /* File pickers follow the theme instead of the browser default grey button. */
 input[type=file]{max-width:100%;box-sizing:border-box;min-height:var(--tap);padding:0 6px 0 6px;display:flex;align-items:center;line-height:var(--tap);color:var(--muted);font:inherit;font-size:13px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
 input[type=file]::file-selector-button{margin:0 10px 0 0;height:36px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font:inherit;font-weight:600;cursor:pointer;vertical-align:middle}
@@ -74,7 +78,7 @@ input[type=checkbox]{width:20px;height:20px;accent-color:var(--brand);flex:none}
 .seg button{white-space:nowrap;min-height:40px;padding:0 14px;border-radius:99px;border:1px solid var(--line);background:var(--surface)}
 .seg button[aria-pressed="true"]{background:var(--brand);color:var(--brand-ink);border-color:transparent;font-weight:600}
 .search,.field input,.field select,.field textarea{min-width:0;max-width:100%;width:100%;min-height:var(--tap);border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:0 12px}
-.field{display:grid;gap:4px}.field label{font-size:13px;color:var(--muted)}.field .hint{font-size:12px;color:var(--muted)}
+.field{display:grid;gap:4px;align-content:start}.field label{font-size:13px;line-height:18px;height:20px;color:var(--muted)}.field .hint{font-size:12px;color:var(--muted)}
 .fgrid{display:grid;gap:10px;grid-template-columns:minmax(0,1fr)}
 .cabs{display:grid;gap:10px}
 .cab{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;text-align:left;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;min-height:72px}
