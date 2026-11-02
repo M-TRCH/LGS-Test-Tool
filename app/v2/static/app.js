@@ -201,7 +201,7 @@ function siteRow(s, i) {
 }
 function viewSites() {
   return `<div class="row between" style="margin-bottom:14px"><h1>${t("sites")}</h1><div class="row">
-      <details class="menu"><summary class="btn">CSV ▾</summary><div class="menupanel">
+      <details class="menu"><summary class="btn">CSV</summary><div class="menupanel">
         <a class="menuitem" href="/api/v2/sites.csv" download>${t("exportCsv")}</a>
         <button class="menuitem" type="button" data-act="csv-import">${t("importCsv")}</button>
         <input type="file" id="csvfile" accept=".csv,text/csv" hidden></div></details>
@@ -825,6 +825,12 @@ document.addEventListener("change", async (ev) => {
   }
 });
 document.addEventListener("keydown", (e) => { if ((e.key === " " || e.key === "Enter") && e.target.matches && e.target.matches(".sw")) { e.preventDefault(); e.target.click(); } });
+/* A dropdown menu is nudged back inside the screen when it would run past an edge (a phone is not always as wide as the layout assumes). */
+document.addEventListener("toggle", (e) => {
+  const d = e.target; if (!d.matches || !d.matches("details.menu") || !d.open) return;
+  const p = d.querySelector(".menupanel"); p.style.transform = ""; const r = p.getBoundingClientRect(), over = r.right - (innerWidth - 8);
+  if (over > 0) p.style.transform = `translateX(-${over}px)`; else if (r.left < 8) p.style.transform = `translateX(${8 - r.left}px)`;
+}, true);
 $("#infoclose").onclick = () => $("#info").close();
 $("#info").addEventListener("click", (e) => { if (e.target.id === "info") $("#info").close(); });
 function settingsText() {
