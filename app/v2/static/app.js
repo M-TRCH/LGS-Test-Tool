@@ -15,9 +15,9 @@ const TXT = {
     search: "ค้นหา (ชื่อ, ไอพี)", noEvents: "ไม่มีเหตุการณ์ในช่วงนี้", noEventsOff: "ยังไม่มีข้อมูล เพราะยังไม่ได้เปิด \"เก็บเหตุการณ์อัตโนมัติ\" ด้านบน (เปิดแล้วรอประมาณ 5 นาทีให้ดึงรอบแรก) ตู้ที่ใช้เฟิร์มแวร์ต่ำกว่า 1.14.0 จะไม่มีข้อมูล", collect: "เก็บเหตุการณ์อัตโนมัติ",
     collectHint: "ดึงบันทึกจากเกตเวย์ทุกตู้ในรายการตู้ทุก 5 นาที เก็บ 90 วัน ต้องใช้เฟิร์มแวร์เกตเวย์ 1.14.0 ขึ้นไป",
     gateway_page: "เกตเวย์", pick: "เลือกตู้", read: "อ่านค่า", reading: "กำลังอ่าน...",
-    setClock: "ซิงค์เวลาจากเครื่องนี้", hubRow: "แถว {n}", hubDirect: "ต่อตรง", hubCh: "ช่อง {n}", cabCustom: "กำหนดเอง", cabSlots: "{n} ช่อง", cabNone: "ไม่มี", schDays: "วันที่รีเซ็ต", schTimes: "เวลารีเซ็ต", schSlot: "ช่วงที่ {n}", schEvery: "ทุกวัน", schNoTime: "ไม่ได้เปิดช่วงเวลาใด", schName: "ตารางรีเซ็ต", schDay: ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"], schDayS: ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"],
+    setClock: "ซิงค์เวลาจากเครื่องนี้", hubRow: "แถว {n}", hubDirect: "ต่อตรง", hubCh: "ช่อง {n}", cabCustom: "กำหนดเอง", cabSlots: "{n} ช่อง", cabNone: "ไม่มี", cabEmpty: "รูปทรงตู้แบบกำหนดเองต้องมีอย่างน้อยหนึ่งแถวที่มีช่อง", schDays: "วันที่รีเซ็ต", schTimes: "เวลารีเซ็ต", schSlot: "ช่วงที่ {n}", schEvery: "ทุกวัน", schNoTime: "ไม่ได้เปิดช่วงเวลาใด", schName: "ตารางรีเซ็ต", schDay: ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"], schDayS: ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"],
     resyncInfo: "เมื่อโมดูลไม่ตอบ เกตเวย์ส่งสัญญาณปรับจังหวะให้โมดูลทั้งบัสแล้วลองถามซ้ำอีกครั้ง เป็นการตั้งค่าชั่วคราวจะกลับมาเปิดเองหลังรีบูต",
-    excInfo: "เมื่อบัส RS485 ไม่ตอบ ให้ตอบไคลเอนต์ด้วย exception 0x0B ทันที แทนที่จะปล่อยให้หมดเวลา เป็นการตั้งค่าชั่วคราวจะกลับมาปิดเองหลังรีบูต", clockWarn: "การตั้งนาฬิกาเป็นการเปิดใช้การรีเซ็ตตามเวลา (เช่น 03:00) ซึ่งตัดไฟชั้นวาง ตั้งเมื่อตั้งใจเท่านั้น",
+    excInfo: "เมื่อบัส RS485 ไม่ตอบ ให้ตอบไคลเอนต์ด้วย exception 0x0B ทันที แทนที่จะปล่อยให้หมดเวลา เป็นการตั้งค่าชั่วคราวจะกลับมาปิดเองหลังรีบูต", clockWarn: "การตั้งนาฬิกาเป็นการเปิดใช้การรีเซ็ตตามเวลา (เช่น 03:00) ซึ่งตัดไฟเลี้ยงโมดูล ตั้งเมื่อตั้งใจเท่านั้น",
     clockSet: "ตั้งนาฬิกาแล้ว", resync: "ซ่อมจังหวะหลังไม่มีคำตอบ (RESYNC)", exc: "ตอบ exception 0x0B ทันทีเมื่อบัสไม่ตอบ (EXC)",
     volatileNote: "ชั่วคราว: กลับค่าเดิมเมื่อเกตเวย์รีบูต", reboot: "รีบูตเกตเวย์", rebootQ: "รีบูตเกตเวย์ {n}? จะตัดการสื่อสารสักครู่",
     defaults: "คืนค่าโรงงาน", defaultsQ: "คืนค่าโรงงานของ {n}? Ethernet จะปิดและ hub map หาย ต้องตั้งใหม่ พิมพ์ชื่อตู้เพื่อยืนยัน",
@@ -43,7 +43,7 @@ const TXT = {
     shapeBad: "ชนิดตู้ใน รายการตู้ ({l}) ไม่ตรงกับเกตเวย์: {w}", shapeFix: "ตั้งค่าที่ตรงให้ (ยังไม่บันทึก)", shapeNoFix: "เกตเวย์รุ่นนี้แก้เองไม่ได้ (ไม่มี panel.shape)",
     fwOta: "อัปเดตโมดูลผ่าน OTA (หลายตู้)", fwImage: "อิมเมจ", fwStart: "เริ่มอัปเดต", fwCancel: "ยกเลิก", fwCancelQ: "ยกเลิกการอัปเดต? โมดูลที่ค้างอยู่ในเซสชันอาจต้องอัปเดตซ้ำ",
     fwStartQ: "อัปเดตเฟิร์มแวร์โมดูลทุกตัวใน {n} ตู้ด้วย {i}? ทำย้อนจากหน้านี้ไม่ได้ ตู้ที่ใช้งานอยู่จะใช้ไม่ได้ระหว่างอัปเดต", fwRun: "กำลังอัปเดต", fwNoOta: "ยังไม่มีอิมเมจ OTA ในโปรแกรมนี้",
-    fwGw: "อัปเดตเกตเวย์ผ่านเครือข่าย (ทีละตู้)", fwGwNote: "เกตเวย์รีบูตตอนจบ และตัดไฟชั้นวางชั่วครู่ (โมดูลทุกตัวรีบูตด้วย) พิมพ์ชื่อตู้เพื่อยืนยัน", fwUpload: "หรือเลือกไฟล์ .bin เอง", fwConfirm: "พิมพ์ชื่อตู้เพื่อยืนยัน",
+    fwGw: "อัปเดตเกตเวย์ผ่านเครือข่าย (ทีละตู้)", fwGwNote: "เกตเวย์รีบูตตอนจบ และตัดไฟเลี้ยงโมดูลชั่วครู่ (โมดูลทุกตัวรีบูตด้วย) พิมพ์ชื่อตู้เพื่อยืนยัน", fwUpload: "หรือเลือกไฟล์ .bin เอง", fwConfirm: "พิมพ์ชื่อตู้เพื่อยืนยัน",
     fwGwStart: "อัปเดตเกตเวย์", fwGwRun: "กำลังอัปเดตเกตเวย์", fwDone: "เสร็จ", fwFail: "ไม่สำเร็จ", fwLog: "บันทึกการทำงาน", fwNone: "—", fwCensus: "ผลตรวจ", fwLeft: "ยังไม่ใช่รุ่นใหม่", fwPhase: "ขั้น",
     explain: "อธิบาย",
     basic: "พื้นฐาน", advanced: "ขั้นสูง", modeLocked: "หน้านี้อยู่ในโหมดขั้นสูง", mode: "โหมด", settings: "ตั้งค่า", language: "ภาษา", noKeys: "ไม่มีค่าในกลุ่มนี้",
@@ -75,7 +75,7 @@ const TXT = {
     search: "Search (name, IP)", noEvents: "No events in this range", noEventsOff: "No data yet because \"Collect events automatically\" above is off (turn it on and wait about 5 minutes for the first pull). Cabinets below firmware 1.14.0 have no events.", collect: "Collect events automatically",
     collectHint: "Pulls every saved cabinet's gateway log every 5 minutes, kept 90 days. Needs gateway firmware 1.14.0 or newer.",
     gateway_page: "Gateway", pick: "Choose cabinet", read: "Read", reading: "Reading...",
-    setClock: "Sync time from this PC", hubRow: "Row {n}", hubDirect: "Direct", hubCh: "Channel {n}", cabCustom: "Custom", cabSlots: "{n} slots", cabNone: "None", schDays: "Reset days", schTimes: "Reset times", schSlot: "Time {n}", schEvery: "Every day", schNoTime: "No time switched on", schName: "Reset schedule", schDay: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], schDayS: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    setClock: "Sync time from this PC", hubRow: "Row {n}", hubDirect: "Direct", hubCh: "Channel {n}", cabCustom: "Custom", cabSlots: "{n} slots", cabNone: "None", cabEmpty: "A custom cabinet shape needs at least one row with slots", schDays: "Reset days", schTimes: "Reset times", schSlot: "Time {n}", schEvery: "Every day", schNoTime: "No time switched on", schName: "Reset schedule", schDay: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], schDayS: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
     resyncInfo: "After a missing reply the gateway re-syncs every module on the bus and retries once. Temporary: returns to on when the gateway reboots.",
     excInfo: "When the RS485 bus does not answer, reply to the client with exception 0x0B at once instead of letting it time out. Temporary: returns to off when the gateway reboots.", clockWarn: "Setting the clock also arms the scheduled reset (e.g. 03:00), which cuts the shelf's power. Do it on purpose only.",
     clockSet: "Clock set", resync: "Re-sync after a missing reply (RESYNC)", exc: "Answer a bus timeout with exception 0x0B at once (EXC)",
@@ -269,7 +269,7 @@ const GWENUM = (() => {
   const btn = { 0: ["ไม่ทำอะไร", "Does nothing"], 1: ["เปิดไฟทุกช่อง", "Light every slot"], 2: ["ปิดไฟทั้งหมด", "Everything off"], 3: ["ปลดล็อกทุกช่อง", "Unlock every slot"],
     4: ["รีเซ็ตไฟเลี้ยงโมดูล", "Reset the shelf power"], 5: ["ทดสอบไฟสถานะ", "Test the status lamps"], 6: ["เปิดไฟทุกช่อง (8 สี)", "Light every slot (8 colours)"] };
   const out = { 0: ["ไม่ใช้", "Not used"], 1: ["พร้อมใช้งาน", "Ready"], 2: ["กำลังทำงาน", "Busy"], 3: ["ผิดปกติ", "Fault"], 4: ["สาย LAN เชื่อมอยู่", "LAN up"],
-    5: ["มีไคลเอนต์เชื่อมอยู่", "A client is connected"], 6: ["กำลังไล่ช่อง", "A sweep is running"], 7: ["กำลังตัดไฟชั้นวาง", "Shelf power is dropped"], 8: ["ไฟเลี้ยงชั้นวาง", "Shelf power"] };
+    5: ["มีไคลเอนต์เชื่อมอยู่", "A client is connected"], 6: ["กำลังไล่ช่อง", "A sweep is running"], 7: ["กำลังตัดไฟเลี้ยงโมดูล", "Shelf power is dropped"], 8: ["ไฟเลี้ยงโมดูล", "Shelf power"] };
   const m = { "rs485.baud": { 9600: ["9600", "9600"], 19200: ["19200", "19200"], 38400: ["38400", "38400"], 57600: ["57600", "57600"] },
     "panel.preset": Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8].map((n) => [n, ["พรีเซ็ต " + n, "Preset " + n]])) };
   /* KIND_BOOL keys in gw_config.cpp */
@@ -296,7 +296,7 @@ const GWNAMES = {
   "net.console": ["เปิดช่องคอนโซลผ่านเครือข่าย", "Console over the network"],
 };
 /* Thai wording for this page that differs from the shared i18n table the Classic tool also reads. */
-const GWTH = { "sys.name": "ชื่อเกตเวย์", "sys.wdt_ms": "Watchdog (ms)", "net.ip": "ไอพีเกตเวย์", "net.ntp": "ไอพีเซิร์ฟเวอร์เวลา NTP", "time.tz_min": "โซนเวลา (UTC)", "panel.cabinet": "รูปทรงตู้", "sched.reset_enabled": "รีเซตไฟเลี้ยงโมดูลตามเวลา",
+const GWTH = { "sys.name": "ชื่อเกตเวย์", "sys.wdt_ms": "Watchdog (ms)", "net.ip": "ไอพีเกตเวย์", "net.ntp": "ไอพีเซิร์ฟเวอร์เวลา NTP", "time.tz_min": "โซนเวลา (UTC)", "panel.cabinet": "รูปทรงตู้", "panel.lamp_hold_ms": "สถานะกำลังทำงานค้างนาน (ms)", "panel.lamp_dead": "เงียบกี่ครั้งจึงนับเป็นผิดปกติ", "sched.reset_enabled": "รีเซตไฟเลี้ยงโมดูลตามเวลา",
   "rs485.t2_ms": "เวลาเงียบที่ถือว่าจบคำตอบ (ms)", "usb.gap_ms": "เวลาเงียบที่ถือว่าจบคำสั่ง (ms)", "panel.preset": "พรีเซ็ตไฟที่ปุ่มสั่ง", "bus.hub_map": "แผนที่ช่อง", "bus.hub_retry": "จำนวนยิงกระตุ้นเมื่อข้ามช่อง", "bus.hub_gap_ms": "เผื่อเวลาเพิ่ม (ms)" };
 /* bus.hub_map is ten numbers, one per row (slave IDs 11-108): which hub channel the row hangs on, 0 = wired straight. */
 const hubRows = (str) => { const a = String(str || "").split(",").map((x) => parseInt(x, 10) || 0); while (a.length < 10) a.push(0); return a.slice(0, 10); };
@@ -335,7 +335,7 @@ function whyBtn(k) {
   return `<button class="why" data-act="hint" data-key="${esc(k.key)}" type="button" aria-label="${t("explain")}">?</button>`;
 }
 /* Shorter Thai explanations for this page than the shared i18n table has. */
-const GWTHHINT = { "panel.lamp_dead": "บัส RS485 เงียบติดกันกี่ครั้งจึงนับเป็น fault แล้วไฟที่ตามสถานะ fault จะติด การสลับช่องฮับทำให้เงียบ 1 ครั้งตามปกติ จึงควรตั้งให้สูงกว่านั้นมาก", "panel.lamp_dwell_ms": "ไฟแต่ละดวงต้องคงสถานะอย่างน้อยเท่านี้ก่อนสลับ กันรีเลย์สับรัว ไม่รวมไฟเลี้ยงโมดูล", "panel.lamp_hold_ms": "หลังมีการสื่อสาร Modbus แต่ละครั้ง เกตเวย์จะนับเป็น busy ต่ออีกเท่านี้ ไฟที่ตามสถานะ busy จึงติดค้างแทนการกระพริบ ตั้งสั้นไปไฟจะกระตุกและรีเลย์ทำงานหนักขึ้น", "panel.preset": "เลือกว่าตอนกดปุ่มหน้าตู้ จะสั่งโมดูลให้เปิดไฟด้วยพรีเซ็ตหมายเลขไหน (1–8) สีและความสว่างกำหนดไว้ในพรีเซ็ตที่ตัวโมดูล ไม่ได้ตั้งที่เกตเวย์ และมีผลเฉพาะบอร์ดที่มีไฟ ring", "bus.hub_retry": "จำนวนครั้งที่ส่งคำสั่งเมื่อต้องเปลี่ยนไปคุยกับช่องฮับอื่น", "bus.hub_settle_ms": "เวลาที่ฮับใช้สลับช่อง รอโดยไม่มีการรับส่งข้อมูล", "bus.hub_budget_ms": "เวลามากสุดต่อหนึ่งคำสั่ง รวมเวลารอฮับสลับช่อง ต้องน้อยกว่าเวลารอคำตอบของฝั่งที่สั่ง (เซิร์ฟเวอร์) ไม่อย่างนั้นฝั่งนั้นจะหมดเวลาก่อน", "bus.hub_map": "เลือกว่าแต่ละแถวของตู้ต่ออยู่กับช่องไหนของฮับ RS485 ตั้งแต่ช่อง 1–8 ถ้าเลือกต่อตรง คือแถวที่ไม่ผ่านฮับ และตั้งต่อตรงทั้ง 10 แถว เกตเวย์จะปิดการจัดการฮับ", "sys.wdt_ms": "บอร์ดรีเซ็ตตัวเองถ้าเฟิร์มแวร์หยุดทำงานนานเท่านี้ ต้องนานกว่าเวลารอสาย LAN ตอนเปิดเครื่อง ไม่อย่างนั้นบอร์ดจะรีสตาร์ทวนไม่จบ มีผลหลังรีบูต" };
+const GWTHHINT = { "panel.lamp_dead": "บัส RS485 เงียบติดกันกี่ครั้งจึงนับเป็นผิดปกติ แล้วไฟที่ตามสถานะผิดปกติจะติด การสลับช่องฮับทำให้เงียบ 1 ครั้งตามปกติ จึงควรตั้งให้สูงกว่านั้นมาก", "panel.lamp_dwell_ms": "ไฟแต่ละดวงต้องคงสถานะอย่างน้อยเท่านี้ก่อนสลับ กันรีเลย์สับรัว ไม่รวมไฟเลี้ยงโมดูล", "panel.lamp_hold_ms": "หลังมีการสื่อสาร Modbus แต่ละครั้ง เกตเวย์จะนับเป็นกำลังทำงานต่ออีกเท่านี้ ไฟที่ตามสถานะกำลังทำงานจึงติดค้างแทนการกระพริบ ตั้งสั้นไปไฟจะกระตุกและรีเลย์ทำงานหนักขึ้น", "panel.preset": "เลือกว่าตอนกดปุ่มหน้าตู้ จะสั่งโมดูลให้เปิดไฟด้วยพรีเซ็ตหมายเลขไหน (1–8) สีและความสว่างกำหนดไว้ในพรีเซ็ตที่ตัวโมดูล ไม่ได้ตั้งที่เกตเวย์ และมีผลเฉพาะบอร์ดที่มีไฟ ring", "bus.hub_retry": "จำนวนครั้งที่ส่งคำสั่งเมื่อต้องเปลี่ยนไปคุยกับช่องฮับอื่น", "bus.hub_settle_ms": "เวลาที่ฮับใช้สลับช่อง รอโดยไม่มีการรับส่งข้อมูล", "bus.hub_budget_ms": "เวลามากสุดต่อหนึ่งคำสั่ง รวมเวลารอฮับสลับช่อง ต้องน้อยกว่าเวลารอคำตอบของฝั่งที่สั่ง (เซิร์ฟเวอร์) ไม่อย่างนั้นฝั่งนั้นจะหมดเวลาก่อน", "bus.hub_map": "เลือกว่าแต่ละแถวของตู้ต่ออยู่กับช่องไหนของฮับ RS485 ตั้งแต่ช่อง 1–8 ถ้าเลือกต่อตรง คือแถวที่ไม่ผ่านฮับ และตั้งต่อตรงทั้ง 10 แถว เกตเวย์จะปิดการจัดการฮับ", "sys.wdt_ms": "บอร์ดรีเซ็ตตัวเองถ้าเฟิร์มแวร์หยุดทำงานนานเท่านี้ ต้องนานกว่าเวลารอสาย LAN ตอนเปิดเครื่อง ไม่อย่างนั้นบอร์ดจะรีสตาร์ทวนไม่จบ มีผลหลังรีบูต" };
 /* Not shown on this page: panel.lamps is redundant with setting every output to "not used" (the gateway default is on, and it is left untouched). */
 const GWHIDE = new Set(["panel.lamps"]);
 function gwLabel(k) { if (lang === "th" && GWTH[k.key]) return GWTH[k.key]; const tx = k.text && k.text[lang]; return (tx && tx.label) || (GWNAMES[k.key] && GWNAMES[k.key][lang === "th" ? 0 : 1]) || k.key; }
@@ -411,14 +411,15 @@ function gwBar() {
   const d = S.gw.data; if (!(d && d.ok)) { el.innerHTML = ""; return; }
   const n = gwChanged();
   const shown = (k, v) => { const e = GWENUM[k] && GWENUM[k][v]; return e ? e[lang === "th" ? 0 : 1] : v; };
+  const emptyShape = ("panel.cabinet" in S.gw.edits || "panel.shape" in S.gw.edits) && +cabCur("panel.cabinet") === 0 && !hubRows(cabCur("panel.shape")).some((x) => x > 0);
   const diffs = n ? `<b>${t("changes", { n })}</b>` + Object.entries(S.gw.edits).map(([k, v]) => {
     if (k === "panel.shape" && "panel.cabinet" in S.gw.edits) return "";
     if (SCH_KEYS.includes(k)) { if (k !== Object.keys(S.gw.edits).find((x) => SCH_KEYS.includes(x))) return ""; return `<div class="small">${t("schName")}: ${esc(schDesc(schSaved))} → <b>${esc(schDesc(schCur))}</b></div>`; }
     if (k === "panel.cabinet" || k === "panel.shape") { const c = d.keys.find((x) => x.key === "panel.cabinet"); return `<div class="small">${esc(gwLabel(c))}: ${esc(cabDesc(cabSaved("panel.cabinet"), cabSaved("panel.shape")))} → <b>${esc(cabDesc(cabCur("panel.cabinet"), cabCur("panel.shape")))}</b></div>`; }
     const kk = d.keys.find((x) => x.key === k); return `<div class="small">${esc(gwLabel(kk))}: ${esc(shown(k, kk.value))} → <b>${esc(shown(k, v))}</b></div>`; }).join("") : "";
   /* Always there: save, and the JSON file buttons. The list of changed values only while something has changed. */
-  el.innerHTML = `<section class="card stack" style="position:sticky;bottom:calc(var(--navh) + 8px);margin-top:12px;${n ? "border-color:var(--brand)" : ""}">${diffs}
-    <div class="row"><button class="btn primary" data-act="gw-apply"${n ? "" : " disabled"}>${t("apply")}</button>${n ? `<button class="btn" data-act="gw-clear">${t("reset")}</button>` : ""}
+  el.innerHTML = `<section class="card stack" style="position:sticky;bottom:calc(var(--navh) + 8px);margin-top:12px;${n ? "border-color:var(--brand)" : ""}">${diffs}${emptyShape ? `<div class="small" style="color:var(--bad)">${t("cabEmpty")}</div>` : ""}
+    <div class="row"><button class="btn primary" data-act="gw-apply"${n && !emptyShape ? "" : " disabled"}>${t("apply")}</button>${n ? `<button class="btn" data-act="gw-clear">${t("reset")}</button>` : ""}
       <button class="btn" data-act="gw-export">${t("expCfg")}</button><label class="btn">${t("impCfg")}<input type="file" id="gwimport" accept=".json,application/json" hidden></label></div></section>`;
 }
 
