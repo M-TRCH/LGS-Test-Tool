@@ -190,7 +190,7 @@ function siteRow(s, i) {
     <button class="btn" data-act="del" data-i="${i}">${t("del")}</button>${dup ? `<div class="tiny" style="color:var(--warn)">${t("dupWarn")}</div>` : ""}</div>`;
 }
 function viewSites() {
-  return `<div class="row between"><h1>${t("sites")}</h1><div class="row">
+  return `<div class="row between" style="margin-bottom:14px"><h1>${t("sites")}</h1><div class="row">
       <details class="menu"><summary class="btn">CSV ▾</summary><div class="menupanel">
         <a class="menuitem" href="/api/v2/sites.csv" download>${t("exportCsv")}</a>
         <button class="menuitem" type="button" data-act="csv-import" data-mode="merge">${t("importCsv")}<small>${t("importMerge")}</small></button>
