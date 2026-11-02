@@ -16,7 +16,6 @@ const TXT = {
     collectHint: "ดึงบันทึกจากเกตเวย์ทุกตู้ในรายการตู้ทุก 5 นาที เก็บ 90 วัน ต้องใช้เฟิร์มแวร์เกตเวย์ 1.14.0 ขึ้นไป",
     gateway_page: "เกตเวย์", pick: "เลือกตู้", read: "อ่านค่า", reading: "กำลังอ่าน...",
     setClock: "ซิงค์เวลาจากเครื่องนี้",
-    clockInfo: "การตั้งนาฬิกาเป็นการเปิดใช้การรีเซ็ตตามเวลา (เช่น 03:00) ซึ่งตัดไฟชั้นวาง ตั้งเมื่อตั้งใจเท่านั้น กดซ้ำได้เมื่อเวลาคลาด นาฬิกาหายเมื่อไฟดับจริง ต้องซิงค์ใหม่",
     resyncInfo: "เมื่อโมดูลไม่ตอบ เกตเวย์ส่งสัญญาณปรับจังหวะให้โมดูลทั้งบัสแล้วลองถามซ้ำอีกครั้ง ชั่วคราว: กลับเป็นเปิดเมื่อเกตเวย์รีบูต",
     excInfo: "เมื่อบัส RS485 ไม่ตอบ ให้ตอบไคลเอนต์ด้วย exception 0x0B ทันที แทนที่จะปล่อยให้หมดเวลา ชั่วคราว: กลับเป็นปิดเมื่อเกตเวย์รีบูต", clockWarn: "การตั้งนาฬิกาเป็นการเปิดใช้การรีเซ็ตตามเวลา (เช่น 03:00) ซึ่งตัดไฟชั้นวาง ตั้งเมื่อตั้งใจเท่านั้น",
     clockSet: "ตั้งนาฬิกาแล้ว", resync: "ซ่อมจังหวะหลังไม่มีคำตอบ (RESYNC)", exc: "ตอบ exception 0x0B ทันทีเมื่อบัสไม่ตอบ (EXC)",
@@ -77,7 +76,6 @@ const TXT = {
     collectHint: "Pulls every saved cabinet's gateway log every 5 minutes, kept 90 days. Needs gateway firmware 1.14.0 or newer.",
     gateway_page: "Gateway", pick: "Choose cabinet", read: "Read", reading: "Reading...",
     setClock: "Sync time from this PC",
-    clockInfo: "Setting the clock arms the scheduled reset (e.g. 03:00), which cuts the shelf's power. Do it on purpose only. Press again to correct drift. The clock is lost on a real power cut and must be synced again.",
     resyncInfo: "After a missing reply the gateway re-syncs every module on the bus and retries once. Temporary: returns to on when the gateway reboots.",
     excInfo: "When the RS485 bus does not answer, reply to the client with exception 0x0B at once instead of letting it time out. Temporary: returns to off when the gateway reboots.", clockWarn: "Setting the clock also arms the scheduled reset (e.g. 03:00), which cuts the shelf's power. Do it on purpose only.",
     clockSet: "Clock set", resync: "Re-sync after a missing reply (RESYNC)", exc: "Answer a bus timeout with exception 0x0B at once (EXC)",
@@ -144,12 +142,15 @@ function pickImportMode() {
     if (d.showModal) d.showModal(); else d.setAttribute("open", "");
   });
 }
-function ask(text, alertOnly) {
+/* ask(text) -> true/false; ask(text, true) is an alert; ask(text, false, true) also wants something typed and resolves with it, or null if cancelled. */
+function ask(text, alertOnly, typed) {
   return new Promise((resolve) => {
-    const d = $("#ask"); $("#asktext").textContent = text; $("#askok").textContent = t("askOk"); $("#askno").textContent = t("askNo"); $("#askno").hidden = !!alertOnly;
+    const d = $("#ask"), inp = $("#askin"); inp.hidden = !typed; inp.value = ""; $("#asktext").textContent = text; $("#askok").textContent = t("askOk"); $("#askno").textContent = t("askNo"); $("#askno").hidden = !!alertOnly;
+    const none = typed ? null : false;
     const done = (v) => { d.onclose = null; if (d.open) d.close(); resolve(v); };
-    $("#askok").onclick = () => done(true); $("#askno").onclick = () => done(false); d.onclose = () => resolve(false);
+    $("#askok").onclick = () => done(typed ? inp.value : true); $("#askno").onclick = () => done(none); d.onclose = () => resolve(none);
     if (d.showModal) d.showModal(); else d.setAttribute("open", "");
+    if (typed) inp.focus();
   });
 }
 async function api(method, url, body, raw) {
@@ -284,7 +285,7 @@ function viewGateway() {
       <section class="card stack">${sw("resync", i["rtu.heal"] === "1", "", "resyncInfo")}${sw("exc", i["tcp.exc"] === "1", "", "excInfo")}</section>
       <section class="card stack">${order.map((grp) => `<details${grp === "rs485" || grp === "net" ? " open" : ""}><summary><b>${esc(TXT[lang]["g_" + grp] || grp)}</b> <span class="small muted mono">${esc(grp)} · ${groups[grp].length}</span></summary><div class="fgrid" style="margin-top:8px">${groups[grp].map(field).join("")}</div></details>`).join("") || `<p class="muted">${t("noKeys")}</p>`}</section>
       <section class="card stack"><div class="row"><button class="btn" data-act="gw-export">${t("expCfg")}</button><label class="btn">${t("impCfg")}<input type="file" id="gwimport" accept=".json,application/json" hidden></label></div></section>
-      <section class="card stack"><h3>${t("danger")}</h3><div class="row"><button class="btn" data-act="gw-time">${t("setClock")}</button><button class="why" data-act="sw-info" data-info="clockInfo" type="button" aria-label="${t("explain")}">?</button><button class="btn" data-act="gw-discard">${t("discard")}</button><button class="btn" data-act="gw-reboot">${t("reboot")}</button><button class="btn" data-act="gw-defaults" style="color:var(--bad)">${t("defaults")}</button></div></section>`;
+      <section class="card stack"><h3>${t("danger")}</h3><div class="row"><button class="btn" data-act="gw-time">${t("setClock")}</button><button class="btn" data-act="gw-discard">${t("discard")}</button><button class="btn" data-act="gw-reboot">${t("reboot")}</button><button class="btn" data-act="gw-defaults" style="color:var(--bad)">${t("defaults")}</button></div></section>`;
   } else if (d && !d.ok) body = `<div class="notice bad">${esc(d.error)}</div>`;
   return `<div class="row between"><h1>${t("gateway_page")}</h1></div>
     <section class="card stack"><div class="row" style="align-items:flex-end"><div class="field" style="min-width:0;flex:1"><label>${t("pick")}</label><select id="gwsel"><option value="">—</option>${opts}</select></div>
@@ -708,7 +709,7 @@ document.addEventListener("click", async (ev) => {
       const g = S.sites.find((x) => x.id === S.gw.id); if (!await ask(t("rebootQ", { n: g ? g.name : "" }))) return;
       const r = await api("POST", "/api/v2/gw/action", { id: S.gw.id, action: "reboot" }); if (!r.ok) throw new Error(r.error); toast(t("doneOk"));
     } else if (act.dataset.act === "gw-defaults") {
-      const g = S.sites.find((x) => x.id === S.gw.id); const typed = prompt(t("defaultsQ", { n: g ? g.name : "" })); if (typed === null) return;
+      const g = S.sites.find((x) => x.id === S.gw.id); const typed = await ask(t("defaultsQ", { n: g ? g.name : "" }), false, true); if (typed === null) return;
       const r = await api("POST", "/api/v2/gw/action", { id: S.gw.id, action: "defaults", confirm: typed }); if (!r.ok) throw new Error(r.error); await gwRead(); toast(t("doneOk"));
     } else if (act.dataset.act === "mod-read") { await modRead();
     } else if (act.dataset.act === "mod-coil") {
