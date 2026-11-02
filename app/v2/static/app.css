@@ -59,6 +59,8 @@ h1{font-size:22px;margin:2px 0 10px}h2{font-size:17px;margin:0}h3{font-size:15px
 .card{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
 .stack{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}.stack.tight{gap:8px}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.row.between{justify-content:space-between}
+/* A page header row (title on the left, buttons on the right) keeps clear of whatever follows it. */
+#main>.row.between:first-child{margin-bottom:14px}
 /* A class that sets display (.btn) would otherwise beat the browser rule for the hidden attribute. */
 [hidden]{display:none!important}
 /* Same box model and height for every control in a field row (a select was 2px taller than its neighbours). */
