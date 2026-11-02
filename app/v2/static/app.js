@@ -284,13 +284,16 @@ function gwChanged() { return Object.keys(S.gw.edits).length; }
 const GWNAMES = {
   "panel.btn1": ["ปุ่มสีแดงทำอะไร", "Red button does"], "panel.btn2": ["ปุ่มสีเขียวทำอะไร", "Green button does"], "panel.btn3": ["ปุ่มสีน้ำเงินทำอะไร", "Blue button does"],
   "panel.btn4": ["ปุ่มสีเหลืองทำอะไร", "Yellow button does"], "panel.btn5": ["ปุ่มสีขาวทำอะไร", "White button does"],
-  "panel.out1": ["รีเลย์เอาต์พุต 1 ทำตาม", "Relay output 1 follows"], "panel.out2": ["รีเลย์เอาต์พุต 2 ทำตาม", "Relay output 2 follows"],
-  "panel.out3": ["รีเลย์เอาต์พุต 3 ทำตาม", "Relay output 3 follows"], "panel.out4": ["รีเลย์เอาต์พุต 4 ทำตาม", "Relay output 4 follows"],
+  "panel.out1": ["รีเลย์เอาต์พุต 1 ทำอะไร?", "Relay output 1 follows"], "panel.out2": ["รีเลย์เอาต์พุต 2 ทำอะไร?", "Relay output 2 follows"],
+  "panel.out3": ["รีเลย์เอาต์พุต 3 ทำอะไร?", "Relay output 3 follows"], "panel.out4": ["รีเลย์เอาต์พุต 4 ทำอะไร?", "Relay output 4 follows"],
   "sched.reset_days": ["วันที่รีเซ็ต", "Reset days"], "sched.reset_slots": ["ช่วงเวลาที่เปิดใช้", "Reset times armed"],
   "sched.reset_hhmm2": ["เวลารีเซ็ต 2", "Reset time 2"], "sched.reset_hhmm3": ["เวลารีเซ็ต 3", "Reset time 3"], "sched.reset_hhmm4": ["เวลารีเซ็ต 4", "Reset time 4"],
   "net.console": ["เปิดช่องคอนโซลผ่านเครือข่าย", "Console over the network"],
 };
-function gwLabel(k) { const tx = k.text && k.text[lang]; return (tx && tx.label) || (GWNAMES[k.key] && GWNAMES[k.key][lang === "th" ? 0 : 1]) || k.key; }
+/* Thai wording for this page that differs from the shared i18n table the Classic tool also reads. */
+const GWTH = { "sys.name": "ชื่อเกตเวย์", "sys.wdt_ms": "Watchdog (ms)", "net.ip": "ไอพีเกตเวย์", "net.ntp": "ไอพีเซิร์ฟเวอร์เวลา NTP", "time.tz_min": "โซนเวลา (UTC)",
+  "rs485.t2_ms": "เวลาเงียบที่ถือว่าจบคำตอบ (ms)", "bus.hub_map": "แผนผังชั้น", "bus.hub_retry": "จำนวนยิงกระตุ้นเมื่อข้ามช่อง", "bus.hub_gap_ms": "เผื่อเวลาเพิ่ม (ms)" };
+function gwLabel(k) { if (lang === "th" && GWTH[k.key]) return GWTH[k.key]; const tx = k.text && k.text[lang]; return (tx && tx.label) || (GWNAMES[k.key] && GWNAMES[k.key][lang === "th" ? 0 : 1]) || k.key; }
 
 function showInfo(key) {
   const k = S.gw.data && S.gw.data.keys.find((x) => x.key === key); if (!k) return;
