@@ -247,13 +247,114 @@ def install(app, cfg, worker) -> None:
         install_api.run.cancel()
         return {"ok": True}
 
-    @app.get("/api/v2/ins/csv")
-    async def ins_csv():
+    @app.get("/api/v2/ins/file")
+    async def ins_file():
         r = install_api.run
-        if not r.csv_bytes:
+        if not r.file_bytes:
             return JSONResponse({"error": "no finished run"}, status_code=404)
-        return Response(r.csv_bytes, media_type="text/csv",
-                        headers={"Content-Disposition": f'attachment; filename="{r.csv_name}"'})
+        return Response(r.file_bytes, media_type=r.file_type,
+                        headers={"Content-Disposition": f'attachment; filename="{r.file_name}"'})
+
+    async def _job(request: Request, fn):
+        """Start a long job for the saved cabinet in the body: fn(site, body)."""
+        if not _mutating(request):
+            return _forbidden()
+        body = await request.json()
+        try:
+            host, port, name = _target(body)
+            return fn({"host": host, "port": port, "name": name}, body)
+        except (ValueError, TypeError) as exc:
+            return JSONResponse({"error": str(exc)}, status_code=422)
+
+    @app.post("/api/v2/ins/scan")
+    async def ins_scan(request: Request):
+        return await _job(request, lambda site, b: install_api.run.start_scan(
+            site, install_api.scan_ids(str(b.get("id", "")), bool(b.get("full")))))
+
+    @app.post("/api/v2/ins/sweep")
+    async def ins_sweep(request: Request):
+        return await _job(request, lambda site, b: install_api.run.start_sweep(site, int(b.get("device_id", 0)), b))
+
+    @app.post("/api/v2/ins/report")
+    async def ins_report(request: Request):
+        return await _job(request, lambda site, b: install_api.run.start_report(site, str(b.get("id", ""))))
+
+    # -- module danger actions: the page must send back what was typed --------
+    @app.post("/api/v2/mod/setid")
+    async def mod_setid(request: Request):
+        body = await request.json()
+        try:
+            host, port, _ = _target(body)
+            dev, new = int(body.get("device_id", 0)), int(body.get("new_id", 0))
+        except (ValueError, TypeError) as exc:
+            return JSONResponse({"error": str(exc)}, status_code=422)
+        if str(body.get("confirm", "")).strip() != str(new):
+            return JSONResponse({"error": "type the new id to confirm"}, status_code=422)
+        return await _run(request, module_api.set_slave_id, host, port, dev, new)
+
+    @app.post("/api/v2/mod/reset")
+    async def mod_reset(request: Request):
+        body = await request.json()
+        try:
+            host, port, _ = _target(body)
+            dev = int(body.get("device_id", 0))
+        except (ValueError, TypeError) as exc:
+            return JSONResponse({"error": str(exc)}, status_code=422)
+        if str(body.get("confirm", "")).strip() != str(dev):
+            return JSONResponse({"error": "type the module id to confirm"}, status_code=422)
+        return await _run(request, module_api.soft_reset, host, port, dev)
+
+    # -- this PC as the site's NTP server, and the web password ----------------
+    def _ntp_state(toward: str = "") -> dict:
+        from .. import ntp_server
+        srv = ntp_server.server
+        site = sites.find(toward) if toward else None
+        try:
+            ip = ntp_server.local_ip_toward(site["host"]) if site else ""
+        except Exception:                                        # noqa: BLE001
+            ip = ""
+        return {"enabled": bool(cfg.ntp_enabled), "running": srv.running, "port": int(cfg.ntp_port),
+                "served": srv.served, "error": srv.error, "ip": ip or ""}
+
+    @app.get("/api/v2/ntp")
+    async def ntp_get(toward: str = ""):
+        return _ntp_state(toward)
+
+    @app.post("/api/v2/ntp")
+    async def ntp_set(request: Request):
+        if not _mutating(request):
+            return _forbidden()
+        from .. import ntp_server
+        body = await request.json()
+        try:
+            port = int(body.get("port", cfg.ntp_port))
+        except (TypeError, ValueError):
+            return JSONResponse({"error": "port must be a number"}, status_code=422)
+        if not 1 <= port <= 65535:
+            return JSONResponse({"error": "port must be 1-65535"}, status_code=422)
+        cfg.ntp_enabled, cfg.ntp_port = bool(body.get("enabled")), port
+        config_store.save(cfg)
+        if cfg.ntp_enabled:
+            await ntp_server.server.start(port)
+        else:
+            await ntp_server.server.stop()
+        return _ntp_state()
+
+    @app.post("/api/v2/auth")
+    async def auth_set(request: Request):
+        """{password} sets it (and signs every browser out, this one too);
+        {clear: true} removes it."""
+        if not _mutating(request):
+            return _forbidden()
+        body = await request.json()
+        if body.get("clear"):
+            auth.clear_password()
+            return {"ok": True, "auth": False}
+        try:
+            auth.set_password(str(body.get("password", "")))
+        except ValueError:
+            return JSONResponse({"error": f"min {auth.MIN_LEN}"}, status_code=422)
+        return {"ok": True, "auth": True}
 
     # ── soak ───────────────────────────────────────────────────────────────
     @app.get("/api/v2/soak/status")

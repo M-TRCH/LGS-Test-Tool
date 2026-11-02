@@ -15,7 +15,7 @@ const TXT = {
     search: "ค้นหา (ชื่อ, ไอพี)", noEvents: "ไม่มีเหตุการณ์ในช่วงนี้", noEventsOff: "ยังไม่มีข้อมูล เพราะยังไม่ได้เปิด \"เก็บเหตุการณ์อัตโนมัติ\" ด้านบน (เปิดแล้วรอประมาณ 5 นาทีให้ดึงรอบแรก) ตู้ที่ใช้เฟิร์มแวร์ต่ำกว่า 1.14.0 จะไม่มีข้อมูล", collect: "เก็บเหตุการณ์อัตโนมัติ",
     collectHint: "ดึงบันทึกจากเกตเวย์ทุกตู้ในรายการตู้ทุก 5 นาที เก็บ 90 วัน ต้องใช้เฟิร์มแวร์เกตเวย์ 1.14.0 ขึ้นไป",
     gateway_page: "เกตเวย์", pick: "เลือกตู้", read: "อ่านค่า", reading: "กำลังอ่าน...",
-    setClock: "ซิงค์เวลาจากเครื่องนี้", hubRow: "แถว {n}", hubDirect: "ต่อตรง", hubCh: "ช่อง {n}", cabCustom: "กำหนดเอง", cabSlots: "{n} ช่อง", cabNone: "ไม่มี", insTitle: "ตรวจการติดตั้ง", insPickCab: "เลือกตู้ด้านบนก่อน", insMods: "โมดูลที่จะตรวจ", insSel: "เลือกแล้ว {n}", insWhole: "ทั้งตู้", insClear: "ล้าง", insModeCheck: "ตรวจทั่วไป", insModePick: "ทดสอบลำดับหยิบยา", insWhat: "จะทำอะไรกับแต่ละโมดูล", insA_skip: "ข้าม (แค่ตรวจว่าตอบสนอง)", insA_light: "เปิดไฟ", insA_light_display: "เปิดไฟ+จอ", insHold: "ค้างแต่ละขั้น (วินาที)", insIdentify: "ระบุตัวตน (กะพริบสีขาว ~5 วินาที)", insUnlock: "ปลดกลอนด้วย (กลอนจะทำงานจริง)", insCoil: "จะส่ง coil {coil} ({what})", insWarnUnlock: "รอบนี้จะปลดล็อก {n} โมดูล", insPreset: "พรีเซ็ตสี", insBatch: "จุดพร้อมกัน (ช่อง)", insTimeout: "รอสูงสุดต่อชุด (วินาที)", insPDisplay: "โชว์เลขช่องบนจอ", insPUnlock: "ปลดกลอน (กลอนจะทำงานจริง)", insPClosed: "รอปิดลิ้นชักก่อนดับไฟ", insPBych: "หนึ่งชุดอยู่ช่องฮับเดียว", insRun: "เริ่มตรวจ", insPickRun: "เริ่มเดินทดสอบ", insCancel: "ยกเลิก", insCsv: "บันทึก CSV", insIdle: "ว่าง", insStarting: "กำลังเริ่ม...", insProg: "โมดูล {id} ({i}/{total})", insPrep: "กำลังเปิดไฟช่อง {id} ({i}/{total})", insWaiting: "ไฟติด {n} ช่อง กดปุ่มหน้าช่อง หยิบช่องไหนก่อนก็ได้", insClosing: "รอปิดลิ้นชัก {n} ช่อง, ไฟยังติดอีก {lit} ช่อง", insDone: "เสร็จ {n} โมดูล", insAnswered: "ตอบสนอง {n}/{total}", insMissing: "ไม่ตอบสนอง: {ids}", insFailedIds: "ทำบางขั้นไม่ผ่าน: {ids}", insPass: "✓ ผ่าน", insNoAns: "✗ ไม่ตอบสนอง", insFail: "✗ ไม่ผ่าน", insType: "ชนิด", insResult: "ผล", insDetail: "รายละเอียด", insB_run: "กำลังทำงาน", insB_pass: "ผ่านทั้งหมด", insB_issues: "พบปัญหา", insB_cancelled: "ยกเลิกแล้ว", insPickOne: "เลือกอย่างน้อยหนึ่งโมดูล", insUnlockQ: "รอบนี้จะปลดล็อก {n} โมดูล กลอนจะทำงานจริง ดำเนินการต่อไหม?", cabEmpty: "รูปทรงตู้แบบกำหนดเองต้องมีอย่างน้อยหนึ่งแถวที่มีช่อง", schDays: "วันที่รีเซ็ต", schTimes: "เวลารีเซ็ต", schSlot: "ช่วงที่ {n}", schEvery: "ทุกวัน", schNoTime: "ไม่ได้เปิดช่วงเวลาใด", schName: "ตารางรีเซ็ต", schDay: ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"], schDayS: ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"],
+    setClock: "ซิงค์เวลาจากเครื่องนี้", hubRow: "แถว {n}", hubDirect: "ต่อตรง", hubCh: "ช่อง {n}", cabCustom: "กำหนดเอง", cabSlots: "{n} ช่อง", cabNone: "ไม่มี", insFromScan: "จากผลสแกน", jobBusy: "มีงานอื่นกำลังทำงานอยู่ รอให้เสร็จก่อน", scanTitle: "สแกนหาโมดูล", scanQuick: "สแกนเร็ว (ตามผังตู้)", scanFull: "สแกนเต็ม (1–247)", scanProg: "ถาม ID {id} ({i}/{total})", scanDone: "พบ {n} โมดูล จากที่ถาม {total} ID", swTitle: "ทดสอบโมดูลแบบเต็มชุด", swLoops: "จำนวนรอบ", swLights: "ทดสอบไฟ พรีเซ็ต และจอ", swLatch: "ทดสอบปลดกลอนด้วย (กลอนจะทำงานจริง)", swRun: "เริ่มทดสอบโมดูล {id}", swPhase: "ขั้น {p} ({i}/{total})", swPhaseCol: "ขั้น", swDone: "เสร็จ: ผ่าน {ok} ไม่ผ่าน {fail} ผิดพลาด {err}", swLatchQ: "การทดสอบนี้จะปลดกลอนโมดูล {id} จริง ดำเนินการต่อไหม?", rptBtn: "สร้างรายงานไซต์ (PDF)", rptProg: "อ่านโมดูล {id} ({i}/{total})", rptDone: "เสร็จ: ตอบสนอง {a}/{n} โมดูล", rptFile: "ดาวน์โหลดรายงาน", dangerTitle: "จัดการโมดูล", setIdNew: "Slave ID ใหม่", setIdBtn: "เปลี่ยน ID ของโมดูล {id}", setIdNeed: "ใส่ Slave ID ใหม่ก่อน", setIdQ: "เปลี่ยน Slave ID ของโมดูล {from} เป็น {to} แล้วบันทึก โมดูลจะรีบูต พิมพ์ {to} เพื่อยืนยัน", setIdBusy: "กำลังเปลี่ยน ID (ราว 5 วินาที)...", setIdDone: "เปลี่ยนเป็น ID {id} แล้ว", resetBtn: "รีเซ็ตซอฟต์แวร์โมดูล {id}", resetQ: "รีบูตโมดูล {id} พิมพ์ {id} เพื่อยืนยัน", resetBusy: "กำลังรีบูตโมดูล...", resetDone: "โมดูลกลับมาแล้ว", ntpTitle: "ให้เครื่องนี้เป็น NTP server", ntpOn: "ทำงานอยู่ที่พอร์ต {port} ตอบไปแล้ว {n} ครั้ง", ntpOff: "ปิดอยู่", ntpErr: "เปิดไม่ได้: {e}", optOn: "เปิด", optOff: "ปิด", ntpUsePc: "ใช้เครื่องนี้", ntpNoIp: "หาไอพีของเครื่องนี้ฝั่งเกตเวย์ไม่เจอ", ntpUseQ: "NTP server ในเครื่องนี้ยังปิดอยู่ เปิดเลยไหม?", pwTitle: "รหัสผ่านหน้าเว็บ", pwOn: "ตั้งรหัสไว้แล้ว", pwOff: "ยังไม่ได้ตั้ง ทุกคนในเครือข่ายเปิดหน้านี้ได้", pwNew: "รหัสใหม่", pwRepeat: "พิมพ์ซ้ำ", pwSet: "ตั้งรหัส", pwClear: "ลบรหัส", pwMismatch: "รหัสสองช่องไม่ตรงกัน", pwShort: "รหัสต้องยาวอย่างน้อย 6 ตัวอักษร", pwClearQ: "ลบรหัสผ่าน ทุกคนในเครือข่ายจะเปิดหน้านี้ได้ ดำเนินการต่อไหม?", insTitle: "ตรวจการติดตั้ง", insPickCab: "เลือกตู้ด้านบนก่อน", insMods: "โมดูลที่จะตรวจ", insSel: "เลือกแล้ว {n}", insWhole: "ทั้งตู้", insClear: "ล้าง", insModeCheck: "ตรวจทั่วไป", insModePick: "ทดสอบลำดับหยิบยา", insWhat: "จะทำอะไรกับแต่ละโมดูล", insA_skip: "ข้าม (แค่ตรวจว่าตอบสนอง)", insA_light: "เปิดไฟ", insA_light_display: "เปิดไฟ+จอ", insHold: "ค้างแต่ละขั้น (วินาที)", insIdentify: "ระบุตัวตน (กะพริบสีขาว ~5 วินาที)", insUnlock: "ปลดกลอนด้วย (กลอนจะทำงานจริง)", insCoil: "จะส่ง coil {coil} ({what})", insWarnUnlock: "รอบนี้จะปลดล็อก {n} โมดูล", insPreset: "พรีเซ็ตสี", insBatch: "จุดพร้อมกัน (ช่อง)", insTimeout: "รอสูงสุดต่อชุด (วินาที)", insPDisplay: "โชว์เลขช่องบนจอ", insPUnlock: "ปลดกลอน (กลอนจะทำงานจริง)", insPClosed: "รอปิดลิ้นชักก่อนดับไฟ", insPBych: "หนึ่งชุดอยู่ช่องฮับเดียว", insRun: "เริ่มตรวจ", insPickRun: "เริ่มเดินทดสอบ", insCancel: "ยกเลิก", insCsv: "บันทึก CSV", insIdle: "ว่าง", insStarting: "กำลังเริ่ม...", insProg: "โมดูล {id} ({i}/{total})", insPrep: "กำลังเปิดไฟช่อง {id} ({i}/{total})", insWaiting: "ไฟติด {n} ช่อง กดปุ่มหน้าช่อง หยิบช่องไหนก่อนก็ได้", insClosing: "รอปิดลิ้นชัก {n} ช่อง, ไฟยังติดอีก {lit} ช่อง", insDone: "เสร็จ {n} โมดูล", insAnswered: "ตอบสนอง {n}/{total}", insMissing: "ไม่ตอบสนอง: {ids}", insFailedIds: "ทำบางขั้นไม่ผ่าน: {ids}", insPass: "✓ ผ่าน", insNoAns: "✗ ไม่ตอบสนอง", insFail: "✗ ไม่ผ่าน", insType: "ชนิด", insResult: "ผล", insDetail: "รายละเอียด", insB_run: "กำลังทำงาน", insB_pass: "ผ่านทั้งหมด", insB_issues: "พบปัญหา", insB_cancelled: "ยกเลิกแล้ว", insPickOne: "เลือกอย่างน้อยหนึ่งโมดูล", insUnlockQ: "รอบนี้จะปลดล็อก {n} โมดูล กลอนจะทำงานจริง ดำเนินการต่อไหม?", cabEmpty: "รูปทรงตู้แบบกำหนดเองต้องมีอย่างน้อยหนึ่งแถวที่มีช่อง", schDays: "วันที่รีเซ็ต", schTimes: "เวลารีเซ็ต", schSlot: "ช่วงที่ {n}", schEvery: "ทุกวัน", schNoTime: "ไม่ได้เปิดช่วงเวลาใด", schName: "ตารางรีเซ็ต", schDay: ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"], schDayS: ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"],
     resyncInfo: "เมื่อโมดูลไม่ตอบ เกตเวย์ส่งสัญญาณปรับจังหวะให้โมดูลทั้งบัสแล้วลองถามซ้ำอีกครั้ง เป็นการตั้งค่าชั่วคราวจะกลับมาเปิดเองหลังรีบูต",
     excInfo: "เมื่อบัส RS485 ไม่ตอบ ให้ตอบไคลเอนต์ด้วย exception 0x0B ทันที แทนที่จะปล่อยให้หมดเวลา เป็นการตั้งค่าชั่วคราวจะกลับมาปิดเองหลังรีบูต", clockWarn: "การตั้งนาฬิกาเป็นการเปิดใช้การรีเซ็ตตามเวลา (เช่น 03:00) ซึ่งตัดไฟเลี้ยงโมดูล ตั้งเมื่อตั้งใจเท่านั้น",
     clockSet: "ตั้งนาฬิกาแล้ว", resync: "ซ่อมจังหวะหลังไม่มีคำตอบ (RESYNC)", exc: "ตอบ exception 0x0B ทันทีเมื่อบัสไม่ตอบ (EXC)",
@@ -75,7 +75,7 @@ const TXT = {
     search: "Search (name, IP)", noEvents: "No events in this range", noEventsOff: "No data yet because \"Collect events automatically\" above is off (turn it on and wait about 5 minutes for the first pull). Cabinets below firmware 1.14.0 have no events.", collect: "Collect events automatically",
     collectHint: "Pulls every saved cabinet's gateway log every 5 minutes, kept 90 days. Needs gateway firmware 1.14.0 or newer.",
     gateway_page: "Gateway", pick: "Choose cabinet", read: "Read", reading: "Reading...",
-    setClock: "Sync time from this PC", hubRow: "Row {n}", hubDirect: "Direct", hubCh: "Channel {n}", cabCustom: "Custom", cabSlots: "{n} slots", cabNone: "None", insTitle: "Installation check", insPickCab: "Pick a cabinet above first", insMods: "Modules to check", insSel: "{n} selected", insWhole: "Whole cabinet", insClear: "Clear", insModeCheck: "General check", insModePick: "Pick walkthrough", insWhat: "What to do on each module", insA_skip: "Skip (only check it answers)", insA_light: "Light", insA_light_display: "Light + display", insHold: "Hold each step (s)", insIdentify: "Identify (blink white ~5 s)", insUnlock: "Also throw the latch (it really moves)", insCoil: "will send coil {coil} ({what})", insWarnUnlock: "this run will unlock {n} module(s)", insPreset: "Colour preset", insBatch: "Light together (slots)", insTimeout: "Timeout per batch (s)", insPDisplay: "Show the slot number", insPUnlock: "Release the latch (it really moves)", insPClosed: "Wait for the drawer to close", insPBych: "Keep a batch on one hub channel", insRun: "Run check", insPickRun: "Start walkthrough", insCancel: "Cancel", insCsv: "Export CSV", insIdle: "idle", insStarting: "starting...", insProg: "module {id} ({i}/{total})", insPrep: "lighting slot {id} ({i}/{total})", insWaiting: "{n} slots lit: press each slot's button, in any order", insClosing: "{n} waiting to be closed, {lit} still lit", insDone: "done: {n} module(s)", insAnswered: "answered {n}/{total}", insMissing: "no answer: {ids}", insFailedIds: "failed a step: {ids}", insPass: "✓ pass", insNoAns: "✗ no answer", insFail: "✗ fail", insType: "type", insResult: "result", insDetail: "detail", insB_run: "RUNNING", insB_pass: "ALL PASS", insB_issues: "ISSUES FOUND", insB_cancelled: "CANCELLED", insPickOne: "select at least one module", insUnlockQ: "This run will unlock {n} module(s); the latches really move. Continue?", cabEmpty: "A custom cabinet shape needs at least one row with slots", schDays: "Reset days", schTimes: "Reset times", schSlot: "Time {n}", schEvery: "Every day", schNoTime: "No time switched on", schName: "Reset schedule", schDay: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], schDayS: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    setClock: "Sync time from this PC", hubRow: "Row {n}", hubDirect: "Direct", hubCh: "Channel {n}", cabCustom: "Custom", cabSlots: "{n} slots", cabNone: "None", insFromScan: "From the scan", jobBusy: "Another job is running; wait for it to finish", scanTitle: "Scan for modules", scanQuick: "Quick scan (cabinet layout)", scanFull: "Full scan (1-247)", scanProg: "asking id {id} ({i}/{total})", scanDone: "found {n} module(s) out of {total} ids asked", swTitle: "Full module test", swLoops: "Rounds", swLights: "Test lights, presets and display", swLatch: "Also test the latch (it really moves)", swRun: "Test module {id}", swPhase: "phase {p} ({i}/{total})", swPhaseCol: "phase", swDone: "done: {ok} ok, {fail} fail, {err} error", swLatchQ: "This test really unlocks module {id}. Continue?", rptBtn: "Site report (PDF)", rptProg: "reading module {id} ({i}/{total})", rptDone: "done: {a}/{n} modules answered", rptFile: "Download report", dangerTitle: "Module management", setIdNew: "New slave id", setIdBtn: "Change id of module {id}", setIdNeed: "Enter the new slave id first", setIdQ: "Change module {from} to slave id {to} and save it; the module reboots. Type {to} to confirm.", setIdBusy: "Changing the id (about 5 s)...", setIdDone: "Now at id {id}", resetBtn: "Software reset module {id}", resetQ: "Reboot module {id}. Type {id} to confirm.", resetBusy: "Rebooting the module...", resetDone: "The module is back", ntpTitle: "This PC as NTP server", ntpOn: "serving on port {port}, {n} answer(s) so far", ntpOff: "off", ntpErr: "cannot start: {e}", optOn: "On", optOff: "Off", ntpUsePc: "Use this PC", ntpNoIp: "cannot tell this PC's address toward the gateway", ntpUseQ: "The NTP server on this PC is off. Switch it on?", pwTitle: "Web password", pwOn: "a password is set", pwOff: "not set: anyone on the network can open this page", pwNew: "New password", pwRepeat: "Repeat", pwSet: "Set password", pwClear: "Remove password", pwMismatch: "the two passwords differ", pwShort: "at least 6 characters", pwClearQ: "Remove the password? Anyone on the network will be able to open this page.", insTitle: "Installation check", insPickCab: "Pick a cabinet above first", insMods: "Modules to check", insSel: "{n} selected", insWhole: "Whole cabinet", insClear: "Clear", insModeCheck: "General check", insModePick: "Pick walkthrough", insWhat: "What to do on each module", insA_skip: "Skip (only check it answers)", insA_light: "Light", insA_light_display: "Light + display", insHold: "Hold each step (s)", insIdentify: "Identify (blink white ~5 s)", insUnlock: "Also throw the latch (it really moves)", insCoil: "will send coil {coil} ({what})", insWarnUnlock: "this run will unlock {n} module(s)", insPreset: "Colour preset", insBatch: "Light together (slots)", insTimeout: "Timeout per batch (s)", insPDisplay: "Show the slot number", insPUnlock: "Release the latch (it really moves)", insPClosed: "Wait for the drawer to close", insPBych: "Keep a batch on one hub channel", insRun: "Run check", insPickRun: "Start walkthrough", insCancel: "Cancel", insCsv: "Export CSV", insIdle: "idle", insStarting: "starting...", insProg: "module {id} ({i}/{total})", insPrep: "lighting slot {id} ({i}/{total})", insWaiting: "{n} slots lit: press each slot's button, in any order", insClosing: "{n} waiting to be closed, {lit} still lit", insDone: "done: {n} module(s)", insAnswered: "answered {n}/{total}", insMissing: "no answer: {ids}", insFailedIds: "failed a step: {ids}", insPass: "✓ pass", insNoAns: "✗ no answer", insFail: "✗ fail", insType: "type", insResult: "result", insDetail: "detail", insB_run: "RUNNING", insB_pass: "ALL PASS", insB_issues: "ISSUES FOUND", insB_cancelled: "CANCELLED", insPickOne: "select at least one module", insUnlockQ: "This run will unlock {n} module(s); the latches really move. Continue?", cabEmpty: "A custom cabinet shape needs at least one row with slots", schDays: "Reset days", schTimes: "Reset times", schSlot: "Time {n}", schEvery: "Every day", schNoTime: "No time switched on", schName: "Reset schedule", schDay: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], schDayS: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
     resyncInfo: "After a missing reply the gateway re-syncs every module on the bus and retries once. Temporary: returns to on when the gateway reboots.",
     excInfo: "When the RS485 bus does not answer, reply to the client with exception 0x0B at once instead of letting it time out. Temporary: returns to off when the gateway reboots.", clockWarn: "Setting the clock also arms the scheduled reset (e.g. 03:00), which cuts the shelf's power. Do it on purpose only.",
     clockSet: "Clock set", resync: "Re-sync after a missing reply (RESYNC)", exc: "Answer a bus timeout with exception 0x0B at once (EXC)",
@@ -129,7 +129,11 @@ const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const $ = (s, r = document) => r.querySelector(s);
 
 let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: "", days: 1, q: "", types: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, lab: { id: "", ward: "", serial: "", layout: "", plate: "", opts: null, info: null, busy: false }, fw: { images: null, sel: new Set(), image: "", ota: null, gwId: "", gwImage: "", gwConfirm: "", gwFile: null, gwFileName: "", gw: null, timer: null }, soak: { sel: new Set(), mode: "pharmacy", picks: 2000, hours: 12, startAt: "", status: null, runs: [], verdict: "", timer: null, was: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 },
-  ins: { id: "", layout: null, sel: new Set(), mode: "check", action: "light", unlock: false, identify: false, hold: 1, preset: 1, batch: 4, timeout: 60, display: true, punlock: true, closed: true, bych: true, running: false, since: 0, res: {}, rows: [], lit: new Set(), closing: new Set(), testing: null, text: "", banner: "", summary: "", csv: false, err: "", timer: null, resumed: false } };
+  ins: { id: "", layout: null, sel: new Set(), mode: "check", action: "light", unlock: false, identify: false, hold: 1, preset: 1, batch: 4, timeout: 60, display: true, punlock: true, closed: true, bych: true, running: false, since: 0, res: {}, rows: [], lit: new Set(), closing: new Set(), testing: null, text: "", banner: "", summary: "", file: false, err: "" },
+  scan: { running: false, found: [], text: "", err: "", file: false },
+  sweep: { running: false, loops: 1, lights: true, latch: false, text: "", banner: "", phases: [], bad: [], err: "", file: false },
+  rpt: { id: "", running: false, text: "", err: "", file: false },
+  jobSince: 0, jobTimer: null, jobResumed: false };
 let page = (location.hash || "#/cabinets").slice(2) || "cabinets";
 
 /* In-page confirmation: window.confirm() is silently answered "no" when the browser has been told to stop a page's dialogs, which made a write button look dead. */
@@ -394,13 +398,14 @@ function viewGateway() {
           <select data-key="${esc(k.key)}"${ed ? ' style="border-color:var(--brand)"' : ""}>${opts}</select></div>`;
       }
       return `<div class="field"><label>${esc(gwLabel(k))}${whyBtn(k)}</label>
-        <input data-key="${esc(k.key)}" value="${esc(val)}" ${k.ro ? 'disabled class="ro"' : ""} ${ed ? 'style="border-color:var(--brand)"' : ""}></div>`;
+        <input data-key="${esc(k.key)}" value="${esc(val)}" ${k.ro ? 'disabled class="ro"' : ""} ${ed ? 'style="border-color:var(--brand)"' : ""}>${k.key === "net.ntp" ? `<button class="btn" data-act="ntp-use" type="button">${t("ntpUsePc")}</button>` : ""}</div>`;
     };
     const sh = d.shape && d.shape.layout && !d.shape.agreed ? `<div class="notice">${t("shapeBad", { l: esc(d.shape.label), w: esc(d.shape.why) })}<div class="row" style="margin-top:8px">${d.shape.fixable ? `<button class="btn" data-act="gw-shape">${t("shapeFix")}</button>` : `<span class="small">${t("shapeNoFix")}</span>`}</div></div>` : "";
     body = sh + `<section class="card"><dl class="kv"><dt>${t("fw")}</dt><dd class="mono">${esc(i.fw)}</dd><dt>${t("uptime")}</dt><dd>${fmtUp(+i["sys.up"] || 0)} (${esc(i["sys.reset"] || "")})</dd>
         <dt>${t("clients")}</dt><dd>${esc(i["net.client"] || "?")}/2</dd><dt>${t("clock")}</dt><dd>${i["time.set"] === "1" ? esc((i["time.now"] || "").replace("T", " ")) : t("clockUnset")}</dd></dl></section>
       <section class="card stack">${order.map((grp) => `<details><summary><b>${esc(TXT[lang]["g_" + grp] || grp)}</b> <span class="small muted">${groups[grp].length}</span></summary><div class="fgrid" style="margin-top:8px">${groups[grp].map(field).join("")}</div></details>`).join("") || `<p class="muted">${t("noKeys")}</p>`}</section>
-      <section class="card stack"><h3>${t("danger")}</h3><div class="row"><button class="btn" data-act="gw-time">${t("setClock")}</button><button class="btn" data-act="gw-discard">${t("discard")}</button><button class="btn" data-act="gw-reboot">${t("reboot")}</button><button class="btn" data-act="gw-defaults" style="color:var(--bad)">${t("defaults")}</button></div>${sw("resync", i["rtu.heal"] === "1", "", "resyncInfo")}${sw("exc", i["tcp.exc"] === "1", "", "excInfo")}</section>`;
+      <section class="card stack"><h3>${t("danger")}</h3><div class="row"><button class="btn" data-act="gw-time">${t("setClock")}</button><button class="btn" data-act="gw-discard">${t("discard")}</button><button class="btn" data-act="gw-reboot">${t("reboot")}</button><button class="btn" data-act="gw-defaults" style="color:var(--bad)">${t("defaults")}</button></div>
+        <div class="row" style="gap:8px;align-items:center"><button class="btn" id="rptrun" data-act="rpt-run"${anyJob() ? " disabled" : ""}>${t("rptBtn")}</button><button class="btn" id="rptstop" data-act="job-stop"${S.rpt.running ? "" : " hidden"}>${t("insCancel")}</button><span id="rptdyn" class="row" style="gap:8px">${rptDyn()}</span></div>${sw("resync", i["rtu.heal"] === "1", "", "resyncInfo")}${sw("exc", i["tcp.exc"] === "1", "", "excInfo")}</section>`;
   } else if (d && !d.ok) body = `<div class="notice bad">${esc(d.error)}</div>`;
   return `<div class="row between"><h1>${t("gateway_page")}</h1></div>
     <section class="card stack"><div class="row" style="align-items:flex-end"><div class="field" style="min-width:0;flex:1"><label>${t("pick")}</label><select id="gwsel"><option value="">—</option>${opts}</select></div>
@@ -462,6 +467,9 @@ function viewModule() {
           <button class="btn" data-act="mod-coil" data-addr="1010" data-val="1">${t("dispPower")}</button><button class="btn" data-act="mod-coil" data-addr="1010" data-val="0">${t("dispOff")}</button></div></div>
         <div class="row" style="align-items:flex-end"><div class="field" style="width:160px"><label>${t("number")}</label><input id="modnum" type="number" min="0" max="9999" value="45"></div><button class="btn" data-act="mod-number">${t("writeNumber")}</button></div>
         <p class="small muted">${t("cooldownNote")}</p></section>
+      <h2>${t("swTitle")}</h2><section class="card stack">${sweepView()}</section>
+      <h2>${t("dangerTitle")}</h2><section class="card stack" style="border-color:var(--bad)">${dangerView()}</section>
+      <h2>${t("scanTitle")}</h2><section class="card stack">${scanView()}</section>
       <h2>${t("insTitle")}</h2><section class="card stack">${insView()}</section></div>`;
 }
 let modTimer = null;
@@ -487,7 +495,7 @@ function pickColor(command) {
 }
 async function modRead() {
   const m = S.mod; if (!m.id || !(m.dev >= 1)) return;
-  if (m.busy || S.ins.running) return;
+  if (m.busy || anyJob()) return;
   m.busy = true;
   try { m.data = await api("POST", "/api/v2/mod/monitor", { id: m.id, device_id: m.dev, stats: m.stats }); }
   catch (e) { m.data = { ok: false, error: e.message }; }
@@ -501,8 +509,10 @@ function modAutoSync() {
 }
 
 
-/* ---------- installation check (module page) ----------
-   Runs on the server (app/v2/install_api.py); this page picks the slots, starts it and paints the events it polls. Everything it shows lives in S.ins, so a full render() (the module auto-read does one) loses nothing. */
+/* ---------- long module jobs: installation check, scan, full module test, site report ----------
+   All run on the server (app/v2/install_api.py), one at a time. The page starts one, then a single poller folds its events
+   into the state of that kind (S.ins / S.scan / S.sweep / S.rpt) and repaints only that kind's box. Everything shown lives
+   in S, so a full render() (the module auto-read does one) loses nothing. */
 const INS_INFO = {
   pick: ["ซ้อมขั้นตอนจ่ายยาจริง: ไฟติดพร้อมกันเป็นชุด เหมือนตอนใบสั่งยาสั่งงานจริง คนที่หน้าตู้หยิบช่องไหนก่อนก็ได้ ไฟแต่ละช่องจะดับเมื่อกดปุ่มหน้าช่องนั้น ครบชุดแล้วชุดถัดไปจะติดต่อ พิสูจน์ไฟ ปุ่ม และวงจรยืนยันครบในรอบเดียว ต้องใช้เฟิร์มแวร์โมดูล v3.2.0",
     "The dispensing flow as a rehearsal: a batch of slots lights up together, just as a prescription lights them, and someone at the cabinet picks them in any order; each light goes out as its front button is pressed. When the batch is done the next one lights. Needs module firmware v3.2.0."],
@@ -516,28 +526,62 @@ const INS_INFO = {
     "The pick is not over when the button is pressed but when the drawer is shut again. With this on, the slot must start closed and the light stays on until the module reports its latch locked."],
   bych: ["เปิด: ช่องที่อยู่คนละช่องฮับจะติดเป็นคนละชุดต่อกันไป ทำให้ยืนยันได้เร็ว ปิด: หนึ่งชุดจะจุดครบตามจำนวนที่ตั้งไม่ว่าอยู่ช่องใด เหมือนใบสั่งยาจริง แต่ไฟจะดับช้าลงราว 2 วินาทีต่อรอบ",
     "On: slots either side of a channel boundary light one batch after the other. Off: the batch holds as many slots as asked for wherever they are, as a real prescription does, but each light takes about two seconds longer to go out."],
+  scan: ["ถามทีละ ID ว่ามีโมดูลตอบไหม (อ่านอย่างเดียว) แบบเร็วถามเฉพาะช่องในผังตู้ รวม 247 (ค่าโรงงาน) และ 246 (โหมดตั้ง ID) แบบเต็มถาม 1–245 ด้วย ใช้เวลาราว 2 นาที ID ที่พบแต่ไม่อยู่ในผังจะขึ้นสีส้ม",
+    "Asks each id in turn whether a module answers (read-only). Quick asks the cabinet's slots plus 247 (factory) and 246 (SET_ID mode); full also asks 1-245 and takes about two minutes. Ids found outside the cabinet's layout show orange."],
+  sweep: ["ทดสอบโมดูลตัวเดียวแบบละเอียด: อ่านทุกรีจิสเตอร์ เขียนค่าทดสอบแล้วอ่านกลับ (คืนค่าเดิมเมื่อจบ) ตรวจพรีเซ็ต จอ และไฟ ส่วนปลดกลอนเลือกเพิ่มได้ ใช้กับงานซ่อมหรือ QA ไม่ใช่การตรวจหน้างานทั้งตู้",
+    "A deep test of one module: reads every register, writes test values and reads them back (restoring the originals at the end), checks presets, display and lights; the latch is optional. For repair or QA, not for checking a whole cabinet on site."],
+  setid: ["เปลี่ยน Slave ID ของโมดูลที่อ่านอยู่ แล้วบันทึกลงหน่วยความจำ โมดูลจะรีบูตและตอบที่ ID ใหม่ เครื่องมือจะไม่ยอมถ้า ID ใหม่มีโมดูลอื่นใช้อยู่ ใช้ได้ 1–245 หรือ 247",
+    "Changes the slave id of the module being read and saves it; the module reboots and answers at the new id. Refused when another module already answers at the new id. 1-245 or 247."],
 };
+const infoBtn = (k) => `<button class="why" data-act="ins-info" data-k="${k}" type="button" aria-label="${t("explain")}">?</button>`;
+const insInfoBtn = infoBtn;
 const insSelText = () => `${S.ins.layout.label} · ${t("insSel", { n: S.ins.sel.size })}`;
-const insInfoBtn = (k) => `<button class="why" data-act="ins-info" data-k="${k}" type="button" aria-label="${t("explain")}">?</button>`;
-function insReset() { Object.assign(S.ins, { res: {}, rows: [], lit: new Set(), closing: new Set(), testing: null, text: "", banner: "", summary: "", csv: false, err: "", since: 0 }); }
+function insReset() { Object.assign(S.ins, { res: {}, rows: [], lit: new Set(), closing: new Set(), testing: null, text: "", banner: "", summary: "", file: false, err: "" }); }
 async function insLayout() {
   const i = S.ins; if (!S.mod.id) { i.layout = null; i.id = ""; return; }
   if (i.id === S.mod.id) return;                         /* loaded, loading or failed for this cabinet already */
-  i.id = S.mod.id; i.layout = null; i.sel = new Set(); insReset();
+  i.id = S.mod.id; i.layout = null; i.sel = new Set(); insReset(); S.scan.found = []; S.scan.text = "";
   try { i.layout = await api("GET", "/api/v2/ins/layout?id=" + encodeURIComponent(S.mod.id)); } catch (e) { i.layout = null; i.err = e.message; }
   if (page === "module") renderKeep();
 }
-/* The page may be opened while a check the server started is still running (another tab, a reload): pick it up. */
-async function insResume() {
-  const i = S.ins; if (i.resumed) return; i.resumed = true;
+
+/* ---- one poller for whichever job runs ---- */
+const JOBST = { check: () => S.ins, scan: () => S.scan, sweep: () => S.sweep, report: () => S.rpt };
+const anyJob = () => Object.values(JOBST).some((f) => f().running);
+function jobFold(kind, ev) { ({ check: insFold, scan: scanFold, sweep: sweepFold, report: rptFold })[kind](ev); }
+function jobPaint() { insPaint(); scanPaint(); sweepPaint(); rptPaint(); }
+async function jobPoll() {
   try {
-    const r = await api("GET", "/api/v2/ins/events?since=0");
-    if (!r.running && !r.events.length) return;
-    const site = S.sites.find((x) => x.name === r.cabinet); if (site) { S.mod.id = site.id; await insLayout(); }
-    i.mode = r.mode || i.mode; insReset(); r.events.forEach(insFold); i.since = r.seq; i.running = r.running; i.csv = r.csv;
-    if (i.running) insSync(); if (page === "module") renderKeep();
-  } catch (e) { /* no check to resume */ }
+    const r = await api("GET", "/api/v2/ins/events?since=" + S.jobSince), st = JOBST[r.kind] && JOBST[r.kind]();
+    if (st) { if (r.kind === "check" && r.mode) S.ins.mode = r.mode; r.events.forEach((ev) => jobFold(r.kind, ev)); st.running = r.running; st.file = r.csv; if (r.error) st.err = r.error; }
+    S.jobSince = r.seq;
+    if (!r.running) { clearInterval(S.jobTimer); S.jobTimer = null; Object.values(JOBST).forEach((f) => { f().running = false; }); if (page === "module" || page === "gateway") renderKeep(); return; }
+  } catch (e) { /* a missed poll is only a late repaint */ }
+  jobPaint();
 }
+function jobSync() { if (!S.jobTimer) S.jobTimer = setInterval(jobPoll, 700); }
+async function jobStart(kind, url, body) {
+  if (anyJob()) { toast(t("jobBusy")); return false; }
+  const st = JOBST[kind](); st.running = true; st.err = ""; S.jobSince = 0; jobPaint();
+  try { await api("POST", url, body); jobSync(); return true; }
+  catch (e) { st.running = false; st.err = e.message; jobPaint(); return false; }
+}
+/* The page may be opened while a job the server started is still running (another tab, a reload): pick it up. */
+async function jobResume() {
+  if (S.jobResumed) return; S.jobResumed = true;
+  try {
+    const r = await api("GET", "/api/v2/ins/events?since=0"), st = JOBST[r.kind] && JOBST[r.kind]();
+    if (!st || (!r.running && !r.events.length)) return;
+    const site = S.sites.find((x) => x.name === r.cabinet);
+    if (r.kind === "check") { if (site) { S.mod.id = site.id; await insLayout(); } S.ins.mode = r.mode || S.ins.mode; insReset(); }
+    if (r.kind === "report" && site) S.rpt.id = site.id;
+    r.events.forEach((ev) => jobFold(r.kind, ev)); S.jobSince = r.seq; st.running = r.running; st.file = r.csv;
+    if (r.running) jobSync(); if (page === "module" || page === "gateway") renderKeep();
+  } catch (e) { /* no job to resume */ }
+}
+const fileLink = (st, label) => `<a class="btn" href="/api/v2/ins/file" download${st.file && !st.running ? "" : " hidden"}>${label}</a>`;
+
+/* ---- installation check / pick walkthrough ---- */
 const insCoil = () => { const i = S.ins; return 1001 + (i.action === "light_display" ? 10 : 0) + (i.unlock ? 20 : 0); };
 function insCaption() {
   const i = S.ins, el = $("#inscap"); if (!el) return;
@@ -570,8 +614,8 @@ function insDyn() {
 }
 function insPaint() {
   const el = $("#insdyn"); if (el) el.innerHTML = insDyn();
-  const run = $("#insrun"), stop = $("#insstop"); if (run) run.disabled = S.ins.running; if (stop) stop.disabled = !S.ins.running;
-  const csv = $("#inscsv"); if (csv) csv.hidden = !S.ins.csv;
+  const busy = anyJob(), run = $("#insrun"), stop = $("#insstop"); if (run) run.disabled = busy; if (stop) stop.disabled = !S.ins.running;
+  const f = $("#insfile"); if (f) f.hidden = !(S.ins.file && !S.ins.running);
 }
 function insFold(ev) {
   const i = S.ins, pick = i.mode === "pick";
@@ -590,50 +634,144 @@ function insFold(ev) {
     i.summary = parts.join(" · ");
   }
 }
-async function insPoll() {
-  const i = S.ins;
-  try {
-    const r = await api("GET", "/api/v2/ins/events?since=" + i.since);
-    i.since = r.seq; r.events.forEach(insFold); i.running = r.running; i.csv = r.csv; if (r.error) i.err = r.error;
-  } catch (e) { /* a missed poll is only a late repaint */ }
-  insPaint();
-  if (!i.running) { clearInterval(i.timer); i.timer = null; if (page === "module") renderKeep(); }
-}
-function insSync() { if (!S.ins.timer) S.ins.timer = setInterval(insPoll, 700); }
 async function insStart() {
-  const i = S.ins; if (!S.mod.id || i.running) return;
+  const i = S.ins; if (!S.mod.id || anyJob()) return;
   if (!i.sel.size) { toast(t("insPickOne")); return; }
   const pick = i.mode === "pick", unlock = pick ? i.punlock : (i.unlock && i.action !== "skip");
   if (unlock && !await ask(t("insUnlockQ", { n: i.sel.size }))) return;
-  insReset(); i.running = true; i.banner = "run"; i.text = t("insStarting"); insPaint();
-  try {
-    await api("POST", "/api/v2/ins/start", { id: S.mod.id, mode: i.mode, ids: [...i.sel].sort((a, b) => a - b), action: i.action, unlock: pick ? i.punlock : i.unlock, identify: i.identify, hold_s: i.hold,
-      preset: i.preset, display: i.display, require_locked: i.closed, timeout_s: i.timeout, batch: i.batch, by_channel: i.bych });
-    insSync();
-  } catch (e) { i.running = false; i.banner = ""; i.err = e.message; insPaint(); }
+  insReset(); i.banner = "run"; i.text = t("insStarting");
+  await jobStart("check", "/api/v2/ins/start", { id: S.mod.id, mode: i.mode, ids: [...i.sel].sort((a, b) => a - b), action: i.action, unlock: pick ? i.punlock : i.unlock, identify: i.identify, hold_s: i.hold,
+    preset: i.preset, display: i.display, require_locked: i.closed, timeout_s: i.timeout, batch: i.batch, by_channel: i.bych });
 }
 function insView() {
   const i = S.ins;
   if (!S.mod.id) return `<div class="notice info">${t("insPickCab")}</div>`;
   if (!i.layout) return i.err ? `<div class="notice bad">${esc(i.err)}</div>` : `<p class="muted">${t("reading")}</p>`;
   const num = (k, lo, hi, step) => `<input type="number" data-ins="${k}" min="${lo}" max="${hi}" step="${step || 1}" value="${i[k]}">`;
-  const chk = (k, label, info) => `<div class="field"><label class="chk"><input type="checkbox" data-ins="${k}"${i[k] ? " checked" : ""}>${t(label)}${info ? insInfoBtn(info) : ""}</label></div>`;
+  const chk = (k, label, info) => `<div class="field"><label class="chk"><input type="checkbox" data-ins="${k}"${i[k] ? " checked" : ""}>${t(label)}${info ? infoBtn(info) : ""}</label></div>`;
   const modes = ["check", "pick"].map((m) => `<button class="btn${i.mode === m ? " primary" : ""}" data-act="ins-mode" data-m="${m}" aria-pressed="${i.mode === m}">${t(m === "check" ? "insModeCheck" : "insModePick")}</button>`).join("");
   const opts = i.mode === "check"
-    ? `<div class="field"><label>${t("insWhat")}${insInfoBtn("action")}</label><select data-ins="action">${["skip", "light", "light_display"].map((a) => `<option value="${a}"${i.action === a ? " selected" : ""}>${t("insA_" + a)}</option>`).join("")}</select></div>
+    ? `<div class="field"><label>${t("insWhat")}${infoBtn("action")}</label><select data-ins="action">${["skip", "light", "light_display"].map((a) => `<option value="${a}"${i.action === a ? " selected" : ""}>${t("insA_" + a)}</option>`).join("")}</select></div>
        <div class="field"><label>${t("insHold")}</label>${num("hold", 0.2, 5, 0.1)}</div>
        ${chk("identify", "insIdentify")}${chk("unlock", "insUnlock", "unlock")}<div id="inscap"></div>`
-    : `<div class="field"><label>${t("insPreset")}</label><select data-ins="preset">${[1, 2, 3, 4, 5, 6, 7, 8].map((n) => `<option value="${n}"${i.preset === n ? " selected" : ""}>${t("presets")} ${n}</option>`).join("")}</select></div>
-       <div class="field"><label>${t("insBatch")}${insInfoBtn("batch")}</label>${num("batch", 0, 16)}</div>
+    : `<div class="field"><label>${t("insPreset")}</label><select data-ins="preset">${[1, 2, 3, 4, 5, 6, 7, 8].map((n) => `<option value="${n}"${i.preset === n ? " selected" : ""}>${t("colorN", { n })}</option>`).join("")}</select></div>
+       <div class="field"><label>${t("insBatch")}${infoBtn("batch")}</label>${num("batch", 0, 16)}</div>
        <div class="field"><label>${t("insTimeout")}</label>${num("timeout", 0, 600)}</div>
        ${chk("display", "insPDisplay")}${chk("punlock", "insPUnlock")}${chk("closed", "insPClosed", "closed")}${chk("bych", "insPBych", "bych")}`;
-  return `<div class="row" style="gap:8px;align-items:center">${modes}${insInfoBtn("pick")}</div>
+  const fromScan = S.scan.found.length ? `<button class="btn" data-act="ins-fromscan">${t("insFromScan")}</button>` : "";
+  return `<div class="row" style="gap:8px;align-items:center">${modes}${infoBtn("pick")}</div>
     <div class="row" style="gap:8px"><b>${t("insMods")}</b><span class="small muted" id="inssel">${insSelText()}</span></div>
-    <div class="row" style="gap:8px"><button class="btn" data-act="ins-whole">${t("insWhole")}</button><button class="btn" data-act="ins-none">${t("insClear")}</button></div>
-    <div class="${i.mode === "check" ? "fgrid" : "fgrid"}">${opts}</div>
-    <div class="row" style="gap:8px"><button class="btn primary" id="insrun" data-act="ins-run"${i.running ? " disabled" : ""}>${t(i.mode === "check" ? "insRun" : "insPickRun")}</button><button class="btn" id="insstop" data-act="ins-stop"${i.running ? "" : " disabled"}>${t("insCancel")}</button>
-      <a class="btn" id="inscsv" href="/api/v2/ins/csv" download${i.csv ? "" : " hidden"}>${t("insCsv")}</a></div>
+    <div class="row" style="gap:8px"><button class="btn" data-act="ins-whole">${t("insWhole")}</button>${fromScan}<button class="btn" data-act="ins-none">${t("insClear")}</button></div>
+    <div class="fgrid">${opts}</div>
+    <div class="row" style="gap:8px"><button class="btn primary" id="insrun" data-act="ins-run"${anyJob() ? " disabled" : ""}>${t(i.mode === "check" ? "insRun" : "insPickRun")}</button><button class="btn" id="insstop" data-act="job-stop"${i.running ? "" : " disabled"}>${t("insCancel")}</button>
+      ${fileLink(i, t("insCsv")).replace("<a ", '<a id="insfile" ')}</div>
     <div id="insdyn" class="stack">${insDyn()}</div>`;
+}
+
+/* ---- bus scan ---- */
+function scanFold(ev) {
+  const s = S.scan;
+  if (ev.t === "probe") { s.text = t("scanProg", { i: ev.index, total: ev.total, id: ev.id }); if (ev.found) s.found.push({ id: ev.id, type: ev.type }); }
+  else if (ev.t === "end") { s.found = ev.found; s.text = ev.cancelled ? t("insB_cancelled") : t("scanDone", { n: ev.found.length, total: ev.total }); }
+}
+function scanDyn() {
+  const s = S.scan, have = new Set((S.ins.layout && S.ins.layout.ids) || []);
+  const chips = s.found.map((f) => `<button class="cmcell${have.has(f.id) ? " ok" : " next"}" style="min-width:64px;padding:0 8px" data-act="scan-pick" data-id="${f.id}" title="${esc(f.type)}">${f.id}</button>`).join("");
+  return `<span class="small mono">${esc(s.text || t("insIdle"))}</span>${s.err ? `<div class="notice bad">${esc(s.err)}</div>` : ""}${chips ? `<div class="row" style="gap:6px">${chips}</div>` : ""}`;
+}
+function scanPaint() {
+  const el = $("#scandyn"); if (el) el.innerHTML = scanDyn();
+  const busy = anyJob(); document.querySelectorAll("[data-act=scan-run]").forEach((b) => { b.disabled = busy; }); const st = $("#scanstop"); if (st) st.disabled = !S.scan.running;
+}
+function scanView() {
+  if (!S.mod.id) return `<div class="notice info">${t("insPickCab")}</div>`;
+  return `<div class="row" style="gap:8px;align-items:center"><button class="btn primary" data-act="scan-run" data-full="0"${anyJob() ? " disabled" : ""}>${t("scanQuick")}</button><button class="btn" data-act="scan-run" data-full="1"${anyJob() ? " disabled" : ""}>${t("scanFull")}</button>
+    <button class="btn" id="scanstop" data-act="job-stop"${S.scan.running ? "" : " disabled"}>${t("insCancel")}</button>${infoBtn("scan")}</div><div id="scandyn" class="stack">${scanDyn()}</div>`;
+}
+
+/* ---- full module test (testsuite sweep) ---- */
+function sweepFold(ev) {
+  const w = S.sweep;
+  if (ev.t === "phase") w.text = t("swPhase", { p: ev.name, i: ev.index, total: ev.total });
+  else if (ev.t === "step" && ev.result !== "OK") w.bad.push(ev);
+  else if (ev.t === "phaseend") w.phases.push(ev);
+  else if (ev.t === "end") { w.banner = ev.cancelled ? "cancelled" : ev.passed ? "pass" : "issues"; w.text = t("swDone", { ok: ev.ok, fail: ev.fail, err: ev.err }); }
+}
+function sweepDyn() {
+  const w = S.sweep, b = w.banner;
+  const chip = b ? `<span class="chip ${b === "pass" ? "ok" : b === "issues" ? "bad" : "off"}">${t("insB_" + b)}</span>` : "";
+  const ph = w.phases.length ? `<div style="overflow-x:auto"><table><tr><th>${t("swPhaseCol")}</th><th>OK</th><th>FAIL</th><th>ERR</th></tr>${w.phases.map((p) => `<tr><td>${esc(p.name)}</td><td>${p.ok}</td><td>${p.fail}</td><td>${p.err}</td></tr>`).join("")}</table></div>` : "";
+  const bad = w.bad.length ? `<div class="small" style="color:var(--bad)">${w.bad.slice(0, 30).map((s) => esc(`${s.phase} ${s.name} (${s.addr}) ${s.op}: ${s.result} ${s.note || s.decoded}`)).join("<br>")}</div>` : "";
+  return `<div class="row" style="gap:10px">${chip}<span class="small mono">${esc(w.text || t("insIdle"))}</span></div>${w.err ? `<div class="notice bad">${esc(w.err)}</div>` : ""}${ph}${bad}`;
+}
+function sweepPaint() {
+  const el = $("#swdyn"); if (el) el.innerHTML = sweepDyn();
+  const r = $("#swrun"), st = $("#swstop"), f = $("#swfile"); if (r) r.disabled = anyJob(); if (st) st.disabled = !S.sweep.running; if (f) f.hidden = !(S.sweep.file && !S.sweep.running);
+}
+function sweepView() {
+  const w = S.sweep;
+  return `<div class="fgrid"><div class="field"><label>${t("swLoops")}</label><input type="number" data-sw="loops" min="1" max="10" value="${w.loops}"></div>
+      <div class="field"><label class="chk"><input type="checkbox" data-sw="lights"${w.lights ? " checked" : ""}>${t("swLights")}</label></div>
+      <div class="field"><label class="chk"><input type="checkbox" data-sw="latch"${w.latch ? " checked" : ""}>${t("swLatch")}</label></div></div>
+    <div class="row" style="gap:8px;align-items:center"><button class="btn primary" id="swrun" data-act="sw-run"${anyJob() ? " disabled" : ""}>${t("swRun", { id: S.mod.dev })}</button><button class="btn" id="swstop" data-act="job-stop"${w.running ? "" : " disabled"}>${t("insCancel")}</button>
+      ${fileLink(w, t("insCsv")).replace("<a ", '<a id="swfile" ')}${infoBtn("sweep")}</div><div id="swdyn" class="stack">${sweepDyn()}</div>`;
+}
+
+/* ---- site report (gateway page) ---- */
+function rptFold(ev) {
+  const r = S.rpt;
+  if (ev.t === "start") r.text = t("rptProg", { i: ev.index, total: ev.total, id: ev.id });
+  else if (ev.t === "end") r.text = ev.cancelled ? t("insB_cancelled") : t("rptDone", { a: ev.answered, n: ev.total });
+}
+function rptPaint() {
+  const el = $("#rptdyn"); if (el) el.innerHTML = rptDyn();
+  const b = $("#rptrun"), st = $("#rptstop"); if (b) b.disabled = anyJob() || !S.gw.id; if (st) st.hidden = !S.rpt.running;
+}
+function rptDyn() {
+  const r = S.rpt, mine = r.id === S.gw.id;
+  return `${mine && r.text ? `<span class="small mono">${esc(r.text)}</span>` : ""}${mine && r.err ? `<div class="notice bad">${esc(r.err)}</div>` : ""}${mine ? fileLink(r, t("rptFile")) : ""}`;
+}
+
+/* ---- module danger: set slave id, software reset ---- */
+async function modSetId() {
+  const m = S.mod, el = $("#newid"), nid = +(el && el.value);
+  if (!m.id || !(nid >= 1)) { toast(t("setIdNeed")); return; }
+  const typed = await ask(t("setIdQ", { from: m.dev, to: nid }), false, true); if (typed === null) return;
+  toast(t("setIdBusy"));
+  const r = await api("POST", "/api/v2/mod/setid", { id: m.id, device_id: m.dev, new_id: nid, confirm: typed });
+  if (!r.ok) throw new Error(r.error || "failed");
+  m.dev = nid; m.data = null; toast(t("setIdDone", { id: nid })); await modRead();
+}
+async function modReset() {
+  const m = S.mod; if (!m.id) return;
+  const typed = await ask(t("resetQ", { id: m.dev }), false, true); if (typed === null) return;
+  toast(t("resetBusy"));
+  const r = await api("POST", "/api/v2/mod/reset", { id: m.id, device_id: m.dev, confirm: typed });
+  if (!r.ok) throw new Error(r.error || "failed");
+  toast(t("resetDone")); await modRead();
+}
+function dangerView() {
+  return `<div class="row" style="align-items:flex-end;gap:8px"><div class="field" style="width:160px"><label>${t("setIdNew")}${infoBtn("setid")}</label><input id="newid" type="number" min="1" max="247"></div>
+      <button class="btn" data-act="mod-setid" style="color:var(--bad)">${t("setIdBtn", { id: S.mod.dev })}</button></div>
+    <div class="row"><button class="btn" data-act="mod-reset" style="color:var(--bad)">${t("resetBtn", { id: S.mod.dev })}</button></div>`;
+}
+
+/* ---- settings dialog: this PC as NTP server, web password ---- */
+async function srvSettings() {
+  const el = $("#setsrv"); if (!el) return;
+  if (uiMode !== "advanced") { el.innerHTML = ""; return; }
+  let n = null; try { n = await api("GET", "/api/v2/ntp"); } catch (e) { /* shown as off */ }
+  const on = n && n.enabled, st = !n ? "" : n.running ? t("ntpOn", { port: n.port, n: n.served }) : n.error ? t("ntpErr", { e: n.error }) : t("ntpOff");
+  const pw = S.me && S.me.auth;
+  el.innerHTML = `<div class="field"><label>${t("ntpTitle")}</label><div class="row" style="gap:8px;align-items:center"><select id="ntpon" style="flex:1;min-width:0"><option value="0"${on ? "" : " selected"}>${t("optOff")}</option><option value="1"${on ? " selected" : ""}>${t("optOn")}</option></select>
+      <input id="ntpport" type="number" min="1" max="65535" value="${n ? n.port : 123}" style="width:100px" aria-label="port"></div><div class="small muted">${esc(st)}</div></div>
+    <div class="field"><label>${t("pwTitle")}</label><div class="small muted">${t(pw ? "pwOn" : "pwOff")}</div>
+      <div class="row" style="gap:8px"><input id="pw1" type="password" autocomplete="new-password" placeholder="${t("pwNew")}"><input id="pw2" type="password" autocomplete="new-password" placeholder="${t("pwRepeat")}"></div>
+      <div class="row" style="gap:8px"><button class="btn" data-act="pw-set" type="button">${t("pwSet")}</button>${pw ? `<button class="btn" data-act="pw-clear" type="button" style="color:var(--bad)">${t("pwClear")}</button>` : ""}</div></div>`;
+}
+async function ntpApply() {
+  try { await api("POST", "/api/v2/ntp", { enabled: $("#ntpon").value === "1", port: +$("#ntpport").value }); } catch (e) { fail(e); }
+  srvSettings();
 }
 
 const fmtDur = (sec) => { sec = Math.max(0, Math.round(sec)); const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60); return h ? `${h} ${t("h")} ${m} m` : `${m} m ${sec % 60} s`; };
@@ -921,7 +1059,8 @@ function render() {
   document.documentElement.lang = lang;
   if (page === "events") loadEvents();
   if (page === "gateway") gwBar();
-  if (page === "module") { modAutoSync(); insCaption(); insLayout(); insResume(); }
+  if (page === "module") { modAutoSync(); insCaption(); insLayout(); jobResume(); }
+  if (page === "gateway") jobResume();
   if (page === "soak" && !S.soak.timer) soakSync();
   if (page === "firmware" && !S.fw.timer) fwSync();
   if (page === "commission" && !S.cm.timer && !S.cm.syncing) { S.cm.syncing = true; cmSync().finally(() => { S.cm.syncing = false; }); }
@@ -1072,7 +1211,27 @@ document.addEventListener("click", async (ev) => {
       else { i.sel = act.dataset.act === "ins-whole" ? new Set(i.layout.ids) : new Set(); i.res = {}; i.rows = []; i.summary = ""; i.banner = ""; i.text = ""; }
       insPaint(); insCaption(); const se = $("#inssel"); if (se) se.textContent = insSelText();
     } else if (act.dataset.act === "ins-run") { await insStart();
-    } else if (act.dataset.act === "ins-stop") { await api("POST", "/api/v2/ins/cancel", {});
+    } else if (act.dataset.act === "job-stop") { await api("POST", "/api/v2/ins/cancel", {});
+    } else if (act.dataset.act === "ins-fromscan") { const L = S.ins.layout; if (!L || anyJob()) return; const have = new Set(L.ids); S.ins.sel = new Set(S.scan.found.map((f) => f.id).filter((x) => have.has(x))); S.ins.res = {}; insPaint(); insCaption(); const se = $("#inssel"); if (se) se.textContent = insSelText();
+    } else if (act.dataset.act === "scan-run") { S.scan.found = []; S.scan.text = ""; await jobStart("scan", "/api/v2/ins/scan", { id: S.mod.id, full: act.dataset.full === "1" });
+    } else if (act.dataset.act === "scan-pick") { S.mod.dev = +act.dataset.id; S.mod.data = null; renderKeep(); await modRead();
+    } else if (act.dataset.act === "sw-run") {
+      const w = S.sweep; if (!S.mod.id) return;
+      if (w.latch && !await ask(t("swLatchQ", { id: S.mod.dev }))) return;
+      Object.assign(w, { text: "", banner: "", phases: [], bad: [], file: false });
+      await jobStart("sweep", "/api/v2/ins/sweep", { id: S.mod.id, device_id: S.mod.dev, loops: w.loops, lights: w.lights, latch: w.latch, fires: 1 });
+    } else if (act.dataset.act === "rpt-run") { if (!S.gw.id) return; Object.assign(S.rpt, { id: S.gw.id, text: "", file: false }); await jobStart("report", "/api/v2/ins/report", { id: S.gw.id });
+    } else if (act.dataset.act === "mod-setid") { await modSetId();
+    } else if (act.dataset.act === "mod-reset") { await modReset();
+    } else if (act.dataset.act === "ntp-use") {
+      const n = await api("GET", "/api/v2/ntp?toward=" + encodeURIComponent(S.gw.id)); if (!n.ip) { toast(t("ntpNoIp")); return; }
+      const k = S.gw.data.keys.find((x) => x.key === "net.ntp"); if (k && n.ip !== k.value) S.gw.edits["net.ntp"] = n.ip; else delete S.gw.edits["net.ntp"];
+      if (!n.running && await ask(t("ntpUseQ"))) await api("POST", "/api/v2/ntp", { enabled: true, port: n.port });
+      renderKeep();
+    } else if (act.dataset.act === "pw-set") {
+      const a = $("#pw1").value, b = $("#pw2").value; if (a !== b) { toast(t("pwMismatch")); return; } if (a.length < 6) { toast(t("pwShort")); return; }
+      await api("POST", "/api/v2/auth", { password: a }); location.href = "/login";
+    } else if (act.dataset.act === "pw-clear") { if (!await ask(t("pwClearQ"))) return; await api("POST", "/api/v2/auth", { clear: true }); S.me.auth = false; srvSettings();
     } else if (act.dataset.act === "ins-info") { const x = INS_INFO[act.dataset.k]; $("#infobody").innerHTML = `<p style="margin:0;white-space:pre-line">${esc(x[lang === "th" ? 0 : 1])}</p>`; const d = $("#info"); if (d.showModal) d.showModal(); else d.setAttribute("open", "");
     } else if (act.dataset.act === "hint") { showInfo(act.dataset.key);
     } else if (act.dataset.act === "collector") { const on = act.getAttribute("aria-checked") !== "true"; await api("POST", "/api/v2/collector", { enabled: on }); S.me = await api("GET", "/api/v2/me"); render(); }
@@ -1136,6 +1295,8 @@ document.addEventListener("input", (ev) => {
 });
 document.addEventListener("change", async (ev) => {
   if (ev.target.id === "modsel") { S.mod.id = ev.target.value; S.mod.data = null; if (S.mod.id) modRead(); else render(); insLayout(); }
+  if (ev.target.dataset && ev.target.dataset.sw) { const k = ev.target.dataset.sw, el = ev.target; S.sweep[k] = el.type === "checkbox" ? el.checked : Math.max(1, Math.min(10, +el.value || 1)); }
+  if (ev.target.id === "ntpon" || ev.target.id === "ntpport") ntpApply();
   if (ev.target.dataset && ev.target.dataset.ins) { const k = ev.target.dataset.ins, el = ev.target; S.ins[k] = el.type === "checkbox" ? el.checked : el.type === "number" ? +el.value : (k === "preset" ? +el.value : el.value); insCaption(); }
   if (ev.target.id === "moddev") { S.mod.dev = Math.max(1, Math.min(247, +ev.target.value || 1)); S.mod.data = null; }
   if (ev.target.id === "modstats") { S.mod.stats = ev.target.checked; }
@@ -1194,7 +1355,7 @@ function settingsText() {
   $("#langlbl").textContent = t("language"); $("#modelbl").textContent = t("mode"); $("#themelbl").textContent = t("theme");
   $("#langsel").value = lang;
 }
-$("#setbtn").onclick = () => { const d = $("#settings"); if (d.showModal) d.showModal(); else d.setAttribute("open", ""); };
+$("#setbtn").onclick = () => { const d = $("#settings"); srvSettings(); if (d.showModal) d.showModal(); else d.setAttribute("open", ""); };
 $("#setclose").onclick = () => $("#settings").close();
 $("#settings").addEventListener("click", (e) => { if (e.target.id === "settings") $("#settings").close(); });
 $("#langsel").onchange = (e) => { lang = e.target.value; try { localStorage.setItem("lgs.lang", lang); } catch (x) { /* not remembered */ } render(); };
@@ -1208,7 +1369,7 @@ function themeSelect() { const el = $("#themesel"); el.setAttribute("aria-label"
 let themeNow = "auto"; try { const th = localStorage.getItem("lgs.theme"); if (THEMES.includes(th)) themeNow = th; } catch (e) { /* storage blocked: follow the device */ }
 setTheme(themeNow);
 function modeSelect() { const el = $("#modesel"); el.setAttribute("aria-label", t("mode")); el.innerHTML = ["basic", "advanced"].map((m) => `<option value="${m}"${m === uiMode ? " selected" : ""}>${t(m)}</option>`).join(""); }
-$("#modesel").onchange = (e) => { uiMode = e.target.value; try { localStorage.setItem("lgs.mode", uiMode); } catch (x) { /* not remembered */ } clearInterval(S.fw.timer); S.fw.timer = null; render(); };
+$("#modesel").onchange = (e) => { uiMode = e.target.value; try { localStorage.setItem("lgs.mode", uiMode); } catch (x) { /* not remembered */ } clearInterval(S.fw.timer); S.fw.timer = null; render(); srvSettings(); };
 $("#themesel").onchange = (e) => { themeNow = e.target.value; setTheme(themeNow); };
 
 (async () => {

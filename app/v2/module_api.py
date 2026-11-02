@@ -27,8 +27,9 @@ class _Bus:
     """One client on the cabinet's gateway, serialised with the console
     sessions (gateway_api) so the page never interleaves two of its own."""
 
-    def __init__(self, host: str, port: int, wait: float = 8.0) -> None:
+    def __init__(self, host: str, port: int, wait: float = 8.0, timeout_s: float = None) -> None:
         self.host, self.port, self.wait = host, port, wait
+        self.timeout_s = timeout_s or INTERACTIVE_TIMEOUT_S
         self._lock = gateway_api._lock(host, port)
         self.client = None
 
@@ -40,7 +41,7 @@ class _Bus:
             raise ConnectionError("the cabinet's gateway is busy (a check is running)")
         try:
             self.client = make_client(TcpSettings(host=self.host, port=self.port,
-                                                  timeout_s=INTERACTIVE_TIMEOUT_S), retries=0)
+                                                  timeout_s=self.timeout_s), retries=0)
             if not self.client.connect():
                 raise ConnectionError(f"cannot connect to {self.host}:{self.port}")
             return self.client
@@ -166,3 +167,74 @@ def display_number(host: str, port: int, device_id: int, value: int) -> dict:
     if r is None or r.isError():
         return {"ok": False, "error": f"no answer from module {device_id}"}
     return {"ok": True, "value": value}
+
+
+# ── danger: set slave ID, software reset ──────────────────────────────────
+# The same sequences as the classic Danger tab (ModbusWorker._do_set_slave_id /
+# _do_danger), written against one held client. Coils 503/504 are DANGER class,
+# which coil() above refuses on purpose: these two functions are the only way
+# to them from v2, and each asks the page for a typed confirmation first.
+REBOOT_WAIT_S = 4.0
+
+
+def _probe(c, dev: int):
+    try:
+        r = c.read_holding_registers(4, count=1, device_id=dev)
+        return None if (r is None or r.isError()) else r.registers[0]
+    except Exception:                                            # noqa: BLE001
+        return None
+
+
+def set_slave_id(host: str, port: int, current_id: int, new_id: int) -> dict:
+    _check_id(current_id)
+    current_id, new_id = int(current_id), int(new_id)
+    if not lgs_map.valid_assignable_id(new_id):
+        raise ValueError(f"invalid new id {new_id} (1-245 or 247; 246 is the SET_ID temp id)")
+    if new_id == current_id:
+        raise ValueError("the new id is the same as the current one")
+    steps = []
+    with _Bus(host, port) as c:
+        if _probe(c, current_id) is None:
+            return {"ok": False, "error": f"module {current_id} is not answering", "steps": steps}
+        steps.append(f"module {current_id} answers")
+        time.sleep(lgs_map.INTER_TXN_S)
+        # Not in the classic sequence: two modules on one address answer on top
+        # of each other, and nothing on the bus could tell them apart again.
+        if _probe(c, new_id) is not None:
+            return {"ok": False, "error": f"id {new_id} is already used by another module", "steps": steps}
+        steps.append(f"id {new_id} is free")
+        time.sleep(lgs_map.INTER_TXN_S)
+        w = c.write_register(4, new_id, device_id=current_id)
+        if w is None or w.isError():
+            return {"ok": False, "error": "writing reg 4 failed", "steps": steps}
+        time.sleep(lgs_map.INTER_TXN_S)
+        rb = _probe(c, current_id)
+        if rb != new_id:
+            return {"ok": False, "error": f"reg 4 readback mismatch (got {rb}, expected {new_id})", "steps": steps}
+        steps.append(f"reg 4 = {new_id}")
+        time.sleep(lgs_map.INTER_TXN_S)
+        try:
+            c.write_coil(503, True, device_id=current_id)           # persist + reboot
+        except Exception:                                        # noqa: BLE001
+            pass                                                 # no reply: rebooting (expected)
+        steps.append("saved, module rebooting")
+        time.sleep(REBOOT_WAIT_S)
+        if _probe(c, new_id) == new_id:
+            steps.append(f"answers at {new_id}")
+            return {"ok": True, "steps": steps, "new_id": new_id}
+        back = _probe(c, current_id)
+        err = (f"module still answers at {current_id}: the new id was rejected when saved"
+               if back is not None else f"module did not answer at {new_id} after reboot")
+        return {"ok": False, "error": err, "steps": steps}
+
+
+def soft_reset(host: str, port: int, device_id: int) -> dict:
+    _check_id(device_id)
+    with _Bus(host, port) as c:
+        try:
+            c.write_coil(504, True, device_id=int(device_id))
+        except Exception:                                        # noqa: BLE001
+            pass                                                 # no reply: rebooting (expected)
+        time.sleep(REBOOT_WAIT_S)
+        back = _probe(c, int(device_id)) is not None
+    return {"ok": back, "error": "" if back else "module did not come back: check power and bus"}
