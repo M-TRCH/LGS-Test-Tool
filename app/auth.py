@@ -46,7 +46,10 @@ _ITERS = 200_000
 # Paths that must stay reachable without a session: the login form itself and
 # the page guard's "is the server back" probe (page_guard.PROBE_PATH), which
 # returns a constant and exposes nothing.
-_OPEN_PATHS = ("/login", "/_lgs/alive")
+_OPEN_PATHS = ("/login", "/_lgs/alive", "/v2/static/app.css", "/v2/static/fonts.css")
+# The login page wears the v2 look, so its stylesheet and fonts load before
+# anyone has signed in. Styles and font files only: no script, no data.
+_OPEN_PREFIXES = ("/v2/static/fonts/",)
 
 # Brute-force brake: per client address, FAIL_MAX wrong passwords lock it out
 # for LOCK_S. In memory on purpose -- a restart is a human at the machine.
@@ -214,7 +217,8 @@ class Gate:
         if scope["type"] not in ("http", "websocket") or not enabled():
             return await self.app(scope, receive, send)
         path = scope.get("path", "")
-        if path in _OPEN_PATHS or token_ok(_cookie_from(scope.get("headers", []))):
+        if path in _OPEN_PATHS or (path.startswith(_OPEN_PREFIXES) and ".." not in path) \
+                or token_ok(_cookie_from(scope.get("headers", []))):
             return await self.app(scope, receive, send)
         if scope["type"] == "websocket":
             await send({"type": "websocket.close", "code": 1008})
@@ -239,21 +243,22 @@ def _safe_next(n: str) -> str:
 
 _PAGE = """<!doctype html><html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>LGS Test Tool</title><style>
-body{{font-family:system-ui,"Segoe UI",sans-serif;background:#f4f5f7;margin:0;
-display:grid;place-items:center;min-height:100vh}}
-form{{background:#fff;padding:28px;border-radius:12px;box-shadow:0 2px 12px #0002;
-width:min(92vw,340px);display:grid;gap:12px}}
-h1{{font-size:18px;margin:0}} input,button{{font-size:16px;padding:10px;border-radius:8px;
-border:1px solid #bbb}} button{{background:#1565c0;color:#fff;border:0;cursor:pointer}}
-.e{{color:#b00020;font-size:14px}}
-@media(prefers-color-scheme:dark){{body{{background:#121417;color:#eee}}
-form{{background:#1d2126}}input{{background:#121417;color:#eee;border-color:#444}}}}
-</style></head><body><form method="post" action="/login">
-<h1>LGS Test Tool</h1>{err}
+<title>LGS Test Tool</title>
+<link rel="stylesheet" href="/v2/static/fonts.css"><link rel="stylesheet" href="/v2/static/app.css">
+<script>try{{var t=localStorage.getItem("lgs.theme");if(t&&t!=="auto")document.documentElement.dataset.theme=t}}catch(e){{}}</script>
+<style>
+.login{{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:16px;box-sizing:border-box}}
+.login form{{width:min(100%,380px);display:grid;gap:16px;padding:24px;box-sizing:border-box}}
+.login h1{{margin:0;font-size:22px;line-height:1.3}}.login .sub{{margin:2px 0 0;color:var(--muted);font-size:14px}}
+.login .btn{{width:100%}}.login .e{{color:var(--bad);background:var(--bad-bg);border-radius:10px;padding:8px 12px;font-size:14px}}
+</style></head><body><main class="login"><form class="card" method="post" action="/login">
+<div><h1>LGS Test Tool</h1><p class="sub" data-en="Sign in to continue">เข้าสู่ระบบเพื่อใช้งานต่อ</p></div>{err}
 <input type="hidden" name="next" value="{nxt}">
-<input type="password" name="password" placeholder="รหัสผ่าน / Password" autofocus required>
-<button>เข้าสู่ระบบ / Sign in</button></form></body></html>"""
+<div class="field"><label for="pw" data-en="Password">รหัสผ่าน</label>
+<input id="pw" type="password" name="password" autocomplete="current-password" autofocus required></div>
+<button class="btn primary" data-en="Sign in">เข้าสู่ระบบ</button></form></main>
+<script>try{{if(localStorage.getItem("lgs.lang")==="en"){{document.documentElement.lang="en";document.querySelectorAll("[data-en]").forEach(function(e){{e.textContent=e.dataset.en}})}}}}catch(e){{}}</script>
+</body></html>"""
 
 
 def install(app) -> None:
