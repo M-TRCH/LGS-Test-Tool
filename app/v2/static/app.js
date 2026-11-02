@@ -267,7 +267,7 @@ const gwRank = (key) => { const i = GWORDER.indexOf(key); return i < 0 ? 999 : i
 /* Settings that pick one of a few meanings (panel.h, gw_config.cpp): a list, not a number. value -> [th, en]. */
 const GWENUM = (() => {
   const btn = { 0: ["ไม่ทำอะไร", "Does nothing"], 1: ["เปิดไฟทุกช่อง", "Light every slot"], 2: ["ปิดไฟทั้งหมด", "Everything off"], 3: ["ปลดล็อกทุกช่อง", "Unlock every slot"],
-    4: ["รีเซ็ตไฟชั้นวาง", "Reset the shelf power"], 5: ["ทดสอบไฟสถานะ", "Test the status lamps"], 6: ["เปิดไฟทุกช่อง (8 สี)", "Light every slot (8 colours)"] };
+    4: ["รีเซ็ตไฟเลี้ยงโมดูล", "Reset the shelf power"], 5: ["ทดสอบไฟสถานะ", "Test the status lamps"], 6: ["เปิดไฟทุกช่อง (8 สี)", "Light every slot (8 colours)"] };
   const out = { 0: ["ไม่ใช้", "Not used"], 1: ["พร้อมใช้งาน", "Ready"], 2: ["กำลังทำงาน", "Busy"], 3: ["ผิดปกติ", "Fault"], 4: ["สาย LAN เชื่อมอยู่", "LAN up"],
     5: ["มีไคลเอนต์เชื่อมอยู่", "A client is connected"], 6: ["กำลังไล่ช่อง", "A sweep is running"], 7: ["กำลังตัดไฟชั้นวาง", "Shelf power is dropped"], 8: ["ไฟเลี้ยงชั้นวาง", "Shelf power"] };
   const m = { "rs485.baud": { 9600: ["9600", "9600"], 19200: ["19200", "19200"], 38400: ["38400", "38400"], 57600: ["57600", "57600"] },
