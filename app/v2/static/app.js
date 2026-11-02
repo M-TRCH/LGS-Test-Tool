@@ -191,9 +191,11 @@ function siteRow(s, i) {
 }
 function viewSites() {
   return `<div class="row between"><h1>${t("sites")}</h1><div class="row">
-      <a class="btn" href="/api/v2/sites.csv" download>${t("exportCsv")}</a>
-      <select id="csvmode" aria-label="import mode"><option value="merge">${t("importMerge")}</option><option value="replace">${t("importReplace")}</option></select>
-      <label class="btn">${t("importCsv")}<input type="file" id="csvfile" accept=".csv,text/csv" hidden></label>
+      <details class="menu"><summary class="btn">CSV ▾</summary><div class="menupanel">
+        <a class="menuitem" href="/api/v2/sites.csv" download>${t("exportCsv")}</a>
+        <button class="menuitem" type="button" data-act="csv-import" data-mode="merge">${t("importCsv")}<small>${t("importMerge")}</small></button>
+        <button class="menuitem" type="button" data-act="csv-import" data-mode="replace">${t("importCsv")}<small>${t("importReplace")}</small></button>
+        <input type="file" id="csvfile" accept=".csv,text/csv" hidden></div></details>
       <button class="btn" data-act="add">${t("add")}</button><button class="btn primary" data-act="save">${t("save")}</button></div></div>
     ${S.dirty ? `<div class="notice">${t("unsaved")}</div>` : ""}
     ${S.warnings.map((w) => `<div class="notice">${esc(w)}</div>`).join("")}
@@ -643,6 +645,7 @@ document.addEventListener("click", async (ev) => {
   if (cell) { const id = +cell.dataset.cmcell, c = S.cm; if (c.mode === "batch") { c.sel.has(id) ? c.sel.delete(id) : c.sel.add(id); } else { c.id = String(id); c.gridOpen = false; } render(); return; }
   const crow = ev.target.closest("[data-cmrow]");
   if (crow) { const r = +crow.dataset.cmrow, g = (S.cm.opts && S.cm.opts.grid) || { cols: 8 }, ids = Array.from({ length: g.cols }, (_, k) => r * 10 + k + 1); const all = ids.every((i) => S.cm.sel.has(i)); ids.forEach((i) => (all ? S.cm.sel.delete(i) : S.cm.sel.add(i))); render(); return; }
+  document.querySelectorAll("details.menu[open]").forEach((d) => { if (!d.contains(ev.target)) d.open = false; });
   const cmm = ev.target.closest("[data-cmmode]"); if (cmm) { S.cm.mode = cmm.dataset.cmmode; render(); return; }
   const type = ev.target.closest("[data-type]");
   if (type) { const x = type.dataset.type; S.ev.types.has(x) ? S.ev.types.delete(x) : S.ev.types.add(x); type.setAttribute("aria-pressed", S.ev.types.has(x)); loadEvents(); return; }
@@ -725,6 +728,8 @@ document.addEventListener("click", async (ev) => {
       f.gwConfirm = ""; await fwRefresh();
     } else if (act.dataset.act === "cm-probe") {
       S.cm.probing = true; render(); try { S.cm.probe = await api("POST", "/api/v2/cm/probe", {}); } finally { S.cm.probing = false; render(); }
+    } else if (act.dataset.act === "csv-import") {
+      S.csvMode = act.dataset.mode; const m = act.closest("details"); if (m) m.open = false; $("#csvfile").click();
     } else if (act.dataset.act === "cm-info") {
       const im = S.cm.opts && S.cm.opts.images.find((x) => x.key === S.cm.image);
       $("#infobody").innerHTML = im ? `${fwNoteHtml(im)}<dl class="kv"><dt>${t("cmVerLbl")}</dt><dd class="mono">${esc(im.version)}</dd><dt>${t("cmShaLbl")}</dt><dd class="mono">${esc(im.sha256)}</dd></dl>` : `<p>${t("cmNeedImage")}</p>`;
@@ -803,7 +808,7 @@ document.addEventListener("change", async (ev) => {
   if (ev.target.id === "evdays") { S.ev.days = +ev.target.value; loadEvents(); }
   if (ev.target.id === "csvfile" && ev.target.files[0]) {
     try {
-      const r = await api("POST", "/api/v2/sites/import?mode=" + $("#csvmode").value, await ev.target.files[0].arrayBuffer(), true);
+      const r = await api("POST", "/api/v2/sites/import?mode=" + (S.csvMode || "merge"), await ev.target.files[0].arrayBuffer(), true);
       S.sites = r.sites; S.warnings = r.warnings; S.dirty = false; render(); toast(t("imported", { n: r.imported }));
     } catch (e) { fail(e); }
   }
