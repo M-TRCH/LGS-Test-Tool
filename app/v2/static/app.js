@@ -251,6 +251,8 @@ function viewEvents() {
 
 
 const GWGROUPS = ["sys", "rs485", "usb", "net", "time", "bus", "panel", "sched"];
+/* Keys the gateway treats as on/off (KIND_BOOL in gw_config.cpp): a switch, never a number. */
+const GWBOOL = new Set(["net.enabled", "net.dhcp", "panel.enabled", "panel.lamps", "sched.reset_enabled", "net.console"]);
 function gwChanged() { return Object.keys(S.gw.edits).length; }
 function gwLabel(k) { const tx = k.text && k.text[lang]; return (tx && tx.label) || k.key; }
 
@@ -276,6 +278,10 @@ function viewGateway() {
     const sw = (name, on, act, info, locked) => `<div class="switch"><div><b>${t(name)}</b><button class="why" data-act="sw-info" data-info="${info}" type="button" aria-label="${t("explain")}">?</button></div><button class="sw" role="switch" aria-checked="${on}" data-act="${act || "gw-vol"}" data-name="${name}"${locked ? " disabled" : ""}></button></div>`;
     const field = (k) => {
       const ed = k.key in g.edits, val = ed ? g.edits[k.key] : k.value;
+      if (GWBOOL.has(k.key)) {
+        return `<div class="field"><div class="switch"><label style="margin:0">${esc(gwLabel(k))}<button class="why" data-act="hint" data-key="${esc(k.key)}" type="button" aria-label="${t("explain")}">?</button></label>
+          <button class="sw" role="switch" aria-checked="${val === "1"}" data-act="gw-bool" data-key="${esc(k.key)}"${ed ? ' style="outline:2px solid var(--brand)"' : ""}></button></div></div>`;
+      }
       return `<div class="field"><label>${esc(gwLabel(k))}${k.ro ? ` <span class="chip off">${t("ro")}</span>` : ""}<button class="why" data-act="hint" data-key="${esc(k.key)}" type="button" aria-label="${t("explain")}">?</button></label>
         <input data-key="${esc(k.key)}" value="${esc(val)}" ${k.ro ? "disabled" : ""} ${ed ? 'style="border-color:var(--brand)"' : ""}></div>`;
     };
@@ -783,6 +789,10 @@ document.addEventListener("click", async (ev) => {
       if (c.file) { const q = new URLSearchParams({ mode: c.mode, id: c.id, ids: c.ids, lot: c.lot, device_type: c.type, overwrite: body.overwrite ? "1" : "0", confirmed: "1", name: c.fileName }); await api("POST", "/api/v2/cm/start?" + q, c.file, true); }
       else await api("POST", "/api/v2/cm/start", body);
       c.since = 0; c.lines = []; c.done = null; c.prog = null; c.boards = {}; c.running = true; render(); cmPoll();
+    } else if (act.dataset.act === "gw-bool") {
+      const k = act.dataset.key, orig = S.gw.data.keys.find((x) => x.key === k).value, now = k in S.gw.edits ? S.gw.edits[k] : orig, nv = now === "1" ? "0" : "1";
+      if (nv === orig) delete S.gw.edits[k]; else S.gw.edits[k] = nv;
+      act.setAttribute("aria-checked", nv === "1"); act.style.outline = k in S.gw.edits ? "2px solid var(--brand)" : ""; gwBar();
     } else if (act.dataset.act === "hint") { showInfo(act.dataset.key);
     } else if (act.dataset.act === "collector") { const on = act.getAttribute("aria-checked") !== "true"; await api("POST", "/api/v2/collector", { enabled: on }); S.me = await api("GET", "/api/v2/me"); render(); }
   } catch (e) { if (String(act.dataset.act).startsWith("cm-")) S.cm.err = e.message; fail(e); render(); }
