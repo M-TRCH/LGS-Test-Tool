@@ -84,11 +84,16 @@ def _image(image_key: str, data: bytes, filename: str) -> tuple:
     return data, filename
 
 
-def _type(value) -> "int | None":
-    v = int(value or 0)
-    if v and v not in ci.DEVICE_TYPES:
-        raise ValueError(f"device type {v} is not one this firmware knows")
-    return v or None
+def _type(value) -> int:
+    """The cabinet type is always chosen: a board that is left to guess records
+    STANDARD or the build default for good, and cannot tell LITE/DELIVERY from NARCOTIC."""
+    try:
+        v = int(value or 0)
+    except (TypeError, ValueError):
+        v = 0
+    if v not in ci.DEVICE_TYPES:
+        raise ValueError("choose a cabinet type: " + ", ".join(f"{k} {n}" for k, n in ci.DEVICE_TYPES.items()))
+    return v
 
 
 def start(worker, body: dict, *, data: bytes = b"", filename: str = "") -> dict:

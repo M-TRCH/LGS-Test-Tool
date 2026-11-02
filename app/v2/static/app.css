@@ -60,8 +60,8 @@ h1{font-size:22px;margin:2px 0 10px}h2{font-size:17px;margin:0}h3{font-size:15px
 .stack{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}.stack.tight{gap:8px}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.row.between{justify-content:space-between}
 /* File pickers follow the theme instead of the browser default grey button. */
-input[type=file]{max-width:100%;color:var(--muted);font:inherit;font-size:13px}
-input[type=file]::file-selector-button{margin-right:10px;min-height:40px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
+input[type=file]{max-width:100%;box-sizing:border-box;min-height:var(--tap);padding:0 6px 0 6px;display:flex;align-items:center;line-height:var(--tap);color:var(--muted);font:inherit;font-size:13px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+input[type=file]::file-selector-button{margin:0 10px 0 0;height:36px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font:inherit;font-weight:600;cursor:pointer;vertical-align:middle}
 input[type=file]::file-selector-button:hover{background:var(--surface);border-color:var(--brand)}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:var(--tap);padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font-weight:600;line-height:1.2;text-decoration:none;text-align:center;cursor:pointer}
 .btn.primary{background:var(--brand);color:var(--brand-ink);border-color:transparent}
