@@ -15,7 +15,7 @@ const TXT = {
     search: "ค้นหา (ชื่อ, ไอพี)", noEvents: "ไม่มีเหตุการณ์ในช่วงนี้", noEventsOff: "ยังไม่มีข้อมูล เพราะยังไม่ได้เปิด \"เก็บเหตุการณ์อัตโนมัติ\" ด้านบน (เปิดแล้วรอประมาณ 5 นาทีให้ดึงรอบแรก) ตู้ที่ใช้เฟิร์มแวร์ต่ำกว่า 1.14.0 จะไม่มีข้อมูล", collect: "เก็บเหตุการณ์อัตโนมัติ",
     collectHint: "ดึงบันทึกจากเกตเวย์ทุกตู้ในรายการตู้ทุก 5 นาที เก็บ 90 วัน ต้องใช้เฟิร์มแวร์เกตเวย์ 1.14.0 ขึ้นไป",
     gateway_page: "เกตเวย์", pick: "เลือกตู้", read: "อ่านค่า", reading: "กำลังอ่าน...",
-    setClock: "ซิงค์เวลาจากเครื่องนี้", hubRow: "แถว {n}", hubDirect: "ต่อตรง", hubCh: "ช่อง {n}",
+    setClock: "ซิงค์เวลาจากเครื่องนี้", hubRow: "แถว {n}", hubDirect: "ต่อตรง", hubCh: "ช่อง {n}", cabCustom: "กำหนดเอง", cabSlots: "{n} ช่อง", cabNone: "ไม่มี",
     resyncInfo: "เมื่อโมดูลไม่ตอบ เกตเวย์ส่งสัญญาณปรับจังหวะให้โมดูลทั้งบัสแล้วลองถามซ้ำอีกครั้ง เป็นการตั้งค่าชั่วคราวจะกลับมาเปิดเองหลังรีบูต",
     excInfo: "เมื่อบัส RS485 ไม่ตอบ ให้ตอบไคลเอนต์ด้วย exception 0x0B ทันที แทนที่จะปล่อยให้หมดเวลา เป็นการตั้งค่าชั่วคราวจะกลับมาปิดเองหลังรีบูต", clockWarn: "การตั้งนาฬิกาเป็นการเปิดใช้การรีเซ็ตตามเวลา (เช่น 03:00) ซึ่งตัดไฟชั้นวาง ตั้งเมื่อตั้งใจเท่านั้น",
     clockSet: "ตั้งนาฬิกาแล้ว", resync: "ซ่อมจังหวะหลังไม่มีคำตอบ (RESYNC)", exc: "ตอบ exception 0x0B ทันทีเมื่อบัสไม่ตอบ (EXC)",
@@ -75,7 +75,7 @@ const TXT = {
     search: "Search (name, IP)", noEvents: "No events in this range", noEventsOff: "No data yet because \"Collect events automatically\" above is off (turn it on and wait about 5 minutes for the first pull). Cabinets below firmware 1.14.0 have no events.", collect: "Collect events automatically",
     collectHint: "Pulls every saved cabinet's gateway log every 5 minutes, kept 90 days. Needs gateway firmware 1.14.0 or newer.",
     gateway_page: "Gateway", pick: "Choose cabinet", read: "Read", reading: "Reading...",
-    setClock: "Sync time from this PC", hubRow: "Row {n}", hubDirect: "Direct", hubCh: "Channel {n}",
+    setClock: "Sync time from this PC", hubRow: "Row {n}", hubDirect: "Direct", hubCh: "Channel {n}", cabCustom: "Custom", cabSlots: "{n} slots", cabNone: "None",
     resyncInfo: "After a missing reply the gateway re-syncs every module on the bus and retries once. Temporary: returns to on when the gateway reboots.",
     excInfo: "When the RS485 bus does not answer, reply to the client with exception 0x0B at once instead of letting it time out. Temporary: returns to off when the gateway reboots.", clockWarn: "Setting the clock also arms the scheduled reset (e.g. 03:00), which cuts the shelf's power. Do it on purpose only.",
     clockSet: "Clock set", resync: "Re-sync after a missing reply (RESYNC)", exc: "Answer a bus timeout with exception 0x0B at once (EXC)",
@@ -270,8 +270,7 @@ const GWENUM = (() => {
     4: ["รีเซ็ตไฟชั้นวาง", "Reset the shelf power"], 5: ["ทดสอบไฟสถานะ", "Test the status lamps"], 6: ["เปิดทุกหน้าต่างทุกช่อง (ตู้ 80)", "Every window of every slot (type 80)"] };
   const out = { 0: ["ไม่ใช้", "Not used"], 1: ["พร้อมใช้งาน", "Ready"], 2: ["กำลังทำงาน", "Busy"], 3: ["ผิดปกติ", "Fault"], 4: ["สาย LAN เชื่อมอยู่", "LAN up"],
     5: ["มีไคลเอนต์เชื่อมอยู่", "A client is connected"], 6: ["กำลังไล่ช่อง", "A sweep is running"], 7: ["กำลังตัดไฟชั้นวาง", "Shelf power is dropped"], 8: ["ไฟเลี้ยงชั้นวาง", "Shelf power"] };
-  const m = { "panel.cabinet": { 0: ["ตามค่ารูปทรง (panel.shape)", "Follow the shape (panel.shape)"], 40: ["40 ช่อง", "40 slots"], 64: ["64 ช่อง", "64 slots"], 80: ["80 ช่อง", "80 slots"] },
-    "rs485.baud": { 9600: ["9600", "9600"], 19200: ["19200", "19200"], 38400: ["38400", "38400"], 57600: ["57600", "57600"] },
+  const m = { "rs485.baud": { 9600: ["9600", "9600"], 19200: ["19200", "19200"], 38400: ["38400", "38400"], 57600: ["57600", "57600"] },
     "panel.preset": Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8].map((n) => [n, ["พรีเซ็ต " + n, "Preset " + n]])) };
   /* KIND_BOOL keys in gw_config.cpp */
   for (const k of ["net.enabled", "net.dhcp", "panel.enabled", "panel.lamps", "sched.reset_enabled", "net.console"]) m[k] = { 0: ["ปิด", "Off"], 1: ["เปิด", "On"] };
@@ -285,7 +284,7 @@ const GWENUM = (() => {
   for (let n = 1; n <= 4; n++) m["panel.out" + n] = out;
   return m;
 })();
-function gwChanged() { return Object.keys(S.gw.edits).length; }
+function gwChanged() { const e = S.gw.edits; return Object.keys(e).length - ("panel.cabinet" in e && "panel.shape" in e ? 1 : 0); }
 /* Keys the gateway names but i18n has no label for (the Classic tool draws them with a custom widget). Same wording as the PDF report. */
 const GWNAMES = {
   "panel.btn1": ["ปุ่มสีแดงทำอะไร", "Red button does"], "panel.btn2": ["ปุ่มสีเขียวทำอะไร", "Green button does"], "panel.btn3": ["ปุ่มสีน้ำเงินทำอะไร", "Blue button does"],
@@ -297,10 +296,21 @@ const GWNAMES = {
   "net.console": ["เปิดช่องคอนโซลผ่านเครือข่าย", "Console over the network"],
 };
 /* Thai wording for this page that differs from the shared i18n table the Classic tool also reads. */
-const GWTH = { "sys.name": "ชื่อเกตเวย์", "sys.wdt_ms": "Watchdog (ms)", "net.ip": "ไอพีเกตเวย์", "net.ntp": "ไอพีเซิร์ฟเวอร์เวลา NTP", "time.tz_min": "โซนเวลา (UTC)",
+const GWTH = { "sys.name": "ชื่อเกตเวย์", "sys.wdt_ms": "Watchdog (ms)", "net.ip": "ไอพีเกตเวย์", "net.ntp": "ไอพีเซิร์ฟเวอร์เวลา NTP", "time.tz_min": "โซนเวลา (UTC)", "panel.cabinet": "รูปทรงตู้",
   "rs485.t2_ms": "เวลาเงียบที่ถือว่าจบคำตอบ (ms)", "usb.gap_ms": "เวลาเงียบที่ถือว่าจบคำสั่ง (ms)", "panel.preset": "พรีเซ็ตสีที่ปุ่มใช้", "bus.hub_map": "แผนที่ช่อง", "bus.hub_retry": "จำนวนยิงกระตุ้นเมื่อข้ามช่อง", "bus.hub_gap_ms": "เผื่อเวลาเพิ่ม (ms)" };
 /* bus.hub_map is ten numbers, one per row (slave IDs 11-108): which hub channel the row hangs on, 0 = wired straight. */
 const hubRows = (str) => { const a = String(str || "").split(",").map((x) => parseInt(x, 10) || 0); while (a.length < 10) a.push(0); return a.slice(0, 10); };
+/* panel.cabinet + panel.shape are one choice for the person: a preset (40/64/80) or a custom list of slots per row. The shape wins when set,
+   and cabinet 0 means "follow the shape" (the gateway refuses 0 without one), so this widget writes the pair together. */
+const CAB_PRESET = { 40: "4,4,4,4,4,4,4,4,4,4", 64: "8,8,8,4,4,4,4,8,8,8", 80: "8,8,8,8,8,8,8,8,8,8" };
+const cabCur = (key) => (key in S.gw.edits ? S.gw.edits[key] : S.gw.data.keys.find((x) => x.key === key).value);
+const cabSaved = (key) => S.gw.data.keys.find((x) => x.key === key).value;
+const cabCustom = (cab, shape) => +cab === 0 || hubRows(shape).some((n) => n > 0);
+const cabDesc = (cab, shape) => cabCustom(cab, shape) ? t("cabCustom") + " (" + hubRows(shape).filter((n) => n > 0).join(",") + ")" : t("cabSlots", { n: cab });
+function cabSet(cab, shape) {
+  const norm = (k, v) => (k === "panel.shape" ? hubRows(v).join(",") : String(v));
+  for (const [k, v] of [["panel.cabinet", cab], ["panel.shape", shape]]) { if (norm(k, v) === norm(k, cabSaved(k))) delete S.gw.edits[k]; else S.gw.edits[k] = String(v); }
+}
 /* The "?" button, only where there is something to say: no button when the name says it all, or when there is no explanation text. */
 const GWNOINFO = new Set(["sys.name", "net.enabled", "net.dhcp", "net.ip", "net.mask", "net.gw", "net.dns", "net.port", "net.ntp", "net.ntp_port", "time.tz_min", "rs485.baud", "usb.max_ms", "panel.enabled", "sched.reset_enabled"]);
 function whyBtn(k) {
@@ -341,6 +351,16 @@ function viewGateway() {
           + `<option value="0"${v === 0 ? " selected" : ""}>${t("hubDirect")}</option>` + [1, 2, 3, 4, 5, 6, 7, 8].map((c) => `<option value="${c}"${v === c ? " selected" : ""}>${t("hubCh", { n: c })}</option>`).join("") + `</select></div>`).join("");
         return `<div class="field" style="grid-column:1/-1"><label>${esc(gwLabel(k))}${whyBtn(k)}</label><div class="hubgrid">${cells}</div></div>`;
       }
+      if (k.key === "panel.shape" && d.keys.some((x) => x.key === "panel.cabinet")) return "";
+      if (k.key === "panel.cabinet" && d.keys.some((x) => x.key === "panel.shape")) {
+        const cab = cabCur("panel.cabinet"), shp = cabCur("panel.shape"), custom = cabCustom(cab, shp), rows = hubRows(shp), saved = hubRows(cabSaved("panel.shape"));
+        const edited = "panel.cabinet" in g.edits || "panel.shape" in g.edits, mark = ' style="border-color:var(--brand)"';
+        const mode = [40, 64, 80].map((n) => `<option value="${n}"${!custom && +cab === n ? " selected" : ""}>${t("cabSlots", { n })}</option>`).join("") + `<option value="custom"${custom ? " selected" : ""}>${t("cabCustom")}</option>`;
+        const cells = rows.map((v, i) => `<div class="hubcell"><span>${t("hubRow", { n: i + 1 })}</span><select data-cabrow="${i}"${v !== saved[i] ? mark : ""}>`
+          + [0, 1, 2, 3, 4, 5, 6, 7, 8].map((c) => `<option value="${c}"${v === c ? " selected" : ""}>${c ? c : t("cabNone")}</option>`).join("") + `</select></div>`).join("");
+        return `<div class="field" style="grid-column:1/-1"><label>${esc(gwLabel(k))}</label><select data-cabmode${edited ? mark : ""}>${mode}</select>
+          <div class="hubgrid" data-cabgrid style="margin-top:8px"${custom ? "" : " hidden"}>${cells}</div></div>`;
+      }
       if (GWENUM[k.key] && !k.ro) {
         const L = GWENUM[k.key], i18 = lang === "th" ? 0 : 1, vals = Object.keys(L).sort((x, y) => x - y), cur = String(val);
         const opts = vals.map((v) => `<option value="${v}"${v === cur ? " selected" : ""}>${esc(L[v][i18])}</option>`).join("") + (vals.includes(cur) ? "" : `<option value="${esc(cur)}" selected>${esc(cur)}</option>`);
@@ -366,7 +386,10 @@ function gwBar() {
   const d = S.gw.data; if (!(d && d.ok)) { el.innerHTML = ""; return; }
   const n = gwChanged();
   const shown = (k, v) => { const e = GWENUM[k] && GWENUM[k][v]; return e ? e[lang === "th" ? 0 : 1] : v; };
-  const diffs = n ? `<b>${t("changes", { n })}</b>` + Object.entries(S.gw.edits).map(([k, v]) => { const kk = d.keys.find((x) => x.key === k); return `<div class="small">${esc(gwLabel(kk))}: ${esc(shown(k, kk.value))} → <b>${esc(shown(k, v))}</b></div>`; }).join("") : "";
+  const diffs = n ? `<b>${t("changes", { n })}</b>` + Object.entries(S.gw.edits).map(([k, v]) => {
+    if (k === "panel.shape" && "panel.cabinet" in S.gw.edits) return "";
+    if (k === "panel.cabinet" || k === "panel.shape") { const c = d.keys.find((x) => x.key === "panel.cabinet"); return `<div class="small">${esc(gwLabel(c))}: ${esc(cabDesc(cabSaved("panel.cabinet"), cabSaved("panel.shape")))} → <b>${esc(cabDesc(cabCur("panel.cabinet"), cabCur("panel.shape")))}</b></div>`; }
+    const kk = d.keys.find((x) => x.key === k); return `<div class="small">${esc(gwLabel(kk))}: ${esc(shown(k, kk.value))} → <b>${esc(shown(k, v))}</b></div>`; }).join("") : "";
   /* Always there: save, and the JSON file buttons. The list of changed values only while something has changed. */
   el.innerHTML = `<section class="card stack" style="position:sticky;bottom:calc(var(--navh) + 8px);margin-top:12px;${n ? "border-color:var(--brand)" : ""}">${diffs}
     <div class="row"><button class="btn primary" data-act="gw-apply"${n ? "" : " disabled"}>${t("apply")}</button>${n ? `<button class="btn" data-act="gw-clear">${t("reset")}</button>` : ""}
@@ -868,6 +891,25 @@ document.addEventListener("input", (ev) => {
     return;
   }
   if (ev.target.closest(".sitesrow")) { S.dirty = true; }
+  if (ev.target.dataset && (ev.target.dataset.cabmode !== undefined || ev.target.dataset.cabrow !== undefined)) {
+    const grid = document.querySelector("[data-cabgrid]"), cells = [...grid.querySelectorAll("[data-cabrow]")];
+    if (ev.target.dataset.cabmode !== undefined) {
+      const v = ev.target.value;
+      if (v === "custom") {
+        /* Start from the geometry of the preset it was on, so it is never an empty (refused) shape. */
+        const cur = hubRows(cabCur("panel.shape")), shape = cur.some((n) => n > 0) ? cur.join(",") : (CAB_PRESET[+cabCur("panel.cabinet")] || CAB_PRESET[80]);
+        hubRows(shape).forEach((n, i) => { cells[i].value = n; });
+        cabSet(0, shape); grid.hidden = false;
+      } else { cabSet(+v, "0"); grid.hidden = true; }
+    } else {
+      const shape = cells.map((x) => x.value).join(",");
+      cabSet(shape.split(",").some((n) => +n > 0) ? 0 : cabCur("panel.cabinet"), shape);
+    }
+    const saved = hubRows(cabSaved("panel.shape")), edited = "panel.cabinet" in S.gw.edits || "panel.shape" in S.gw.edits;
+    cells.forEach((x, i) => { x.style.borderColor = +x.value !== saved[i] ? "var(--brand)" : ""; });
+    document.querySelector("[data-cabmode]").style.borderColor = edited ? "var(--brand)" : "";
+    gwBar(); return;
+  }
   if (ev.target.dataset && ev.target.dataset.hubrow !== undefined) {
     const k = "bus.hub_map", orig = hubRows(S.gw.data.keys.find((x) => x.key === k).value).join(",");
     const now = [...document.querySelectorAll("[data-hubrow]")].map((x) => x.value).join(",");
