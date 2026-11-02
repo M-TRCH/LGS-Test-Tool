@@ -405,7 +405,7 @@ function viewGateway() {
         <dt>${t("clients")}</dt><dd>${esc(i["net.client"] || "?")}/2</dd><dt>${t("clock")}</dt><dd>${i["time.set"] === "1" ? esc((i["time.now"] || "").replace("T", " ")) : t("clockUnset")}</dd></dl></section>
       <section class="card stack">${order.map((grp) => `<details><summary><b>${esc(TXT[lang]["g_" + grp] || grp)}</b> <span class="small muted">${groups[grp].length}</span></summary><div class="fgrid" style="margin-top:8px">${groups[grp].map(field).join("")}</div></details>`).join("") || `<p class="muted">${t("noKeys")}</p>`}</section>
       <section class="card stack"><h3>${t("danger")}</h3><div class="row"><button class="btn" data-act="gw-time">${t("setClock")}</button><button class="btn" data-act="gw-discard">${t("discard")}</button><button class="btn" data-act="gw-reboot">${t("reboot")}</button><button class="btn" data-act="gw-defaults" style="color:var(--bad)">${t("defaults")}</button></div>
-        <div class="row" style="gap:8px;align-items:center"><button class="btn" id="rptrun" data-act="rpt-run"${anyJob() ? " disabled" : ""}>${t("rptBtn")}</button><button class="btn" id="rptstop" data-act="job-stop"${S.rpt.running ? "" : " hidden"}>${t("insCancel")}</button><span id="rptdyn" class="row" style="gap:8px">${rptDyn()}</span></div>${sw("resync", i["rtu.heal"] === "1", "", "resyncInfo")}${sw("exc", i["tcp.exc"] === "1", "", "excInfo")}</section>`;
+        <div class="row"><button class="btn" id="rptrun" data-act="rpt-run"${anyJob() && !S.rpt.running ? " disabled" : ""}>${t("rptBtn")}</button></div>${sw("resync", i["rtu.heal"] === "1", "", "resyncInfo")}${sw("exc", i["tcp.exc"] === "1", "", "excInfo")}</section>`;
   } else if (d && !d.ok) body = `<div class="notice bad">${esc(d.error)}</div>`;
   return `<div class="row between"><h1>${t("gateway_page")}</h1></div>
     <section class="card stack"><div class="row" style="align-items:flex-end"><div class="field" style="min-width:0;flex:1"><label>${t("pick")}</label><select id="gwsel"><option value="">—</option>${opts}</select></div>
@@ -555,7 +555,7 @@ async function jobPoll() {
     const r = await api("GET", "/api/v2/ins/events?since=" + S.jobSince), st = JOBST[r.kind] && JOBST[r.kind]();
     if (st) { if (r.kind === "check" && r.mode) S.ins.mode = r.mode; r.events.forEach((ev) => jobFold(r.kind, ev)); st.running = r.running; st.file = r.csv; if (r.error) st.err = r.error; }
     S.jobSince = r.seq;
-    if (!r.running) { clearInterval(S.jobTimer); S.jobTimer = null; Object.values(JOBST).forEach((f) => { f().running = false; }); if (page === "module" || page === "gateway") renderKeep(); return; }
+    if (!r.running) { clearInterval(S.jobTimer); S.jobTimer = null; Object.values(JOBST).forEach((f) => { f().running = false; }); if (page === "module" || page === "gateway") renderKeep(); jobPaint(); return; }
   } catch (e) { /* a missed poll is only a late repaint */ }
   jobPaint();
 }
@@ -575,6 +575,7 @@ async function jobResume() {
     const site = S.sites.find((x) => x.name === r.cabinet);
     if (r.kind === "check") { if (site) { S.mod.id = site.id; await insLayout(); } S.ins.mode = r.mode || S.ins.mode; insReset(); }
     if (r.kind === "report" && site) S.rpt.id = site.id;
+    if (r.kind === "report" && r.running && page === "gateway") setTimeout(rptOpen, 0);
     r.events.forEach((ev) => jobFold(r.kind, ev)); S.jobSince = r.seq; st.running = r.running; st.file = r.csv;
     if (r.running) jobSync(); if (page === "module" || page === "gateway") renderKeep();
   } catch (e) { /* no job to resume */ }
@@ -608,7 +609,7 @@ function insDyn() {
   const chip = b ? `<span class="chip ${b === "pass" ? "ok" : b === "run" ? "warn" : b === "issues" ? "bad" : "off"}">${t("insB_" + b)}</span>` : "";
   const resText = (r) => (r.ok ? t("insPass") : !r.responded ? t("insNoAns") : t("insFail"));
   const rows = i.rows.map((r) => `<tr><td>${r.id}</td><td>${esc(r.type || "—")}</td><td style="color:var(${r.ok ? "--ok" : "--bad"})">${resText(r)}</td><td>${esc(r.steps.map((s) => `${s.label}: ${s.ok ? "ok" : "FAIL"}${s.note && !s.ok ? ` (${s.note})` : ""}`).join("; "))}</td></tr>`).join("");
-  return `<div class="row" style="gap:10px">${chip}<span class="small mono">${esc(i.text || t("insIdle"))}</span></div>${i.err ? `<div class="notice bad">${esc(i.err)}</div>` : ""}
+  return `<div class="row" style="gap:10px">${chip}<span class="small">${esc(i.text || t("insIdle"))}</span></div>${i.err ? `<div class="notice bad">${esc(i.err)}</div>` : ""}
     ${insGridHtml()}${i.summary ? `<div class="small">${esc(i.summary)}</div>` : ""}
     ${rows ? `<div style="overflow-x:auto"><table><tr><th>ID</th><th>${t("insType")}</th><th>${t("insResult")}</th><th>${t("insDetail")}</th></tr>${rows}</table></div>` : ""}`;
 }
@@ -677,7 +678,7 @@ function scanFold(ev) {
 function scanDyn() {
   const s = S.scan, have = new Set((S.ins.layout && S.ins.layout.ids) || []);
   const chips = s.found.map((f) => `<button class="cmcell${have.has(f.id) ? " ok" : " next"}" style="min-width:64px;padding:0 8px" data-act="scan-pick" data-id="${f.id}" title="${esc(f.type)}">${f.id}</button>`).join("");
-  return `<span class="small mono">${esc(s.text || t("insIdle"))}</span>${s.err ? `<div class="notice bad">${esc(s.err)}</div>` : ""}${chips ? `<div class="row" style="gap:6px">${chips}</div>` : ""}`;
+  return `<span class="small">${esc(s.text || t("insIdle"))}</span>${s.err ? `<div class="notice bad">${esc(s.err)}</div>` : ""}${chips ? `<div class="row" style="gap:6px">${chips}</div>` : ""}`;
 }
 function scanPaint() {
   const el = $("#scandyn"); if (el) el.innerHTML = scanDyn();
@@ -702,7 +703,7 @@ function sweepDyn() {
   const chip = b ? `<span class="chip ${b === "pass" ? "ok" : b === "issues" ? "bad" : "off"}">${t("insB_" + b)}</span>` : "";
   const ph = w.phases.length ? `<div style="overflow-x:auto"><table><tr><th>${t("swPhaseCol")}</th><th>OK</th><th>FAIL</th><th>ERR</th></tr>${w.phases.map((p) => `<tr><td>${esc(p.name)}</td><td>${p.ok}</td><td>${p.fail}</td><td>${p.err}</td></tr>`).join("")}</table></div>` : "";
   const bad = w.bad.length ? `<div class="small" style="color:var(--bad)">${w.bad.slice(0, 30).map((s) => esc(`${s.phase} ${s.name} (${s.addr}) ${s.op}: ${s.result} ${s.note || s.decoded}`)).join("<br>")}</div>` : "";
-  return `<div class="row" style="gap:10px">${chip}<span class="small mono">${esc(w.text || t("insIdle"))}</span></div>${w.err ? `<div class="notice bad">${esc(w.err)}</div>` : ""}${ph}${bad}`;
+  return `<div class="row" style="gap:10px">${chip}<span class="small">${esc(w.text || t("insIdle"))}</span></div>${w.err ? `<div class="notice bad">${esc(w.err)}</div>` : ""}${ph}${bad}`;
 }
 function sweepPaint() {
   const el = $("#swdyn"); if (el) el.innerHTML = sweepDyn();
@@ -717,19 +718,23 @@ function sweepView() {
       ${fileLink(w, t("insCsv")).replace("<a ", '<a id="swfile" ')}${infoBtn("sweep")}</div><div id="swdyn" class="stack">${sweepDyn()}</div>`;
 }
 
-/* ---- site report (gateway page) ---- */
+/* ---- site report (gateway page): runs in its own popup, which carries the progress, Cancel and then the download ---- */
 function rptFold(ev) {
   const r = S.rpt;
-  if (ev.t === "start") r.text = t("rptProg", { i: ev.index, total: ev.total, id: ev.id });
-  else if (ev.t === "end") r.text = ev.cancelled ? t("insB_cancelled") : t("rptDone", { a: ev.answered, n: ev.total });
+  if (ev.t === "start") { r.i = ev.index - 1; r.total = ev.total; r.text = t("rptProg", { i: ev.index, total: ev.total, id: ev.id }); }
+  else if (ev.t === "end") { r.i = r.total = ev.total; r.text = ev.cancelled ? t("insB_cancelled") : t("rptDone", { a: ev.answered, n: ev.total }); }
 }
 function rptPaint() {
-  const el = $("#rptdyn"); if (el) el.innerHTML = rptDyn();
-  const b = $("#rptrun"), st = $("#rptstop"); if (b) b.disabled = anyJob() || !S.gw.id; if (st) st.hidden = !S.rpt.running;
+  const b = $("#rptrun"); if (b) b.disabled = (anyJob() && !S.rpt.running) || !S.gw.id;
+  const d = $("#rptdlg"); if (!d || !d.open) return;
+  const r = S.rpt;
+  $("#rptbody").innerHTML = `<div>${esc(r.text || t("insStarting"))}</div>${r.total ? `<progress max="${r.total}" value="${r.i || 0}" style="width:100%"></progress>` : ""}${r.err ? `<div class="notice bad">${esc(r.err)}</div>` : ""}`;
+  $("#rptcancel").hidden = !r.running; $("#rptdl").hidden = !(r.file && !r.running); $("#rptclose").hidden = r.running;
 }
-function rptDyn() {
-  const r = S.rpt, mine = r.id === S.gw.id;
-  return `${mine && r.text ? `<span class="small mono">${esc(r.text)}</span>` : ""}${mine && r.err ? `<div class="notice bad">${esc(r.err)}</div>` : ""}${mine ? fileLink(r, t("rptFile")) : ""}`;
+function rptOpen() {
+  const d = $("#rptdlg"); $("#rpttitle").textContent = t("rptBtn"); $("#rptcancel").textContent = t("insCancel"); $("#rptdl").textContent = t("rptFile"); $("#rptclose").textContent = t("close");
+  if (!d.open) { if (d.showModal) d.showModal(); else d.setAttribute("open", ""); }
+  rptPaint();
 }
 
 /* ---- module danger: set slave id, software reset ---- */
@@ -1220,7 +1225,10 @@ document.addEventListener("click", async (ev) => {
       if (w.latch && !await ask(t("swLatchQ", { id: S.mod.dev }))) return;
       Object.assign(w, { text: "", banner: "", phases: [], bad: [], file: false });
       await jobStart("sweep", "/api/v2/ins/sweep", { id: S.mod.id, device_id: S.mod.dev, loops: w.loops, lights: w.lights, latch: w.latch, fires: 1 });
-    } else if (act.dataset.act === "rpt-run") { if (!S.gw.id) return; Object.assign(S.rpt, { id: S.gw.id, text: "", file: false }); await jobStart("report", "/api/v2/ins/report", { id: S.gw.id });
+    } else if (act.dataset.act === "rpt-run") {
+      if (S.rpt.running) { rptOpen(); return; }             /* closed while it ran: just show it again */
+      if (!S.gw.id) return; Object.assign(S.rpt, { id: S.gw.id, text: "", file: false, i: 0, total: 0, err: "" }); rptOpen();
+      if (!await jobStart("report", "/api/v2/ins/report", { id: S.gw.id })) rptPaint();
     } else if (act.dataset.act === "mod-setid") { await modSetId();
     } else if (act.dataset.act === "mod-reset") { await modReset();
     } else if (act.dataset.act === "ntp-use") {
@@ -1349,6 +1357,8 @@ document.addEventListener("toggle", (e) => {
   if (over > 0) p.style.transform = `translateX(-${over}px)`; else if (r.left < 8) p.style.transform = `translateX(${8 - r.left}px)`;
 }, true);
 $("#infoclose").onclick = () => $("#info").close();
+$("#rptclose").onclick = () => $("#rptdlg").close();
+$("#rptcancel").onclick = () => api("POST", "/api/v2/ins/cancel", {}).catch(fail);
 $("#info").addEventListener("click", (e) => { if (e.target.id === "info") $("#info").close(); });
 function settingsText() {
   $("#setbtn").textContent = "⚙"; $("#setbtn").setAttribute("aria-label", t("settings")); $("#setbtn").title = t("settings"); $("#settitle").textContent = t("settings"); $("#setclose").textContent = t("close");
