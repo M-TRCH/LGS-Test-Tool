@@ -52,7 +52,7 @@ const TXT = {
     commission_page: "ลงโมดูลใหม่", cmProbe: "ตรวจ ST-Link", cmProbing: "กำลังตรวจ...", cmNoCli: "ยังไม่พบ STM32CubeProgrammer บนเครื่องที่รันโปรแกรมนี้", cmNoProbe: "ไม่พบ ST-Link ตรวจสาย USB และปิดโปรแกรมอื่นที่จับ ST-Link อยู่ (เช่น CubeProgrammer, CubeIDE)",
     cmProbeOk: "พบ ST-Link {n} ตัว", cmCli: "CubeProgrammer", cmSingle: "ทีละตัว", cmBatch: "ต่อเนื่อง",
     cmImage: "ไฟล์เฟิร์มแวร์", cmChoose: "เลือกไฟล์", cmWhat: "รายละเอียดไฟล์นี้", cmNoteLbl: "หมายเหตุ", cmShaLbl: "SHA-256 (12 ตัวแรก)", cmVerLbl: "เวอร์ชัน", cmNoFile: "ยังไม่ได้เลือกไฟล์", cmUpload: "หรืออัปโหลดไฟล์ .bin", cmType: "ชนิดตู้", cmTypeAuto: "ให้บอร์ดตัดสินเอง", cmLot: "ล็อต (ไม่บังคับ)",
-    cmId: "ID ของโมดูล", cmIdBad: "ID ต้องเป็นตัวเลข 1-245 เท่านั้น", cmIdNeed: "ใส่ ID ของโมดูลก่อน", cmIds: "ID ที่จะแจก เรียงตามลำดับ เช่น 11-18, 21", cmOverwrite: "เขียนทับ ID ที่โมดูลเก็บไว้แล้ว", cmOverwriteWarn: "เปิดเขียนทับไว้: จะแทนที่ ID เดิมที่โมดูลเก็บไว้", cmOverwriteNote: "ปิดไว้เป็นค่าเริ่มต้น: โมดูลที่มี ID อยู่แล้วจะไม่ถูกเปลี่ยนเลข", cmOverwriteConfirm: "พิมพ์ ID ใหม่เพื่อยืนยันการเขียนทับ",
+    cmId: "ID ของโมดูล", cmIdBad: "ID ต้องเป็นตัวเลข 1-245 เท่านั้น", cmIdNeed: "ใส่ ID ของโมดูลก่อน", cmIds: "ID ที่จะแจก เรียงตามลำดับ เช่น 11-18, 21", cmOverwrite: "เขียนทับ ID ที่โมดูลเก็บไว้แล้ว", cmOverwriteWarn: "เปิดเขียนทับไว้: จะแทนที่ ID เดิมที่โมดูลเก็บไว้", cmOverwriteConfirm: "พิมพ์ ID ใหม่เพื่อยืนยันการเขียนทับ",
     cmStart: "เขียนโมดูล", cmCancel: "ยกเลิก", cmRunning: "กำลังเขียน", cmNeedImage: "เลือกไฟล์ factory ก่อน", cmStartQ: "เขียน {i} เป็นชนิด {ty} ลงโมดูลที่ต่อกับ ST-Link แล้วให้ตอบที่ ID {id}? ย้อนกลับจากหน้านี้ไม่ได้", cmStartBatchQ: "เขียน {i} เป็นชนิด {ty} ลงบอร์ดเปล่าตามลำดับ ID {ids}? สลับบอร์ดตามที่ log บอก ถ้าตัวไหนพลาดคิวจะหยุด", cmLog: "ความคืบหน้า", cmResultOk: "สำเร็จ", cmResultFail: "ไม่สำเร็จ", cmNone: "ยังไม่มีการเขียน",
     askOk: "ตกลง", askNo: "ยกเลิก",
     cmGrid: "เลือก ID จากผัง", cmGridOne: "แตะช่องเพื่อเลือก ID ของโมดูลนี้", cmGridMany: "แตะช่องเพื่อเลือก (เรียงตามเลข) กด R1-R10 เลือกทั้งแถว", cmClear: "ล้างที่เลือก", cmPreset: "ตามแบบตู้", cmSelected: "เลือกแล้ว {n} ช่อง", cmPickFirst: "เลือก ID อย่างน้อย 1 ช่องก่อน",
@@ -113,7 +113,7 @@ const TXT = {
     commission_page: "Commission", cmProbe: "Check ST-Link", cmProbing: "Checking...", cmNoCli: "STM32CubeProgrammer was not found on the machine running this tool", cmNoProbe: "No ST-Link found. Check the USB cable and close other programs that hold the ST-Link (CubeProgrammer, CubeIDE).",
     cmProbeOk: "{n} ST-Link found", cmCli: "CubeProgrammer", cmSingle: "One module", cmBatch: "Continuous",
     cmImage: "Firmware file", cmChoose: "Choose file", cmWhat: "About this file", cmNoteLbl: "Note", cmShaLbl: "SHA-256 (first 12)", cmVerLbl: "Version", cmNoFile: "No file chosen", cmUpload: "Or upload a .bin", cmType: "Cabinet type", cmTypeAuto: "Let the board decide", cmLot: "Lot (optional)",
-    cmId: "Module ID", cmIdBad: "The ID must be a number from 1 to 245", cmIdNeed: "Enter the module ID first", cmIds: "IDs to assign, in order, e.g. 11-18, 21", cmOverwrite: "Overwrite an ID the module already stores", cmOverwriteWarn: "Overwrite is on: this replaces the ID the module already stores.", cmOverwriteNote: "Off by default: a module that already has an ID keeps it", cmOverwriteConfirm: "Type the new ID to confirm the overwrite",
+    cmId: "Module ID", cmIdBad: "The ID must be a number from 1 to 245", cmIdNeed: "Enter the module ID first", cmIds: "IDs to assign, in order, e.g. 11-18, 21", cmOverwrite: "Overwrite an ID the module already stores", cmOverwriteWarn: "Overwrite is on: this replaces the ID the module already stores.", cmOverwriteConfirm: "Type the new ID to confirm the overwrite",
     cmStart: "Flash module", cmCancel: "Cancel", cmRunning: "Flashing", cmNeedImage: "Choose a factory image first", cmStartQ: "Write {i} as type {ty} to the module on the ST-Link so it answers at ID {id}? This cannot be undone from this page.", cmStartBatchQ: "Write {i} as type {ty} to blank boards, giving IDs {ids} in order? Swap boards when the log says so; the queue stops on any failure.", cmLog: "Progress", cmResultOk: "Done", cmResultFail: "Failed", cmNone: "Nothing flashed yet",
     askOk: "Confirm", askNo: "Cancel",
     cmGrid: "Pick the ID on the grid", cmGridOne: "Tap a cell to choose this module's ID", cmGridMany: "Tap cells to choose (assigned in number order); R1-R10 picks a whole row", cmClear: "Clear", cmPreset: "From cabinet type", cmSelected: "{n} selected", cmPickFirst: "Pick at least one ID first",
@@ -466,6 +466,71 @@ function cmGridHtml() {
   return h + "</div>";
 }
 /* One look for every file picker: the browser's own widget draws its button and label differently in each engine, which is what never lined up with the other fields. */
+/* What each bundled module firmware changed, written from the module repo's own version notes (doc/FIRMWARE_VERSION_NOTE.md). Shown by the "i" button on the Commission page in the page language; a version not listed falls back to the short English note that ships with the image. Keep the facts to what that note states. */
+const FW_NOTES = {
+  "v3.5.5": {
+    th: { date: "26 ต.ค. 2569 (FW 30505)", head: "โมดูลไม่ล็อกเฟสหลังมีคำขอที่ไม่มีใครตอบ", items: [
+      "แก้: เมื่อมีคำขอที่ไม่มีใครตอบบนบัส (ID ที่ไม่มีอยู่, โมดูลที่ตอบช้า, เฟรมที่ฮับตัดครึ่งทาง) โมดูลอื่นบนช่องเดียวกันจะเลื่อนเฟสและทิ้งคำขอของตัวเอง ทำให้ \"ครั้งแรกพลาด ครั้งที่สองผ่าน\" ค้างอยู่จนกว่าจะมี CRC error หรือตัดไฟ ตอนนี้โมดูลล้างแฟล็กของไลบรารี Modbus ทุกรอบ จึงไม่ล็อกเฟส",
+      "ยังไม่แก้: โมดูลที่หน่วงจริงตอนเขียนสถิติรายชั่วโมงลง AT24 (25-60 ms) ยังตอบช้า (ฝั่งเกตเวย์รับด้วย rs485.t2_ms) และปัญหาทางไฟฟ้าของโมดูลแถวที่ 2 ของตู้ Ref-12",
+      "ความเข้ากันได้: ไม่เปลี่ยน register map และ settings อัปเดตผ่านบัสจาก v3.4.x / v3.5.x ได้ทั้งบัส",
+      "ขนาด: ไฟล์ factory 65,400 B (ใช้ลงผ่าน ST-Link ครั้งแรก)"] },
+    en: { date: "26 Oct 2026 (FW 30505)", head: "Modules no longer lose frame phase after an unanswered request", items: [
+      "Fixed: when a request on the bus goes unanswered (an ID that does not exist, a slow module, a frame cut by the hub) the other modules on that channel shift phase and discard their own requests: \"first poll missed, second passes\", until a CRC error or a power cut changes the phase. The module now clears the Modbus library's flag after every poll, so it keeps its phase.",
+      "Not fixed: a module that really is slow while writing its hourly stats to the AT24 (25-60 ms) still answers late (the gateway absorbs it with rs485.t2_ms), and the electrical problem on row 2 of the Ref-12 cabinet.",
+      "Compatibility: no register map or settings change. Over-the-bus update from v3.4.x / v3.5.x is safe for the whole bus.",
+      "Size: factory image 65,400 B (the one for the first ST-Link flash)."] } },
+  "v3.5.4": {
+    th: { date: "2 ต.ค. 2569 (FW 30504)", head: "ครบ max-on-time แล้วดับทั้งไฟและจอ (รวม v3.5.1-v3.5.3)", items: [
+      "บอร์ดวงแหวน (type 20): เมื่อไฟติดครบเวลา max-on-time ตอนนี้ดับทั้งวงแหวนและตัวเลขบนจอ OLED (เดิมดับแค่วงแหวน ตัวเลขยังค้าง)",
+      "รวมจาก v3.5.3: เวลา max-on นับจากตอนที่ไฟติดจริง ไม่ใช่จากรอบบันทึกสถิติ ไฟที่ไม่มีใครสั่งดับจึงดับเองจริงเมื่อครบ (ค่าเริ่มต้น 3600 วินาที, 0 = ไม่จำกัด) ระบบที่เคยพึ่งให้ไฟค้างนานกว่านั้นต้องตั้งค่าให้ยาวขึ้น",
+      "รวมจาก v3.5.2 และ v3.5.1: session อัปเดตผ่านบัสอยู่ได้ 90 วินาที (เดิม 30) และจำกัดเวลารอภายในไลบรารี Modbus ไม่ให้โมดูลค้างจนวอตช์ด็อกรีเซ็ตเมื่อเฟรมถูกตัดหรือมีไบต์ขยะ",
+      "บอร์ด mask (type 10) ไม่มีจอ OLED พฤติกรรมเดิม ความเข้ากันได้: ไม่เปลี่ยน register map และ settings อัปเดตผ่านบัสจาก v3.4.x / v3.5.x ได้"] },
+    en: { date: "2 Oct 2026 (FW 30504)", head: "Max-on-time puts out both the light and the display (includes v3.5.1-v3.5.3)", items: [
+      "Ring boards (type 20): when a light reaches its max-on-time it now puts out the ring and the number on the OLED (it used to put out only the ring, leaving the number lit).",
+      "From v3.5.3: max-on is counted from when the light really went on, not from the stats flush, so a light nobody switches off does go out when the time is up (default 3600 s, 0 = no limit). A server that relied on lights staying on longer must set it higher.",
+      "From v3.5.2 and v3.5.1: an over-the-bus update session lives 90 s (was 30), and the Modbus library's own waits are bounded so a module no longer hangs into a watchdog reset on a cut frame or stray bytes.",
+      "Mask boards (type 10) have no OLED: behaviour unchanged. Compatibility: no register map or settings change; over-the-bus update from v3.4.x / v3.5.x is safe."] } },
+  "v3.5.0": {
+    th: { date: "8 ก.ย. 2569 (แท็ก v3.5.0, FW 30500)", head: "บอร์ด mask (type 10) ใช้หน้าต่างอิสระ", items: [
+      "บอร์ด mask 8 ช่อง (type 10 STANDARD): coil แต่ละตัวคุมหน้าต่างของตัวเองเท่านั้น จึงติดพร้อมกันได้หลายช่อง (v3.4.0 และก่อนหน้าทำงานแบบ \"radio\" คือติดได้ครั้งละหน้าต่างเดียว)",
+      "register 61 ใหม่ (เดิมเป็นช่องสำรอง): bit n-1 = หน้าต่างที่ n กำลังติดอยู่",
+      "บอร์ดวงแหวน (type 20) ไม่เปลี่ยนพฤติกรรม (มีชุดทดสอบ regression ยืนยัน)",
+      "หมายเหตุ: รุ่นนี้ไม่มีหัวข้อของตัวเองในไฟล์บันทึกเวอร์ชัน รายละเอียดอ้างจากเอกสารตารางควบคุมและประวัติ commit"] },
+    en: { date: "8 Sep 2026 (tag v3.5.0, FW 30500)", head: "Mask boards (type 10) use independent windows", items: [
+      "8-LED mask boards (type 10 STANDARD): each coil drives only its own window, so several can be lit at once (v3.4.0 and earlier behave as a \"radio\": one window at a time).",
+      "New register 61 (previously reserved): bit n-1 = window n is lit.",
+      "Ring boards (type 20) behave as before (a regression test confirms it).",
+      "Note: this release has no section of its own in the version note; the details come from the control table document and the commit history."] } },
+  "v3.4.0": {
+    th: { date: "27 ส.ค. 2569 (FW 30400)", head: "จอเลขใหญ่แสดง 3 หลัก (0-999)", items: [
+      "จอเลขใหญ่แสดง 0-999 (เดิม 0-99) ค่าต่ำกว่า 100 ยังแสดง 2 หลักหน้าตาเดิม เกิน 99 จึงงอกหลักที่สาม",
+      "สัญญาของ register 60 เปลี่ยน: ค่าสูงสุดที่รับขยับจาก 99 เป็น 999 เอกสารฝั่งเซิร์ฟเวอร์ที่ระบุ 0-99 ต้องแจ้งพร้อมกันตอนติดตั้ง",
+      "โหมด DEMO นับ 0-999 และเริ่มจาก ID เต็มค่า (ID 108 แสดง 108)",
+      "ฟอนต์เลขใหญ่ลดจากสูง 54 เป็น 51 px เพื่อให้เลข 3 หลักพ้นขอบเบเซลของจอ",
+      "ความเข้ากันได้: ไม่เปลี่ยน settings/stats schema อัปเดตผ่านบัสจาก v3.3.x ได้"] },
+    en: { date: "27 Aug 2026 (FW 30400)", head: "Big display face shows 3 digits (0-999)", items: [
+      "The big number face shows 0-999 (was 0-99). Values below 100 keep the two-digit look; above 99 a third digit appears.",
+      "The register 60 contract changed: the accepted maximum moves from 99 to 999. Server-side documents that say 0-99 must be updated at the same time.",
+      "DEMO counts 0-999 and starts from the full ID (ID 108 shows 108).",
+      "The big-number font is 51 px tall (was 54) so three digits clear the display bezel.",
+      "Compatibility: no settings/stats schema change; over-the-bus update from v3.3.x is safe."] } },
+  "v3.3.0": {
+    th: { date: "13 ส.ค. 2569 (FW 30300)", head: "สถิติ v2, framing, หน้าปัดหน้าเครื่อง", items: [
+      "สถิติ v2 (register 400-451): จำนวนครั้งและเวลาที่ไฟติดรายพรีเซ็ต, จำนวนครั้งที่กลอนทำงาน, จำนวนครั้งที่กดปุ่มยืนยัน, วินาทีที่ทำงานสะสม, จำนวน IWDG reset อ่านค่า blob v1 เดิมเข้ามาให้ ตัวนับที่สะสมไว้ในสนามจึงไม่หายตอนอัปเกรด",
+      "หน้าปัดหน้าเครื่อง: SET_ID ตั้งได้ถึง 108 กดค้างเพื่อไล่เลข บันทึกเองเมื่อปล่อยครบเวลา ตัวเลขขยายเต็มกรอบ และมีหน้าจอ OTA ของตัวเอง",
+      "device type ตอน commissioning (เลือกชนิดตู้ตอนลงไฟล์) และ LED-8 mask สำหรับ type 10",
+      "แก้ framing RTU: รอความเงียบก่อนส่งบัฟเฟอร์ให้ไลบรารี เดิมฮับตัดเฟรมครึ่งทางตอนสลับแชนแนลแล้วโมดูลค้างจนวอตช์ด็อกรีเซ็ต (วัดได้ประมาณ 0.6 ครั้งต่อโมดูลต่อรอบที่มีการข้ามแชนแนล)"] },
+    en: { date: "13 Aug 2026 (FW 30300)", head: "Stats v2, framing, front-panel dial", items: [
+      "Statistics v2 (registers 400-451): per-preset on-count and on-time, latch operations, confirm-button presses, accumulated run seconds, IWDG resets. The old v1 blob is read in, so counters collected in the field survive the upgrade.",
+      "Front-panel dial: SET_ID goes up to 108, hold to scroll through numbers, saves itself when left for the set time, bigger digits fill the frame, and OTA has its own screen.",
+      "Device type at commissioning (the cabinet type chosen when the file is flashed) and the LED-8 mask for type 10.",
+      "RTU framing fix: wait for bus silence before handing the buffer to the library. Before, a hub cutting a frame at a channel change left a module hung until the watchdog reset it (about 0.6 resets per module per run with channel crossings)."] } },
+};
+function fwNoteHtml(im) {
+  const n = FW_NOTES[im.version] && FW_NOTES[im.version][lang];
+  if (!n) return `<h2>${esc(im.version)}</h2><p style="margin:8px 0 12px">${esc(im.note || "—")}</p>`;
+  return `<h2>${esc(im.version)}</h2><div class="small muted" style="margin:2px 0 8px">${esc(n.date)}</div><p style="margin:0 0 8px;font-weight:600">${esc(n.head)}</p><ul style="margin:0 0 12px;padding-left:18px;display:grid;gap:6px;font-size:14px">${n.items.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`;
+}
 function fileBox(id, name) {
   return `<div class="filebox"><label class="btn">${t("cmChoose")}<input type="file" id="${id}" accept=".bin" hidden></label><span class="small ${name ? "" : "muted"}">${esc(name || t("cmNoFile"))}</span></div>`;
 }
@@ -480,7 +545,7 @@ function viewCommission() {
     ? `<div class="field" style="grid-column:1/-1"><label>${t("cmGrid")}</label><span class="small muted">${t("cmGridMany")}</span>
         <div class="row"><select id="cmpreset"><option value="">${t("cmPreset")}</option>${presets}</select><button class="btn" data-act="cm-clear">${t("cmClear")}</button><span class="small muted">${t("cmSelected", { n: c.sel.size })}</span></div>${cmGridHtml()}</div>`
     : `<div class="field" style="grid-column:1/-1"><label>${t("cmId")}</label><input id="cmid" value="${esc(c.id)}" inputmode="numeric" autocomplete="off" style="max-width:140px"></div>`;
-  const ow = c.mode === "batch" ? "" : `<label class="row" style="min-height:40px"><input type="checkbox" id="cmow"${c.overwrite ? " checked" : ""}> <span>${t("cmOverwrite")}</span></label><span class="small muted">${t("cmOverwriteNote")}</span>`;
+  const ow = c.mode === "batch" ? "" : `<label class="row" style="min-height:40px"><input type="checkbox" id="cmow"${c.overwrite ? " checked" : ""}> <span>${t("cmOverwrite")}</span></label>`;
   return `<h1>${t("commission_page")}</h1><div class="stack">${c.err ? `<div class="notice bad">${esc(c.err)}</div>` : ""}
     <section class="card stack"><div class="row"><button class="btn" data-act="cm-probe"${c.probing ? " disabled" : ""}>${c.probing ? t("cmProbing") : t("cmProbe")}</button></div>${probe}</section>
     <section class="card stack"><div class="seg"><button data-cmmode="single" aria-pressed="${c.mode === "single"}">${t("cmSingle")}</button><button data-cmmode="batch" aria-pressed="${c.mode === "batch"}">${t("cmBatch")}</button></div><div class="fgrid">
@@ -654,7 +719,7 @@ document.addEventListener("click", async (ev) => {
       S.cm.probing = true; render(); try { S.cm.probe = await api("POST", "/api/v2/cm/probe", {}); } finally { S.cm.probing = false; render(); }
     } else if (act.dataset.act === "cm-info") {
       const im = S.cm.opts && S.cm.opts.images.find((x) => x.key === S.cm.image);
-      $("#infobody").innerHTML = im ? `<h2>${esc(im.version)}</h2><p style="margin:8px 0 12px">${esc(im.note || "—")}</p><dl class="kv"><dt>${t("cmVerLbl")}</dt><dd class="mono">${esc(im.version)}</dd><dt>${t("cmShaLbl")}</dt><dd class="mono">${esc(im.sha256)}</dd></dl>` : `<p>${t("cmNeedImage")}</p>`;
+      $("#infobody").innerHTML = im ? `${fwNoteHtml(im)}<dl class="kv"><dt>${t("cmVerLbl")}</dt><dd class="mono">${esc(im.version)}</dd><dt>${t("cmShaLbl")}</dt><dd class="mono">${esc(im.sha256)}</dd></dl>` : `<p>${t("cmNeedImage")}</p>`;
       const d = $("#info"); if (d.showModal) d.showModal(); else d.setAttribute("open", "");
     } else if (act.dataset.act === "cm-clear") { S.cm.sel.clear(); render();
     } else if (act.dataset.act === "cm-cancel") {
