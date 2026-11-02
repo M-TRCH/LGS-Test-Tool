@@ -130,6 +130,16 @@ let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty
 let page = (location.hash || "#/cabinets").slice(2) || "cabinets";
 
 /* In-page confirmation: window.confirm() is silently answered "no" when the browser has been told to stop a page's dialogs, which made a write button look dead. */
+/* Which way a CSV is brought in, asked when the button is pressed. Resolves "merge", "replace" or null (cancelled). */
+function pickImportMode() {
+  return new Promise((resolve) => {
+    const d = $("#pick"); $("#picktitle").textContent = t("importCsv");
+    $("#pickmerge").textContent = t("importMerge"); $("#pickreplace").textContent = t("importReplace"); $("#pickno").textContent = t("askNo");
+    const done = (v) => { d.onclose = null; if (d.open) d.close(); resolve(v); };
+    $("#pickmerge").onclick = () => done("merge"); $("#pickreplace").onclick = () => done("replace"); $("#pickno").onclick = () => done(null); d.onclose = () => resolve(null);
+    if (d.showModal) d.showModal(); else d.setAttribute("open", "");
+  });
+}
 function ask(text, alertOnly) {
   return new Promise((resolve) => {
     const d = $("#ask"); $("#asktext").textContent = text; $("#askok").textContent = t("askOk"); $("#askno").textContent = t("askNo"); $("#askno").hidden = !!alertOnly;
@@ -193,8 +203,7 @@ function viewSites() {
   return `<div class="row between" style="margin-bottom:14px"><h1>${t("sites")}</h1><div class="row">
       <details class="menu"><summary class="btn">CSV ▾</summary><div class="menupanel">
         <a class="menuitem" href="/api/v2/sites.csv" download>${t("exportCsv")}</a>
-        <button class="menuitem" type="button" data-act="csv-import" data-mode="merge">${t("importCsv")}<small>${t("importMerge")}</small></button>
-        <button class="menuitem" type="button" data-act="csv-import" data-mode="replace">${t("importCsv")}<small>${t("importReplace")}</small></button>
+        <button class="menuitem" type="button" data-act="csv-import">${t("importCsv")}</button>
         <input type="file" id="csvfile" accept=".csv,text/csv" hidden></div></details>
       <button class="btn" data-act="add">${t("add")}</button><button class="btn primary" data-act="save">${t("save")}</button></div></div>
     ${S.dirty ? `<div class="notice">${t("unsaved")}</div>` : ""}
@@ -729,7 +738,9 @@ document.addEventListener("click", async (ev) => {
     } else if (act.dataset.act === "cm-probe") {
       S.cm.probing = true; render(); try { S.cm.probe = await api("POST", "/api/v2/cm/probe", {}); } finally { S.cm.probing = false; render(); }
     } else if (act.dataset.act === "csv-import") {
-      S.csvMode = act.dataset.mode; const m = act.closest("details"); if (m) m.open = false; $("#csvfile").click();
+      const m = act.closest("details"); if (m) m.open = false;
+      const mode = await pickImportMode(); if (!mode) return;
+      S.csvMode = mode; $("#csvfile").click();
     } else if (act.dataset.act === "cm-info") {
       const im = S.cm.opts && S.cm.opts.images.find((x) => x.key === S.cm.image);
       $("#infobody").innerHTML = im ? `${fwNoteHtml(im)}<dl class="kv"><dt>${t("cmVerLbl")}</dt><dd class="mono">${esc(im.version)}</dd><dt>${t("cmShaLbl")}</dt><dd class="mono">${esc(im.sha256)}</dd></dl>` : `<p>${t("cmNeedImage")}</p>`;
