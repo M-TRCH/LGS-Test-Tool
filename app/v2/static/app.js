@@ -51,9 +51,9 @@ const TXT = {
     basic: "พื้นฐาน", advanced: "ขั้นสูง", modeNote: "พื้นฐาน = ตรวจ ทดสอบ ดูผล · ขั้นสูง = เพิ่มหน้าที่แก้ค่าหรือเขียนเฟิร์มแวร์ได้", modeLocked: "หน้านี้อยู่ในโหมดขั้นสูง", mode: "โหมด", settings: "ตั้งค่า", language: "ภาษา", noKeys: "ไม่มีค่าในกลุ่มนี้",
     commission_page: "ลงโมดูลใหม่", cmBanner: "ล้างและเขียนแฟลชของโมดูลใหม่ผ่าน ST-Link แล้วใส่ ID ให้ในครั้งเดียว โมดูลไม่ต้องต่อบัส RS485 ใช้กับโมดูลที่ยังไม่มีเฟิร์มแวร์ (ลงครั้งแรกหลังผลิต)",
     cmProbe: "ตรวจ ST-Link", cmProbing: "กำลังตรวจ...", cmNoCli: "ยังไม่พบ STM32CubeProgrammer บนเครื่องที่รันโปรแกรมนี้", cmNoProbe: "ไม่พบ ST-Link ตรวจสาย USB และปิดโปรแกรมอื่นที่จับ ST-Link อยู่ (เช่น CubeProgrammer, CubeIDE)",
-    cmProbeOk: "พบ ST-Link {n} ตัว", cmCli: "CubeProgrammer", cmSingle: "ทีละตัว", cmBatch: "ต่อเนื่องทั้งล็อต",
+    cmProbeOk: "พบ ST-Link {n} ตัว", cmCli: "CubeProgrammer", cmSingle: "ทีละตัว", cmBatch: "ต่อเนื่อง",
     cmImage: "ไฟล์ factory (bootloader + แอป)", cmUpload: "หรืออัปโหลดไฟล์ .bin", cmType: "ชนิดตู้", cmTypeAuto: "ให้บอร์ดตัดสินเอง", cmLot: "ล็อต (ไม่บังคับ)",
-    cmId: "ID ของโมดูล (1-245)", cmIds: "ID ที่จะแจก เรียงตามลำดับ เช่น 11-18, 21", cmOverwrite: "เขียนทับ ID ที่โมดูลเก็บไว้แล้ว", cmOverwriteNote: "ปิดไว้เป็นค่าเริ่มต้น: โมดูลที่มี ID อยู่แล้วจะไม่ถูกเปลี่ยนเลข", cmOverwriteConfirm: "พิมพ์ ID ใหม่เพื่อยืนยันการเขียนทับ",
+    cmId: "ID ของโมดูล (1-245)", cmIds: "ID ที่จะแจก เรียงตามลำดับ เช่น 11-18, 21", cmOverwrite: "เขียนทับ ID ที่โมดูลเก็บไว้แล้ว", cmOverwriteWarn: "เปิดเขียนทับไว้: จะแทนที่ ID เดิมที่โมดูลเก็บไว้", cmOverwriteNote: "ปิดไว้เป็นค่าเริ่มต้น: โมดูลที่มี ID อยู่แล้วจะไม่ถูกเปลี่ยนเลข", cmOverwriteConfirm: "พิมพ์ ID ใหม่เพื่อยืนยันการเขียนทับ",
     cmStart: "เขียนโมดูล", cmCancel: "ยกเลิก", cmRunning: "กำลังเขียน", cmNeedImage: "เลือกไฟล์ factory ก่อน", cmStartQ: "เขียน {i} ลงโมดูลที่ต่อกับ ST-Link แล้วให้ตอบที่ ID {id}? ย้อนกลับจากหน้านี้ไม่ได้", cmStartBatchQ: "เขียน {i} ลงบอร์ดเปล่าตามลำดับ ID {ids}? สลับบอร์ดตามที่ log บอก ถ้าตัวไหนพลาดคิวจะหยุด", cmLog: "ความคืบหน้า", cmResultOk: "สำเร็จ", cmResultFail: "ไม่สำเร็จ", cmNone: "ยังไม่มีการเขียน",
     askOk: "ตกลง", askNo: "ยกเลิก",
     cmGrid: "เลือก ID จากผัง", cmGridOne: "แตะช่องเพื่อเลือก ID ของโมดูลนี้", cmGridMany: "แตะช่องเพื่อเลือก (เรียงตามเลข) กด R1-R10 เลือกทั้งแถว", cmClear: "ล้างที่เลือก", cmPreset: "ตามแบบตู้", cmSelected: "เลือกแล้ว {n} ช่อง", cmPickFirst: "เลือก ID อย่างน้อย 1 ช่องก่อน",
@@ -113,9 +113,9 @@ const TXT = {
     basic: "Basic", advanced: "Advanced", modeNote: "Basic = check, test, read results · Advanced = adds the pages that change settings or write firmware", modeLocked: "That page is in Advanced mode", mode: "Mode", settings: "Settings", language: "Language", noKeys: "No values in this group",
     commission_page: "Commission", cmBanner: "Erases and rewrites a new module's flash over ST-Link and gives it its ID in one step. The module does not need to be on the RS485 bus. For modules with no firmware yet (first flash after production).",
     cmProbe: "Check ST-Link", cmProbing: "Checking...", cmNoCli: "STM32CubeProgrammer was not found on the machine running this tool", cmNoProbe: "No ST-Link found. Check the USB cable and close other programs that hold the ST-Link (CubeProgrammer, CubeIDE).",
-    cmProbeOk: "{n} ST-Link found", cmCli: "CubeProgrammer", cmSingle: "One module", cmBatch: "Whole lot",
+    cmProbeOk: "{n} ST-Link found", cmCli: "CubeProgrammer", cmSingle: "One module", cmBatch: "Continuous",
     cmImage: "Factory image (bootloader + app)", cmUpload: "Or upload a .bin", cmType: "Cabinet type", cmTypeAuto: "Let the board decide", cmLot: "Lot (optional)",
-    cmId: "Module ID (1-245)", cmIds: "IDs to assign, in order, e.g. 11-18, 21", cmOverwrite: "Overwrite an ID the module already stores", cmOverwriteNote: "Off by default: a module that already has an ID keeps it", cmOverwriteConfirm: "Type the new ID to confirm the overwrite",
+    cmId: "Module ID (1-245)", cmIds: "IDs to assign, in order, e.g. 11-18, 21", cmOverwrite: "Overwrite an ID the module already stores", cmOverwriteWarn: "Overwrite is on: this replaces the ID the module already stores.", cmOverwriteNote: "Off by default: a module that already has an ID keeps it", cmOverwriteConfirm: "Type the new ID to confirm the overwrite",
     cmStart: "Flash module", cmCancel: "Cancel", cmRunning: "Flashing", cmNeedImage: "Choose a factory image first", cmStartQ: "Write {i} to the module on the ST-Link so it answers at ID {id}? This cannot be undone from this page.", cmStartBatchQ: "Write {i} to blank boards, giving IDs {ids} in order? Swap boards when the log says so; the queue stops on any failure.", cmLog: "Progress", cmResultOk: "Done", cmResultFail: "Failed", cmNone: "Nothing flashed yet",
     askOk: "Confirm", askNo: "Cancel",
     cmGrid: "Pick the ID on the grid", cmGridOne: "Tap a cell to choose this module's ID", cmGridMany: "Tap cells to choose (assigned in number order); R1-R10 picks a whole row", cmClear: "Clear", cmPreset: "From cabinet type", cmSelected: "{n} selected", cmPickFirst: "Pick at least one ID first",
@@ -446,7 +446,7 @@ function fwSync() {
 
 /* ---------- commission (ST-Link) ---------- */
 S.cm = { opts: null, probe: null, probing: false, mode: "single", image: "", file: null, fileName: "", id: "", ids: "", lot: "", type: "0", overwrite: false, confirm: "", since: 0, lines: [], running: false, prog: null, boards: {}, done: null, timer: null, sel: new Set(), gridOpen: false };
-function cmLog() { return S.cm.lines.length ? S.cm.lines.map((l) => `<div style="${l.level === "err" ? "color:var(--bad)" : l.level === "ok" ? "color:var(--ok)" : l.level === "warn" ? "color:var(--warn)" : ""}">${esc(l.text)}</div>`).join("") : `<span class="muted">${t("cmNone")}</span>`; }
+function cmLog() { return S.cm.lines.length ? S.cm.lines.map((l) => `<div style="${l.level === "err" ? "color:var(--bad)" : l.level === "ok" ? "color:var(--ok)" : l.level === "warn" ? "color:var(--warn)" : ""}">${esc(l.text)}</div>`).join("") : `<span class="muted" style="font-family:var(--sans)">${t("cmNone")}</span>`; }
 function cmStatus() {
   const c = S.cm, parts = [];
   if (c.running) parts.push(`<span class="chip warn"><i class="dot"></i>${t("cmRunning")}${c.prog ? " " + c.prog.done + "/" + c.prog.total : ""}</span>`);
@@ -477,9 +477,8 @@ function viewCommission() {
   const idField = c.mode === "batch"
     ? `<div class="field" style="grid-column:1/-1"><label>${t("cmGrid")}</label><span class="small muted">${t("cmGridMany")}</span>
         <div class="row"><select id="cmpreset"><option value="">${t("cmPreset")}</option>${presets}</select><button class="btn" data-act="cm-clear">${t("cmClear")}</button><span class="small muted">${t("cmSelected", { n: c.sel.size })}</span></div>${cmGridHtml()}</div>`
-    : `<div class="field" style="grid-column:1/-1"><label>${t("cmId")}</label><div class="row"><input id="cmid" value="${esc(c.id)}" inputmode="numeric" autocomplete="off" style="max-width:140px"><button class="btn" type="button" data-act="cm-grid" aria-label="${t("cmGrid")}" title="${t("cmGrid")}">▦</button></div><div id="cmgridbox"${c.gridOpen ? "" : " hidden"}><span class="small muted">${t("cmGridOne")}</span>${cmGridHtml()}</div></div>`;
-  const ow = c.mode === "batch" ? "" : `<label class="row" style="min-height:40px"><input type="checkbox" id="cmow"${c.overwrite ? " checked" : ""}> <span>${t("cmOverwrite")}</span></label><span class="small muted">${t("cmOverwriteNote")}</span>`
-    + (c.overwrite ? `<div class="field"><label>${t("cmOverwriteConfirm")}</label><input id="cmconfirm" value="${esc(c.confirm)}" inputmode="numeric" autocomplete="off"></div>` : "");
+    : `<div class="field" style="grid-column:1/-1"><label>${t("cmId")}</label><input id="cmid" value="${esc(c.id)}" inputmode="numeric" autocomplete="off" style="max-width:140px"></div>`;
+  const ow = c.mode === "batch" ? "" : `<label class="row" style="min-height:40px"><input type="checkbox" id="cmow"${c.overwrite ? " checked" : ""}> <span>${t("cmOverwrite")}</span></label><span class="small muted">${t("cmOverwriteNote")}</span>`;
   return `<h1>${t("commission_page")}</h1><div class="stack"><div class="notice">${t("cmBanner")}</div>${c.err ? `<div class="notice bad">${esc(c.err)}</div>` : ""}
     <section class="card stack"><div class="row"><button class="btn" data-act="cm-probe"${c.probing ? " disabled" : ""}>${c.probing ? t("cmProbing") : t("cmProbe")}</button></div>${probe}</section>
     <section class="card stack"><div class="seg"><button data-cmmode="single" aria-pressed="${c.mode === "single"}">${t("cmSingle")}</button><button data-cmmode="batch" aria-pressed="${c.mode === "batch"}">${t("cmBatch")}</button></div><div class="fgrid">
@@ -565,8 +564,6 @@ function readRows() {
 document.addEventListener("click", async (ev) => {
   const nav = ev.target.closest("[data-nav]");
   if (nav) { if (nav.dataset.nav === "classic") { location.href = "/"; return; } page = nav.dataset.nav; location.hash = "#/" + page; if (page !== "soak") { clearInterval(S.soak.timer); S.soak.timer = null; } if (page !== "firmware") { clearInterval(S.fw.timer); S.fw.timer = null; } if (page !== "commission") { clearInterval(S.cm.timer); S.cm.timer = null; } if (page === "events") S.evGw = (await api("GET", "/api/v2/events/gateways").catch(() => ({}))).gateways || []; render(); return; }
-  if (S.cm.gridOpen && !ev.target.closest("#cmgridbox, #cmid, [data-act=cm-grid]")) { S.cm.gridOpen = false; const bx = $("#cmgridbox"); if (bx) bx.hidden = true; }
-  if (ev.target.id === "cmid") { S.cm.gridOpen = true; const bx = $("#cmgridbox"); if (bx) bx.hidden = false; return; }
   const cell = ev.target.closest("[data-cmcell]");
   if (cell) { const id = +cell.dataset.cmcell, c = S.cm; if (c.mode === "batch") { c.sel.has(id) ? c.sel.delete(id) : c.sel.add(id); } else { c.id = String(id); c.gridOpen = false; } render(); return; }
   const crow = ev.target.closest("[data-cmrow]");
@@ -653,22 +650,21 @@ document.addEventListener("click", async (ev) => {
       f.gwConfirm = ""; await fwRefresh();
     } else if (act.dataset.act === "cm-probe") {
       S.cm.probing = true; render(); try { S.cm.probe = await api("POST", "/api/v2/cm/probe", {}); } finally { S.cm.probing = false; render(); }
-    } else if (act.dataset.act === "cm-grid") { const bx = $("#cmgridbox"); S.cm.gridOpen = !S.cm.gridOpen; if (bx) bx.hidden = !S.cm.gridOpen;
     } else if (act.dataset.act === "cm-clear") { S.cm.sel.clear(); render();
     } else if (act.dataset.act === "cm-cancel") {
       await api("POST", "/api/v2/cm/cancel", {}); await cmPoll();
     } else if (act.dataset.act === "cm-start") {
       S.cm.err = "";
-      const c = S.cm; ["cmid", "cmlot", "cmconfirm"].forEach((k) => { const el = $("#" + k); if (el) c[k.slice(2)] = el.value; });
+      const c = S.cm; ["cmid", "cmlot"].forEach((k) => { const el = $("#" + k); if (el) c[k.slice(2)] = el.value; });
       if (c.mode === "batch") { c.ids = cmIdsText(); if (!c.sel.size) { toast(t("cmPickFirst")); return; } }
       const im = c.opts && c.opts.images.find((x) => x.key === c.image), label = c.file ? c.fileName : (im ? im.label : "");
       if (!c.file && !im) { toast(t("cmNeedImage")); return; }
       const batch = c.mode === "batch";
-      if (!await ask(batch ? t("cmStartBatchQ", { i: label, ids: c.ids }) : t("cmStartQ", { i: label, id: c.id }))) return;
-      const body = { mode: c.mode, image: c.file ? "" : c.image, id: c.id, ids: c.ids, lot: c.lot, device_type: c.type, overwrite: !batch && c.overwrite, confirm: c.confirm, confirmed: true };
-      if (c.file) { const q = new URLSearchParams({ mode: c.mode, id: c.id, ids: c.ids, lot: c.lot, device_type: c.type, overwrite: body.overwrite ? "1" : "0", confirm: c.confirm, confirmed: "1", name: c.fileName }); await api("POST", "/api/v2/cm/start?" + q, c.file, true); }
+      if (!await ask(batch ? t("cmStartBatchQ", { i: label, ids: c.ids }) : t("cmStartQ", { i: label, id: c.id }) + (c.overwrite ? "\n\n" + t("cmOverwriteWarn") : ""))) return;
+      const body = { mode: c.mode, image: c.file ? "" : c.image, id: c.id, ids: c.ids, lot: c.lot, device_type: c.type, overwrite: !batch && c.overwrite, confirmed: true };
+      if (c.file) { const q = new URLSearchParams({ mode: c.mode, id: c.id, ids: c.ids, lot: c.lot, device_type: c.type, overwrite: body.overwrite ? "1" : "0", confirmed: "1", name: c.fileName }); await api("POST", "/api/v2/cm/start?" + q, c.file, true); }
       else await api("POST", "/api/v2/cm/start", body);
-      c.since = 0; c.lines = []; c.done = null; c.prog = null; c.boards = {}; c.running = true; c.confirm = ""; render(); cmPoll();
+      c.since = 0; c.lines = []; c.done = null; c.prog = null; c.boards = {}; c.running = true; render(); cmPoll();
     } else if (act.dataset.act === "hint") { showInfo(act.dataset.key);
     } else if (act.dataset.act === "collector") { const on = act.getAttribute("aria-checked") !== "true"; await api("POST", "/api/v2/collector", { enabled: on }); S.me = await api("GET", "/api/v2/me"); render(); }
   } catch (e) { if (String(act.dataset.act).startsWith("cm-")) S.cm.err = e.message; fail(e); render(); }
@@ -704,8 +700,7 @@ document.addEventListener("change", async (ev) => {
   if (ev.target.id === "cmlot") S.cm.lot = ev.target.value;
   if (ev.target.id === "cmid") S.cm.id = ev.target.value;
   if (ev.target.id === "cmpreset" && ev.target.value && S.cm.opts) { const l = S.cm.opts.layouts.find((x) => x.key === ev.target.value); if (l) { S.cm.sel = new Set(l.ids); render(); } }
-  if (ev.target.id === "cmconfirm") S.cm.confirm = ev.target.value;
-  if (ev.target.id === "cmow") { S.cm.overwrite = ev.target.checked; S.cm.confirm = ""; render(); }
+  if (ev.target.id === "cmow") { S.cm.overwrite = ev.target.checked; }
   if (ev.target.id === "cmfile" && ev.target.files[0]) { S.cm.file = await ev.target.files[0].arrayBuffer(); S.cm.fileName = ev.target.files[0].name; S.cm.image = ""; render(); }
   if (ev.target.id === "fwimage") S.fw.image = ev.target.value;
   if (ev.target.id === "fwgwsel") S.fw.gwId = ev.target.value;

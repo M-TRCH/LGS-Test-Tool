@@ -111,8 +111,6 @@ def start(worker, body: dict, *, data: bytes = b"", filename: str = "") -> dict:
         if len(ids) != 1:
             raise ValueError("give one ID")
         overwrite = bool(body.get("overwrite"))
-        if overwrite and str(body.get("confirm", "")) != str(ids[0]):
-            raise ValueError("overwrite replaces the ID the module already has: type its new ID to confirm")
         ok = worker.start_commission(CommissionConfig(image=image, filename=name, identifier=ids[0], lot=lot,
                                                       overwrite=overwrite, log_dir=log_dir,
                                                       device_type=dtype))
