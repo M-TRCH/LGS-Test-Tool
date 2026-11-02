@@ -39,8 +39,7 @@ const TXT = {
     sVerdict: "สรุปผลรอบล่าสุด", sHistory: "รอบที่ผ่านมา", sView: "ดูสรุป", sNoRuns: "ยังไม่มีรอบที่ผ่านมา", sFrames: "เฟรมที่ถูกทิ้ง: {n}",
     sNeedType: "ตู้ที่ไม่ได้กำหนดชนิดจะเริ่มไม่ได้ ตั้งที่หน้า รายการตู้", sStarted: "เริ่มแล้ว {n} ตู้", sCsv: "ไฟล์ CSV", sLongNote: "รันบนเซิร์ฟเวอร์ ปิดหน้านี้ได้ ผลเก็บใน data/exports",
     labels_page: "ป้าย", firmware_page: "เฟิร์มแวร์", lbWard: "ชื่อวอร์ด (พิมพ์บนป้าย)", lbSerial: "ซีเรียลจากคลัง (ไม่เก็บ)", lbLayout: "แบบป้าย", lbPlate: "กรอบ",
-    lbPreview: "ดูตัวอย่างข้อมูล", lbDownload: "ดาวน์โหลด .lbx", lbInfo: "{name} · {ip} · {mac} · {rows} แถว", lbReady: "ยาว {mm} มม. · QR {qr} ไบต์ ({ecc}, กู้ได้ {rec}, เหลือ {spare} ไบต์) · ไฟล์ {size} ไบต์",
-    lbNote: "อ่านชื่อ ไอพี MAC และแผนผังแถวจากเกตเวย์ตอนกด ป้ายจึงไม่ใช่ของเก่า ซีเรียลเป็นของฐานข้อมูลคลัง ไม่เก็บในโปรแกรม",
+    lbPreview: "ดูตัวอย่างข้อมูล", lbDownload: "ดาวน์โหลด .lbx", lbNote: "อ่านชื่อ ไอพี MAC และแผนผังแถวจากเกตเวย์ตอนกด ป้ายจึงไม่ใช่ของเก่า ซีเรียลเป็นของฐานข้อมูลคลัง ไม่เก็บในโปรแกรม",
     expCfg: "ส่งออก config (JSON)", impCfg: "นำเข้า config (JSON)", impDone: "นำเข้า {n} ค่า (ยังไม่บันทึก ตรวจแล้วกดบันทึกลงเกตเวย์)", impNone: "ไม่มีค่าที่ต่างจากเกตเวย์",
     shapeBad: "ชนิดตู้ใน รายการตู้ ({l}) ไม่ตรงกับเกตเวย์: {w}", shapeFix: "ตั้งค่าที่ตรงให้ (ยังไม่บันทึก)", shapeNoFix: "เกตเวย์รุ่นนี้แก้เองไม่ได้ (ไม่มี panel.shape)",
     fwOta: "อัปเดตโมดูลผ่าน OTA (หลายตู้)", fwImage: "อิมเมจ", fwStart: "เริ่มอัปเดต", fwCancel: "ยกเลิก", fwCancelQ: "ยกเลิกการอัปเดต? โมดูลที่ค้างอยู่ในเซสชันอาจต้องอัปเดตซ้ำ",
@@ -56,6 +55,7 @@ const TXT = {
     cmStart: "เขียนโมดูล", cmCancel: "ยกเลิก", cmRunning: "กำลังเขียน", cmNeedImage: "เลือกไฟล์ factory ก่อน", cmLog: "ความคืบหน้า", cmResultOk: "สำเร็จ", cmResultFail: "ไม่สำเร็จ", cmNone: "ยังไม่มีการเขียน",
     askOk: "ตกลง", askNo: "ยกเลิก",
     cmGrid: "ไอดีของโมดูล", cmClear: "ล้างที่เลือก", cmPreset: "กำหนดเอง", cmSelected: "เลือกแล้ว {n} ช่อง", cmPickFirst: "เลือก ID อย่างน้อย 1 ช่องก่อน",
+    lbIName: "ตู้", lbIIp: "ไอพี", lbIMac: "MAC", lbIRows: "จำนวนแถว", lbIRowsV: "{n} แถว", lbILen: "ความยาวป้าย", lbILenV: "{mm} มม.", lbIFile: "ขนาดไฟล์", lbIBytesV: "{n} ไบต์", lbIQrData: "ข้อมูลใน QR", lbIQrDataV: "{n} ไบต์ เหลืออีก {spare} ไบต์", lbIQrKind: "ชนิด QR", lbIQrKindV: "เวอร์ชัน {v} ระดับ {ecc} กู้ได้ {rec}", lbIPayload: "ดูข้อมูลที่อยู่ใน QR", lbIHead: "ข้อมูลป้าย",
     g_sys: "ทั่วไป", g_rs485: "บัส RS485", g_usb: "พอร์ต USB", g_net: "เครือข่าย", g_time: "เวลา", g_bus: "ฮับ RS485", g_panel: "ปุ่มและไฟหน้าตู้", g_sched: "รีเซตตามเวลา",
     theme: "ธีม", th_auto: "ตามเครื่อง", th_light: "สว่าง", th_dark: "มืด", th_ocean: "ทะเล", th_forest: "ป่า", th_sand: "ทราย", th_midnight: "เที่ยงคืน", th_contrast: "คอนทราสต์สูง",
     lbPicture: "ตัวอย่างป้าย", lbPicNote: "ภาพจากไฟล์ .lbx จริง QR เป็นตัวจริง ฟอนต์ตรงกับไฟล์เมื่อเครื่องที่เปิดมีฟอนต์ Arial และ Browallia New",
@@ -100,8 +100,7 @@ const TXT = {
     sVerdict: "Latest run verdict", sHistory: "Past runs", sView: "View verdict", sNoRuns: "No past runs yet", sFrames: "Frames pymodbus discarded: {n}",
     sNeedType: "A cabinet with no type cannot start. Set it on the Sites page.", sStarted: "Started {n} cabinets", sCsv: "CSV files", sLongNote: "Runs on the server: you can close this page. Results go to data/exports.",
     labels_page: "Labels", firmware_page: "Firmware", lbWard: "Ward name (printed)", lbSerial: "Serial from the warehouse (not stored)", lbLayout: "Label layout", lbPlate: "Frame",
-    lbPreview: "Preview data", lbDownload: "Download .lbx", lbInfo: "{name} · {ip} · {mac} · {rows} rows", lbReady: "{mm} mm long · QR {qr} bytes ({ecc}, recovers {rec}, {spare} bytes spare) · file {size} bytes",
-    lbNote: "Name, IP, MAC and the row map are read from the gateway when you press the button, so a sticker is never stale. The serial belongs to the warehouse database and is not kept here.",
+    lbPreview: "Preview data", lbDownload: "Download .lbx", lbNote: "Name, IP, MAC and the row map are read from the gateway when you press the button, so a sticker is never stale. The serial belongs to the warehouse database and is not kept here.",
     expCfg: "Export config (JSON)", impCfg: "Import config (JSON)", impDone: "Imported {n} values (not saved yet: review, then Save to gateway)", impNone: "Nothing differs from the gateway",
     shapeBad: "The cabinet type on the Sites page ({l}) does not match the gateway: {w}", shapeFix: "Stage the matching values (not saved yet)", shapeNoFix: "This firmware cannot be told (no panel.shape)",
     fwOta: "Module update over OTA (several cabinets)", fwImage: "Image", fwStart: "Start update", fwCancel: "Cancel", fwCancelQ: "Cancel the update? Modules left in a session may need updating again.",
@@ -117,6 +116,7 @@ const TXT = {
     cmStart: "Flash module", cmCancel: "Cancel", cmRunning: "Flashing", cmNeedImage: "Choose a factory image first", cmLog: "Progress", cmResultOk: "Done", cmResultFail: "Failed", cmNone: "Nothing flashed yet",
     askOk: "Confirm", askNo: "Cancel",
     cmGrid: "Module ID", cmClear: "Clear", cmPreset: "Custom", cmSelected: "{n} selected", cmPickFirst: "Pick at least one ID first",
+    lbIName: "Cabinet", lbIIp: "IP address", lbIMac: "MAC", lbIRows: "Rows", lbIRowsV: "{n} rows", lbILen: "Label length", lbILenV: "{mm} mm", lbIFile: "File size", lbIBytesV: "{n} bytes", lbIQrData: "QR data", lbIQrDataV: "{n} bytes, {spare} bytes spare", lbIQrKind: "QR type", lbIQrKindV: "Version {v}, level {ecc}, recovers {rec}", lbIPayload: "Show what is in the QR", lbIHead: "Label details",
     g_sys: "General", g_rs485: "RS485 bus", g_usb: "USB port", g_net: "Network", g_time: "Time", g_bus: "RS485 hub", g_panel: "Panel buttons and lamps", g_sched: "Scheduled reset",
     theme: "Theme", th_auto: "Follow device", th_light: "Light", th_dark: "Dark", th_ocean: "Ocean", th_forest: "Forest", th_sand: "Sand", th_midnight: "Midnight", th_contrast: "High contrast",
     lbPicture: "Label preview", lbPicNote: "Drawn from the real .lbx with the real QR. Fonts match the file when this device has Arial and Browallia New.",
@@ -390,8 +390,14 @@ function soakSync() {
 function viewLabels() {
   const l = S.lab, o = l.opts;
   const opts = S.sites.map((x) => `<option value="${esc(x.id)}"${x.id === l.id ? " selected" : ""}>${esc(x.name)} · ${esc(x.host)}</option>`).join("");
-  const info = l.info ? `<div class="notice info">${t("lbInfo", { name: esc(l.info.name), ip: esc(l.info.ip), mac: esc(l.info.mac), rows: l.info.rows })}<br>${t("lbReady", { mm: l.info.mm, qr: l.info.qr_bytes, ecc: l.info.ecc, rec: l.info.recover_pct, spare: l.info.spare_bytes, size: l.info.size })}
-      <details style="margin-top:6px"><summary class="small">QR</summary><pre class="mono tiny" style="white-space:pre-wrap;margin:0">${esc(l.info.payload)}</pre></details></div>` : "";
+  const fmt = (n) => Number(n).toLocaleString(lang === "th" ? "th-TH" : "en-US");
+  const row = (k, v, mono) => `<dt>${t(k)}</dt><dd${mono ? ' class="mono"' : ""}>${v}</dd>`;
+  const info = l.info ? `<div class="stack" style="margin-top:6px;padding-top:12px;border-top:1px solid var(--line)"><h3>${t("lbIHead")}</h3><dl class="kv left">`
+    + row("lbIName", esc(l.info.name)) + row("lbIIp", esc(l.info.ip), true) + row("lbIMac", esc(l.info.mac), true)
+    + row("lbIRows", t("lbIRowsV", { n: l.info.rows })) + row("lbILen", t("lbILenV", { mm: l.info.mm })) + row("lbIFile", t("lbIBytesV", { n: fmt(l.info.size) }))
+    + row("lbIQrData", t("lbIQrDataV", { n: l.info.qr_bytes, spare: l.info.spare_bytes }))
+    + row("lbIQrKind", t("lbIQrKindV", { v: l.info.qr_version, ecc: esc(l.info.ecc), rec: esc(l.info.recover_pct) }))
+    + `</dl><details><summary class="small">${t("lbIPayload")}</summary><pre class="mono small" style="white-space:pre-wrap;margin:8px 0 0;padding:10px;border-radius:8px;background:var(--surface2)">${esc(l.info.payload)}</pre></details></div>` : "";
   const pic = l.info && l.info.svg ? `<section class="card stack"><h3>${t("lbPicture")}</h3><div style="border:1px solid var(--line);border-radius:8px;background:#fff;padding:6px">${l.info.svg}</div><p class="small muted">${t("lbPicNote")}</p></section>` : "";
   return `<h1>${t("labels_page")}</h1><p class="small muted">${t("lbNote")}</p>
     <section class="card stack"><div class="fgrid">

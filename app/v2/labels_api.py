@@ -59,7 +59,7 @@ def build(host: str, port: int, ward: str, serial: str, layout: str, plate: str)
     version = (modules - 17) // 4
     stem = "".join(ch if ch.isalnum() or ch in "-_" else "-" for ch in (cab.name or "cabinet")).strip("-") or "cabinet"
     return ({"name": cab.name, "ip": cab.ip, "mac": cab.mac, "rows": len(cab.rows), "mm": round(mm),
-             "qr_bytes": n, "ecc": ecc.upper(), "recover_pct": labels._ECC_PCT[ecc],
+             "qr_bytes": n, "qr_version": version, "ecc": ecc.upper(), "recover_pct": labels._ECC_PCT[ecc],
              "spare_bytes": labels._QR_BYTES[ecc][version] - n, "size": len(blob), "payload": payload,
              "svg": label_preview.svg_from_lbx(blob)},
             blob, f"{stem}-{layout}.lbx")
