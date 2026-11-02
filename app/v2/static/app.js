@@ -8,7 +8,6 @@ const TXT = {
     noSites: "ยังไม่มีตู้ในรายการ เพิ่มได้ที่หน้า รายการตู้", ok: "ปกติ", warn: "ควรดู", bad: "ผิดปกติ",
     fw: "เฟิร์มแวร์", uptime: "เปิดมาแล้ว", clients: "client", clock: "นาฬิกา", rtu: "ซ่อม RS485 (สะสม)",
     clockUnset: "ยังไม่ตั้ง", repaired: "ซ่อมได้ {n}", failed: "ซ่อมไม่ได้ {n}", badcrc: "CRC เสีย {n}",
-    probeNote: "การตรวจแต่ละครั้งเปิดการเชื่อมต่อสั้นๆ หนึ่งครั้งต่อตู้ และถูกบันทึกในเหตุการณ์ของเกตเวย์ จึงไม่ตรวจอัตโนมัติ",
     add: "เพิ่มตู้", save: "บันทึก", saved: "บันทึกแล้ว", del: "ลบ", name: "ชื่อตู้", host: "ไอพี / โฮสต์", port: "พอร์ต",
     cabinet: "ชนิดตู้", site: "ไซต์", note: "หมายเหตุ", exportCsv: "ส่งออก CSV", importCsv: "นำเข้า CSV",
     importMerge: "เพิ่มเฉพาะที่ยังไม่มี", importReplace: "แทนที่ทั้งรายการ", imported: "นำเข้า {n} แถว",
@@ -67,7 +66,6 @@ const TXT = {
     noSites: "No cabinets saved yet. Add them on the Sites page.", ok: "OK", warn: "Look", bad: "Fault",
     fw: "Firmware", uptime: "Up for", clients: "Clients", clock: "Clock", rtu: "RS485 repairs (total)",
     clockUnset: "not set", repaired: "{n} repaired", failed: "{n} failed", badcrc: "{n} bad CRC",
-    probeNote: "Each check opens one short connection per gateway and shows up in that gateway's event log, so it is never automatic.",
     add: "Add cabinet", save: "Save", saved: "Saved", del: "Delete", name: "Name", host: "IP / host", port: "Port",
     cabinet: "Cabinet type", site: "Site", note: "Note", exportCsv: "Export CSV", importCsv: "Import CSV",
     importMerge: "Add only new rows", importReplace: "Replace the list", imported: "Imported {n} rows",
@@ -163,6 +161,25 @@ const fail = (e) => toast(t("error", { e: e.message || e }));
 function fmtUp(s) { const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600); return d ? `${d} ${t("d")} ${h} ${t("h")}` : `${h} ${t("h")} ${Math.floor((s % 3600) / 60)} m`; }
 
 /* ---------- pages ---------- */
+/* The cabinet check's reasons are written by the server in English; the page language decides what is shown. A text it does not know is shown as it came. */
+const REASONS_TH = [
+  [/^cannot connect$/, () => "เชื่อมต่อไม่ได้"],
+  [/^unreachable$/, () => "ติดต่อไม่ได้"],
+  [/^console refused.*$/, () => "เกตเวย์ไม่ยอมรับคอนโซล เฟิร์มแวร์เก่ากว่า 1.12 หรือปิด net.console"],
+  [/^INFO refused$/, () => "เกตเวย์ไม่ตอบคำสั่ง INFO"],
+  [/^both client slots busy$/, () => "ช่อง client เต็มทั้ง 2 ช่อง"],
+  [/^connection closed by the gateway.*$/, () => "เกตเวย์ตัดการเชื่อมต่อ ช่อง client อาจเต็มทั้ง 2 ช่อง"],
+  [/^(\d+) other client\(s\) connected(?:: (.*))?$/, (m) => `มี client อื่นเชื่อมต่ออยู่ ${m[1]} ราย${m[2] ? ": " + m[2] : ""}`],
+  [/^clock not set.*$/, () => "ยังไม่ได้ตั้งเวลา การรีเซ็ตตามกำหนดจะไม่ทำงาน"],
+  [/^NTP (.+)$/, (m) => "NTP: " + m[1]],
+  [/^event log (.+)$/, (m) => "บันทึกเหตุการณ์: " + m[1]],
+  [/^gateway is in safe mode$/, () => "เกตเวย์อยู่ในโหมดปลอดภัย"],
+];
+function reasonText(r) {
+  if (lang !== "th") return r;
+  for (const [re, f] of REASONS_TH) { const m = String(r).match(re); if (m) return f(m); }
+  return r;
+}
 function viewCabinets() {
   const cards = S.sites.map((s) => {
     const h = S.health[s.id];
@@ -177,13 +194,12 @@ function viewCabinets() {
         <dt>${t("clock")}</dt><dd>${h.time_set ? esc(h.time_now.replace("T", " ")) : t("clockUnset")}</dd>
         ${r ? `<dt>${t("rtu")}</dt><dd>${t("repaired", { n: r.healed })}${r.heal_failed ? " · " + t("failed", { n: r.heal_failed }) : ""}${r.bad_crc ? " · " + t("badcrc", { n: r.bad_crc }) : ""}</dd>` : ""}</dl>`;
     }
-    const why = h && h.reasons && h.reasons.length ? `<div class="notice ${state === "bad" ? "bad" : ""}">${h.reasons.map(esc).join("<br>")}</div>` : "";
+    const why = h && h.reasons && h.reasons.length ? `<div class="notice ${state === "bad" ? "bad" : ""}">${h.reasons.map((x) => esc(reasonText(x))).join("<br>")}</div>` : "";
     return `<section class="card cab"><h3><span>${esc(s.name)}</span><span class="chip ${state === "off" ? "off" : state}"><i class="dot"></i>${esc(chip)}</span></h3>
       <div class="small muted mono">${esc(s.host)}:${s.port}${s.cabinet ? " · " + esc(s.cabinet) : ""}${s.site ? " · " + esc(s.site) : ""}</div>${body}${why}</section>`;
   }).join("");
   return `<div class="row between"><h1>${t("cabinets")}</h1><div class="row"><span class="small muted">${S.checkedAt ? t("checkedAt", { at: esc(S.checkedAt) }) : ""}</span>
     <button class="btn primary" data-act="check">${t("checkAll")}</button></div></div>
-    <p class="small muted">${t("probeNote")}</p>
     ${S.sites.length ? `<div class="cabs">${cards}</div>` : `<div class="notice info">${t("noSites")}</div>`}`;
 }
 
