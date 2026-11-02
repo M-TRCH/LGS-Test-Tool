@@ -302,7 +302,7 @@ const GWTH = { "sys.name": "ชื่อเกตเวย์", "sys.wdt_ms": "W
 /* bus.hub_map is ten numbers, one per row (slave IDs 11-108): which hub channel the row hangs on, 0 = wired straight. */
 const hubRows = (str) => { const a = String(str || "").split(",").map((x) => parseInt(x, 10) || 0); while (a.length < 10) a.push(0); return a.slice(0, 10); };
 /* The "?" button, only where there is something to say: no button when the name says it all, or when there is no explanation text. */
-const GWNOINFO = new Set(["sys.name", "net.enabled", "net.dhcp", "net.ip", "net.mask", "net.gw", "net.dns", "net.port", "net.ntp", "net.ntp_port", "time.tz_min", "rs485.baud", "panel.enabled", "sched.reset_enabled"]);
+const GWNOINFO = new Set(["sys.name", "net.enabled", "net.dhcp", "net.ip", "net.mask", "net.gw", "net.dns", "net.port", "net.ntp", "net.ntp_port", "time.tz_min", "rs485.baud", "usb.max_ms", "panel.enabled", "sched.reset_enabled"]);
 function whyBtn(k) {
   const tx = k.text && k.text[lang];
   if (k.ro || GWNOINFO.has(k.key) || !(tx && tx.hint)) return "";
