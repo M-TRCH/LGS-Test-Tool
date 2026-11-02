@@ -225,19 +225,24 @@ class Gate:
             return
         qs = scope.get("query_string", b"").decode("latin-1")
         nxt = path + ("?" + qs if qs else "")
-        loc = "/login" + ("?next=" + quote(nxt, safe="") if nxt not in ("", "/") else "")
+        loc = "/login" + ("?next=" + quote(nxt, safe="") if nxt else "")
         await send({"type": "http.response.start", "status": 302,
                     "headers": [(b"location", loc.encode("latin-1")),
                                 (b"cache-control", b"no-store")]})
         await send({"type": "http.response.body", "body": b""})
 
 
+# Where a sign-in lands when nothing asked for a particular page: the v2 UI.
+# A page that did ask (the classic tool at "/", say) passes ?next= and keeps it.
+HOME = "/v2"
+
+
 def _safe_next(n: str) -> str:
     """Only same-site paths: '//evil.example' or 'http://...' would turn the
     login into an open redirect."""
-    n = n or "/"
+    n = n or HOME
     if not n.startswith("/") or n.startswith("//") or "\\" in n or urlsplit(n).netloc:
-        return "/"
+        return HOME
     return n
 
 
@@ -266,7 +271,7 @@ def install(app) -> None:
     seed_from_env()
     app.add_middleware(Gate)
 
-    def page(err: str = "", nxt: str = "/", status: int = 200) -> HTMLResponse:
+    def page(err: str = "", nxt: str = HOME, status: int = 200) -> HTMLResponse:
         e = f'<div class="e">{escape(err)}</div>' if err else ""
         return HTMLResponse(_PAGE.format(err=e, nxt=escape(nxt, quote=True)),
                             status_code=status,
@@ -275,16 +280,16 @@ def install(app) -> None:
     @app.get("/login")
     async def login_form(request: Request):
         if not enabled() or token_ok(request.cookies.get(COOKIE, "")):
-            return RedirectResponse("/", status_code=302)
-        return page(nxt=_safe_next(request.query_params.get("next", "/")))
+            return RedirectResponse(_safe_next(request.query_params.get("next", HOME)), status_code=302)
+        return page(nxt=_safe_next(request.query_params.get("next", HOME)))
 
     @app.post("/login")
     async def login_submit(request: Request):
         addr = request.client.host if request.client else "?"
         form = parse_qs((await request.body()).decode("utf-8", "replace"))
-        nxt = _safe_next((form.get("next") or ["/"])[0])
+        nxt = _safe_next((form.get("next") or [HOME])[0])
         if not enabled():
-            return RedirectResponse("/", status_code=303)
+            return RedirectResponse(nxt, status_code=303)
         if _locked(addr):
             return page("พยายามหลายครั้งเกินไป รอ 1 นาที / Too many attempts, wait 1 minute",
                         nxt, 429)

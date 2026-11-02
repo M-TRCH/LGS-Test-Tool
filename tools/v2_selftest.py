@@ -70,7 +70,8 @@ def _():
         auth._note_fail("9.9.9.9")
     assert auth._locked("9.9.9.9")
     assert not auth._locked("9.9.9.9", now=time.time() + auth.LOCK_S + 1)
-    assert auth._safe_next("//evil.example") == "/" and auth._safe_next("https://x") == "/"
+    assert auth._safe_next("//evil.example") == auth.HOME and auth._safe_next("https://x") == auth.HOME
+    assert auth._safe_next("") == "/v2" and auth._safe_next("/") == "/"     # no next lands on v2; the classic tool asks for "/"
     assert auth._safe_next("/v2?a=1") == "/v2?a=1"
     auth.clear_password()
     assert not auth.enabled()
