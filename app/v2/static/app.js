@@ -12,8 +12,7 @@ const TXT = {
     add: "เพิ่มตู้", save: "บันทึก", saved: "บันทึกแล้ว", del: "ลบ", name: "ชื่อตู้", host: "ไอพี / โฮสต์", port: "พอร์ต",
     cabinet: "ชนิดตู้", site: "ไซต์", note: "หมายเหตุ", exportCsv: "ส่งออก CSV", importCsv: "นำเข้า CSV",
     importMerge: "เพิ่มเฉพาะที่ยังไม่มี", importReplace: "แทนที่ทั้งรายการ", imported: "นำเข้า {n} แถว",
-    dupWarn: "ไอพีซ้ำกับแถวอื่น", unsaved: "มีการแก้ที่ยังไม่บันทึก", sitesHint: "รายการนี้เก็บบนเซิร์ฟเวอร์ ทุกเครื่องเห็นเหมือนกัน ไม่ต้องกรอกไอพีซ้ำ",
-    gateway: "เกตเวย์", days: "ย้อนหลัง", day1: "วันนี้", day7: "7 วัน", day30: "30 วัน", day90: "90 วัน", all: "ทั้งหมด",
+    dupWarn: "ไอพีซ้ำกับแถวอื่น", unsaved: "มีการแก้ที่ยังไม่บันทึก", gateway: "เกตเวย์", days: "ย้อนหลัง", day1: "วันนี้", day7: "7 วัน", day30: "30 วัน", day90: "90 วัน", all: "ทั้งหมด",
     search: "ค้นหา (ชื่อ, ไอพี)", noEvents: "ไม่มีเหตุการณ์ในช่วงนี้", noEventsOff: "ยังไม่มีข้อมูล เพราะยังไม่ได้เปิด \"เก็บเหตุการณ์อัตโนมัติ\" ด้านบน (เปิดแล้วรอประมาณ 5 นาทีให้ดึงรอบแรก) ตู้ที่ใช้เฟิร์มแวร์ต่ำกว่า 1.14.0 จะไม่มีข้อมูล", collect: "เก็บเหตุการณ์อัตโนมัติ",
     collectHint: "ดึงบันทึกจากเกตเวย์ทุกตู้ในรายการตู้ทุก 5 นาที เก็บ 90 วัน ต้องใช้เฟิร์มแวร์เกตเวย์ 1.14.0 ขึ้นไป",
     gateway_page: "เกตเวย์", pick: "เลือกตู้", read: "อ่านค่า", reading: "กำลังอ่าน...", notRead: "เลือกตู้แล้วกดอ่านค่า",
@@ -72,8 +71,7 @@ const TXT = {
     add: "Add cabinet", save: "Save", saved: "Saved", del: "Delete", name: "Name", host: "IP / host", port: "Port",
     cabinet: "Cabinet type", site: "Site", note: "Note", exportCsv: "Export CSV", importCsv: "Import CSV",
     importMerge: "Add only new rows", importReplace: "Replace the list", imported: "Imported {n} rows",
-    dupWarn: "same address as another row", unsaved: "Unsaved changes", sitesHint: "Stored on the server, the same on every device: no retyping IPs.",
-    gateway: "Gateway", days: "Range", day1: "Today", day7: "7 days", day30: "30 days", day90: "90 days", all: "All",
+    dupWarn: "same address as another row", unsaved: "Unsaved changes", gateway: "Gateway", days: "Range", day1: "Today", day7: "7 days", day30: "30 days", day90: "90 days", all: "All",
     search: "Search (name, IP)", noEvents: "No events in this range", noEventsOff: "No data yet because \"Collect events automatically\" above is off (turn it on and wait about 5 minutes for the first pull). Cabinets below firmware 1.14.0 have no events.", collect: "Collect events automatically",
     collectHint: "Pulls every saved cabinet's gateway log every 5 minutes, kept 90 days. Needs gateway firmware 1.14.0 or newer.",
     gateway_page: "Gateway", pick: "Choose cabinet", read: "Read", reading: "Reading...", notRead: "Choose a cabinet and press Read",
@@ -194,7 +192,7 @@ function siteRow(s, i) {
 function viewSites() {
   return `<div class="row between"><h1>${t("sites")}</h1><div class="row">
       <button class="btn" data-act="add">${t("add")}</button><button class="btn primary" data-act="save">${t("save")}</button></div></div>
-    <p class="small muted">${t("sitesHint")}</p>
+    
     ${S.dirty ? `<div class="notice">${t("unsaved")}</div>` : ""}
     ${S.warnings.map((w) => `<div class="notice">${esc(w)}</div>`).join("")}
     <section class="card" id="sitelist">${S.sites.length ? `<div class="sitesrow siteshead tiny muted"><span>${t("name")}</span><span>${t("host")}</span><span>${t("port")}</span><span>${t("cabinet")}</span><span>${t("site")}</span><span>${t("note")}</span><span></span></div>` : ""}${S.sites.map(siteRow).join("") || `<p class="muted">${t("noSites")}</p>`}</section>
