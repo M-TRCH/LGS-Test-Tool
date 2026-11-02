@@ -22,7 +22,7 @@ const TXT = {
     clockSet: "ตั้งนาฬิกาแล้ว", resync: "ซ่อมจังหวะหลังไม่มีคำตอบ (RESYNC)", exc: "ตอบ exception 0x0B ทันทีเมื่อบัสไม่ตอบ (EXC)",
     volatileNote: "ชั่วคราว: กลับค่าเดิมเมื่อเกตเวย์รีบูต", reboot: "รีบูตเกตเวย์", rebootQ: "รีบูตเกตเวย์ {n}? จะตัดการสื่อสารสักครู่",
     defaults: "คืนค่าโรงงาน", defaultsQ: "คืนค่าโรงงานของ {n}? Ethernet จะปิดและ hub map หาย ต้องตั้งใหม่ พิมพ์ชื่อตู้เพื่อยืนยัน",
-    discard: "ทิ้งค่าที่ค้างอยู่", danger: "ส่วนอันตราย", changes: "{n} ค่าที่แก้", apply: "บันทึกลงเกตเวย์", applyQ: "บันทึก {n} ค่าลง {g}?",
+    discard: "ทิ้งค่าที่ค้างอยู่", danger: "จัดการเกตเวย์", changes: "{n} ค่าที่แก้", apply: "บันทึกลงเกตเวย์", applyQ: "บันทึก {n} ค่าลง {g}?",
     applied: "บันทึกแล้ว", needReboot: "ต้องรีบูตจึงมีผล: {k}", reset: "ล้างที่แก้", ro: "อ่านอย่างเดียว", rebootKey: "ต้องรีบูต",
     doneOk: "สำเร็จ", noPassword: "ยังไม่ตั้งรหัสผ่านหน้าเว็บ ทุกคนในเครือข่ายแก้ค่าเกตเวย์ได้",
     module_page: "โมดูล", devId: "รหัสโมดูล (ID)", withStats: "รวมสถิติ", auto: "อ่านอัตโนมัติทุก 2 วินาที", modNotRead: "เลือกตู้ ใส่ ID โมดูล แล้วกดอ่านค่า",
@@ -83,7 +83,7 @@ const TXT = {
     clockSet: "Clock set", resync: "Re-sync after a missing reply (RESYNC)", exc: "Answer a bus timeout with exception 0x0B at once (EXC)",
     volatileNote: "Temporary: reverts when the gateway reboots", reboot: "Reboot gateway", rebootQ: "Reboot gateway {n}? It will be unreachable for a moment.",
     defaults: "Factory defaults", defaultsQ: "Reset {n} to factory defaults? Ethernet goes off and the hub map is lost; both must be set again. Type the cabinet's name to confirm.",
-    discard: "Discard staged edits", danger: "Danger zone", changes: "{n} changed", apply: "Save to gateway", applyQ: "Save {n} value(s) to {g}?",
+    discard: "Discard staged edits", danger: "Gateway actions", changes: "{n} changed", apply: "Save to gateway", applyQ: "Save {n} value(s) to {g}?",
     applied: "Saved", needReboot: "Needs a reboot to take effect: {k}", reset: "Clear edits", ro: "read-only", rebootKey: "needs reboot",
     doneOk: "Done", noPassword: "No web password set: anyone on the network can edit the gateway.",
     module_page: "Module", devId: "Module ID", withStats: "Include statistics", auto: "Read automatically every 2 s", modNotRead: "Choose a cabinet, enter a module ID, press Read",
@@ -281,10 +281,10 @@ function viewGateway() {
     const sh = d.shape && d.shape.layout && !d.shape.agreed ? `<div class="notice">${t("shapeBad", { l: esc(d.shape.label), w: esc(d.shape.why) })}<div class="row" style="margin-top:8px">${d.shape.fixable ? `<button class="btn" data-act="gw-shape">${t("shapeFix")}</button>` : `<span class="small">${t("shapeNoFix")}</span>`}</div></div>` : "";
     body = sh + `<section class="card"><dl class="kv"><dt>${t("fw")}</dt><dd class="mono">${esc(i.fw)}</dd><dt>${t("uptime")}</dt><dd>${fmtUp(+i["sys.up"] || 0)} (${esc(i["sys.reset"] || "")})</dd>
         <dt>${t("clients")}</dt><dd>${esc(i["net.client"] || "?")}/2</dd><dt>${t("clock")}</dt><dd>${i["time.set"] === "1" ? esc((i["time.now"] || "").replace("T", " ")) : t("clockUnset")}</dd></dl></section>
-      <section class="card stack"><div class="row"><button class="btn" data-act="gw-time">${t("setClock")}</button><button class="why" data-act="sw-info" data-info="clockInfo" type="button" aria-label="${t("explain")}">?</button></div>${sw("resync", i["rtu.heal"] === "1", "", "resyncInfo")}${sw("exc", i["tcp.exc"] === "1", "", "excInfo")}</section>
+      <section class="card stack">${sw("resync", i["rtu.heal"] === "1", "", "resyncInfo")}${sw("exc", i["tcp.exc"] === "1", "", "excInfo")}</section>
       <section class="card stack">${order.map((grp) => `<details${grp === "rs485" || grp === "net" ? " open" : ""}><summary><b>${esc(TXT[lang]["g_" + grp] || grp)}</b> <span class="small muted mono">${esc(grp)} · ${groups[grp].length}</span></summary><div class="fgrid" style="margin-top:8px">${groups[grp].map(field).join("")}</div></details>`).join("") || `<p class="muted">${t("noKeys")}</p>`}</section>
       <section class="card stack"><div class="row"><button class="btn" data-act="gw-export">${t("expCfg")}</button><label class="btn">${t("impCfg")}<input type="file" id="gwimport" accept=".json,application/json" hidden></label></div></section>
-      <section class="card stack"><h3>${t("danger")}</h3><div class="row"><button class="btn" data-act="gw-discard">${t("discard")}</button><button class="btn" data-act="gw-reboot">${t("reboot")}</button><button class="btn" data-act="gw-defaults" style="color:var(--bad)">${t("defaults")}</button></div></section>`;
+      <section class="card stack"><h3>${t("danger")}</h3><div class="row"><button class="btn" data-act="gw-time">${t("setClock")}</button><button class="why" data-act="sw-info" data-info="clockInfo" type="button" aria-label="${t("explain")}">?</button><button class="btn" data-act="gw-discard">${t("discard")}</button><button class="btn" data-act="gw-reboot">${t("reboot")}</button><button class="btn" data-act="gw-defaults" style="color:var(--bad)">${t("defaults")}</button></div></section>`;
   } else if (d && !d.ok) body = `<div class="notice bad">${esc(d.error)}</div>`;
   return `<div class="row between"><h1>${t("gateway_page")}</h1></div>
     <section class="card stack"><div class="row" style="align-items:flex-end"><div class="field" style="min-width:0;flex:1"><label>${t("pick")}</label><select id="gwsel"><option value="">—</option>${opts}</select></div>
