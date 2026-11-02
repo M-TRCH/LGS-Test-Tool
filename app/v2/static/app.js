@@ -287,8 +287,8 @@ function viewGateway() {
       <section class="card stack"><h3>${t("danger")}</h3><div class="row"><button class="btn" data-act="gw-discard">${t("discard")}</button><button class="btn" data-act="gw-reboot">${t("reboot")}</button><button class="btn" data-act="gw-defaults" style="color:var(--bad)">${t("defaults")}</button></div></section>`;
   } else if (d && !d.ok) body = `<div class="notice bad">${esc(d.error)}</div>`;
   return `<div class="row between"><h1>${t("gateway_page")}</h1></div>
-    <section class="card stack"><div class="row" style="align-items:flex-end"><div class="field" style="min-width:220px;flex:1"><label>${t("pick")}</label><select id="gwsel"><option value="">—</option>${opts}</select></div>
-      <button class="btn primary" data-act="gw-read">${g.busy ? t("reading") : t("read")}</button></div></section>
+    <section class="card stack"><div class="row" style="align-items:flex-end"><div class="field" style="min-width:0;flex:1"><label>${t("pick")}</label><select id="gwsel"><option value="">—</option>${opts}</select></div>
+      <button class="btn primary" data-act="gw-read" style="flex:none;min-width:112px;white-space:nowrap">${g.busy ? t("reading") : t("read")}</button></div></section>
     <div class="stack" style="margin-top:12px">${body}</div><div id="gwbar"></div>`;
 }
 function gwBar() {
