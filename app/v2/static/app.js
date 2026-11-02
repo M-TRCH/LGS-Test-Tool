@@ -191,14 +191,13 @@ function siteRow(s, i) {
 }
 function viewSites() {
   return `<div class="row between"><h1>${t("sites")}</h1><div class="row">
+      <a class="btn" href="/api/v2/sites.csv" download>${t("exportCsv")}</a>
+      <select id="csvmode" aria-label="import mode"><option value="merge">${t("importMerge")}</option><option value="replace">${t("importReplace")}</option></select>
+      <label class="btn">${t("importCsv")}<input type="file" id="csvfile" accept=".csv,text/csv" hidden></label>
       <button class="btn" data-act="add">${t("add")}</button><button class="btn primary" data-act="save">${t("save")}</button></div></div>
-    
     ${S.dirty ? `<div class="notice">${t("unsaved")}</div>` : ""}
     ${S.warnings.map((w) => `<div class="notice">${esc(w)}</div>`).join("")}
-    <section class="card" id="sitelist">${S.sites.length ? `<div class="sitesrow siteshead tiny muted"><span>${t("name")}</span><span>${t("host")}</span><span>${t("port")}</span><span>${t("cabinet")}</span><span>${t("site")}</span><span>${t("note")}</span><span></span></div>` : ""}${S.sites.map(siteRow).join("") || `<p class="muted">${t("noSites")}</p>`}</section>
-    <section class="card stack"><div class="row"><a class="btn" href="/api/v2/sites.csv" download>${t("exportCsv")}</a>
-      <label class="btn">${t("importCsv")}<input type="file" id="csvfile" accept=".csv,text/csv" hidden></label>
-      <select id="csvmode" aria-label="import mode"><option value="merge">${t("importMerge")}</option><option value="replace">${t("importReplace")}</option></select></div></section>`;
+    <section class="card" id="sitelist">${S.sites.length ? `<div class="sitesrow siteshead tiny muted"><span>${t("name")}</span><span>${t("host")}</span><span>${t("port")}</span><span>${t("cabinet")}</span><span>${t("site")}</span><span>${t("note")}</span><span></span></div>` : ""}${S.sites.map(siteRow).join("") || `<p class="muted">${t("noSites")}</p>`}</section>`;
 }
 
 function viewEvents() {
