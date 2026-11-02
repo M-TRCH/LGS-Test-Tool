@@ -307,7 +307,7 @@ function whyBtn(k) {
   return `<button class="why" data-act="hint" data-key="${esc(k.key)}" type="button" aria-label="${t("explain")}">?</button>`;
 }
 /* Shorter Thai explanations for this page than the shared i18n table has. */
-const GWTHHINT = { "sys.wdt_ms": "บอร์ดรีเซ็ตตัวเองถ้าเฟิร์มแวร์หยุดทำงานนานเท่านี้ (8000 = 8 วินาที) ต้องนานกว่าเวลารอสาย LAN ตอนเปิดเครื่อง ไม่อย่างนั้นบอร์ดจะรีสตาร์ทวนไม่จบ มีผลหลังรีบูต" };
+const GWTHHINT = { "sys.wdt_ms": "บอร์ดรีเซ็ตตัวเองถ้าเฟิร์มแวร์หยุดทำงานนานเท่านี้ ต้องนานกว่าเวลารอสาย LAN ตอนเปิดเครื่อง ไม่อย่างนั้นบอร์ดจะรีสตาร์ทวนไม่จบ มีผลหลังรีบูต" };
 function gwLabel(k) { if (lang === "th" && GWTH[k.key]) return GWTH[k.key]; const tx = k.text && k.text[lang]; return (tx && tx.label) || (GWNAMES[k.key] && GWNAMES[k.key][lang === "th" ? 0 : 1]) || k.key; }
 
 function showInfo(key) {
