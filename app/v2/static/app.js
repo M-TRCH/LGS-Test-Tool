@@ -250,7 +250,20 @@ function viewEvents() {
 }
 
 
-const GWGROUPS = ["sys", "rs485", "usb", "net", "time", "bus", "panel", "sched"];
+/* The order a gateway is really set up in: name, network (to be reachable at all), clock, the RS485 bus and its hub, USB, then the cabinet's panel and its schedule.
+   Fields follow the same order inside a group; the firmware's own table is append-only history, not a sensible reading order. */
+const GWGROUPS = ["sys", "net", "time", "rs485", "bus", "usb", "panel", "sched"];
+const GWORDER = ["sys.name", "sys.wdt_ms",
+  "net.enabled", "net.dhcp", "net.ip", "net.mask", "net.gw", "net.dns", "net.port", "net.mac", "net.ntp", "net.ntp_port", "net.link_timeout_ms", "net.console",
+  "time.tz_min",
+  "rs485.baud", "rs485.predelay_us", "rs485.postdelay_us", "rs485.t1_ms", "rs485.t2_ms",
+  "bus.hub_map", "bus.hub_retry", "bus.hub_gap_ms", "bus.hub_settle_ms", "bus.hub_budget_ms",
+  "usb.gap_ms", "usb.max_ms",
+  "panel.enabled", "panel.cabinet", "panel.shape", "panel.preset", "panel.bright", "panel.btn1", "panel.btn2", "panel.btn3", "panel.btn4", "panel.btn5",
+  "panel.out1", "panel.out2", "panel.out3", "panel.out4", "panel.lamps", "panel.lamp_hold_ms", "panel.lamp_dwell_ms", "panel.lamp_dead",
+  "panel.step_on_ms", "panel.step_off_ms", "panel.step_unlock_ms", "panel.reset_ms",
+  "sched.reset_enabled", "sched.reset_days", "sched.reset_slots", "sched.reset_hhmm", "sched.reset_hhmm2", "sched.reset_hhmm3", "sched.reset_hhmm4"];
+const gwRank = (key) => { const i = GWORDER.indexOf(key); return i < 0 ? 999 : i; };
 /* Settings that pick one of a few meanings (panel.h, gw_config.cpp): a list, not a number. value -> [th, en]. */
 const GWENUM = (() => {
   const btn = { 0: ["ไม่ทำอะไร", "Does nothing"], 1: ["เปิดไฟทุกช่อง", "Light every slot"], 2: ["ปิดไฟทั้งหมด", "Everything off"], 3: ["ปลดล็อกทุกช่อง", "Unlock every slot"],
@@ -287,6 +300,7 @@ function viewGateway() {
     const i = d.info;
     const groups = {};
     d.keys.forEach((k) => { const p = k.key.split(".")[0]; (groups[p] = groups[p] || []).push(k); });
+    Object.values(groups).forEach((g) => g.sort((a, b) => gwRank(a.key) - gwRank(b.key)));
     const order = [...GWGROUPS.filter((x) => groups[x]), ...Object.keys(groups).filter((x) => !GWGROUPS.includes(x))];
     const sw = (name, on, act, info, locked) => `<div class="switch"><div><b>${t(name)}</b><button class="why" data-act="sw-info" data-info="${info}" type="button" aria-label="${t("explain")}">?</button></div><button class="sw" role="switch" aria-checked="${on}" data-act="${act || "gw-vol"}" data-name="${name}"${locked ? " disabled" : ""}></button></div>`;
     const field = (k) => {
