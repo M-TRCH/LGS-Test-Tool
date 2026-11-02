@@ -306,6 +306,8 @@ function whyBtn(k) {
   if (k.ro || GWNOINFO.has(k.key) || !(tx && tx.hint)) return "";
   return `<button class="why" data-act="hint" data-key="${esc(k.key)}" type="button" aria-label="${t("explain")}">?</button>`;
 }
+/* Shorter Thai explanations for this page than the shared i18n table has. */
+const GWTHHINT = { "sys.wdt_ms": "บอร์ดรีเซ็ตตัวเองถ้าเฟิร์มแวร์หยุดทำงานนานเท่านี้ (8000 = 8 วินาที) ต้องนานกว่าเวลารอสาย LAN ตอนเปิดเครื่อง ไม่อย่างนั้นบอร์ดจะรีสตาร์ทวนไม่จบ มีผลหลังรีบูต" };
 function gwLabel(k) { if (lang === "th" && GWTH[k.key]) return GWTH[k.key]; const tx = k.text && k.text[lang]; return (tx && tx.label) || (GWNAMES[k.key] && GWNAMES[k.key][lang === "th" ? 0 : 1]) || k.key; }
 
 function showInfo(key) {
@@ -313,7 +315,7 @@ function showInfo(key) {
   const tx = (k.text && k.text[lang]) || {};
   const flags = [k.reboot ? t("rebootKey") : "", k.ro ? t("ro") : ""].filter(Boolean).map((f) => `<span class="chip ${f === t("ro") ? "off" : "warn"}">${esc(f)}</span>`).join(" ");
   $("#infobody").innerHTML = `<h2>${esc(gwLabel(k))}</h2><div class="mono small muted" style="margin:2px 0 10px">${esc(k.key)}</div>
-    <p style="margin:0 0 12px;white-space:pre-line">${esc(tx.hint || t("noExplain"))}</p>
+    <p style="margin:0 0 12px;white-space:pre-line">${esc((lang === "th" && GWTHHINT[k.key]) || tx.hint || t("noExplain"))}</p>
     <dl class="kv"><dt>${t("curValue")}</dt><dd class="mono">${esc(k.value)}</dd>${k.key in S.gw.edits ? `<dt>${t("newValue")}</dt><dd class="mono">${esc(S.gw.edits[k.key])}</dd>` : ""}</dl>${flags ? `<div class="row" style="margin-top:10px">${flags}</div>` : ""}`;
   const d = $("#info"); if (d.showModal) d.showModal(); else d.setAttribute("open", "");
 }
