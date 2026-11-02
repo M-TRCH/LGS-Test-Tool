@@ -321,8 +321,8 @@ function viewGateway() {
         return `<div class="field"><label>${esc(gwLabel(k))}<button class="why" data-act="hint" data-key="${esc(k.key)}" type="button" aria-label="${t("explain")}">?</button></label>
           <select data-key="${esc(k.key)}"${ed ? ' style="border-color:var(--brand)"' : ""}>${opts}</select></div>`;
       }
-      return `<div class="field"><label>${esc(gwLabel(k))}${k.ro ? ` <span class="chip off">${t("ro")}</span>` : ""}<button class="why" data-act="hint" data-key="${esc(k.key)}" type="button" aria-label="${t("explain")}">?</button></label>
-        <input data-key="${esc(k.key)}" value="${esc(val)}" ${k.ro ? "disabled" : ""} ${ed ? 'style="border-color:var(--brand)"' : ""}></div>`;
+      return `<div class="field"><label>${esc(gwLabel(k))}${k.ro ? "" : `<button class="why" data-act="hint" data-key="${esc(k.key)}" type="button" aria-label="${t("explain")}">?</button>`}</label>
+        <input data-key="${esc(k.key)}" value="${esc(val)}" ${k.ro ? 'disabled class="ro"' : ""} ${ed ? 'style="border-color:var(--brand)"' : ""}></div>`;
     };
     const sh = d.shape && d.shape.layout && !d.shape.agreed ? `<div class="notice">${t("shapeBad", { l: esc(d.shape.label), w: esc(d.shape.why) })}<div class="row" style="margin-top:8px">${d.shape.fixable ? `<button class="btn" data-act="gw-shape">${t("shapeFix")}</button>` : `<span class="small">${t("shapeNoFix")}</span>`}</div></div>` : "";
     body = sh + `<section class="card"><dl class="kv"><dt>${t("fw")}</dt><dd class="mono">${esc(i.fw)}</dd><dt>${t("uptime")}</dt><dd>${fmtUp(+i["sys.up"] || 0)} (${esc(i["sys.reset"] || "")})</dd>

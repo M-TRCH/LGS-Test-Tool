@@ -145,3 +145,5 @@ select,input{max-width:100%}.app,main{min-width:0}.line{font-size:14px;overflow-
   .sheetwrap{align-items:center}.sheet{border-radius:20px}
   .toast{bottom:24px}.savebar{bottom:12px}.conn{max-width:none}
 }
+/* A value the tool shows but cannot change (the MAC): grey, plainly not editable. */
+input.ro,input.ro:disabled{background:color-mix(in srgb,var(--ink) 10%,var(--surface));color:color-mix(in srgb,var(--ink) 55%,var(--surface));border-color:color-mix(in srgb,var(--ink) 18%,var(--surface));cursor:not-allowed;opacity:1;-webkit-text-fill-color:color-mix(in srgb,var(--ink) 55%,var(--surface))}
