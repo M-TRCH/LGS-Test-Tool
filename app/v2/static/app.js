@@ -275,6 +275,12 @@ const GWENUM = (() => {
     "panel.preset": Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8].map((n) => [n, ["พรีเซ็ต " + n, "Preset " + n]])) };
   /* KIND_BOOL keys in gw_config.cpp */
   for (const k of ["net.enabled", "net.dhcp", "panel.enabled", "panel.lamps", "sched.reset_enabled", "net.console"]) m[k] = { 0: ["ปิด", "Off"], 1: ["เปิด", "On"] };
+  /* Offsets people actually live at, in minutes east of UTC (what time.tz_min stores). */
+  const tz = {}, fmt = (min) => { const a = Math.abs(min), h = Math.floor(a / 60), mm = a % 60; return "UTC" + (min < 0 ? "-" : "+") + h + (mm ? ":" + String(mm).padStart(2, "0") : ""); };
+  const named = { 420: ["ไทย", "Thailand"], 480: ["สิงคโปร์ / จีน", "Singapore / China"], 540: ["ญี่ปุ่น", "Japan"], 0: ["ลอนดอน (ฤดูหนาว)", "London (winter)"], 330: ["อินเดีย", "India"], 390: ["เมียนมา", "Myanmar"] };
+  [-720, -660, -600, -540, -480, -420, -360, -300, -240, -210, -180, -120, -60, 0, 60, 120, 180, 210, 240, 270, 300, 330, 345, 360, 390, 420, 480, 525, 540, 570, 600, 660, 720, 765, 780, 840]
+    .forEach((min) => { const n = named[min]; tz[min] = [fmt(min) + (n ? " (" + n[0] + ")" : ""), fmt(min) + (n ? " (" + n[1] + ")" : "")]; });
+  m["time.tz_min"] = tz;
   for (let n = 1; n <= 5; n++) m["panel.btn" + n] = btn;
   for (let n = 1; n <= 4; n++) m["panel.out" + n] = out;
   return m;
@@ -319,7 +325,7 @@ function viewGateway() {
     const field = (k) => {
       const ed = k.key in g.edits, val = ed ? g.edits[k.key] : k.value;
       if (GWENUM[k.key] && !k.ro) {
-        const L = GWENUM[k.key], i18 = lang === "th" ? 0 : 1, vals = Object.keys(L), cur = String(val);
+        const L = GWENUM[k.key], i18 = lang === "th" ? 0 : 1, vals = Object.keys(L).sort((x, y) => x - y), cur = String(val);
         const opts = vals.map((v) => `<option value="${v}"${v === cur ? " selected" : ""}>${esc(L[v][i18])}</option>`).join("") + (vals.includes(cur) ? "" : `<option value="${esc(cur)}" selected>${esc(cur)}</option>`);
         return `<div class="field"><label>${esc(gwLabel(k))}<button class="why" data-act="hint" data-key="${esc(k.key)}" type="button" aria-label="${t("explain")}">?</button></label>
           <select data-key="${esc(k.key)}"${ed ? ' style="border-color:var(--brand)"' : ""}>${opts}</select></div>`;
