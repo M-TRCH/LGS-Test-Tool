@@ -15,7 +15,7 @@ const TXT = {
     search: "ค้นหา (ชื่อ, ไอพี)", noEvents: "ไม่มีเหตุการณ์ในช่วงนี้", noEventsOff: "ยังไม่มีข้อมูล เพราะยังไม่ได้เปิด \"เก็บเหตุการณ์อัตโนมัติ\" ด้านบน (เปิดแล้วรอประมาณ 5 นาทีให้ดึงรอบแรก) ตู้ที่ใช้เฟิร์มแวร์ต่ำกว่า 1.14.0 จะไม่มีข้อมูล", collect: "เก็บเหตุการณ์อัตโนมัติ",
     collectHint: "ดึงบันทึกจากเกตเวย์ทุกตู้ในรายการตู้ทุก 5 นาที เก็บ 90 วัน ต้องใช้เฟิร์มแวร์เกตเวย์ 1.14.0 ขึ้นไป",
     gateway_page: "เกตเวย์", pick: "เลือกตู้", read: "อ่านค่า", reading: "กำลังอ่าน...",
-    setClock: "ซิงค์เวลาจากเครื่องนี้", hubRow: "แถว {n}", hubDirect: "ต่อตรง", hubCh: "ช่อง {n}", cabCustom: "กำหนดเอง", cabSlots: "{n} ช่อง", cabNone: "ไม่มี", schDays: "วันที่รีเซ็ต", schTimes: "เวลารีเซ็ต (ติ๊กช่วงที่ใช้)", schSlot: "ช่วงที่ {n}", schEvery: "ทุกวัน", schNoTime: "ไม่ได้เปิดช่วงเวลาใด", schName: "ตารางรีเซ็ต", schDay: ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"],
+    setClock: "ซิงค์เวลาจากเครื่องนี้", hubRow: "แถว {n}", hubDirect: "ต่อตรง", hubCh: "ช่อง {n}", cabCustom: "กำหนดเอง", cabSlots: "{n} ช่อง", cabNone: "ไม่มี", schDays: "วันที่รีเซ็ต", schTimes: "เวลารีเซ็ต (ติ๊กช่วงที่ใช้)", schSlot: "ช่วงที่ {n}", schEvery: "ทุกวัน", schNoTime: "ไม่ได้เปิดช่วงเวลาใด", schName: "ตารางรีเซ็ต", schDay: ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"], schDayS: ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"],
     resyncInfo: "เมื่อโมดูลไม่ตอบ เกตเวย์ส่งสัญญาณปรับจังหวะให้โมดูลทั้งบัสแล้วลองถามซ้ำอีกครั้ง เป็นการตั้งค่าชั่วคราวจะกลับมาเปิดเองหลังรีบูต",
     excInfo: "เมื่อบัส RS485 ไม่ตอบ ให้ตอบไคลเอนต์ด้วย exception 0x0B ทันที แทนที่จะปล่อยให้หมดเวลา เป็นการตั้งค่าชั่วคราวจะกลับมาปิดเองหลังรีบูต", clockWarn: "การตั้งนาฬิกาเป็นการเปิดใช้การรีเซ็ตตามเวลา (เช่น 03:00) ซึ่งตัดไฟชั้นวาง ตั้งเมื่อตั้งใจเท่านั้น",
     clockSet: "ตั้งนาฬิกาแล้ว", resync: "ซ่อมจังหวะหลังไม่มีคำตอบ (RESYNC)", exc: "ตอบ exception 0x0B ทันทีเมื่อบัสไม่ตอบ (EXC)",
@@ -75,7 +75,7 @@ const TXT = {
     search: "Search (name, IP)", noEvents: "No events in this range", noEventsOff: "No data yet because \"Collect events automatically\" above is off (turn it on and wait about 5 minutes for the first pull). Cabinets below firmware 1.14.0 have no events.", collect: "Collect events automatically",
     collectHint: "Pulls every saved cabinet's gateway log every 5 minutes, kept 90 days. Needs gateway firmware 1.14.0 or newer.",
     gateway_page: "Gateway", pick: "Choose cabinet", read: "Read", reading: "Reading...",
-    setClock: "Sync time from this PC", hubRow: "Row {n}", hubDirect: "Direct", hubCh: "Channel {n}", cabCustom: "Custom", cabSlots: "{n} slots", cabNone: "None", schDays: "Reset days", schTimes: "Reset times (tick the ones in use)", schSlot: "Time {n}", schEvery: "Every day", schNoTime: "No time switched on", schName: "Reset schedule", schDay: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    setClock: "Sync time from this PC", hubRow: "Row {n}", hubDirect: "Direct", hubCh: "Channel {n}", cabCustom: "Custom", cabSlots: "{n} slots", cabNone: "None", schDays: "Reset days", schTimes: "Reset times (tick the ones in use)", schSlot: "Time {n}", schEvery: "Every day", schNoTime: "No time switched on", schName: "Reset schedule", schDay: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], schDayS: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
     resyncInfo: "After a missing reply the gateway re-syncs every module on the bus and retries once. Temporary: returns to on when the gateway reboots.",
     excInfo: "When the RS485 bus does not answer, reply to the client with exception 0x0B at once instead of letting it time out. Temporary: returns to off when the gateway reboots.", clockWarn: "Setting the clock also arms the scheduled reset (e.g. 03:00), which cuts the shelf's power. Do it on purpose only.",
     clockSet: "Clock set", resync: "Re-sync after a missing reply (RESYNC)", exc: "Answer a bus timeout with exception 0x0B at once (EXC)",
@@ -319,7 +319,7 @@ const schCur = (key) => +cabCur(key), schSaved = (key) => +cabSaved(key);
 const schSet = (key, v) => { if (+v === schSaved(key)) delete S.gw.edits[key]; else S.gw.edits[key] = String(v); };
 const hhmmText = (n) => String(Math.floor(n / 100)).padStart(2, "0") + ":" + String(n % 100).padStart(2, "0");
 function schDesc(get) {
-  const days = get("sched.reset_days"), names = t("schDay"), slots = get("sched.reset_slots");
+  const days = get("sched.reset_days"), names = t("schDayS"), slots = get("sched.reset_slots");
   const d = days === 0 || days === 127 ? t("schEvery") : names.filter((_, i) => days & (1 << i)).join(",");
   const times = [0, 1, 2, 3].filter((i) => slots & (1 << i)).map((i) => hhmmText(get(schHhmmKey(i)))).join(", ");
   return times ? d + " " + times : t("schNoTime");
