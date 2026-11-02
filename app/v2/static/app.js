@@ -39,8 +39,7 @@ const TXT = {
     sVerdict: "สรุปผลรอบล่าสุด", sHistory: "รอบที่ผ่านมา", sView: "ดูสรุป", sNoRuns: "ยังไม่มีรอบที่ผ่านมา", sFrames: "เฟรมที่ถูกทิ้ง: {n}",
     sNeedType: "ตู้ที่ไม่ได้กำหนดชนิดจะเริ่มไม่ได้ ตั้งที่หน้า รายการตู้", sStarted: "เริ่มแล้ว {n} ตู้", sCsv: "ไฟล์ CSV", sLongNote: "รันบนเซิร์ฟเวอร์ ปิดหน้านี้ได้ ผลเก็บใน data/exports",
     labels_page: "ป้าย", firmware_page: "เฟิร์มแวร์", lbWard: "ชื่อวอร์ด (พิมพ์บนป้าย)", lbSerial: "ซีเรียลจากคลัง (ไม่เก็บ)", lbLayout: "แบบป้าย", lbPlate: "กรอบ",
-    lbPreview: "ดูตัวอย่างข้อมูล", lbDownload: "ดาวน์โหลด .lbx", lbNote: "อ่านชื่อ ไอพี MAC และแผนผังแถวจากเกตเวย์ตอนกด ป้ายจึงไม่ใช่ของเก่า ซีเรียลเป็นของฐานข้อมูลคลัง ไม่เก็บในโปรแกรม",
-    expCfg: "ส่งออก config (JSON)", impCfg: "นำเข้า config (JSON)", impDone: "นำเข้า {n} ค่า (ยังไม่บันทึก ตรวจแล้วกดบันทึกลงเกตเวย์)", impNone: "ไม่มีค่าที่ต่างจากเกตเวย์",
+    lbPreview: "ดูตัวอย่างข้อมูล", lbDownload: "ดาวน์โหลด .lbx", expCfg: "ส่งออก config (JSON)", impCfg: "นำเข้า config (JSON)", impDone: "นำเข้า {n} ค่า (ยังไม่บันทึก ตรวจแล้วกดบันทึกลงเกตเวย์)", impNone: "ไม่มีค่าที่ต่างจากเกตเวย์",
     shapeBad: "ชนิดตู้ใน รายการตู้ ({l}) ไม่ตรงกับเกตเวย์: {w}", shapeFix: "ตั้งค่าที่ตรงให้ (ยังไม่บันทึก)", shapeNoFix: "เกตเวย์รุ่นนี้แก้เองไม่ได้ (ไม่มี panel.shape)",
     fwOta: "อัปเดตโมดูลผ่าน OTA (หลายตู้)", fwImage: "อิมเมจ", fwStart: "เริ่มอัปเดต", fwCancel: "ยกเลิก", fwCancelQ: "ยกเลิกการอัปเดต? โมดูลที่ค้างอยู่ในเซสชันอาจต้องอัปเดตซ้ำ",
     fwStartQ: "อัปเดตเฟิร์มแวร์โมดูลทุกตัวใน {n} ตู้ด้วย {i}? ทำย้อนจากหน้านี้ไม่ได้ ตู้ที่ใช้งานอยู่จะใช้ไม่ได้ระหว่างอัปเดต", fwRun: "กำลังอัปเดต", fwNoOta: "ยังไม่มีอิมเมจ OTA ในโปรแกรมนี้",
@@ -100,8 +99,7 @@ const TXT = {
     sVerdict: "Latest run verdict", sHistory: "Past runs", sView: "View verdict", sNoRuns: "No past runs yet", sFrames: "Frames pymodbus discarded: {n}",
     sNeedType: "A cabinet with no type cannot start. Set it on the Sites page.", sStarted: "Started {n} cabinets", sCsv: "CSV files", sLongNote: "Runs on the server: you can close this page. Results go to data/exports.",
     labels_page: "Labels", firmware_page: "Firmware", lbWard: "Ward name (printed)", lbSerial: "Serial from the warehouse (not stored)", lbLayout: "Label layout", lbPlate: "Frame",
-    lbPreview: "Preview data", lbDownload: "Download .lbx", lbNote: "Name, IP, MAC and the row map are read from the gateway when you press the button, so a sticker is never stale. The serial belongs to the warehouse database and is not kept here.",
-    expCfg: "Export config (JSON)", impCfg: "Import config (JSON)", impDone: "Imported {n} values (not saved yet: review, then Save to gateway)", impNone: "Nothing differs from the gateway",
+    lbPreview: "Preview data", lbDownload: "Download .lbx", expCfg: "Export config (JSON)", impCfg: "Import config (JSON)", impDone: "Imported {n} values (not saved yet: review, then Save to gateway)", impNone: "Nothing differs from the gateway",
     shapeBad: "The cabinet type on the Sites page ({l}) does not match the gateway: {w}", shapeFix: "Stage the matching values (not saved yet)", shapeNoFix: "This firmware cannot be told (no panel.shape)",
     fwOta: "Module update over OTA (several cabinets)", fwImage: "Image", fwStart: "Start update", fwCancel: "Cancel", fwCancelQ: "Cancel the update? Modules left in a session may need updating again.",
     fwStartQ: "Update the firmware of every module in {n} cabinets with {i}? This cannot be undone from this page, and cabinets in use are unusable during the update.", fwRun: "Updating", fwNoOta: "No OTA image is bundled in this build",
@@ -399,7 +397,7 @@ function viewLabels() {
     + row("lbIQrKind", t("lbIQrKindV", { v: l.info.qr_version, ecc: esc(l.info.ecc), rec: esc(l.info.recover_pct) }))
     + `</dl><details><summary class="small">${t("lbIPayload")}</summary><pre class="mono small" style="white-space:pre-wrap;margin:8px 0 0;padding:10px;border-radius:8px;background:var(--surface2)">${esc(l.info.payload)}</pre></details></div>` : "";
   const pic = l.info && l.info.svg ? `<section class="card stack"><h3>${t("lbPicture")}</h3><div style="border:1px solid var(--line);border-radius:8px;background:#fff;padding:6px">${l.info.svg}</div><p class="small muted">${t("lbPicNote")}</p></section>` : "";
-  return `<h1>${t("labels_page")}</h1><p class="small muted">${t("lbNote")}</p>
+  return `<h1>${t("labels_page")}</h1>
     <section class="card stack"><div class="fgrid">
       <div class="field"><label>${t("pick")}</label><select id="lbsel"><option value="">—</option>${opts}</select></div>
       <div class="field"><label>${t("lbWard")}</label><input id="lbward" value="${esc(l.ward)}"></div>
