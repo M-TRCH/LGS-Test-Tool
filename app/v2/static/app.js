@@ -354,7 +354,6 @@ function viewGateway() {
     body = sh + `<section class="card"><dl class="kv"><dt>${t("fw")}</dt><dd class="mono">${esc(i.fw)}</dd><dt>${t("uptime")}</dt><dd>${fmtUp(+i["sys.up"] || 0)} (${esc(i["sys.reset"] || "")})</dd>
         <dt>${t("clients")}</dt><dd>${esc(i["net.client"] || "?")}/2</dd><dt>${t("clock")}</dt><dd>${i["time.set"] === "1" ? esc((i["time.now"] || "").replace("T", " ")) : t("clockUnset")}</dd></dl></section>
       <section class="card stack">${order.map((grp) => `<details><summary><b>${esc(TXT[lang]["g_" + grp] || grp)}</b> <span class="small muted">${groups[grp].length}</span></summary><div class="fgrid" style="margin-top:8px">${groups[grp].map(field).join("")}</div></details>`).join("") || `<p class="muted">${t("noKeys")}</p>`}</section>
-      <section class="card stack"><div class="row"><button class="btn" data-act="gw-export">${t("expCfg")}</button><label class="btn">${t("impCfg")}<input type="file" id="gwimport" accept=".json,application/json" hidden></label></div></section>
       <section class="card stack"><h3>${t("danger")}</h3><div class="row"><button class="btn" data-act="gw-time">${t("setClock")}</button><button class="btn" data-act="gw-discard">${t("discard")}</button><button class="btn" data-act="gw-reboot">${t("reboot")}</button><button class="btn" data-act="gw-defaults" style="color:var(--bad)">${t("defaults")}</button></div>${sw("resync", i["rtu.heal"] === "1", "", "resyncInfo")}${sw("exc", i["tcp.exc"] === "1", "", "excInfo")}</section>`;
   } else if (d && !d.ok) body = `<div class="notice bad">${esc(d.error)}</div>`;
   return `<div class="row between"><h1>${t("gateway_page")}</h1></div>
@@ -363,12 +362,15 @@ function viewGateway() {
     <div class="stack" style="margin-top:12px">${body}</div><div id="gwbar"></div>`;
 }
 function gwBar() {
-  const n = gwChanged(), el = $("#gwbar"); if (!el) return;
-  if (!n) { el.innerHTML = ""; return; }
+  const el = $("#gwbar"); if (!el) return;
+  const d = S.gw.data; if (!(d && d.ok)) { el.innerHTML = ""; return; }
+  const n = gwChanged();
   const shown = (k, v) => { const e = GWENUM[k] && GWENUM[k][v]; return e ? e[lang === "th" ? 0 : 1] : v; };
-  const diffs = Object.entries(S.gw.edits).map(([k, v]) => { const kk = S.gw.data.keys.find((x) => x.key === k); return `<div class="small">${esc(gwLabel(kk))}: ${esc(shown(k, kk.value))} → <b>${esc(shown(k, v))}</b></div>`; }).join("");
-  el.innerHTML = `<section class="card stack" style="position:sticky;bottom:calc(var(--navh) + 8px);margin-top:12px;border-color:var(--brand)"><b>${t("changes", { n })}</b>${diffs}
-    <div class="row"><button class="btn primary" data-act="gw-apply">${t("apply")}</button><button class="btn" data-act="gw-clear">${t("reset")}</button></div></section>`;
+  const diffs = n ? `<b>${t("changes", { n })}</b>` + Object.entries(S.gw.edits).map(([k, v]) => { const kk = d.keys.find((x) => x.key === k); return `<div class="small">${esc(gwLabel(kk))}: ${esc(shown(k, kk.value))} → <b>${esc(shown(k, v))}</b></div>`; }).join("") : "";
+  /* Always there: save, and the JSON file buttons. The list of changed values only while something has changed. */
+  el.innerHTML = `<section class="card stack" style="position:sticky;bottom:calc(var(--navh) + 8px);margin-top:12px;${n ? "border-color:var(--brand)" : ""}">${diffs}
+    <div class="row"><button class="btn primary" data-act="gw-apply"${n ? "" : " disabled"}>${t("apply")}</button>${n ? `<button class="btn" data-act="gw-clear">${t("reset")}</button>` : ""}
+      <button class="btn" data-act="gw-export">${t("expCfg")}</button><label class="btn">${t("impCfg")}<input type="file" id="gwimport" accept=".json,application/json" hidden></label></div></section>`;
 }
 
 
