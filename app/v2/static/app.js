@@ -15,7 +15,7 @@ const TXT = {
     search: "ค้นหา (ชื่อ, ไอพี)", noEvents: "ไม่มีเหตุการณ์ในช่วงนี้", noEventsOff: "ยังไม่มีข้อมูล เพราะยังไม่ได้เปิด \"เก็บเหตุการณ์อัตโนมัติ\" ด้านบน (เปิดแล้วรอประมาณ 5 นาทีให้ดึงรอบแรก) ตู้ที่ใช้เฟิร์มแวร์ต่ำกว่า 1.14.0 จะไม่มีข้อมูล", collect: "เก็บเหตุการณ์อัตโนมัติ",
     collectHint: "ดึงบันทึกจากเกตเวย์ทุกตู้ในรายการตู้ทุก 5 นาที เก็บ 90 วัน ต้องใช้เฟิร์มแวร์เกตเวย์ 1.14.0 ขึ้นไป",
     gateway_page: "เกตเวย์", pick: "เลือกตู้", read: "อ่านค่า", reading: "กำลังอ่าน...",
-    setClock: "ซิงค์เวลาจากเครื่องนี้",
+    setClock: "ซิงค์เวลาจากเครื่องนี้", hubRow: "แถว {n}", hubDirect: "ต่อตรง", hubCh: "ช่อง {n}",
     resyncInfo: "เมื่อโมดูลไม่ตอบ เกตเวย์ส่งสัญญาณปรับจังหวะให้โมดูลทั้งบัสแล้วลองถามซ้ำอีกครั้ง เป็นการตั้งค่าชั่วคราวจะกลับมาเปิดเองหลังรีบูต",
     excInfo: "เมื่อบัส RS485 ไม่ตอบ ให้ตอบไคลเอนต์ด้วย exception 0x0B ทันที แทนที่จะปล่อยให้หมดเวลา เป็นการตั้งค่าชั่วคราวจะกลับมาปิดเองหลังรีบูต", clockWarn: "การตั้งนาฬิกาเป็นการเปิดใช้การรีเซ็ตตามเวลา (เช่น 03:00) ซึ่งตัดไฟชั้นวาง ตั้งเมื่อตั้งใจเท่านั้น",
     clockSet: "ตั้งนาฬิกาแล้ว", resync: "ซ่อมจังหวะหลังไม่มีคำตอบ (RESYNC)", exc: "ตอบ exception 0x0B ทันทีเมื่อบัสไม่ตอบ (EXC)",
@@ -75,7 +75,7 @@ const TXT = {
     search: "Search (name, IP)", noEvents: "No events in this range", noEventsOff: "No data yet because \"Collect events automatically\" above is off (turn it on and wait about 5 minutes for the first pull). Cabinets below firmware 1.14.0 have no events.", collect: "Collect events automatically",
     collectHint: "Pulls every saved cabinet's gateway log every 5 minutes, kept 90 days. Needs gateway firmware 1.14.0 or newer.",
     gateway_page: "Gateway", pick: "Choose cabinet", read: "Read", reading: "Reading...",
-    setClock: "Sync time from this PC",
+    setClock: "Sync time from this PC", hubRow: "Row {n}", hubDirect: "Direct", hubCh: "Channel {n}",
     resyncInfo: "After a missing reply the gateway re-syncs every module on the bus and retries once. Temporary: returns to on when the gateway reboots.",
     excInfo: "When the RS485 bus does not answer, reply to the client with exception 0x0B at once instead of letting it time out. Temporary: returns to off when the gateway reboots.", clockWarn: "Setting the clock also arms the scheduled reset (e.g. 03:00), which cuts the shelf's power. Do it on purpose only.",
     clockSet: "Clock set", resync: "Re-sync after a missing reply (RESYNC)", exc: "Answer a bus timeout with exception 0x0B at once (EXC)",
@@ -299,6 +299,8 @@ const GWNAMES = {
 /* Thai wording for this page that differs from the shared i18n table the Classic tool also reads. */
 const GWTH = { "sys.name": "ชื่อเกตเวย์", "sys.wdt_ms": "Watchdog (ms)", "net.ip": "ไอพีเกตเวย์", "net.ntp": "ไอพีเซิร์ฟเวอร์เวลา NTP", "time.tz_min": "โซนเวลา (UTC)",
   "rs485.t2_ms": "เวลาเงียบที่ถือว่าจบคำตอบ (ms)", "usb.gap_ms": "เวลาเงียบที่ถือว่าจบคำสั่ง (ms)", "panel.preset": "พรีเซ็ตสีที่ปุ่มใช้", "bus.hub_map": "แผนผังชั้น", "bus.hub_retry": "จำนวนยิงกระตุ้นเมื่อข้ามช่อง", "bus.hub_gap_ms": "เผื่อเวลาเพิ่ม (ms)" };
+/* bus.hub_map is ten numbers, one per row (slave IDs 11-108): which hub channel the row hangs on, 0 = wired straight. */
+const hubRows = (str) => { const a = String(str || "").split(",").map((x) => parseInt(x, 10) || 0); while (a.length < 10) a.push(0); return a.slice(0, 10); };
 /* The "?" button, only where there is something to say: no button when the name says it all, or when there is no explanation text. */
 const GWNOINFO = new Set(["sys.name", "net.enabled", "net.dhcp", "net.ip", "net.mask", "net.gw", "net.dns", "net.port", "net.ntp", "net.ntp_port", "time.tz_min", "rs485.baud", "panel.enabled", "sched.reset_enabled"]);
 function whyBtn(k) {
@@ -333,6 +335,12 @@ function viewGateway() {
     const sw = (name, on, act, info, locked) => `<div class="switch"><div><b>${t(name)}</b><button class="why" data-act="sw-info" data-info="${info}" type="button" aria-label="${t("explain")}">?</button></div><button class="sw" role="switch" aria-checked="${on}" data-act="${act || "gw-vol"}" data-name="${name}"${locked ? " disabled" : ""}></button></div>`;
     const field = (k) => {
       const ed = k.key in g.edits, val = ed ? g.edits[k.key] : k.value;
+      if (k.key === "bus.hub_map") {
+        const cur = hubRows(val), saved = hubRows(k.value);
+        const cells = cur.map((v, i) => `<div class="hubcell"><span>${t("hubRow", { n: i + 1 })}</span><select data-hubrow="${i}"${v !== saved[i] ? ' style="border-color:var(--brand)"' : ""}>`
+          + `<option value="0"${v === 0 ? " selected" : ""}>${t("hubDirect")}</option>` + [1, 2, 3, 4, 5, 6, 7, 8].map((c) => `<option value="${c}"${v === c ? " selected" : ""}>${t("hubCh", { n: c })}</option>`).join("") + `</select></div>`).join("");
+        return `<div class="field" style="grid-column:1/-1"><label>${esc(gwLabel(k))}${whyBtn(k)}</label><div class="hubgrid">${cells}</div></div>`;
+      }
       if (GWENUM[k.key] && !k.ro) {
         const L = GWENUM[k.key], i18 = lang === "th" ? 0 : 1, vals = Object.keys(L).sort((x, y) => x - y), cur = String(val);
         const opts = vals.map((v) => `<option value="${v}"${v === cur ? " selected" : ""}>${esc(L[v][i18])}</option>`).join("") + (vals.includes(cur) ? "" : `<option value="${esc(cur)}" selected>${esc(cur)}</option>`);
@@ -859,6 +867,13 @@ document.addEventListener("input", (ev) => {
     return;
   }
   if (ev.target.closest(".sitesrow")) { S.dirty = true; }
+  if (ev.target.dataset && ev.target.dataset.hubrow !== undefined) {
+    const k = "bus.hub_map", orig = hubRows(S.gw.data.keys.find((x) => x.key === k).value).join(",");
+    const now = [...document.querySelectorAll("[data-hubrow]")].map((x) => x.value).join(",");
+    if (now === orig) delete S.gw.edits[k]; else S.gw.edits[k] = now;
+    const saved = orig.split(","); document.querySelectorAll("[data-hubrow]").forEach((x, i) => { x.style.borderColor = x.value !== saved[i] ? "var(--brand)" : ""; });
+    gwBar(); return;
+  }
   if (ev.target.dataset && ev.target.dataset.key) {
     const k = ev.target.dataset.key, orig = S.gw.data.keys.find((x) => x.key === k).value;
     if (ev.target.value === orig) delete S.gw.edits[k]; else S.gw.edits[k] = ev.target.value;
