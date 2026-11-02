@@ -299,6 +299,13 @@ const GWNAMES = {
 /* Thai wording for this page that differs from the shared i18n table the Classic tool also reads. */
 const GWTH = { "sys.name": "ชื่อเกตเวย์", "sys.wdt_ms": "Watchdog (ms)", "net.ip": "ไอพีเกตเวย์", "net.ntp": "ไอพีเซิร์ฟเวอร์เวลา NTP", "time.tz_min": "โซนเวลา (UTC)",
   "rs485.t2_ms": "เวลาเงียบที่ถือว่าจบคำตอบ (ms)", "usb.gap_ms": "เวลาเงียบที่ถือว่าจบคำสั่ง (ms)", "panel.preset": "พรีเซ็ตสีที่ปุ่มใช้", "bus.hub_map": "แผนผังชั้น", "bus.hub_retry": "จำนวนยิงกระตุ้นเมื่อข้ามช่อง", "bus.hub_gap_ms": "เผื่อเวลาเพิ่ม (ms)" };
+/* The "?" button, only where there is something to say: no button when the name says it all, or when there is no explanation text. */
+const GWNOINFO = new Set(["sys.name", "net.enabled", "net.dhcp", "net.ip", "net.mask", "net.gw", "net.dns", "net.port", "net.ntp", "net.ntp_port", "panel.enabled", "sched.reset_enabled"]);
+function whyBtn(k) {
+  const tx = k.text && k.text[lang];
+  if (k.ro || GWNOINFO.has(k.key) || !(tx && tx.hint)) return "";
+  return `<button class="why" data-act="hint" data-key="${esc(k.key)}" type="button" aria-label="${t("explain")}">?</button>`;
+}
 function gwLabel(k) { if (lang === "th" && GWTH[k.key]) return GWTH[k.key]; const tx = k.text && k.text[lang]; return (tx && tx.label) || (GWNAMES[k.key] && GWNAMES[k.key][lang === "th" ? 0 : 1]) || k.key; }
 
 function showInfo(key) {
@@ -327,10 +334,10 @@ function viewGateway() {
       if (GWENUM[k.key] && !k.ro) {
         const L = GWENUM[k.key], i18 = lang === "th" ? 0 : 1, vals = Object.keys(L).sort((x, y) => x - y), cur = String(val);
         const opts = vals.map((v) => `<option value="${v}"${v === cur ? " selected" : ""}>${esc(L[v][i18])}</option>`).join("") + (vals.includes(cur) ? "" : `<option value="${esc(cur)}" selected>${esc(cur)}</option>`);
-        return `<div class="field"><label>${esc(gwLabel(k))}<button class="why" data-act="hint" data-key="${esc(k.key)}" type="button" aria-label="${t("explain")}">?</button></label>
+        return `<div class="field"><label>${esc(gwLabel(k))}${whyBtn(k)}</label>
           <select data-key="${esc(k.key)}"${ed ? ' style="border-color:var(--brand)"' : ""}>${opts}</select></div>`;
       }
-      return `<div class="field"><label>${esc(gwLabel(k))}${k.ro ? "" : `<button class="why" data-act="hint" data-key="${esc(k.key)}" type="button" aria-label="${t("explain")}">?</button>`}</label>
+      return `<div class="field"><label>${esc(gwLabel(k))}${whyBtn(k)}</label>
         <input data-key="${esc(k.key)}" value="${esc(val)}" ${k.ro ? 'disabled class="ro"' : ""} ${ed ? 'style="border-color:var(--brand)"' : ""}></div>`;
     };
     const sh = d.shape && d.shape.layout && !d.shape.agreed ? `<div class="notice">${t("shapeBad", { l: esc(d.shape.label), w: esc(d.shape.why) })}<div class="row" style="margin-top:8px">${d.shape.fixable ? `<button class="btn" data-act="gw-shape">${t("shapeFix")}</button>` : `<span class="small">${t("shapeNoFix")}</span>`}</div></div>` : "";
