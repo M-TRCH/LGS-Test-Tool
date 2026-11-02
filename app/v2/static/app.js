@@ -251,6 +251,19 @@ function viewEvents() {
 
 
 const GWGROUPS = ["sys", "rs485", "usb", "net", "time", "bus", "panel", "sched"];
+/* Settings that pick one of a few meanings (panel.h, gw_config.cpp): a list, not a number. value -> [th, en]. */
+const GWENUM = (() => {
+  const btn = { 0: ["ไม่ทำอะไร", "Does nothing"], 1: ["เปิดไฟทุกช่อง", "Light every slot"], 2: ["ปิดไฟทั้งหมด", "Everything off"], 3: ["ปลดล็อกทุกช่อง", "Unlock every slot"],
+    4: ["รีเซ็ตไฟชั้นวาง", "Reset the shelf power"], 5: ["ทดสอบไฟสถานะ", "Test the status lamps"], 6: ["เปิดทุกหน้าต่างทุกช่อง (ตู้ 80)", "Every window of every slot (type 80)"] };
+  const out = { 0: ["ไม่ใช้", "Not used"], 1: ["พร้อมใช้งาน", "Ready"], 2: ["กำลังทำงาน", "Busy"], 3: ["ผิดปกติ", "Fault"], 4: ["สาย LAN เชื่อมอยู่", "LAN up"],
+    5: ["มีไคลเอนต์เชื่อมอยู่", "A client is connected"], 6: ["กำลังไล่ช่อง", "A sweep is running"], 7: ["กำลังตัดไฟชั้นวาง", "Shelf power is dropped"], 8: ["ไฟเลี้ยงชั้นวาง", "Shelf power"] };
+  const m = { "panel.cabinet": { 0: ["ตามค่ารูปทรง (panel.shape)", "Follow the shape (panel.shape)"], 40: ["40 ช่อง", "40 slots"], 64: ["64 ช่อง", "64 slots"], 80: ["80 ช่อง", "80 slots"] },
+    "rs485.baud": { 9600: ["9600", "9600"], 19200: ["19200", "19200"], 38400: ["38400", "38400"], 57600: ["57600", "57600"] },
+    "panel.preset": Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8].map((n) => [n, ["พรีเซ็ต " + n, "Preset " + n]])) };
+  for (let n = 1; n <= 5; n++) m["panel.btn" + n] = btn;
+  for (let n = 1; n <= 4; n++) m["panel.out" + n] = out;
+  return m;
+})();
 /* Keys the gateway treats as on/off (KIND_BOOL in gw_config.cpp): a switch, never a number. */
 const GWBOOL = new Set(["net.enabled", "net.dhcp", "panel.enabled", "panel.lamps", "sched.reset_enabled", "net.console"]);
 function gwChanged() { return Object.keys(S.gw.edits).length; }
@@ -281,6 +294,12 @@ function viewGateway() {
       if (GWBOOL.has(k.key)) {
         return `<div class="field"><div class="switch"><label style="margin:0">${esc(gwLabel(k))}<button class="why" data-act="hint" data-key="${esc(k.key)}" type="button" aria-label="${t("explain")}">?</button></label>
           <button class="sw" role="switch" aria-checked="${val === "1"}" data-act="gw-bool" data-key="${esc(k.key)}"${ed ? ' style="outline:2px solid var(--brand)"' : ""}></button></div></div>`;
+      }
+      if (GWENUM[k.key] && !k.ro) {
+        const L = GWENUM[k.key], i18 = lang === "th" ? 0 : 1, vals = Object.keys(L), cur = String(val);
+        const opts = vals.map((v) => `<option value="${v}"${v === cur ? " selected" : ""}>${esc(L[v][i18])}</option>`).join("") + (vals.includes(cur) ? "" : `<option value="${esc(cur)}" selected>${esc(cur)}</option>`);
+        return `<div class="field"><label>${esc(gwLabel(k))}<button class="why" data-act="hint" data-key="${esc(k.key)}" type="button" aria-label="${t("explain")}">?</button></label>
+          <select data-key="${esc(k.key)}"${ed ? ' style="border-color:var(--brand)"' : ""}>${opts}</select></div>`;
       }
       return `<div class="field"><label>${esc(gwLabel(k))}${k.ro ? ` <span class="chip off">${t("ro")}</span>` : ""}<button class="why" data-act="hint" data-key="${esc(k.key)}" type="button" aria-label="${t("explain")}">?</button></label>
         <input data-key="${esc(k.key)}" value="${esc(val)}" ${k.ro ? "disabled" : ""} ${ed ? 'style="border-color:var(--brand)"' : ""}></div>`;
