@@ -64,6 +64,8 @@ h1{font-size:22px;margin:2px 0 10px}h2{font-size:17px;margin:0}h3{font-size:15px
 /* Same box model and height for every control in a field row (a select was 2px taller than its neighbours). */
 .field select,.field input:not([type=checkbox]){box-sizing:border-box;height:var(--tap)}
 /* File pickers follow the theme instead of the browser default grey button. */
+.filebox{display:flex;align-items:center;gap:10px;box-sizing:border-box;height:var(--tap);padding:0 5px;border:1px solid var(--line);border-radius:10px;background:var(--surface);min-width:0}
+.filebox .btn{min-height:0;height:36px;padding:0 14px;border-radius:8px;flex:none}.filebox span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 input[type=file]{max-width:100%;box-sizing:border-box;min-height:var(--tap);padding:0 6px 0 6px;display:flex;align-items:center;line-height:var(--tap);color:var(--muted);font:inherit;font-size:13px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
 input[type=file]::file-selector-button{margin:0 10px 0 0;height:36px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font:inherit;font-weight:600;cursor:pointer;vertical-align:middle}
 input[type=file]::file-selector-button:hover{background:var(--surface);border-color:var(--brand)}
