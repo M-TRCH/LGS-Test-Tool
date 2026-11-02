@@ -3,3 +3,4 @@ nicegui>=2.11,<3    # tested: 2.24.2
 pymodbus>=3.9,<4    # tested: 3.14.0
 pyserial>=3.5       # tested: 3.5
 fpdf2>=2.7,<3       # tested: 2.8.8 — the site report PDF
+segno>=1.6,<2       # the real QR symbol in the label preview (pure Python)

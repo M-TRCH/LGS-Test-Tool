@@ -1,13 +1,22 @@
 """A picture of a .lbx for the Labels page.
 
 Drawn from the very label.xml that gets downloaded, so what is shown is the
-geometry and text that will be printed. Two honest limits: the QR is a
-placeholder block at the right size (the printer software generates the real
-symbol and this tool carries no QR encoder), and the font is whatever the
-browser has, not Brother's rendering.
+geometry and text that will be printed:
+
+* the QR is the real symbol, encoded here with the version and error
+  correction the file asks for (segno), not a stand-in;
+* text is placed the way the editor places it: the object's top edge plus the
+  font's own ascent, drawn in the font the file names, never squeezed. The
+  ascent comes from the font file itself when this machine has it (Windows
+  ships Arial and Browallia New);
+* what stays approximate: the editor's own renderer and the font on the device
+  that views the page. A phone has no Browallia New, so it shows a close
+  stand-in at the true position.
 """
 import io
+import os
 import zipfile
+from functools import lru_cache
 from xml.etree import ElementTree as ET
 from xml.sax.saxutils import escape
 
@@ -16,6 +25,9 @@ _NS = {"pt": "http://schemas.brother.info/ptouch/2007/lbx/main",
        "text": "http://schemas.brother.info/ptouch/2007/lbx/text",
        "draw": "http://schemas.brother.info/ptouch/2007/lbx/draw",
        "barcode": "http://schemas.brother.info/ptouch/2007/lbx/barcode"}
+
+_ECC = {"7%": "l", "15%": "m", "25%": "q", "30%": "h"}
+_FALLBACK = "IBM Plex Sans Thai,IBM Plex Sans,Arial,sans-serif"
 
 
 def _pt(v: str) -> float:
@@ -26,24 +38,94 @@ def _box(style) -> tuple:
     return _pt(style.get("x")), _pt(style.get("y")), _pt(style.get("width")), _pt(style.get("height"))
 
 
-def _qr_block(x: float, y: float, w: float, h: float) -> str:
-    """Finder-pattern look-alike so it reads as a QR without pretending to be one."""
-    n, cell = 25, w / 25
-    out = [f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="#fff" stroke="#bbb" stroke-width=".4" stroke-dasharray="2 1.5"/>']
-    for fx, fy in ((0, 0), (n - 7, 0), (0, n - 7)):
-        X, Y = x + fx * cell, y + fy * cell
-        out.append(f'<rect x="{X:.2f}" y="{Y:.2f}" width="{7 * cell:.2f}" height="{7 * cell:.2f}" fill="#111"/>'
-                   f'<rect x="{X + cell:.2f}" y="{Y + cell:.2f}" width="{5 * cell:.2f}" height="{5 * cell:.2f}" fill="#fff"/>'
-                   f'<rect x="{X + 2 * cell:.2f}" y="{Y + 2 * cell:.2f}" width="{3 * cell:.2f}" height="{3 * cell:.2f}" fill="#111"/>')
-    seed = 7
-    for r in range(n):
-        for c in range(n):
-            if (r < 8 and (c < 8 or c >= n - 8)) or (r >= n - 8 and c < 8):
-                continue
-            seed = (seed * 1103515245 + 12345) & 0x7FFFFFFF
-            if seed & 0x10000:
-                out.append(f'<rect x="{x + c * cell:.2f}" y="{y + r * cell:.2f}" width="{cell:.2f}" height="{cell:.2f}" fill="#111"/>')
-    return "".join(out)
+# ── QR ────────────────────────────────────────────────────────────────────────
+def _qr_placeholder(x: float, y: float, w: float, h: float) -> str:
+    """Only when the symbol cannot be encoded (segno missing, data too long)."""
+    return (f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="#fff" stroke="#bbb" stroke-width=".4" '
+            f'stroke-dasharray="2 1.5"/><text x="{x + w / 2:.1f}" y="{y + h / 2:.1f}" font-size="5" text-anchor="middle" '
+            f'fill="#888">QR</text>')
+
+
+def _qr_symbol(el, x: float, y: float, w: float, h: float) -> str:
+    """The real module matrix, one <path>, inside the object's box.
+
+    The file states model, error correction and version, so asking for exactly
+    those gives the symbol the editor would draw (same size and density). The
+    box includes two modules of quiet zone on each side."""
+    try:
+        import segno
+        data = el.find("pt:data", _NS)
+        qs = el.find("barcode:qrcodeStyle", _NS)
+        text = (data.text or "") if data is not None else ""
+        ecc = _ECC.get(qs.get("eccLevel", "25%"), "q") if qs is not None else "q"
+        version = int(qs.get("version")) if qs is not None and qs.get("version") else None
+        q = segno.make(text, error=ecc, version=version, boost_error=False, micro=False, encoding="utf-8")
+        m = [list(row) for row in q.matrix]
+    except Exception:                                            # noqa: BLE001
+        return _qr_placeholder(x, y, w, h)
+    n = len(m)
+    cell = w / (n + 4)
+    ox, oy = x + 2 * cell, y + (h - n * cell) / 2
+    runs = []
+    for r, row in enumerate(m):
+        c = 0
+        while c < n:
+            if row[c]:
+                s = c
+                while c < n and row[c]:
+                    c += 1
+                runs.append(f"M{ox + s * cell:.3f} {oy + r * cell:.3f}h{(c - s) * cell:.3f}v{cell:.3f}h-{(c - s) * cell:.3f}z")
+            else:
+                c += 1
+    return (f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="#fff"/>'
+            f'<path d="{"".join(runs)}" fill="#000" shape-rendering="crispEdges"/>')
+
+
+# ── text ──────────────────────────────────────────────────────────────────────
+@lru_cache(maxsize=None)
+def _vmetrics(font: str, weight: int):
+    """(unitsPerEm, winAscent, winDescent) of the face on this machine, or None.
+    GDI cell height is winAscent + winDescent, which is what the editor lays a
+    text object out with."""
+    try:
+        from .. import labels
+        entry = labels._FONT_FILES.get((font, weight)) or labels._FONT_FILES.get((font, 400))
+        if not entry:
+            return None
+        name, index = entry
+        path = os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts", name)
+        if not os.path.exists(path):
+            return None
+        from fontTools.ttLib import TTCollection, TTFont
+        f = TTCollection(path).fonts[index] if path.lower().endswith(".ttc") else TTFont(path)
+        os2 = f["OS/2"]
+        return f["head"].unitsPerEm, os2.usWinAscent, os2.usWinDescent
+    except Exception:                                            # noqa: BLE001
+        return None
+
+
+def _text_objects(el, x: float, y: float, w: float) -> list:
+    data = el.find("pt:data", _NS)
+    fx = el.find("text:ptFontInfo/text:fontExt", _NS)
+    lf = el.find("text:ptFontInfo/text:logFont", _NS)
+    al = el.find("text:textAlign", _NS)
+    size = _pt(fx.get("size")) if fx is not None else 9
+    face = lf.get("name", "Arial") if lf is not None else "Arial"
+    weight = 700 if (lf is not None and int(lf.get("weight", "400")) >= 600) else 400
+    ha = al.get("horizontalAlignment") if al is not None else "LEFT"
+    anchor, tx = {"CENTER": ("middle", x + w / 2), "RIGHT": ("end", x + w)}.get(ha, ("start", x))
+    vm = _vmetrics(face, weight)
+    if vm:
+        upm, asc, desc = vm
+        ascent, pitch = size * asc / upm, size * (asc + desc) / upm
+    else:                                                        # no font file here: the old estimate
+        ascent, pitch = size * 0.85, size * 1.15
+    out = []
+    for i, ln in enumerate((data.text or "").split("\n")):
+        out.append(f'<text x="{tx:.2f}" y="{y + ascent + i * pitch:.2f}" font-size="{size}" text-anchor="{anchor}" '
+                   f'font-weight="{weight}" font-family="{escape(face)},{_FALLBACK}" fill="#000" '
+                   f'xml:space="preserve">{escape(ln)}</text>')
+    return out
 
 
 def svg_from_lbx(blob: bytes) -> str:
@@ -68,23 +150,8 @@ def svg_from_lbx(blob: bytes) -> str:
         elif tag == "poly":
             parts.append(f'<line x1="{x + w / 2}" y1="{y}" x2="{x + w / 2}" y2="{y + h}" stroke="#111" stroke-width=".5"/>')
         elif tag == "barcode":
-            parts.append(_qr_block(x, y, w, h))
+            parts.append(_qr_symbol(el, x, y, w, h))
         elif tag == "text":
-            data = el.find("pt:data", _NS)
-            fx = el.find("text:ptFontInfo/text:fontExt", _NS)
-            lf = el.find("text:ptFontInfo/text:logFont", _NS)
-            al = el.find("text:textAlign", _NS)
-            size = _pt(fx.get("size")) if fx is not None else 9
-            bold = lf is not None and int(lf.get("weight", "400")) >= 600
-            ha = (al.get("horizontalAlignment") if al is not None else "LEFT")
-            anchor, tx = {"CENTER": ("middle", x + w / 2), "RIGHT": ("end", x + w)}.get(ha, ("start", x))
-            lines = (data.text or "").split("\n")
-            for i, ln in enumerate(lines):
-                parts.append(f'<text x="{tx:.1f}" y="{y + size * (0.85 + 1.15 * i):.1f}" font-size="{size}" text-anchor="{anchor}" '
-                             f'font-weight="{700 if bold else 400}" font-family="IBM Plex Sans Thai,IBM Plex Sans,Arial,sans-serif" '
-                             f'fill="#111" textLength="{min(w, max(1, len(ln) * size * 0.62)):.1f}" lengthAdjust="spacingAndGlyphs">{escape(ln)}</text>'
-                             if len(ln) * size * 0.62 > w else
-                             f'<text x="{tx:.1f}" y="{y + size * (0.85 + 1.15 * i):.1f}" font-size="{size}" text-anchor="{anchor}" '
-                             f'font-weight="{700 if bold else 400}" font-family="IBM Plex Sans Thai,IBM Plex Sans,Arial,sans-serif" fill="#111">{escape(ln)}</text>')
+            parts.extend(_text_objects(el, x, y, w))
     parts.append("</svg>")
     return "".join(parts)
