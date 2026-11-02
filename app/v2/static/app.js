@@ -452,6 +452,12 @@ function cmStatus() {
   Object.keys(c.boards).forEach((id) => { const b = c.boards[id]; parts.push(`<span class="chip ${b === "next" ? "warn" : b === "ok" ? "ok" : "bad"}">${esc(id)}</span>`); });
   return parts.join(" ");
 }
+/* "LGS 80 ช่อง" / "LGS 80 slots": the count is the slot count, so it is not repeated. */
+function layoutName(l) {
+  const n = l.ids.length, fridge = /^lgs\d+r$/.test(l.key), fam = /^lgs\d+r?$/.test(l.key) ? "LGS" : /^smt/.test(l.key) ? "SMT" : "";
+  if (!fam) return l.label;
+  return lang === "th" ? `${fam} ${n} ช่อง${fridge ? " (ตู้เย็น)" : ""}` : `${fam} ${n} slots${fridge ? " (fridge)" : ""}`;
+}
 function cmIdsText() { return [...S.cm.sel].sort((a, b) => a - b).join(","); }
 function cmGridHtml() {
   const c = S.cm, g = (c.opts && c.opts.grid) || { rows: 10, cols: 8 }, batch = c.mode === "batch";
@@ -541,7 +547,7 @@ function viewCommission() {
   let probe = "";
   if (pr) probe = !pr.cli ? `<div class="notice bad">${t("cmNoCli")}</div>` : pr.probes.length ? `<div class="notice info">${t("cmProbeOk", { n: pr.probes.length })} · ${pr.probes.map((p) => esc(p.serial)).join(", ")} · ${t("cmCli")} ${esc(pr.version || "")}</div>` : `<div class="notice bad">${t("cmNoProbe")}</div>`;
   const same = o ? o.layouts.find((l) => l.ids.length === c.sel.size && l.ids.every((i) => c.sel.has(i))) : null;
-  const presets = o ? o.layouts.map((l) => `<option value="${esc(l.key)}"${same && same.key === l.key ? " selected" : ""}>${esc(l.label)} (${l.ids.length})</option>`).join("") : "";
+  const presets = o ? o.layouts.map((l) => `<option value="${esc(l.key)}"${same && same.key === l.key ? " selected" : ""}>${esc(layoutName(l))}</option>`).join("") : "";
   const idField = c.mode === "batch"
     ? `<div class="field" style="grid-column:1/-1"><label>${t("cmGrid")}</label>
         <div class="row"><select id="cmpreset"><option value="">${t("cmPreset")}</option>${presets}</select><button class="btn" data-act="cm-clear">${t("cmClear")}</button><span class="small muted">${t("cmSelected", { n: c.sel.size })}</span></div>${cmGridHtml()}</div>`
