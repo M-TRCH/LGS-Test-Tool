@@ -25,7 +25,7 @@ const TXT = {
     applied: "บันทึกแล้ว", needReboot: "ต้องรีบูตจึงมีผล: {k}", reset: "ล้างที่แก้", ro: "อ่านอย่างเดียว", rebootKey: "ต้องรีบูต",
     doneOk: "สำเร็จ", noPassword: "ยังไม่ตั้งรหัสผ่านหน้าเว็บ ทุกคนในเครือข่ายแก้ค่าเกตเวย์ได้",
     module_page: "โมดูล", devId: "รหัสโมดูล (ID)", withStats: "รวมสถิติ", auto: "อ่านอัตโนมัติทุก 2 วินาที", modNotRead: "เลือกตู้ ใส่ ID โมดูล แล้วกดอ่านค่า",
-    cDevice: "อุปกรณ์", cRuntime: "การทำงาน", cHealth: "สุขภาพระบบ", cReset: "สาเหตุรีเซ็ตล่าสุด", cTemp: "อุณหภูมิ", cLatch: "กลอน / จอ", cStats: "สถิติ",
+    cDevice: "อุปกรณ์", modInfo: "ข้อมูลโมดูล", hOk: "ปกติ", hBad: "มีปัญหา {n}", cRuntime: "การทำงาน", cHealth: "สุขภาพระบบ", cReset: "สาเหตุรีเซ็ตล่าสุด", cTemp: "อุณหภูมิ", cLatch: "กลอน / จอ", cStats: "สถิติ",
     mType: "ชนิด", mFw: "เฟิร์มแวร์", mHw: "ฮาร์ดแวร์", mBaud: "Baud", mUid: "หมายเลขชิป", mUptime: "เปิดมาแล้ว", mBoots: "จำนวนครั้งที่บูต", mMode: "โหมด",
     mPreset: "พรีเซ็ตที่ใช้อยู่", mButton: "กดยืนยันแล้ว", mRoom: "ในห้อง", mBoard: "บนบอร์ด", mCurrent: "กระแสขาเข้า", mLatch: "กลอน", mLocked: "ล็อก", mUnlocked: "ปลดแล้ว",
     mUnlockedAgo: "ปลดล่าสุด {s} วินาทีก่อน", mDisplay: "ตัวเลขบนจอ", na: "ไม่มี", presets: "พรีเซ็ตสี", pLight: "ไฟ", pLightDisp: "ไฟ + เลข", pUnlock: "ปลดกลอน", pUnlockDisp: "ปลดกลอน + เลข", grpLight: "ไฟ", grpLatch: "กลอน", grpOther: "จอและอื่น ๆ", cLight: "เปิดไฟ", cLightNum: "เปิดไฟ + เลข", dispOff: "ปิดจอ", colorTitle: "{c} · เลือกสี", colorN: "สี {n}",
@@ -85,7 +85,7 @@ const TXT = {
     applied: "Saved", needReboot: "Needs a reboot to take effect: {k}", reset: "Clear edits", ro: "read-only", rebootKey: "needs reboot",
     doneOk: "Done", noPassword: "No web password set: anyone on the network can edit the gateway.",
     module_page: "Module", devId: "Module ID", withStats: "Include statistics", auto: "Read automatically every 2 s", modNotRead: "Choose a cabinet, enter a module ID, press Read",
-    cDevice: "Device", cRuntime: "Runtime", cHealth: "Health", cReset: "Last reset cause", cTemp: "Temperatures", cLatch: "Latch / display", cStats: "Statistics",
+    cDevice: "Device", modInfo: "Module details", hOk: "healthy", hBad: "{n} issue(s)", cRuntime: "Runtime", cHealth: "Health", cReset: "Last reset cause", cTemp: "Temperatures", cLatch: "Latch / display", cStats: "Statistics",
     mType: "Type", mFw: "Firmware", mHw: "Hardware", mBaud: "Baud", mUid: "Chip serial", mUptime: "Uptime", mBoots: "Boots", mMode: "Mode",
     mPreset: "Active preset", mButton: "Confirm presses", mRoom: "Room", mBoard: "Board", mCurrent: "Input current", mLatch: "Latch", mLocked: "locked", mUnlocked: "unlocked",
     mUnlockedAgo: "last unlock {s} s ago", mDisplay: "Display number", na: "n/a", presets: "Colour presets", pLight: "Light", pLightDisp: "Light + number", pUnlock: "Unlock", pUnlockDisp: "Unlock + number", grpLight: "Light", grpLatch: "Latch", grpOther: "Display and more", cLight: "Light", cLightNum: "Light + number", dispOff: "Display off", colorTitle: "{c} · pick a colour", colorN: "Colour {n}",
@@ -439,16 +439,20 @@ function viewModule() {
   else if (d && d.device) {
     const dv = d.device, rt = d.runtime, tp = d.temps, lt = d.latch;
     const hc = (d.health || []).map((h) => `<span class="chip ${h.ok === null ? "off" : h.ok ? "ok" : "bad"}"><i class="dot"></i>${esc(h.name)}${h.ok === null ? " " + t("na") : ""}</span>`).join(" ");
-    const st = d.stats ? `<section class="card stack"><h3>${t("cStats")}</h3><div class="small">${t("fires", { c: d.stats.fires, s: d.stats.seconds })}</div>
+    const st = d.stats ? `<section class="msub stack"><h3>${t("cStats")}</h3><div class="small">${t("fires", { c: d.stats.fires, s: d.stats.seconds })}</div>
       <table><tr><th>#</th><th>${t("count")}</th><th>${t("seconds")}</th></tr>${d.stats.presets.map((p) => `<tr><td>${p.p}</td><td>${p.count}</td><td>${p.seconds}</td></tr>`).join("")}</table></section>` : "";
-    cards = `<div class="cabs">
-      <section class="card stack"><h3>${t("cDevice")}</h3>${kv([[t("mType"), esc(dv.type)], [t("mFw"), esc(dv.fw)], [t("mHw"), esc(dv.hw)], [t("mBaud"), esc(dv.baud) + " · ID " + dv.id], dv.uid ? [t("mUid"), `<span class="mono">${esc(dv.uid)}</span>`] : null])}</section>
-      <section class="card stack"><h3>${t("cRuntime")}</h3>${kv([[t("mUptime"), esc(rt.uptime)], [t("mBoots"), rt.boots], [t("mMode"), esc(rt.mode)], [t("mPreset"), esc(rt.preset)], rt.button !== undefined && rt.button !== null ? [t("mButton"), rt.button + (rt.held ? " ●" : "")] : null])}</section>
-      <section class="card stack"><h3>${t("cHealth")}</h3><div class="row">${hc}</div>${d.reset ? `<div class="small muted">${t("cReset")}: ${esc(d.reset)}</div>` : ""}</section>
-      ${tp ? `<section class="card stack"><h3>${t("cTemp")}</h3>${kv([[t("mRoom"), `<span style="${tp.fault ? "color:var(--bad)" : ""}">${esc(tp.room)}</span>`], [t("mBoard"), `<span style="${tp.fault ? "color:var(--bad)" : ""}">${esc(tp.board)}</span>`], tp.current ? [t("mCurrent"), esc(tp.current)] : null])}</section>` : ""}
-      ${lt ? `<section class="card stack"><h3>${t("cLatch")}</h3>${kv([[t("mLatch"), lt.state ? t(lt.state === "locked" ? "mLocked" : "mUnlocked") : "—"], [t("mUnlockedAgo", { s: lt.unlocked_ago_s }), ""], d.display !== undefined ? [t("mDisplay"), d.display] : null].map((r) => (r && r[1] === "" ? [r[0], ""] : r)))}</section>` : ""}
+    const bad = (d.health || []).filter((h) => h.ok === false).length;    /* a sensor fault is already one of these */
+    const sumChip = `<span class="chip ${bad ? "bad" : "ok"}"><i class="dot"></i>${bad ? t("hBad", { n: bad }) : t("hOk")}</span>`;
+    /* One box, closed by default: the summary line says what most visits need (which module, which firmware, is it healthy). */
+    cards = `<details class="card" id="moddet"${m.open ? " open" : ""}><summary class="row" style="gap:8px;cursor:pointer"><b>${t("modInfo")}</b><span class="small muted">ID ${dv.id} · ${esc(dv.type)} · ${esc(dv.fw)}</span>${sumChip}</summary>
+      <div class="cabs" style="margin-top:12px">
+      <section class="msub stack"><h3>${t("cDevice")}</h3>${kv([[t("mType"), esc(dv.type)], [t("mFw"), esc(dv.fw)], [t("mHw"), esc(dv.hw)], [t("mBaud"), esc(dv.baud) + " · ID " + dv.id], dv.uid ? [t("mUid"), `<span class="mono">${esc(dv.uid)}</span>`] : null])}</section>
+      <section class="msub stack"><h3>${t("cRuntime")}</h3>${kv([[t("mUptime"), esc(rt.uptime)], [t("mBoots"), rt.boots], [t("mMode"), esc(rt.mode)], [t("mPreset"), esc(rt.preset)], rt.button !== undefined && rt.button !== null ? [t("mButton"), rt.button + (rt.held ? " ●" : "")] : null])}</section>
+      <section class="msub stack"><h3>${t("cHealth")}</h3><div class="row">${hc}</div>${d.reset ? `<div class="small muted">${t("cReset")}: ${esc(d.reset)}</div>` : ""}</section>
+      ${tp ? `<section class="msub stack"><h3>${t("cTemp")}</h3>${kv([[t("mRoom"), `<span style="${tp.fault ? "color:var(--bad)" : ""}">${esc(tp.room)}</span>`], [t("mBoard"), `<span style="${tp.fault ? "color:var(--bad)" : ""}">${esc(tp.board)}</span>`], tp.current ? [t("mCurrent"), esc(tp.current)] : null])}</section>` : ""}
+      ${lt ? `<section class="msub stack"><h3>${t("cLatch")}</h3>${kv([[t("mLatch"), lt.state ? t(lt.state === "locked" ? "mLocked" : "mUnlocked") : "—"], [t("mUnlockedAgo", { s: lt.unlocked_ago_s }), ""], d.display !== undefined ? [t("mDisplay"), d.display] : null].map((r) => (r && r[1] === "" ? [r[0], ""] : r)))}</section>` : ""}
       ${st}</div>
-      <p class="small muted">${t("checkedAt", { at: esc(d.at) })} · ${d.ms} ms</p>`;
+      <p class="small muted" style="margin:10px 0 0">${t("checkedAt", { at: esc(d.at) })} · ${d.ms} ms</p></details>`;
   }
   const lb = (addr, label, cls) => `<button class="btn ${cls || ""}" data-act="mod-coil" data-addr="${addr}" data-val="1"${cls === "latch" ? " data-latch=1" : ""}>${label}</button>`;
   const cb = (kind, label, latch) => `<button class="btn" data-act="mod-color" data-kind="${kind}"${latch ? " data-latch=1" : ""}>${label}</button>`;
@@ -1358,6 +1362,8 @@ document.addEventListener("toggle", (e) => {
   if (over > 0) p.style.transform = `translateX(-${over}px)`; else if (r.left < 8) p.style.transform = `translateX(${8 - r.left}px)`;
 }, true);
 $("#infoclose").onclick = () => $("#info").close();
+/* The module details box stays as the person left it across the auto-read's re-renders. */
+document.addEventListener("toggle", (e) => { if (e.target.id === "moddet") S.mod.open = e.target.open; }, true);
 $("#rptclose").onclick = () => $("#rptdlg").close();
 $("#rptcancel").onclick = () => api("POST", "/api/v2/ins/cancel", {}).catch(fail);
 $("#info").addEventListener("click", (e) => { if (e.target.id === "info") $("#info").close(); });
