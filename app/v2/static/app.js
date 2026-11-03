@@ -639,10 +639,10 @@ function insDyn() {
   const i = S.ins, b = i.banner;
   const chip = b ? `<span class="chip ${b === "pass" ? "ok" : b === "run" ? "warn" : b === "issues" ? "bad" : "off"}">${t("insB_" + b)}</span>` : "";
   const resText = (r) => (r.ok ? t("insPass") : !r.responded ? t("insNoAns") : t("insFail"));
-  const rows = i.rows.map((r) => `<tr><td>${r.id}</td><td>${esc(r.type || "—")}</td><td style="color:var(${r.ok ? "--ok" : "--bad"})">${resText(r)}</td><td>${esc(r.steps.map((s) => `${s.label}: ${s.ok ? "ok" : "FAIL"}${s.note && !s.ok ? ` (${s.note})` : ""}`).join("; "))}</td></tr>`).join("");
+  const rows = i.rows.slice().reverse().map((r) => `<tr><td>${r.id}</td><td>${esc(r.type || "—")}</td><td style="color:var(${r.ok ? "--ok" : "--bad"})">${resText(r)}</td><td>${esc(r.steps.map((s) => `${s.label}: ${s.ok ? "ok" : "FAIL"}${s.note && !s.ok ? ` (${s.note})` : ""}`).join("; "))}</td></tr>`).join("");
   return `${chip || i.text ? `<div class="row" style="gap:10px">${chip}<span class="small">${esc(i.text)}</span></div>` : ""}${i.err ? `<div class="notice bad">${esc(i.err)}</div>` : ""}
     ${i.summary ? `<div class="small">${esc(i.summary)}</div>` : ""}
-    ${rows ? `<div style="overflow-x:auto"><table><tr><th>ID</th><th>${t("insType")}</th><th>${t("insResult")}</th><th>${t("insDetail")}</th></tr>${rows}</table></div>` : ""}`;
+    ${rows ? `<div id="insres" class="insres"><table><tr><th>ID</th><th>${t("insType")}</th><th>${t("insResult")}</th><th>${t("insDetail")}</th></tr>${rows}</table></div>` : ""}`;
 }
 /* Cancel while a check runs; once there is a result on screen the same button clears it (the selection stays). */
 function insStopBtn() {
@@ -650,9 +650,16 @@ function insStopBtn() {
   return has ? `<button class="btn" id="insstop" data-act="ins-clear">${t("scanClear")}</button>`
     : `<button class="btn" id="insstop" data-act="job-stop"${i.running ? "" : " disabled"}>${t("insCancel")}</button>`;
 }
+/* The newest result is on top and the box is as tall as the header plus five rows: older ones are a scroll away. */
+function insResFit() {
+  const box = $("#insres"); if (!box) return;
+  const rows = box.querySelectorAll("tr"); box.style.maxHeight = "";
+  if (rows.length > 6) box.style.maxHeight = Math.ceil(rows[6].getBoundingClientRect().top - rows[0].getBoundingClientRect().top) + 2 + "px";
+}
 function insPaint() {
   const g = $("#insgrid"); if (g) g.innerHTML = insGridHtml();
   const el = $("#insdyn"); if (el) { el.innerHTML = insDyn(); el.hidden = !el.innerHTML.trim(); }
+  insResFit();
   const busy = anyJob(), run = $("#insrun"), stop = $("#insstop"); if (run) run.disabled = busy; if (stop) stop.outerHTML = insStopBtn();
   const f = $("#insfile"); if (f) f.hidden = !(S.ins.file && !S.ins.running);
 }
@@ -1141,7 +1148,7 @@ function render() {
   document.documentElement.lang = lang;
   if (page === "events") loadEvents();
   if (page === "gateway") gwBar();
-  if (page === "module") { modAutoSync(); insCaption(); insLayout(); jobResume(); }
+  if (page === "module") { modAutoSync(); insCaption(); insResFit(); insLayout(); jobResume(); }
   if (page === "gateway") jobResume();
   if (page === "soak" && !S.soak.timer) soakSync();
   if (page === "firmware" && !S.fw.timer) fwSync();
