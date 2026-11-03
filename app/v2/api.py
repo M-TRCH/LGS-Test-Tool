@@ -536,6 +536,14 @@ def install(app, cfg, worker) -> None:
     async def events(gw: str = "", days: int = 1, ev: str = "", q: str = "", limit: int = 500):
         return await asyncio.to_thread(events_api.query, gw, days, ev, q, limit)
 
+    @app.get("/api/v2/events/csv")
+    async def events_csv(gw: str = "", days: int = 1, ev: str = "", q: str = ""):
+        data = await asyncio.to_thread(events_api.csv_bytes, gw, days, ev, q)
+        from datetime import datetime
+        name = f"events-{(gw or 'all')[:40]}-{datetime.now():%Y%m%d-%H%M}.csv".replace("/", "_").replace("\\", "_")
+        return Response(data, media_type="text/csv; charset=utf-8",
+                        headers={"Content-Disposition": f'attachment; filename="{name}"'})
+
     @app.post("/api/v2/collector")
     async def collector(request: Request):
         if not _mutating(request):

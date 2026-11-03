@@ -60,7 +60,7 @@ const TXT = {
     lbPicture: "ตัวอย่างป้าย", lbPicNote: "ภาพจากไฟล์ .lbx จริง QR เป็นตัวจริง ฟอนต์ตรงกับไฟล์เมื่อเครื่องที่เปิดมีฟอนต์ Arial และ Browallia New",
     sCsvFiles: "ไฟล์ข้อมูล", sColLegend: "คอลัมน์: mod = โมดูล · pass = รอบ · reads = อ่าน · fail = พลาด · rbt = รีบูต · wdt = วอตช์ด็อก · cross = ข้ามช่องฮับ · worst = ช้าสุด (ms) · drop = ตกหล่น · silent = เงียบ",
     close: "ปิด", noExplain: "ยังไม่มีคำอธิบายสำหรับค่านี้", curValue: "ค่าปัจจุบัน", newValue: "ค่าที่กำลังแก้",
-    matched: "พบ {n} รายการ", loginAgain: "ต้องเข้าสู่ระบบอีกครั้ง", error: "ผิดพลาด: {e}", d: "วัน", h: "ชม.",
+    matched: "พบ {n} รายการ", evExport: "ส่งออก CSV", loginAgain: "ต้องเข้าสู่ระบบอีกครั้ง", error: "ผิดพลาด: {e}", d: "วัน", h: "ชม.",
   },
   en: {
     stage: "v2 preview", classic: "Classic UI", cabinets: "Cabinets", sites: "Sites", events: "Events",
@@ -120,7 +120,7 @@ const TXT = {
     lbPicture: "Label preview", lbPicNote: "Drawn from the real .lbx with the real QR. Fonts match the file when this device has Arial and Browallia New.",
     sCsvFiles: "Data files", sColLegend: "",
     close: "Close", noExplain: "No explanation for this setting yet", curValue: "Current value", newValue: "Value being edited",
-    matched: "{n} found", loginAgain: "Sign in again", error: "Error: {e}", d: "d", h: "h",
+    matched: "{n} found", evExport: "Export CSV", loginAgain: "Sign in again", error: "Error: {e}", d: "d", h: "h",
   },
 };
 let lang = (localStorage.getItem("lgs.lang") || "th");
@@ -251,7 +251,7 @@ function viewEvents() {
       <div class="field"><label>${t("days")}</label><select id="evdays">${[[1, "day1"], [7, "day7"], [30, "day30"], [90, "day90"]].map(([d, k]) => `<option value="${d}"${d === S.ev.days ? " selected" : ""}>${t(k)}</option>`).join("")}</select></div>
       <div class="field"><label>${t("search")}</label><input id="evq" value="${esc(S.ev.q)}"></div></div>
       <div class="seg">${types.map((x) => `<button data-type="${x}" aria-pressed="${S.ev.types.has(x)}">${x}</button>`).join("")}</div>
-      <div class="small muted" id="evcount"></div><div id="evlist"></div></section>`;
+      <div class="row between"><div class="small muted" id="evcount"></div><a class="btn" id="evcsv" href="#" download>${t("evExport")}</a></div><div id="evlist"></div></section>`;
 }
 
 
@@ -1173,6 +1173,7 @@ async function loadEvents() {
     const q = new URLSearchParams({ gw: S.ev.gw, days: S.ev.days, q: S.ev.q, ev: [...S.ev.types].join(",") });
     const r = await api("GET", "/api/v2/events?" + q);
     $("#evcount").textContent = t("matched", { n: r.matched });
+    const csv = $("#evcsv"); if (csv) { csv.href = "/api/v2/events/csv?" + q; csv.classList.toggle("disabled", !r.matched); csv.setAttribute("aria-disabled", String(!r.matched)); }
     $("#evlist").innerHTML = r.rows.length ? r.rows.map((e) => `<div class="evrow"><span class="when">${esc((e.t || e.collected || "").replace("T", " ").slice(5, 19))}</span><span><b>${esc(e.gw)}</b> ${esc(e.text)}</span></div>`).join("") : `<p class="muted">${t(S.me && S.me.collector && S.me.collector.enabled ? "noEvents" : "noEventsOff")}</p>`;
   } catch (e) { fail(e); }
 }
