@@ -204,7 +204,8 @@ def pick_config(body: dict) -> fieldcheck.PickConfig:
                                  timeout_s=_num(body, "timeout_s", 0, 600, 60),
                                  batch=int(_num(body, "batch", 0, 16, 4)),
                                  by_channel=bool(body.get("by_channel", True)),
-                                 shuffle=bool(body.get("shuffle")))
+                                 shuffle=bool(body.get("shuffle")),
+                                 drawer_only=bool(body.get("drawer_only")))
 
 
 def sweep_config(body: dict) -> testsuite.SweepConfig:
