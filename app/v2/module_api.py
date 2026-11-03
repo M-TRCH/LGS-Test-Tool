@@ -12,7 +12,7 @@ import threading
 import time
 from datetime import datetime
 
-from .. import lgs_map
+from .. import fw_survey, lgs_map
 from ..transports import INTERACTIVE_TIMEOUT_S
 from . import gateway_api
 
@@ -82,11 +82,18 @@ def monitor(host: str, port: int, device_id: int, with_stats: bool = False) -> d
             except Exception as exc:                             # noqa: BLE001
                 errors.append(str(exc)[:80])
                 break                       # module probably absent: do not stack timeouts
-        stats = None
-        if with_stats and not errors:
+        # Statistics are always read. Firmware >= v3.3.0 has the true 32-bit
+        # lifetime counters at 400-451; the legacy group at 200-281 stops at
+        # 65535 (on-time tops out at ~18 hours), so it is only the fallback.
+        stats = stats2 = None
+        if not errors:
             try:
-                stats = {STATS_GROUP[0] + i: v
-                         for i, v in enumerate(_read(c, *STATS_GROUP, device_id))}
+                if regs.get(1, 0) >= fw_survey.FW_MIN_STATS:
+                    stats2 = {lgs_map.STATS2_BASE + i: v for i, v in
+                              enumerate(_read(c, lgs_map.STATS2_BASE, lgs_map.STATS2_COUNT, device_id))}
+                else:
+                    stats = {STATS_GROUP[0] + i: v
+                             for i, v in enumerate(_read(c, *STATS_GROUP, device_id))}
             except Exception as exc:                             # noqa: BLE001
                 errors.append("stats: " + str(exc)[:70])
     out = {"ok": bool(regs) and not (errors and 0 not in regs), "device_id": device_id,
@@ -113,8 +120,14 @@ def monitor(host: str, port: int, device_id: int, with_stats: bool = False) -> d
                         "unlocked_ago_s": regs[40]}
     if DISPLAY_REG in regs:
         out["display"] = regs[DISPLAY_REG]
-    if stats:
-        out["stats"] = {"fires": stats.get(200, 0), "seconds": stats.get(201, 0),
+    if stats2:
+        u = lambda a: lgs_map.u32(stats2.get(a, 0), stats2.get(a + 1, 0))   # noqa: E731
+        out["stats"] = {"v2": True, "on_count": u(400), "on_seconds": u(402), "latch_fires": u(404),
+                        "button_presses": u(406), "op_seconds": u(408), "wdt_resets": stats2.get(410, 0),
+                        "presets": [{"p": n, "count": u(lgs_map.stats2_count_hi(n)),
+                                     "seconds": u(lgs_map.stats2_time_hi(n))} for n in range(1, 9)]}
+    elif stats:
+        out["stats"] = {"v2": False, "on_count": stats.get(200, 0), "on_seconds": stats.get(201, 0),
                         "presets": [{"p": n, "count": stats.get(lgs_map.stats_count(n), 0),
                                      "seconds": stats.get(lgs_map.stats_time(n), 0)}
                                     for n in range(1, 9)]}
