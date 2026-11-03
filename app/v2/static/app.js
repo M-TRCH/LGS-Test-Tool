@@ -456,9 +456,9 @@ function viewModule() {
       + `<table class="sttab"><tr><th>${t("stLight")}</th><th>${t("count")}</th><th>${t("stTimeCol")}</th></tr>${S2.presets.map((p) => `<tr><td><i class="dot" style="color:${PCOL[p.p]};width:10px;height:10px;display:inline-block;vertical-align:middle"></i> ${p.p}</td><td>${p.count}</td><td>${hm(p.seconds)}</td></tr>`).join("")}</table>`
       + (S2.v2 ? "" : `<div class="small muted">${t("stOld")}</div>`)) : "";
     /* One box, closed by default: the summary line says what most visits need (which module, which firmware, is it healthy).
-       Three columns that each keep their own height, so a short section is never stretched to match a tall one. */
+       Two rows (device | health, runtime | latch) with the statistics down the right: boxes side by side share a height. */
     cards = `<details class="card" id="moddet"${m.open ? " open" : ""}><summary class="row" style="gap:8px;cursor:pointer"><b>${t("modInfo")}</b><span class="small muted">ID ${dv.id} · ${esc(pl(dv.type))} · ${esc(pl(dv.fw))}</span>${sumChip}</summary>
-      <div class="mgrid"><div class="mcol">${device}${runtime}</div><div class="mcol">${health}${latch}</div><div class="mcol">${stats}</div></div>
+      <div class="mgrid">${device}${health}${runtime}${latch}${stats ? stats.replace('class="msub"', 'class="msub mstats"') : ""}</div>
       <p class="small muted" style="margin:10px 0 0">${t("checkedAt", { at: esc(d.at) })} · ${d.ms} ms</p></details>`;
   }
   const lb = (addr, label, cls) => `<button class="btn ${cls || ""}" data-act="mod-coil" data-addr="${addr}" data-val="1"${cls === "latch" ? " data-latch=1" : ""}>${label}</button>`;
