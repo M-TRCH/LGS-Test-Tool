@@ -696,7 +696,7 @@ function insView() {
        ${chk("display", "insPDisplay")}${chk("punlock", "insPUnlock")}${chk("closed", "insPClosed", "closed")}${chk("bych", "insPBych", "bych")}`;
   const fromScan = S.scan.found.length ? `<button class="btn" data-act="ins-fromscan">${t("insFromScan")}</button>` : "";
   const res = insDyn();
-  return step(1, t("insStep1"), `<div class="row" style="gap:8px">${modes}</div>`, infoBtn("pick"))
+  return step(1, t("insStep1"), `<div class="row" style="gap:8px">${modes}</div>`)
     + step(2, t("insStep2"), `<div class="row" style="gap:8px"><button class="btn" data-act="ins-whole">${t("insWhole")}</button>${fromScan}<button class="btn" data-act="ins-none">${t("insClear")}</button></div><div id="insgrid">${insGridHtml()}</div>`,
       `<span class="small muted" id="inssel">${insSelText()}</span>`)
     + step(3, t("insStep3"), `<div class="fgrid">${opts}</div>`)
