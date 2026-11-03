@@ -466,8 +466,8 @@ function viewModule() {
           <button class="btn" data-act="mod-coil" data-addr="1010" data-val="1">${t("dispPower")}</button><button class="btn" data-act="mod-coil" data-addr="1010" data-val="0">${t("dispOff")}</button></div></div>
         <div class="row" style="align-items:flex-end"><div class="field" style="width:160px"><label>${t("number")}</label><input id="modnum" type="number" min="0" max="9999" value="45"></div><button class="btn" data-act="mod-number">${t("writeNumber")}</button></div>
         <p class="small muted">${t("cooldownNote")}</p></section>
-      <h2>${t("swTitle")}</h2><section class="card stack">${sweepView()}</section>
-      <h2>${t("dangerTitle")}</h2><section class="card stack" style="border-color:var(--bad)">${dangerView()}</section>
+      ${uiMode === "advanced" ? `<h2>${t("swTitle")}</h2><section class="card stack">${sweepView()}</section>
+      <h2>${t("dangerTitle")}</h2><section class="card stack" style="border-color:var(--bad)">${dangerView()}</section>` : ""}
       <h2>${t("scanTitle")}</h2><section class="card stack">${scanView()}</section>
       <h2>${t("insTitle")}</h2><section class="card stack">${insView()}</section></div>`;
 }
@@ -1050,16 +1050,16 @@ async function cmSync() {
 }
 
 const VIEWS = { commission: viewCommission, cabinets: viewCabinets, gateway: viewGateway, module: viewModule, soak: viewSoak, firmware: viewFirmware, labels: viewLabels, sites: viewSites, events: viewEvents };
-const NAV = ["cabinets", "gateway", "module", "soak", "firmware", "commission", "labels", "sites", "events"];
-/* Basic mode hides the pages that change a gateway's settings, write firmware or edit the cabinet list. It is a convenience for whoever holds the phone, not security: the login is what keeps strangers out. */
-const ADV_PAGES = new Set(["gateway", "firmware", "commission", "sites"]);
+const NAV = ["cabinets", "module", "gateway", "labels", "events", "soak", "firmware", "commission", "sites"];
+/* Basic mode is what a technician on site needs day to day: cabinets, modules (read, quick commands, scan, installation check) and events. Everything that changes settings, firmware, module ids or the cabinet list, runs for hours or prints labels, and the classic tool, is advanced. It is a convenience for whoever holds the phone, not security: the login is what keeps strangers out. */
+const ADV_PAGES = new Set(["gateway", "labels", "soak", "firmware", "commission", "sites"]);
 let uiMode = "basic"; try { uiMode = localStorage.getItem("lgs.mode") === "advanced" ? "advanced" : "basic"; } catch (e) { /* storage blocked: basic */ }
 const allowed = (k) => uiMode === "advanced" || !ADV_PAGES.has(k);
 
 function render() {
   if (!allowed(page)) { page = "cabinets"; location.hash = "#/cabinets"; toast(t("modeLocked")); }
   $("#nav").innerHTML = NAV.filter(allowed).map((k) => `<button data-nav="${k}" ${k === page ? 'aria-current="page"' : ""}>${t(k === "gateway" ? "gateway_page" : k === "module" ? "module_page" : k === "soak" ? "soak_page" : k === "firmware" ? "firmware_page" : k === "commission" ? "commission_page" : k === "labels" ? "labels_page" : k)}</button>`).join("")
-    + `<button data-nav="classic">${t("classic")}</button>`;
+    + (uiMode === "advanced" ? `<button data-nav="classic">${t("classic")}</button>` : "");
   $("#main").innerHTML = (VIEWS[page] || viewCabinets)();
   const cur = $("#nav [aria-current]"); if (cur && cur.scrollIntoView) cur.scrollIntoView({ inline: "center", block: "nearest" });
   $("#stagechip").textContent = t("stage"); $("#infoclose").textContent = t("close");
