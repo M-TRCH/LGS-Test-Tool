@@ -203,7 +203,8 @@ def pick_config(body: dict) -> fieldcheck.PickConfig:
                                  require_locked=bool(body.get("require_locked", True)),
                                  timeout_s=_num(body, "timeout_s", 0, 600, 60),
                                  batch=int(_num(body, "batch", 0, 16, 4)),
-                                 by_channel=bool(body.get("by_channel", True)))
+                                 by_channel=bool(body.get("by_channel", True)),
+                                 shuffle=bool(body.get("shuffle")))
 
 
 def sweep_config(body: dict) -> testsuite.SweepConfig:

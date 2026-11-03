@@ -7,6 +7,7 @@ in testsuite.py.
 """
 from __future__ import annotations
 
+import random
 import threading
 import time
 from dataclasses import dataclass, field
@@ -294,6 +295,8 @@ class PickConfig:
     poll_s: float = 0.25         # pause between sweeps of the waiting slots
     batch: int = 4               # slots lit together; 0 = every slot at once
     by_channel: bool = True      # keep a batch on one hub channel
+    shuffle: bool = False        # random slot order, batches cut anywhere (a day's
+                                 # prescriptions do not arrive in id order)
 
     @property
     def action_coil(self) -> int:
@@ -321,7 +324,8 @@ def _poll_order(ids: Sequence[int]) -> list:
     return sorted(ids, key=lambda i: (hub_channel(i), i))
 
 
-def pick_batches(ids: Sequence[int], size: int, by_channel: bool = True) -> list:
+def pick_batches(ids: Sequence[int], size: int, by_channel: bool = True,
+                 shuffle: bool = False) -> list:
     """The groups of slots that light together.
 
     Measured on the cabinet: what costs time is the number of hub CHANNELS
@@ -342,6 +346,15 @@ def pick_batches(ids: Sequence[int], size: int, by_channel: bool = True) -> list
     `size` slots regardless of channel, at the cost of a slower sweep. A
     `size` of 0 lights everything selected at once, spread and all.
     """
+    if shuffle:
+        # Random order, `size` to a batch wherever they fall: the rehearsal of
+        # a real shift, where nothing arrives in slot order. by_channel does
+        # not apply -- keeping a channel together would undo the shuffle.
+        ids = list(ids)
+        random.shuffle(ids)
+        if size is None or size <= 0:
+            return [tuple(ids)] if ids else []
+        return [tuple(ids[s:s + size]) for s in range(0, len(ids), size)]
     ids = sorted(ids)
     if not ids:
         return []
@@ -389,7 +402,7 @@ def run_pick_sequence(ops: FieldOps, cfg: PickConfig, ids: Sequence[int],
         emit(DeviceDone(result))
 
     try:
-        for batch in pick_batches(ids, cfg.batch, cfg.by_channel):
+        for batch in pick_batches(ids, cfg.batch, cfg.by_channel, cfg.shuffle):
             waiting.clear()
             # ── prepare this batch, and light the slots that are ready ─────
             for device_id in batch:
