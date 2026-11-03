@@ -475,13 +475,13 @@ function viewModule() {
       <div class="row"><label class="row"><input type="checkbox" id="modauto"${m.auto ? " checked" : ""}> ${t("auto")}</label></div></section>
     <div class="stack" style="margin-top:12px">${cards}
       <h2>${t("quick")}</h2><section class="card stack">
-        <div class="row between"><span class="small muted">${noOled && !m.showAll ? t("qHidden") : ""}</span><label class="row"><input type="checkbox" id="modall"${m.showAll ? " checked" : ""}> ${t("qShowAll")}</label></div>
+        <div class="row" style="justify-content:flex-end"><label class="row"><input type="checkbox" id="modall"${m.showAll ? " checked" : ""}> ${t("qShowAll")}</label></div>
         <div class="stack tight"><b class="small muted">${t("grpLight")}</b><div class="qgrid">${cb("enable", t("cLight"))}${oled(cb("display", t("cLightNum")))}</div></div>
         ${oled(`<div class="stack tight"><b class="small muted">${t("grpLatch")}</b><div class="qgrid"><button class="btn" data-act="mod-unlock" data-latch=1>${t("pUnlock")}</button>${cb("latch", t("cLightUnlock"), 1)}${cb("latch_display", t("cLightNumUnlock"), 1)}</div></div>`)}
         <div class="stack tight"><b class="small muted">${t("grpOther")}</b><div class="qgrid">${lb(509, t("identify"))}${lb(511, t("allOff"))}
           ${oled(`<button class="btn" data-act="mod-coil" data-addr="1010" data-val="1">${t("dispPower")}</button><button class="btn" data-act="mod-coil" data-addr="1010" data-val="0">${t("dispOff")}</button>`)}</div></div>
         ${oled(`<div class="row" style="align-items:flex-end"><div class="field" style="width:160px"><label>${t("number")}</label><input id="modnum" type="number" min="0" max="9999" value="45"></div><button class="btn" data-act="mod-number">${t("writeNumber")}</button></div>`)}
-        <p class="small muted">${t("cooldownNote")}</p></section>
+        </section>
       ${uiMode === "advanced" ? `<h2>${t("swTitle")}</h2><section class="card stack">${sweepView()}</section>
       <h2>${t("dangerTitle")}</h2><section class="card stack" style="border-color:var(--bad)">${dangerView()}</section>` : ""}
       <h2>${t("scanTitle")}</h2><section class="card stack">${scanView()}</section>
