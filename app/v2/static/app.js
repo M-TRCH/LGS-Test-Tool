@@ -438,18 +438,20 @@ function viewModule() {
   if (d && d.ok === false && !d.device) cards = `<div class="notice bad">${esc((d.errors || [d.error || ""]).join(" · "))}</div>`;
   else if (d && d.device) {
     const dv = d.device, rt = d.runtime, tp = d.temps, lt = d.latch;
+    /* The decoders write "10 = STANDARD", "30505 (v3.5.5)", "SENSOR FAULT (0x8000)": the raw number is for the classic tool's register view, not for reading. */
+    const pl = (v) => String(v == null ? "" : v).replace(/^-?\d+ = /, "").replace(/^\d+ \((.*)\)$/, "$1").replace(/ \(0x[0-9a-f]+\)$/i, "");
     const hc = (d.health || []).map((h) => `<span class="chip ${h.ok === null ? "off" : h.ok ? "ok" : "bad"}"><i class="dot"></i>${esc(h.name)}${h.ok === null ? " " + t("na") : ""}</span>`).join(" ");
     const st = d.stats ? `<section class="msub stack"><h3>${t("cStats")}</h3><div class="small">${t("fires", { c: d.stats.fires, s: d.stats.seconds })}</div>
       <table><tr><th>#</th><th>${t("count")}</th><th>${t("seconds")}</th></tr>${d.stats.presets.map((p) => `<tr><td>${p.p}</td><td>${p.count}</td><td>${p.seconds}</td></tr>`).join("")}</table></section>` : "";
     const bad = (d.health || []).filter((h) => h.ok === false).length;    /* a sensor fault is already one of these */
     const sumChip = `<span class="chip ${bad ? "bad" : "ok"}"><i class="dot"></i>${bad ? t("hBad", { n: bad }) : t("hOk")}</span>`;
     /* One box, closed by default: the summary line says what most visits need (which module, which firmware, is it healthy). */
-    cards = `<details class="card" id="moddet"${m.open ? " open" : ""}><summary class="row" style="gap:8px;cursor:pointer"><b>${t("modInfo")}</b><span class="small muted">ID ${dv.id} · ${esc(dv.type)} · ${esc(dv.fw)}</span>${sumChip}</summary>
+    cards = `<details class="card" id="moddet"${m.open ? " open" : ""}><summary class="row" style="gap:8px;cursor:pointer"><b>${t("modInfo")}</b><span class="small muted">ID ${dv.id} · ${esc(pl(dv.type))} · ${esc(pl(dv.fw))}</span>${sumChip}</summary>
       <div class="cabs" style="margin-top:12px">
-      <section class="msub stack"><h3>${t("cDevice")}</h3>${kv([[t("mType"), esc(dv.type)], [t("mFw"), esc(dv.fw)], [t("mHw"), esc(dv.hw)], [t("mBaud"), esc(dv.baud) + " · ID " + dv.id], dv.uid ? [t("mUid"), `<span class="mono">${esc(dv.uid)}</span>`] : null])}</section>
-      <section class="msub stack"><h3>${t("cRuntime")}</h3>${kv([[t("mUptime"), esc(rt.uptime)], [t("mBoots"), rt.boots], [t("mMode"), esc(rt.mode)], [t("mPreset"), esc(rt.preset)], rt.button !== undefined && rt.button !== null ? [t("mButton"), rt.button + (rt.held ? " ●" : "")] : null])}</section>
+      <section class="msub stack"><h3>${t("cDevice")}</h3>${kv([[t("mType"), esc(pl(dv.type))], [t("mFw"), esc(pl(dv.fw))], [t("mHw"), esc(pl(dv.hw))], [t("mBaud"), esc(dv.baud) + " · ID " + dv.id], dv.uid ? [t("mUid"), `<span class="mono">${esc(dv.uid)}</span>`] : null])}</section>
+      <section class="msub stack"><h3>${t("cRuntime")}</h3>${kv([[t("mUptime"), esc(rt.uptime)], [t("mBoots"), rt.boots], [t("mMode"), esc(pl(rt.mode))], [t("mPreset"), esc(pl(rt.preset))], rt.button !== undefined && rt.button !== null ? [t("mButton"), rt.button + (rt.held ? " ●" : "")] : null])}</section>
       <section class="msub stack"><h3>${t("cHealth")}</h3><div class="row">${hc}</div>${d.reset ? `<div class="small muted">${t("cReset")}: ${esc(d.reset)}</div>` : ""}</section>
-      ${tp ? `<section class="msub stack"><h3>${t("cTemp")}</h3>${kv([[t("mRoom"), `<span style="${tp.fault ? "color:var(--bad)" : ""}">${esc(tp.room)}</span>`], [t("mBoard"), `<span style="${tp.fault ? "color:var(--bad)" : ""}">${esc(tp.board)}</span>`], tp.current ? [t("mCurrent"), esc(tp.current)] : null])}</section>` : ""}
+      ${tp ? `<section class="msub stack"><h3>${t("cTemp")}</h3>${kv([[t("mRoom"), `<span style="${tp.fault ? "color:var(--bad)" : ""}">${esc(pl(tp.room))}</span>`], [t("mBoard"), `<span style="${tp.fault ? "color:var(--bad)" : ""}">${esc(pl(tp.board))}</span>`], tp.current ? [t("mCurrent"), esc(tp.current)] : null])}</section>` : ""}
       ${lt ? `<section class="msub stack"><h3>${t("cLatch")}</h3>${kv([[t("mLatch"), lt.state ? t(lt.state === "locked" ? "mLocked" : "mUnlocked") : "—"], [t("mUnlockedAgo", { s: lt.unlocked_ago_s }), ""], d.display !== undefined ? [t("mDisplay"), d.display] : null].map((r) => (r && r[1] === "" ? [r[0], ""] : r)))}</section>` : ""}
       ${st}</div>
       <p class="small muted" style="margin:10px 0 0">${t("checkedAt", { at: esc(d.at) })} · ${d.ms} ms</p></details>`;
