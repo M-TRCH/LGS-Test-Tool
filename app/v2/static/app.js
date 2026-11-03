@@ -733,7 +733,7 @@ function scanDyn() {
   return `${s.err ? `<div class="notice bad">${esc(s.err)}</div>` : ""}${started ? grid : ""}${ex}`;
 }
 function scanPaint() {
-  const el = $("#scandyn"); if (el) el.innerHTML = scanDyn();
+  const el = $("#scandyn"); if (el) { el.innerHTML = scanDyn(); el.hidden = !el.innerHTML; }   /* an empty box would leave an extra gap under the buttons */
   const stt = $("#scanstat"); if (stt) stt.textContent = S.scan.text || t("insIdle");
   const busy = anyJob(); document.querySelectorAll("[data-act=scan-run]").forEach((b) => { b.disabled = busy; }); const st = $("#scanstop"); if (st) st.outerHTML = scanStopBtn();
 }
@@ -746,7 +746,7 @@ function scanStopBtn() {
 function scanView() {
   if (!S.mod.id) return `<div class="notice info">${t("insPickCab")}</div>`;
   return `<div class="row" style="gap:8px;align-items:center"><button class="btn primary" data-act="scan-run" data-full="0"${anyJob() ? " disabled" : ""}>${t("scanQuick")}</button><button class="btn" data-act="scan-run" data-full="1"${anyJob() ? " disabled" : ""}>${t("scanFull")}</button>
-    ${scanStopBtn()}<span id="scanstat" class="small muted" style="margin-left:auto">${esc(S.scan.text || t("insIdle"))}</span></div><div id="scandyn" class="stack">${scanDyn()}</div>`;
+    ${scanStopBtn()}<span id="scanstat" class="small muted" style="margin-left:auto">${esc(S.scan.text || t("insIdle"))}</span></div><div id="scandyn" class="stack"${scanDyn() ? "" : " hidden"}>${scanDyn()}</div>`;
 }
 
 /* ---- full module test (testsuite sweep) ---- */
