@@ -30,7 +30,7 @@ const TXT = {
     mPreset: "พรีเซ็ตที่ใช้อยู่", mButton: "กดยืนยันแล้ว", mRoom: "ในห้อง", mBoard: "บนบอร์ด", mCurrent: "กระแสขาเข้า", mLatch: "กลอน", mLocked: "ล็อก", mUnlocked: "ปลดแล้ว",
     mUnlockedAgo: "ปลดล่าสุด {s} วินาทีก่อน", mDisplay: "ตัวเลขบนจอ", na: "ไม่มี", presets: "พรีเซ็ตสี", pLight: "ไฟ", pLightDisp: "ไฟ + เลข", pUnlock: "ปลดกลอน", pUnlockDisp: "ปลดกลอน + เลข", grpLight: "ไฟ", grpLatch: "กลอน", grpDisp: "จอ", grpOther: "อื่น ๆ", cLight: "เปิดไฟ", cLightNum: "เปิดไฟ + เลข", dispOff: "ปิดจอ", qShowAll: "แสดงทั้งหมด", qHidden: "ซ่อนคำสั่งจอและกลอน: โมดูลนี้ไม่มีจอและกลอน", cLightUnlock: "เปิดไฟ + ปลดกลอน", cLightNumUnlock: "เปิดไฟ + เลข + ปลดกลอน", unlockTitle: "ปลดกลอน · เลือกวิธี", unlockSafe: "ปลอดภัย", unlockSafeD: "ปลดเฉพาะเมื่อกลอนล็อกอยู่ ลิ้นชักที่เปิดค้างจะไม่ถูกสั่งซ้ำ", unlockForce: "บังคับ", unlockForceD: "ปลดทันทีโดยไม่ดูสถานะกลอน", colorTitle: "{c} · เลือกสี", colorN: "สี {n}",
     quick: "คำสั่งด่วน", identify: "ระบุตำแหน่ง", allOff: "ดับทั้งหมด", latchSafety: "ปลดกลอน (ปลอดภัย)", latchForce: "ปลดกลอน (บังคับ)", dispPower: "เปิดจอ",
-    number: "ตัวเลข", numRange: "ตัวเลขต้องเป็นจำนวนเต็ม 0 ถึง 9999", writeNumber: "เขียนตัวเลข", cooldownNote: "กลอนต้องเว้น 2.2 วินาทีระหว่างการปลด", sent: "ส่งแล้ว", fires: "ยิงกลอน {c} ครั้ง · {s} วินาที", count: "ครั้ง", seconds: "วินาที",
+    number: "ตัวเลข", numAsk: "ตัวเลขที่จะแสดงบนจอโมดูล {id}", numRange: "ตัวเลขต้องเป็นจำนวนเต็ม 0 ถึง 9999", writeNumber: "เขียนตัวเลข", cooldownNote: "กลอนต้องเว้น 2.2 วินาทีระหว่างการปลด", sent: "ส่งแล้ว", fires: "ยิงกลอน {c} ครั้ง · {s} วินาที", count: "ครั้ง", seconds: "วินาที",
     soak_page: "ทดสอบต่อเนื่อง", sPick: "เลือกตู้ที่จะทดสอบ", sAll: "ทั้งหมด", sMode: "โหมด", sPoll: "อ่านอย่างเดียว", sPharm: "จำลองการจ่ายยา",
     sPicks: "จำนวนครั้งที่จ่ายต่อวัน", sHours: "ชั่วโมง (0 = จนกว่าจะหยุด)", sStartAt: "เริ่มเวลา (เช่น 21:00 เว้นว่าง = ทันที)", sStart: "เริ่มทดสอบ",
     sStop: "หยุด", sStopQ: "หยุดการทดสอบที่กำลังรัน? ข้อมูลถึงตอนนี้ถูกเก็บไว้", sRunning: "กำลังรัน", sArmed: "ตั้งเวลาไว้ เริ่มในอีก {t}", sLeft: "เหลือ {t}",
@@ -90,7 +90,7 @@ const TXT = {
     mPreset: "Active preset", mButton: "Confirm presses", mRoom: "Room", mBoard: "Board", mCurrent: "Input current", mLatch: "Latch", mLocked: "locked", mUnlocked: "unlocked",
     mUnlockedAgo: "last unlock {s} s ago", mDisplay: "Display number", na: "n/a", presets: "Colour presets", pLight: "Light", pLightDisp: "Light + number", pUnlock: "Unlock", pUnlockDisp: "Unlock + number", grpLight: "Light", grpLatch: "Latch", grpDisp: "Display", grpOther: "Other", cLight: "Light", cLightNum: "Light + number", dispOff: "Display off", qShowAll: "Show all", qHidden: "Display and latch commands hidden: this module has neither", cLightUnlock: "Light + unlock", cLightNumUnlock: "Light + number + unlock", unlockTitle: "Unlock · choose how", unlockSafe: "Safe", unlockSafeD: "Only when the latch reads locked; an open drawer is left alone", unlockForce: "Force", unlockForceD: "Pulse now, whatever the latch reads", colorTitle: "{c} · pick a colour", colorN: "Colour {n}",
     quick: "Quick commands", identify: "Identify", allOff: "All off", latchSafety: "Unlock (safe)", latchForce: "Unlock (force)", dispPower: "Display on",
-    number: "Number", numRange: "The number must be a whole number from 0 to 9999", writeNumber: "Write number", cooldownNote: "A latch needs 2.2 s between unlocks", sent: "Sent", fires: "{c} fires · {s} s", count: "count", seconds: "seconds",
+    number: "Number", numAsk: "Number to show on module {id}'s display", numRange: "The number must be a whole number from 0 to 9999", writeNumber: "Write number", cooldownNote: "A latch needs 2.2 s between unlocks", sent: "Sent", fires: "{c} fires · {s} s", count: "count", seconds: "seconds",
     soak_page: "Soak", sPick: "Choose the cabinets to test", sAll: "All", sMode: "Mode", sPoll: "Read only", sPharm: "Pharmacy simulation",
     sPicks: "Picks per day", sHours: "Hours (0 = until stopped)", sStartAt: "Start at (e.g. 21:00, empty = now)", sStart: "Start soak",
     sStop: "Stop", sStopQ: "Stop the running soak? Data up to now is kept.", sRunning: "Running", sArmed: "Armed, starts in {t}", sLeft: "{t} left",
@@ -478,7 +478,7 @@ function viewModule() {
         <div class="row" style="justify-content:flex-end"><label class="row"><input type="checkbox" id="modall"${m.showAll ? " checked" : ""}> ${t("qShowAll")}</label></div>
         <div class="stack tight"><b class="small muted">${t("grpLight")}</b><div class="qgrid">${cb("enable", t("cLight"))}${oled(cb("display", t("cLightNum")))}</div></div>
         ${oled(`<div class="stack tight"><b class="small muted">${t("grpLatch")}</b><div class="qgrid"><button class="btn" data-act="mod-unlock" data-latch=1>${t("pUnlock")}</button>${cb("latch", t("cLightUnlock"), 1)}${cb("latch_display", t("cLightNumUnlock"), 1)}</div></div>`)}
-        ${oled(`<div class="stack tight"><b class="small muted">${t("grpDisp")}</b><div class="qgrid"><input id="modnum" class="qnum" type="number" min="0" max="9999" value="45" aria-label="${t("number")}" title="${t("number")}"><button class="btn" data-act="mod-number">${t("writeNumber")}</button>
+        ${oled(`<div class="stack tight"><b class="small muted">${t("grpDisp")}</b><div class="qgrid"><button class="btn" data-act="mod-number">${t("writeNumber")}</button>
           <button class="btn" data-act="mod-coil" data-addr="1010" data-val="1">${t("dispPower")}</button><button class="btn" data-act="mod-coil" data-addr="1010" data-val="0">${t("dispOff")}</button></div></div>`)}
         <div class="stack tight"><b class="small muted">${t("grpOther")}</b><div class="qgrid">${lb(509, t("identify"))}${lb(511, t("allOff"))}</div></div>
         </section>
@@ -530,7 +530,7 @@ async function modRead() {
   if (page === "module") renderKeep();
 }
 /* re-render without losing a typed value or the scroll position */
-function renderKeep() { const y = window.scrollY, num = $("#modnum") && $("#modnum").value; render(); if ($("#modnum") && num) $("#modnum").value = num; window.scrollTo(0, y); }
+function renderKeep() { const y = window.scrollY; render(); window.scrollTo(0, y); }
 function modAutoSync() {
   clearInterval(modTimer); modTimer = null;
   if (S.mod.auto && page === "module") modTimer = setInterval(() => { if (!document.hidden && page === "module") modRead(); }, 2000);
@@ -1183,8 +1183,10 @@ document.addEventListener("click", async (ev) => {
       const n = await pickColor(act.textContent.trim()); if (!n) return;
       await modCoil({ enable: 1000, display: 1010, latch: 1020, latch_display: 1030 }[kind] + n, true, latch);
     } else if (act.dataset.act === "mod-number") {
-      const raw = $("#modnum").value.trim(), v = Number(raw);
-      if (raw === "" || !Number.isInteger(v) || v < 0 || v > 9999) { await ask(t("numRange"), true); $("#modnum").focus(); return; }
+      if (!S.mod.id) return;
+      const typed = await ask(t("numAsk", { id: S.mod.dev }), false, true); if (typed === null) return;
+      const raw = typed.trim(), v = Number(raw);
+      if (raw === "" || !Number.isInteger(v) || v < 0 || v > 9999) { await ask(t("numRange"), true); return; }
       const r = await api("POST", "/api/v2/mod/number", { id: S.mod.id, device_id: S.mod.dev, value: v }); if (!r.ok) throw new Error(r.error); toast(t("sent"));
     } else if (act.dataset.act === "soak-all") { S.sites.forEach((x) => S.soak.sel.add(x.id)); render();
     } else if (act.dataset.act === "soak-start") {
