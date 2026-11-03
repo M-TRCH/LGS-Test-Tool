@@ -730,10 +730,11 @@ function scanDyn() {
   const have = new Set((L && L.ids) || []), extra = s.full ? [] : s.found.filter((f) => !have.has(f.id));
   const ex = extra.length ? `<div class="row" style="gap:6px;align-items:center"><span class="small muted">${t("scanExtra")}</span>${extra.map((f) => `<button class="cmcell next" style="min-width:56px;padding:0 8px" data-act="scan-pick" data-id="${f.id}" title="${esc(f.type)}">${f.id}</button>`).join("")}</div>` : "";
   const started = s.running || s.asked.size;
-  return `<span class="small">${esc(s.text || t("insIdle"))}</span>${s.err ? `<div class="notice bad">${esc(s.err)}</div>` : ""}${started ? grid : ""}${ex}`;
+  return `${s.err ? `<div class="notice bad">${esc(s.err)}</div>` : ""}${started ? grid : ""}${ex}`;
 }
 function scanPaint() {
   const el = $("#scandyn"); if (el) el.innerHTML = scanDyn();
+  const stt = $("#scanstat"); if (stt) stt.textContent = S.scan.text || t("insIdle");
   const busy = anyJob(); document.querySelectorAll("[data-act=scan-run]").forEach((b) => { b.disabled = busy; }); const st = $("#scanstop"); if (st) st.outerHTML = scanStopBtn();
 }
 /* Cancel while a scan runs; once there is a result on screen the same button clears it. */
@@ -745,7 +746,7 @@ function scanStopBtn() {
 function scanView() {
   if (!S.mod.id) return `<div class="notice info">${t("insPickCab")}</div>`;
   return `<div class="row" style="gap:8px;align-items:center"><button class="btn primary" data-act="scan-run" data-full="0"${anyJob() ? " disabled" : ""}>${t("scanQuick")}</button><button class="btn" data-act="scan-run" data-full="1"${anyJob() ? " disabled" : ""}>${t("scanFull")}</button>
-    ${scanStopBtn()}</div><div id="scandyn" class="stack">${scanDyn()}</div>`;
+    ${scanStopBtn()}<span id="scanstat" class="small muted" style="margin-left:auto">${esc(S.scan.text || t("insIdle"))}</span></div><div id="scandyn" class="stack">${scanDyn()}</div>`;
 }
 
 /* ---- full module test (testsuite sweep) ---- */
