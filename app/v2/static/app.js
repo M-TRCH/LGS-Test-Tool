@@ -492,9 +492,9 @@ async function modCoil(addr, on, latch) {
 }
 /* One chooser popup: the command is picked first, then what it needs (a colour 1-8, or safe/forced for an unlock).
    Resolves with the chosen value, or 0 if cancelled. items: [{v, html, cls}]. */
-function pickFrom(title, items, cols) {
+function pickFrom(title, items, cols, info) {
   return new Promise((resolve) => {
-    const d = $("#colorpick"); $("#colortitle").textContent = title;
+    const d = $("#colorpick"); $("#colortitle").innerHTML = esc(title) + (info ? " " + infoBtn(info) : "");
     const g = $("#colorgrid"); g.style.gridTemplateColumns = `repeat(${cols || 2},minmax(0,1fr))`;
     g.innerHTML = items.map((it) => `<button class="btn colbtn ${it.cls || ""}" type="button" data-col="${it.v}">${it.html}</button>`).join("");
     $("#colorno").textContent = t("insCancel");
@@ -507,9 +507,7 @@ function pickFrom(title, items, cols) {
 const pickColor = (command) => pickFrom(t("colorTitle", { c: command }),
   [1, 2, 3, 4, 5, 6, 7, 8].map((n) => ({ v: n, html: `<i class="dot" style="color:${PCOL[n]};width:16px;height:16px"></i>${t("colorN", { n })}` })));
 /* Coil 1020 only pulses a latch the module reads as locked (an open drawer is left alone); 1019 pulses it regardless. */
-const pickUnlock = () => pickFrom(t("unlockTitle"), [
-  { v: 1020, html: `<span class="stack tight" style="text-align:left"><b>${t("unlockSafe")}</b><span class="small muted">${t("unlockSafeD")}</span></span>`, cls: "unl" },
-  { v: 1019, html: `<span class="stack tight" style="text-align:left"><b style="color:var(--bad)">${t("unlockForce")}</b><span class="small muted">${t("unlockForceD")}</span></span>`, cls: "unl" }], 1);
+const pickUnlock = () => pickFrom(t("unlockTitle"), [{ v: 1020, html: t("unlockSafe") }, { v: 1019, html: `<span style="color:var(--bad)">${t("unlockForce")}</span>` }], 2, "unlockHow");
 async function modRead() {
   const m = S.mod; if (!m.id || !(m.dev >= 1)) return;
   if (m.busy || anyJob()) return;
@@ -531,6 +529,8 @@ function modAutoSync() {
    into the state of that kind (S.ins / S.scan / S.sweep / S.rpt) and repaints only that kind's box. Everything shown lives
    in S, so a full render() (the module auto-read does one) loses nothing. */
 const INS_INFO = {
+  unlockHow: ["ปลอดภัย: ปลดเฉพาะเมื่อกลอนล็อกอยู่ ลิ้นชักที่เปิดค้างจะไม่ถูกสั่งซ้ำ\nบังคับ: ปลดทันทีโดยไม่ดูสถานะกลอน",
+    "Safe: only when the latch reads locked; an open drawer is left alone.\nForce: pulse now, whatever the latch reads."],
   pick: ["ซ้อมขั้นตอนจ่ายยาจริง: ไฟติดพร้อมกันเป็นชุด เหมือนตอนใบสั่งยาสั่งงานจริง คนที่หน้าตู้หยิบช่องไหนก่อนก็ได้ ไฟแต่ละช่องจะดับเมื่อกดปุ่มหน้าช่องนั้น ครบชุดแล้วชุดถัดไปจะติดต่อ พิสูจน์ไฟ ปุ่ม และวงจรยืนยันครบในรอบเดียว ต้องใช้เฟิร์มแวร์โมดูล v3.2.0",
     "The dispensing flow as a rehearsal: a batch of slots lights up together, just as a prescription lights them, and someone at the cabinet picks them in any order; each light goes out as its front button is pressed. When the batch is done the next one lights. Needs module firmware v3.2.0."],
   action: ["หนึ่งคำสั่งต่อโมดูล ใช้ชุดเดียวกับที่เฟิร์มแวร์มีให้ เปิดไฟวงแหวน หรือเปิดไฟพร้อมโชว์เลขประจำช่อง ถ้าติ๊กปลดกลอนจะยกระดับคำสั่งนั้นให้ปลดกลอนด้วย จอแสดง Slave ID ถ้าเกิน 99 จะแสดงเลขช่องแทน เพราะจอรองรับสองหลัก",
