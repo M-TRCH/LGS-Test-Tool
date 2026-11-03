@@ -28,7 +28,7 @@ const TXT = {
     cDevice: "อุปกรณ์", hmFmt: "{h} ชม. {m} นาที", mFmt: "{m} นาที {s} วินาที", mUnlockedAgoK: "ปลดล่าสุด", agoS: "{s} ที่แล้ว", stOn: "เปิดไฟ", stTimes: "{n} ครั้ง", stOnTime: "ไฟติดรวม", stLatch: "ปลดกลอน", stButton: "กดปุ่มยืนยัน", stRun: "เวลาทำงานรวม", stLight: "ไฟ", stTimeCol: "เวลาติด", stOld: "เฟิร์มแวร์โมดูลเก่ากว่า v3.3.0: ตัวนับหยุดที่ 65535", modInfo: "ข้อมูลโมดูล", hOk: "ปกติ", hBad: "มีปัญหา {n}", cRuntime: "การทำงาน", cHealth: "สุขภาพระบบ", cReset: "สาเหตุรีเซ็ตล่าสุด", cTemp: "อุณหภูมิ", cLatch: "กลอน / จอ", cStats: "สถิติ",
     mType: "ชนิด", mFw: "เฟิร์มแวร์", mHw: "ฮาร์ดแวร์", mBaud: "Baud", mUid: "หมายเลขชิป", mUptime: "เปิดมาแล้ว", mBoots: "จำนวนครั้งที่บูต", mMode: "โหมด",
     mPreset: "พรีเซ็ตที่ใช้อยู่", mButton: "กดยืนยันแล้ว", mRoom: "ในห้อง", mBoard: "บนบอร์ด", mCurrent: "กระแสขาเข้า", mLatch: "กลอน", mLocked: "ล็อก", mUnlocked: "ปลดแล้ว",
-    mUnlockedAgo: "ปลดล่าสุด {s} วินาทีก่อน", mDisplay: "ตัวเลขบนจอ", na: "ไม่มี", presets: "พรีเซ็ตสี", pLight: "ไฟ", pLightDisp: "ไฟ + เลข", pUnlock: "ปลดกลอน", pUnlockDisp: "ปลดกลอน + เลข", grpLight: "ไฟ", grpLatch: "กลอน", grpOther: "จอและอื่น ๆ", cLight: "เปิดไฟ", cLightNum: "เปิดไฟ + เลข", dispOff: "ปิดจอ", cLightUnlock: "เปิดไฟ + ปลดกลอน", cLightNumUnlock: "เปิดไฟ + เลข + ปลดกลอน", unlockTitle: "ปลดกลอน · เลือกวิธี", unlockSafe: "ปลอดภัย", unlockSafeD: "ปลดเฉพาะเมื่อกลอนล็อกอยู่ ลิ้นชักที่เปิดค้างจะไม่ถูกสั่งซ้ำ", unlockForce: "บังคับ", unlockForceD: "ปลดทันทีโดยไม่ดูสถานะกลอน", colorTitle: "{c} · เลือกสี", colorN: "สี {n}",
+    mUnlockedAgo: "ปลดล่าสุด {s} วินาทีก่อน", mDisplay: "ตัวเลขบนจอ", na: "ไม่มี", presets: "พรีเซ็ตสี", pLight: "ไฟ", pLightDisp: "ไฟ + เลข", pUnlock: "ปลดกลอน", pUnlockDisp: "ปลดกลอน + เลข", grpLight: "ไฟ", grpLatch: "กลอน", grpOther: "จอและอื่น ๆ", cLight: "เปิดไฟ", cLightNum: "เปิดไฟ + เลข", dispOff: "ปิดจอ", qShowAll: "แสดงทั้งหมด", qHidden: "ซ่อนคำสั่งจอ: โมดูลนี้ไม่มีจอ", cLightUnlock: "เปิดไฟ + ปลดกลอน", cLightNumUnlock: "เปิดไฟ + เลข + ปลดกลอน", unlockTitle: "ปลดกลอน · เลือกวิธี", unlockSafe: "ปลอดภัย", unlockSafeD: "ปลดเฉพาะเมื่อกลอนล็อกอยู่ ลิ้นชักที่เปิดค้างจะไม่ถูกสั่งซ้ำ", unlockForce: "บังคับ", unlockForceD: "ปลดทันทีโดยไม่ดูสถานะกลอน", colorTitle: "{c} · เลือกสี", colorN: "สี {n}",
     quick: "คำสั่งด่วน", identify: "ระบุตำแหน่ง (กะพริบ)", allOff: "ดับทั้งหมด", latchSafety: "ปลดกลอน (ปลอดภัย)", latchForce: "ปลดกลอน (บังคับ)", dispPower: "เปิดจอ",
     number: "ตัวเลข (0-9999)", writeNumber: "เขียนตัวเลข", cooldownNote: "กลอนต้องเว้น 2.2 วินาทีระหว่างการปลด", sent: "ส่งแล้ว", fires: "ยิงกลอน {c} ครั้ง · {s} วินาที", count: "ครั้ง", seconds: "วินาที",
     soak_page: "ทดสอบต่อเนื่อง", sPick: "เลือกตู้ที่จะทดสอบ", sAll: "ทั้งหมด", sMode: "โหมด", sPoll: "อ่านอย่างเดียว", sPharm: "จำลองการจ่ายยา",
@@ -88,7 +88,7 @@ const TXT = {
     cDevice: "Device", hmFmt: "{h} h {m} min", mFmt: "{m} min {s} s", mUnlockedAgoK: "Last unlock", agoS: "{s} ago", stOn: "Lit", stTimes: "{n} times", stOnTime: "Total on time", stLatch: "Unlocked", stButton: "Button presses", stRun: "Total run time", stLight: "Light", stTimeCol: "On time", stOld: "Module firmware older than v3.3.0: counters stop at 65535", modInfo: "Module details", hOk: "healthy", hBad: "{n} issue(s)", cRuntime: "Runtime", cHealth: "Health", cReset: "Last reset cause", cTemp: "Temperatures", cLatch: "Latch / display", cStats: "Statistics",
     mType: "Type", mFw: "Firmware", mHw: "Hardware", mBaud: "Baud", mUid: "Chip serial", mUptime: "Uptime", mBoots: "Boots", mMode: "Mode",
     mPreset: "Active preset", mButton: "Confirm presses", mRoom: "Room", mBoard: "Board", mCurrent: "Input current", mLatch: "Latch", mLocked: "locked", mUnlocked: "unlocked",
-    mUnlockedAgo: "last unlock {s} s ago", mDisplay: "Display number", na: "n/a", presets: "Colour presets", pLight: "Light", pLightDisp: "Light + number", pUnlock: "Unlock", pUnlockDisp: "Unlock + number", grpLight: "Light", grpLatch: "Latch", grpOther: "Display and more", cLight: "Light", cLightNum: "Light + number", dispOff: "Display off", cLightUnlock: "Light + unlock", cLightNumUnlock: "Light + number + unlock", unlockTitle: "Unlock · choose how", unlockSafe: "Safe", unlockSafeD: "Only when the latch reads locked; an open drawer is left alone", unlockForce: "Force", unlockForceD: "Pulse now, whatever the latch reads", colorTitle: "{c} · pick a colour", colorN: "Colour {n}",
+    mUnlockedAgo: "last unlock {s} s ago", mDisplay: "Display number", na: "n/a", presets: "Colour presets", pLight: "Light", pLightDisp: "Light + number", pUnlock: "Unlock", pUnlockDisp: "Unlock + number", grpLight: "Light", grpLatch: "Latch", grpOther: "Display and more", cLight: "Light", cLightNum: "Light + number", dispOff: "Display off", qShowAll: "Show all", qHidden: "Display commands hidden: this module has no display", cLightUnlock: "Light + unlock", cLightNumUnlock: "Light + number + unlock", unlockTitle: "Unlock · choose how", unlockSafe: "Safe", unlockSafeD: "Only when the latch reads locked; an open drawer is left alone", unlockForce: "Force", unlockForceD: "Pulse now, whatever the latch reads", colorTitle: "{c} · pick a colour", colorN: "Colour {n}",
     quick: "Quick commands", identify: "Identify (blink)", allOff: "All off", latchSafety: "Unlock (safe)", latchForce: "Unlock (force)", dispPower: "Display on",
     number: "Number (0-9999)", writeNumber: "Write number", cooldownNote: "A latch needs 2.2 s between unlocks", sent: "Sent", fires: "{c} fires · {s} s", count: "count", seconds: "seconds",
     soak_page: "Soak", sPick: "Choose the cabinets to test", sAll: "All", sMode: "Mode", sPoll: "Read only", sPharm: "Pharmacy simulation",
@@ -462,6 +462,11 @@ function viewModule() {
       <p class="small muted" style="margin:10px 0 0">${t("checkedAt", { at: esc(d.at) })} · ${d.ms} ms</p></details>`;
   }
   const lb = (addr, label, cls) => `<button class="btn ${cls || ""}" data-act="mod-coil" data-addr="${addr}" data-val="1"${cls === "latch" ? " data-latch=1" : ""}>${label}</button>`;
+  /* Commands the module that was read cannot carry are hidden unless "show all" is ticked. Only one fact is used, and it
+     comes from the module itself: device type 10 (STANDARD) is the 8-window mask board with no OLED (LGS-Control-Table,
+     note 13), so every display command is moot there. Nothing is hidden before a module has been read. */
+  const typeNo = d && d.device ? parseInt(String(d.device.type), 10) : NaN, noOled = typeNo === 10;
+  const oled = (html) => (noOled && !m.showAll ? "" : html);
   const cb = (kind, label, latch) => `<button class="btn" data-act="mod-color" data-kind="${kind}"${latch ? " data-latch=1" : ""}>${label}</button>`;
   return `<h1>${t("module_page")}</h1>
     <section class="card stack"><div class="row" style="align-items:flex-end"><div class="field" style="min-width:220px;flex:1"><label>${t("pick")}</label><select id="modsel"><option value="">—</option>${opts}</select></div>
@@ -470,11 +475,12 @@ function viewModule() {
       <div class="row"><label class="row"><input type="checkbox" id="modauto"${m.auto ? " checked" : ""}> ${t("auto")}</label></div></section>
     <div class="stack" style="margin-top:12px">${cards}
       <h2>${t("quick")}</h2><section class="card stack">
-        <div class="stack tight"><b class="small muted">${t("grpLight")}</b><div class="qgrid">${cb("enable", t("cLight"))}${cb("display", t("cLightNum"))}</div></div>
-        <div class="stack tight"><b class="small muted">${t("grpLatch")}</b><div class="qgrid"><button class="btn" data-act="mod-unlock" data-latch=1>${t("pUnlock")}</button>${cb("latch", t("cLightUnlock"), 1)}${cb("latch_display", t("cLightNumUnlock"), 1)}</div></div>
+        <div class="row between"><span class="small muted">${noOled && !m.showAll ? t("qHidden") : ""}</span><label class="row"><input type="checkbox" id="modall"${m.showAll ? " checked" : ""}> ${t("qShowAll")}</label></div>
+        <div class="stack tight"><b class="small muted">${t("grpLight")}</b><div class="qgrid">${cb("enable", t("cLight"))}${oled(cb("display", t("cLightNum")))}</div></div>
+        <div class="stack tight"><b class="small muted">${t("grpLatch")}</b><div class="qgrid"><button class="btn" data-act="mod-unlock" data-latch=1>${t("pUnlock")}</button>${cb("latch", t("cLightUnlock"), 1)}${oled(cb("latch_display", t("cLightNumUnlock"), 1))}</div></div>
         <div class="stack tight"><b class="small muted">${t("grpOther")}</b><div class="qgrid">${lb(509, t("identify"))}${lb(511, t("allOff"))}
-          <button class="btn" data-act="mod-coil" data-addr="1010" data-val="1">${t("dispPower")}</button><button class="btn" data-act="mod-coil" data-addr="1010" data-val="0">${t("dispOff")}</button></div></div>
-        <div class="row" style="align-items:flex-end"><div class="field" style="width:160px"><label>${t("number")}</label><input id="modnum" type="number" min="0" max="9999" value="45"></div><button class="btn" data-act="mod-number">${t("writeNumber")}</button></div>
+          ${oled(`<button class="btn" data-act="mod-coil" data-addr="1010" data-val="1">${t("dispPower")}</button><button class="btn" data-act="mod-coil" data-addr="1010" data-val="0">${t("dispOff")}</button>`)}</div></div>
+        ${oled(`<div class="row" style="align-items:flex-end"><div class="field" style="width:160px"><label>${t("number")}</label><input id="modnum" type="number" min="0" max="9999" value="45"></div><button class="btn" data-act="mod-number">${t("writeNumber")}</button></div>`)}
         <p class="small muted">${t("cooldownNote")}</p></section>
       ${uiMode === "advanced" ? `<h2>${t("swTitle")}</h2><section class="card stack">${sweepView()}</section>
       <h2>${t("dangerTitle")}</h2><section class="card stack" style="border-color:var(--bad)">${dangerView()}</section>` : ""}
@@ -1331,6 +1337,7 @@ document.addEventListener("change", async (ev) => {
   if (ev.target.id === "ntpon" || ev.target.id === "ntpport") ntpApply();
   if (ev.target.dataset && ev.target.dataset.ins) { const k = ev.target.dataset.ins, el = ev.target; S.ins[k] = el.type === "checkbox" ? el.checked : el.type === "number" ? +el.value : (k === "preset" ? +el.value : el.value); insCaption(); }
   if (ev.target.id === "moddev") { S.mod.dev = Math.max(1, Math.min(247, +ev.target.value || 1)); S.mod.data = null; }
+  if (ev.target.id === "modall") { S.mod.showAll = ev.target.checked; renderKeep(); }
   if (ev.target.id === "modauto") { S.mod.auto = ev.target.checked; modAutoSync(); }
   if (ev.target.id === "gwsel") { S.gw.id = ev.target.value; S.gw.data = null; S.gw.edits = {}; if (S.gw.id) gwRead(); else render(); }
   if (ev.target.dataset && ev.target.dataset.pick) { ev.target.checked ? S.soak.sel.add(ev.target.dataset.pick) : S.soak.sel.delete(ev.target.dataset.pick); }
