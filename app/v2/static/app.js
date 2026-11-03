@@ -644,10 +644,16 @@ function insDyn() {
     ${i.summary ? `<div class="small">${esc(i.summary)}</div>` : ""}
     ${rows ? `<div style="overflow-x:auto"><table><tr><th>ID</th><th>${t("insType")}</th><th>${t("insResult")}</th><th>${t("insDetail")}</th></tr>${rows}</table></div>` : ""}`;
 }
+/* Cancel while a check runs; once there is a result on screen the same button clears it (the selection stays). */
+function insStopBtn() {
+  const i = S.ins, has = !i.running && (i.rows.length || Object.keys(i.res).length || i.summary || i.banner);
+  return has ? `<button class="btn" id="insstop" data-act="ins-clear">${t("scanClear")}</button>`
+    : `<button class="btn" id="insstop" data-act="job-stop"${i.running ? "" : " disabled"}>${t("insCancel")}</button>`;
+}
 function insPaint() {
   const g = $("#insgrid"); if (g) g.innerHTML = insGridHtml();
   const el = $("#insdyn"); if (el) { el.innerHTML = insDyn(); el.hidden = !el.innerHTML.trim(); }
-  const busy = anyJob(), run = $("#insrun"), stop = $("#insstop"); if (run) run.disabled = busy; if (stop) stop.disabled = !S.ins.running;
+  const busy = anyJob(), run = $("#insrun"), stop = $("#insstop"); if (run) run.disabled = busy; if (stop) stop.outerHTML = insStopBtn();
   const f = $("#insfile"); if (f) f.hidden = !(S.ins.file && !S.ins.running);
 }
 function insFold(ev) {
@@ -704,7 +710,7 @@ function insView() {
     + step(2, t("insStep2"), `<div class="row" style="gap:8px"><button class="btn" data-act="ins-whole">${t("insWhole")}</button>${fromScan}<button class="btn" data-act="ins-none">${t("insClear")}</button></div><div id="insgrid">${insGridHtml()}</div>`,
       `<span class="small muted" id="inssel">${insSelText()}</span>`)
     + step(3, t("insStep3"), `<div class="fgrid">${opts}</div>`)
-    + step(4, t("insStep4"), `<div class="row" style="gap:8px"><button class="btn primary" id="insrun" data-act="ins-run"${anyJob() ? " disabled" : ""}>${t(i.mode === "check" ? "insRun" : "insPickRun")}</button><button class="btn" id="insstop" data-act="job-stop"${i.running ? "" : " disabled"}>${t("insCancel")}</button>
+    + step(4, t("insStep4"), `<div class="row" style="gap:8px"><button class="btn primary" id="insrun" data-act="ins-run"${anyJob() ? " disabled" : ""}>${t(i.mode === "check" ? "insRun" : "insPickRun")}</button>${insStopBtn()}
       ${fileLink(i, t("insCsv")).replace("<a ", '<a id="insfile" ')}</div><div id="insdyn" class="stack"${res.trim() ? "" : " hidden"}>${res}</div>`);
 }
 
@@ -1296,6 +1302,7 @@ document.addEventListener("click", async (ev) => {
     } else if (act.dataset.act === "ins-run") { await insStart();
     } else if (act.dataset.act === "job-stop") { await api("POST", "/api/v2/ins/cancel", {});
     } else if (act.dataset.act === "ins-fromscan") { const L = S.ins.layout; if (!L || anyJob()) return; const have = new Set(L.ids); S.ins.sel = new Set(S.scan.found.map((f) => f.id).filter((x) => have.has(x))); S.ins.res = {}; insPaint(); insCaption(); const se = $("#inssel"); if (se) se.textContent = insSelText();
+    } else if (act.dataset.act === "ins-clear") { insReset(); insPaint();
     } else if (act.dataset.act === "scan-clear") { Object.assign(S.scan, { found: [], asked: new Set(), at: 0, text: "", err: "" }); scanPaint(); const fs = document.querySelector("[data-act=ins-fromscan]"); if (fs) fs.remove();
     } else if (act.dataset.act === "scan-run") { S.scan.found = []; S.scan.text = ""; S.scan.asked = new Set(); S.scan.at = 0; S.scan.full = act.dataset.full === "1"; await jobStart("scan", "/api/v2/ins/scan", { id: S.mod.id, full: act.dataset.full === "1" });
     } else if (act.dataset.act === "scan-pick") { S.mod.dev = +act.dataset.id; S.mod.data = null; renderKeep(); await modRead();
