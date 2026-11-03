@@ -603,6 +603,7 @@ async function jobResume() {
     const r = await api("GET", "/api/v2/ins/events?since=0"), st = JOBST[r.kind] && JOBST[r.kind]();
     if (!st || (!r.running && !r.events.length)) return;
     const site = S.sites.find((x) => x.name === r.cabinet);
+    if ((r.kind === "scan" || r.kind === "sweep") && site && !S.mod.id) { S.mod.id = site.id; await insLayout(); }
     if (r.kind === "check") { if (site) { S.mod.id = site.id; await insLayout(); } S.ins.mode = r.mode || S.ins.mode; insReset(); }
     if (r.kind === "report" && site) S.rpt.id = site.id;
     if (r.kind === "report" && r.running && page === "gateway") setTimeout(rptOpen, 0);
@@ -702,7 +703,7 @@ function insView() {
 /* ---- bus scan ---- */
 function scanFold(ev) {
   const s = S.scan;
-  if (ev.t === "probe") { s.text = t("scanProg", { i: ev.index, total: ev.total, id: ev.id }); s.at = ev.id; s.asked.add(ev.id); if (ev.found) s.found.push({ id: ev.id, type: ev.type }); }
+  if (ev.t === "probe") { s.full = ev.total > 100; s.text = t("scanProg", { i: ev.index, total: ev.total, id: ev.id }); s.at = ev.id; s.asked.add(ev.id); if (ev.found) s.found.push({ id: ev.id, type: ev.type }); }
   else if (ev.t === "end") { s.found = ev.found; s.at = 0; s.text = ev.cancelled ? t("insB_cancelled") : t("scanDone", { n: ev.found.length, total: ev.total }); }
 }
 /* The result laid out like the cabinet, eight to a row: found = green, asked and silent = red, being asked = amber.
@@ -712,12 +713,21 @@ function scanDyn() {
   const cell = (id) => { const f = found.has(id), cls = f ? " ok" : s.at === id ? " next" : s.asked.has(id) ? " bad" : "";
     return f ? `<button class="cmcell${cls}" data-act="scan-pick" data-id="${id}" title="${esc(found.get(id))}">${id}</button>` : `<span class="cmcell${cls}" style="display:grid;place-items:center;cursor:default">${id}</span>`; };
   let grid = "";
-  if (L) {
+  if (s.full) {
+    /* Every id: ten to a row by tens (1-9, 10-19 ... 240-247). Found = green, found outside the cabinet's layout = amber,
+       a layout slot that stayed silent = red, any other silent id just fades. */
+    const lay = new Set((L && L.ids) || []);
+    const fcell = (id) => { const f = found.has(id), cls = f ? (lay.has(id) ? " ok" : " extra") : s.at === id ? " next" : s.asked.has(id) ? (lay.has(id) ? " bad" : " dim") : "";
+      return f ? `<button class="cmcell sm${cls}" data-act="scan-pick" data-id="${id}" title="${esc(found.get(id))}">${id}</button>` : `<span class="cmcell sm${cls}">${id}</span>`; };
+    grid = `<div class="cmgrid" style="grid-template-columns:auto repeat(10,minmax(0,1fr))">`;
+    for (let r = 0; r <= 24; r++) { grid += `<span class="cmrow">${r * 10}</span>`; for (let k = 0; k <= 9; k++) { const id = r * 10 + k; grid += id >= 1 && id <= 247 ? fcell(id) : "<span></span>"; } }
+    grid += "</div>";
+  } else if (L) {
     grid = `<div class="cmgrid" style="grid-template-columns:auto repeat(8,minmax(0,1fr))">`;
     for (const row of L.rows) { grid += `<span class="cmrow">R${row.r}</span>`; for (let k = 1; k <= 8; k++) { const id = row.r * 10 + k; grid += row.ids.includes(id) ? cell(id) : "<span></span>"; } }
     grid += "</div>";
   }
-  const have = new Set((L && L.ids) || []), extra = s.found.filter((f) => !have.has(f.id));
+  const have = new Set((L && L.ids) || []), extra = s.full ? [] : s.found.filter((f) => !have.has(f.id));
   const ex = extra.length ? `<div class="row" style="gap:6px;align-items:center"><span class="small muted">${t("scanExtra")}</span>${extra.map((f) => `<button class="cmcell next" style="min-width:56px;padding:0 8px" data-act="scan-pick" data-id="${f.id}" title="${esc(f.type)}">${f.id}</button>`).join("")}</div>` : "";
   const started = s.running || s.asked.size;
   return `<span class="small">${esc(s.text || t("insIdle"))}</span>${s.err ? `<div class="notice bad">${esc(s.err)}</div>` : ""}${started ? grid : ""}${ex}`;
@@ -1271,7 +1281,7 @@ document.addEventListener("click", async (ev) => {
     } else if (act.dataset.act === "ins-run") { await insStart();
     } else if (act.dataset.act === "job-stop") { await api("POST", "/api/v2/ins/cancel", {});
     } else if (act.dataset.act === "ins-fromscan") { const L = S.ins.layout; if (!L || anyJob()) return; const have = new Set(L.ids); S.ins.sel = new Set(S.scan.found.map((f) => f.id).filter((x) => have.has(x))); S.ins.res = {}; insPaint(); insCaption(); const se = $("#inssel"); if (se) se.textContent = insSelText();
-    } else if (act.dataset.act === "scan-run") { S.scan.found = []; S.scan.text = ""; S.scan.asked = new Set(); S.scan.at = 0; await jobStart("scan", "/api/v2/ins/scan", { id: S.mod.id, full: act.dataset.full === "1" });
+    } else if (act.dataset.act === "scan-run") { S.scan.found = []; S.scan.text = ""; S.scan.asked = new Set(); S.scan.at = 0; S.scan.full = act.dataset.full === "1"; await jobStart("scan", "/api/v2/ins/scan", { id: S.mod.id, full: act.dataset.full === "1" });
     } else if (act.dataset.act === "scan-pick") { S.mod.dev = +act.dataset.id; S.mod.data = null; renderKeep(); await modRead();
     } else if (act.dataset.act === "sw-run") {
       const w = S.sweep; if (!S.mod.id) return;
