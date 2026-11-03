@@ -653,8 +653,15 @@ function insStopBtn() {
 /* The newest result is on top and the box is as tall as the header plus five rows: older ones are a scroll away. */
 function insResFit() {
   const box = $("#insres"); if (!box) return;
-  const rows = box.querySelectorAll("tr"); box.style.maxHeight = "";
-  if (rows.length > 6) box.style.maxHeight = Math.ceil(rows[6].getBoundingClientRect().top - rows[0].getBoundingClientRect().top) + 2 + "px";
+  const fit = () => {
+    const rows = box.querySelectorAll("tr");
+    box.style.maxHeight = rows.length > 6 ? Math.ceil(rows[6].getBoundingClientRect().top - rows[0].getBoundingClientRect().top) + 2 + "px" : "";
+  };
+  fit();
+  /* Row heights change after the fit on a phone (the web font arriving, a rotation, the detail column re-wrapping):
+     refit whenever the table itself changes size, so the box keeps showing five rows, not six or seven. */
+  const table = box.querySelector("table");
+  if (table && !table._fitObs && window.ResizeObserver) { table._fitObs = new ResizeObserver(fit); table._fitObs.observe(table); }
 }
 function insPaint() {
   const g = $("#insgrid"); if (g) g.innerHTML = insGridHtml();
