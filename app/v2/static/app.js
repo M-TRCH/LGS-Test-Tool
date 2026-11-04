@@ -1170,7 +1170,7 @@ async function cmSync() {
 }
 
 const VIEWS = { commission: viewCommission, cabinets: viewCabinets, gateway: viewGateway, module: viewModule, soak: viewSoak, firmware: viewFirmware, labels: viewLabels, sites: viewSites, events: viewEvents };
-const NAV = ["cabinets", "module", "gateway", "labels", "events", "soak", "firmware", "commission", "sites"];
+const NAV = ["cabinets", "module", "events", "gateway", "sites", "firmware", "soak", "commission", "labels"];
 /* Basic mode is what a technician on site needs day to day: cabinets, modules (read, quick commands, scan, installation check) and events. Everything that changes settings, firmware, module ids or the cabinet list, runs for hours or prints labels, and the classic tool, is advanced. It is a convenience for whoever holds the phone, not security: the login is what keeps strangers out. */
 const ADV_PAGES = new Set(["gateway", "labels", "soak", "firmware", "commission", "sites"]);
 let uiMode = "basic"; try { uiMode = localStorage.getItem("lgs.mode") === "advanced" ? "advanced" : "basic"; } catch (e) { /* storage blocked: basic */ }
