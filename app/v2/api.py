@@ -540,8 +540,9 @@ def install(app, cfg, worker) -> None:
         return await asyncio.to_thread(events_api.query, gw, days, ev, q, limit, False, start, end, offset, tfrom, tto, client, unit)
 
     @app.get("/api/v2/events/summary")
-    async def events_summary(gw: str = "", days: int = 1, start: str = "", end: str = ""):
-        return await asyncio.to_thread(events_api.summary, gw, days, start, end)
+    async def events_summary(gw: str = "", days: int = 1, start: str = "", end: str = "", ev: str = "",
+                             client: str = "", unit: str = "", tfrom: str = "", tto: str = ""):
+        return await asyncio.to_thread(events_api.summary, gw, days, start, end, ev, client, unit, tfrom, tto)
 
     @app.get("/api/v2/events/csv")
     async def events_csv(gw: str = "", days: int = 1, ev: str = "", q: str = "", start: str = "", end: str = "",

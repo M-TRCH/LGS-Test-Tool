@@ -56,51 +56,78 @@ def time_window(tfrom: str = "", tto: str = ""):
     return a, b
 
 
-def query(gw: str = "", days: int = 1, ev: str = "", q: str = "", limit: int = 500,
-          everything: bool = False, start: str = "", end: str = "", offset: int = 0,
-          tfrom: str = "", tto: str = "", client: str = "", unit: str = "") -> dict:
-    """Newest first. `gw` is a folder name from gateways(); empty = every gateway.
-    `everything` lifts the row cap (the screen shows a page; the CSV export wants all);
-    `offset` skips that many matches, for paging."""
+def _split(text: str, ws: bool = False) -> set:
+    """A comma list from the page ("a,b") as a set; `ws` also splits on spaces (event types never contain one)."""
+    return {x.strip() for x in re.split(r"[,\s]+" if ws else r",", text or "") if x.strip()}
+
+
+class _Filter:
+    """Which filters a record fails. The page filters like a parametric part search: tick values in several groups (gateway,
+    event type, client, module) and every group narrows the result, with each option's count showing what ticking it WOULD
+    leave, so a count is computed with that option's own group left out. `fails()` therefore returns the set of groups a
+    record fails rather than one yes/no."""
+
+    def __init__(self, gw="", ev="", client="", unit="", tfrom="", tto="", q=""):
+        self.gw, self.ev, self.client, self.unit = _split(gw), _split(ev, True), _split(client), _split(unit)
+        self.tw = time_window(tfrom, tto)           # a time of day on every chosen day; "from" later than "to" wraps past midnight
+        self.needle = (q or "").strip().lower()
+
+    def fails(self, name: str, r: dict) -> set:
+        out = set()
+        ev = r.get("ev")
+        if self.gw and name not in self.gw:
+            out.add("gw")
+        if self.ev and ev not in self.ev:
+            out.add("ev")
+        if self.client and r.get("client") not in self.client:
+            out.add("client")                       # the address is only on tcp_accept / tcp_refused records
+        if self.unit and not (ev == "coil" and str(r.get("a")) in self.unit):
+            out.add("unit")                         # a module id: its light commands
+        if self.tw:
+            stamp = r.get("t") or ""
+            hm = stamp[11:16]
+            if len(stamp) < 16 or stamp[0] != "2":
+                out.add("time")                     # no gateway time on it, so it cannot be placed in a window
+            elif not (self.tw[0] <= hm <= self.tw[1] if self.tw[0] <= self.tw[1] else hm >= self.tw[0] or hm <= self.tw[1]):
+                out.add("time")
+        if self.needle and self.needle not in (r.get("text", "") + " " + r.get("client", "")).lower():
+            out.add("q")
+        return out
+
+
+def _records(since: str, until: str, only=None):
+    """Every (gateway folder name, record) in the window; `only` limits it to those gateway folders."""
     root = event_collector.events_root()
-    limit = 10 ** 9 if everything else max(1, min(int(limit), 2000))
-    offset = max(0, int(offset))
-    since, until = window(days, start, end)
-    tw = time_window(tfrom, tto)   # a time of day on every chosen day; a later "from" than "to" wraps past midnight
-    evs = {e for e in re.split(r"[,\s]+", ev) if e}
-    needle = q.strip().lower()
-    rows, scanned = [], 0
-    dirs = [root / gw] if gw else sorted(p for p in root.iterdir() if p.is_dir())
-    for d in dirs:
-        if not d.is_dir() or d.resolve().parent != root.resolve():
-            continue                                  # no path walking out of the events folder
+    for d in sorted(p for p in root.iterdir() if p.is_dir()):
+        if only and d.name not in only:
+            continue
         for f in sorted(d.glob("events-*.jsonl"), reverse=True):
             if f.name[7:17] > until:
                 continue
             if f.name[7:17] < since:
                 break
             for line in f.read_text(encoding="utf-8").splitlines():
-                scanned += 1
                 try:
-                    r = json.loads(line)
+                    yield d.name, json.loads(line)
                 except ValueError:
                     continue
-                if evs and r.get("ev") not in evs:
-                    continue
-                if needle and needle not in (r.get("text", "") + " " + r.get("client", "")).lower():
-                    continue
-                if client and r.get("client") != client:
-                    continue                                  # exact client address, from a tcp_accept / tcp_refused record
-                if unit != "" and (r.get("ev") != "coil" or str(r.get("a")) != str(unit)):
-                    continue                                  # a module id: its light commands
-                if tw:
-                    stamp = r.get("t") or ""
-                    if len(stamp) < 16 or stamp[0] != "2":
-                        continue                              # no gateway time on it, so it cannot be placed in a window
-                    hm = stamp[11:16]
-                    if not (tw[0] <= hm <= tw[1] if tw[0] <= tw[1] else hm >= tw[0] or hm <= tw[1]):
-                        continue
-                rows.append(r)
+
+
+def query(gw: str = "", days: int = 1, ev: str = "", q: str = "", limit: int = 500,
+          everything: bool = False, start: str = "", end: str = "", offset: int = 0,
+          tfrom: str = "", tto: str = "", client: str = "", unit: str = "") -> dict:
+    """Newest first. `gw`, `ev`, `client` and `unit` are comma lists (several values = any of them); empty = no limit.
+    `everything` lifts the row cap (the screen shows a page; the CSV export wants all);
+    `offset` skips that many matches, for paging."""
+    limit = 10 ** 9 if everything else max(1, min(int(limit), 2000))
+    offset = max(0, int(offset))
+    since, until = window(days, start, end)
+    flt = _Filter(gw, ev, client, unit, tfrom, tto, q)
+    rows, scanned = [], 0
+    for name, r in _records(since, until, flt.gw or None):
+        scanned += 1
+        if not flt.fails(name, r):
+            rows.append(r)
     rows.sort(key=lambda r: (r.get("t") or r.get("collected", ""), r.get("seq", 0)), reverse=True)
     return {"rows": rows[offset:offset + limit], "matched": len(rows), "scanned": scanned, "limit": limit, "offset": offset}
 
@@ -109,51 +136,58 @@ def query(gw: str = "", days: int = 1, ev: str = "", q: str = "", limit: int = 5
 # network side; everything else (lights, connects, schedule, config) is activity.
 PROBLEM_EVENTS = ("bus_quiet", "rtu_heal", "tcp_refused", "link_down", "boot")
 TILE_EVENTS = ("coil", "tcp_accept", "tcp_refused", "bus_quiet", "rtu_heal", "boot")
+HIDDEN_TYPES = ("tcp_peer",)          # folded into the tcp_accept before it, never a row of its own
 
 
-def summary(gw: str = "", days: int = 1, start: str = "", end: str = "") -> dict:
-    """Counts for the dashboard over the same window as the list: totals, one row per gateway, and
-    a time series (by hour when the window is two days or less, otherwise by day) of lights and problems.
+def summary(gw: str = "", days: int = 1, start: str = "", end: str = "", ev: str = "", client: str = "", unit: str = "",
+            tfrom: str = "", tto: str = "") -> dict:
+    """One pass over the window for the whole dashboard side of the page: the counters, one row per gateway, a time series
+    (by hour when the window is two days or less, otherwise by day) of lights and problems, and the option lists with counts
+    for the filter groups. The counters, chart and table follow every filter EXCEPT the event-type one (filtering to one type
+    would blank the rest of the dashboard); each option count leaves out its own group (see _Filter).
     Buckets are the gateway's own timestamps (local wall time), so a bucket is the hour on the cabinet's clock."""
-    root = event_collector.events_root()
     since, until = window(days, start, end)
     span = (datetime.strptime(until, "%Y-%m-%d") - datetime.strptime(since, "%Y-%m-%d")).days + 1
     hourly = span <= 2
+    flt = _Filter(gw, ev, client, unit, tfrom, tto)
     totals = {k: 0 for k in TILE_EVENTS}
-    per, buckets, clients, units = {}, {}, set(), set()
-    dirs = [root / gw] if gw else sorted(p for p in root.iterdir() if p.is_dir())
-    for d in dirs:
-        if not d.is_dir() or d.resolve().parent != root.resolve():
+    per, buckets = {}, {}
+    facets = {"gw": {}, "ev": {}, "client": {}, "unit": {}}
+    root = event_collector.events_root()
+    for d in sorted(p for p in root.iterdir() if p.is_dir()):
+        if not flt.gw or d.name in flt.gw:
+            per[d.name] = {"gw": d.name, "last": "", **{k: 0 for k in TILE_EVENTS}}
+        facets["gw"].setdefault(d.name, 0)
+    for name, r in _records(since, until):
+        ev_name = r.get("ev", "")
+        f = flt.fails(name, r)
+        if "time" in f or "q" in f:
             continue
-        row = per.setdefault(d.name, {"gw": d.name, "last": "", **{k: 0 for k in TILE_EVENTS}})
-        for f in sorted(d.glob("events-*.jsonl"), reverse=True):
-            if f.name[7:17] > until:
-                continue
-            if f.name[7:17] < since:
-                break
-            for line in f.read_text(encoding="utf-8").splitlines():
-                try:
-                    r = json.loads(line)
-                except ValueError:
-                    continue
-                ev = r.get("ev", "")
-                if r.get("client"):
-                    clients.add(r["client"])                  # the pick-lists on the page: who connected, which modules were driven
-                if ev == "coil":
-                    units.add(int(r.get("a", 0)))
-                if ev in TILE_EVENTS:
-                    totals[ev] += 1
-                    row[ev] += 1
-                t = r.get("t") or r.get("collected", "")
-                if len(t) >= 13 and t[0] == "2":
-                    row["last"] = max(row["last"], t)
-                    key = t[:13] if hourly else t[:10]
-                    if since <= key[:10] <= until:
-                        b = buckets.setdefault(key, {"lights": 0, "problems": 0})
-                        if ev == "coil":
-                            b["lights"] += 1
-                        elif ev in PROBLEM_EVENTS:
-                            b["problems"] += 1
+        if f <= {"gw"}:
+            facets["gw"][name] = facets["gw"].get(name, 0) + 1
+        if f <= {"ev"} and ev_name not in HIDDEN_TYPES:
+            facets["ev"][ev_name] = facets["ev"].get(ev_name, 0) + 1
+        if f <= {"client"} and r.get("client"):
+            facets["client"][r["client"]] = facets["client"].get(r["client"], 0) + 1
+        if f <= {"unit"} and ev_name == "coil":
+            u = str(r.get("a", 0))
+            facets["unit"][u] = facets["unit"].get(u, 0) + 1
+        if not f <= {"ev"}:
+            continue
+        row = per[name]
+        if ev_name in TILE_EVENTS:
+            totals[ev_name] += 1
+            row[ev_name] += 1
+        t = r.get("t") or r.get("collected", "")
+        if len(t) >= 13 and t[0] == "2":
+            row["last"] = max(row["last"], t)
+            key = t[:13] if hourly else t[:10]
+            if since <= key[:10] <= until:
+                b = buckets.setdefault(key, {"lights": 0, "problems": 0})
+                if ev_name == "coil":
+                    b["lights"] += 1
+                elif ev_name in PROBLEM_EVENTS:
+                    b["problems"] += 1
     series = []
     if buckets:
         if hourly:
@@ -170,11 +204,17 @@ def summary(gw: str = "", days: int = 1, start: str = "", end: str = "") -> dict
             k = cur.strftime(fmt)
             series.append({"t": k, **buckets.get(k, {"lights": 0, "problems": 0})})
             cur += step
+
     def ip_key(x):
         return tuple(int(p) if p.isdigit() else 0 for p in x.split("."))
 
-    return {"since": since, "until": until, "hourly": hourly, "totals": totals,
-            "clients": sorted(clients, key=ip_key), "units": sorted(units),
+    opts = {
+        "gw": [{"v": k, "n": n} for k, n in sorted(facets["gw"].items())],
+        "ev": [{"v": k, "n": n} for k, n in sorted(facets["ev"].items(), key=lambda kv: (-kv[1], kv[0]))],
+        "client": [{"v": k, "n": n} for k, n in sorted(facets["client"].items(), key=lambda kv: ip_key(kv[0]))],
+        "unit": [{"v": k, "n": n} for k, n in sorted(facets["unit"].items(), key=lambda kv: int(kv[0]))],
+    }
+    return {"since": since, "until": until, "hourly": hourly, "totals": totals, "facets": opts,
             "gateways": sorted(per.values(), key=lambda r: r["gw"]), "series": series}
 
 
