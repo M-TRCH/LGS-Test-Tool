@@ -989,13 +989,12 @@ function verdictHtml(txt, inCard) {
   if (m.wrong !== null) out += `<div class="small ${m.wrong ? "vwarn" : "muted"}">${t("vWrong", { n: m.wrong })}</div>`;
   return out;
 }
-/* The same verdict drawn on a canvas, to save as a picture: the page's own colours and font, two times the size so it stays
-   sharp when pasted into a report. Resolves to a PNG blob. */
+/* The same verdict drawn on a canvas, to save as a picture: white background and light colours (not the page's theme), the
+   page's font, two times the size so it stays sharp when pasted into a report. Resolves to a PNG blob. */
 function verdictPng(txt) {
-  const m = verdictModel(txt), cs = getComputedStyle(document.documentElement), body = getComputedStyle(document.body);
-  const v = (n, d) => (cs.getPropertyValue(n).trim() || d);
-  const C = { ink: v("--ink", "#1b2430"), muted: v("--muted", "#6b7785"), line: v("--line", "#dfe4ea"), bg: body.backgroundColor && body.backgroundColor !== "rgba(0, 0, 0, 0)" ? body.backgroundColor : "#ffffff",
-    ok: v("--ok", "#0f8a4f"), warn: v("--warn", "#9a6700"), bad: v("--bad", "#c62828"), okbg: v("--ok-bg", "#e3f4ea"), warnbg: v("--warn-bg", "#fff1d6"), badbg: v("--bad-bg", "#fde7e7") };
+  const m = verdictModel(txt), body = getComputedStyle(document.body);
+  // a picture for a report: always white paper and the light-theme colours, whatever theme the page is in
+  const C = { ink: "#1b2430", muted: "#6b7785", line: "#dfe4ea", bg: "#ffffff", ok: "#0f8a4f", warn: "#9a6700", bad: "#c62828", okbg: "#e3f4ea", warnbg: "#fff1d6", badbg: "#fde7e7" };
   const font = body.fontFamily || "sans-serif", W = 1200, PAD = 28, RH = 32, S = 2;
   const lvlColor = (l) => (l === "bad" ? C.bad : l === "warn" ? C.warn : C.ok);
   const cabW = [170, 60, 70, 96, 60, 60, 60, 76, 76, 60], gwW = [260, 120, 100, 130, 150, 110, 100];
