@@ -469,7 +469,61 @@ def install(app, cfg, worker) -> None:
         ids = set(body.get("ids") or [])
         chosen = [s for s in sites.load() if s["id"] in ids]
         try:
-            return await asyncio.to_thread(ota_api.ota_start, worker, chosen, str(body.get("image", "")))
+            depot = body.get("depot")                  # {id: cabinet that holds the image, slot: 0-3}
+            dsite = None
+            if depot:
+                dsite = sites.find(str(depot.get("id", "")))
+                if not dsite:
+                    raise ValueError("unknown cabinet for the depot image")
+            return await asyncio.to_thread(ota_api.ota_start, worker, chosen, str(body.get("image", "")),
+                                           dsite, int(depot.get("slot", -1)) if depot else -1)
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=422)
+
+    # ── module images kept on a gateway ────────────────────────────────────
+    @app.get("/api/v2/fw/depot")
+    async def fw_depot(id: str):
+        site = sites.find(id)
+        if not site:
+            return JSONResponse({"error": "unknown cabinet"}, status_code=422)
+        try:
+            return await asyncio.to_thread(ota_api.depot_list, site)
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=502)
+
+    @app.post("/api/v2/fw/depot/put")
+    async def fw_depot_put(request: Request):
+        """JSON {id, image} for a bundled image; or a raw .bin body with ?id=&name= for an uploaded one."""
+        if not _mutating(request):
+            return _forbidden()
+        try:
+            if "json" in request.headers.get("content-type", ""):
+                body = await request.json()
+                site = sites.find(str(body.get("id", "")))
+                if not site:
+                    raise ValueError("unknown cabinet")
+                return await asyncio.to_thread(ota_api.depot_put, site, image_key=str(body.get("image", "")))
+            q = request.query_params
+            site = sites.find(q.get("id", ""))
+            if not site:
+                raise ValueError("unknown cabinet")
+            data = await request.body()
+            if len(data) > 200_000:
+                raise ValueError("image larger than 200 KB")
+            return await asyncio.to_thread(ota_api.depot_put, site, data=data, filename=q.get("name", "upload.bin")[:80])
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=422)
+
+    @app.post("/api/v2/fw/depot/delete")
+    async def fw_depot_delete(request: Request):
+        if not _mutating(request):
+            return _forbidden()
+        body = await request.json()
+        site = sites.find(str(body.get("id", "")))
+        if not site:
+            return JSONResponse({"error": "unknown cabinet"}, status_code=422)
+        try:
+            return await asyncio.to_thread(ota_api.depot_delete, site, int(body.get("slot", -1)))
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=422)
 

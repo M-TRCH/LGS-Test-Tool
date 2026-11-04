@@ -27,6 +27,84 @@ def images() -> dict:
             "gateway": [row(i) for i in firmware_bundle.for_kind(firmware_bundle.KIND_GATEWAY)]}
 
 
+# ── module images kept on a gateway ──────────────────────────────────────────
+def _depot_link(site: dict):
+    """(client, link) to the gateway's tunnel; the caller holds the gateway's lock and closes the client."""
+    from pymodbus.client import ModbusTcpClient
+    from .. import gateway_tcp
+    c = ModbusTcpClient(host=site["host"], port=int(site["port"]), timeout=5.0, retries=0)
+    if not c.connect():
+        raise ValueError(f"cannot reach {site['host']}:{site['port']}")
+    gateway_tcp.register_pdu(c)
+    return c, gateway_tcp.GatewayTcpLink(c)
+
+
+def depot_list(site: dict) -> dict:
+    from .. import gw_depot
+    from ..gateway_config import GatewayError
+    with gateway_api._lock(site["host"], int(site["port"])):
+        c, link = _depot_link(site)
+        try:
+            return {"name": site["name"], "slots": gw_depot.slots(link)}
+        except (OSError, GatewayError, gw_depot.DepotError) as exc:
+            raise ValueError(str(exc))
+        finally:
+            c.close()
+
+
+def depot_put(site: dict, *, image_key: str = "", data: bytes = b"", filename: str = "") -> dict:
+    from .. import gw_depot
+    from ..gateway_config import GatewayError
+    if image_key:
+        img = firmware_bundle.by_key(image_key)
+        if img is None or img.kind != firmware_bundle.KIND_MODULE_OTA:
+            raise ValueError("choose a module OTA image")
+        try:
+            data, filename = firmware_bundle.load(img), img.filename
+        except firmware_bundle.BundleError as exc:
+            raise ValueError(str(exc))
+    if not data:
+        raise ValueError("no image")
+    name = gw_depot.depot_name(filename)
+    with gateway_api._lock(site["host"], int(site["port"])):
+        c, link = _depot_link(site)
+        try:
+            slot = gw_depot.put(link, name, data)
+            return {"ok": True, "name": name, "slot": slot, "size": len(data), "slots": gw_depot.slots(link)}
+        except (OSError, GatewayError, gw_depot.DepotError) as exc:
+            raise ValueError(str(exc))
+        finally:
+            c.close()
+
+
+def depot_delete(site: dict, slot: int) -> dict:
+    from .. import gw_depot
+    from ..gateway_config import GatewayError
+    with gateway_api._lock(site["host"], int(site["port"])):
+        c, link = _depot_link(site)
+        try:
+            gw_depot.delete(link, slot)
+            return {"ok": True, "slots": gw_depot.slots(link)}
+        except (OSError, GatewayError, gw_depot.DepotError) as exc:
+            raise ValueError(str(exc))
+        finally:
+            c.close()
+
+
+def depot_fetch(site: dict, slot: int) -> tuple:
+    """(name, bytes) read back from one gateway and CRC-proven."""
+    from .. import gw_depot
+    from ..gateway_config import GatewayError
+    with gateway_api._lock(site["host"], int(site["port"])):
+        c, link = _depot_link(site)
+        try:
+            return gw_depot.fetch(link, slot)
+        except (OSError, GatewayError, gw_depot.DepotError) as exc:
+            raise ValueError(str(exc))
+        finally:
+            c.close()
+
+
 # ── module OTA across cabinets ───────────────────────────────────────────────
 class _OtaLog:
     def __init__(self) -> None:
@@ -65,10 +143,13 @@ def ota_status(worker) -> dict:
             "outcome": ({"text": out.text, "path": out.path} if out else None)}
 
 
-def ota_start(worker, sites_list: list, image_key: str) -> dict:
-    img = firmware_bundle.by_key(image_key)
-    if img is None or img.kind != firmware_bundle.KIND_MODULE_OTA:
-        raise ValueError("choose a module OTA image")
+def ota_start(worker, sites_list: list, image_key: str, depot_site: dict = None, depot_slot: int = -1) -> dict:
+    """The image is a bundled release (image_key) or one read back out of a gateway's depot (depot_site + depot_slot)."""
+    img = None
+    if depot_site is None:
+        img = firmware_bundle.by_key(image_key)
+        if img is None or img.kind != firmware_bundle.KIND_MODULE_OTA:
+            raise ValueError("choose a module OTA image")
     cabs = []
     for s in sites_list:
         if not s.get("cabinet"):
@@ -81,15 +162,22 @@ def ota_start(worker, sites_list: list, image_key: str) -> dict:
     dupes = soak_fleet.duplicate_hosts(cabs)
     if dupes:
         raise ValueError("two rows on one gateway: " + ", ".join(dupes))
-    try:
-        data = firmware_bundle.load(img)         # SHA-256 proven here
-    except firmware_bundle.BundleError as exc:
-        raise ValueError(str(exc))
+    if depot_site is not None:
+        filename, data = depot_fetch(depot_site, depot_slot)        # CRC-proven against the gateway's own record
+        filename = f"{filename} (from {depot_site['name']})"
+        from .. import ota
+        if not 8 <= len(data) <= ota.MAX_IMAGE_SIZE:
+            raise ValueError(f"{len(data):,} bytes is not a module image (the module slot holds {ota.MAX_IMAGE_SIZE:,})")
+    else:
+        try:
+            data, filename = firmware_bundle.load(img), img.filename         # SHA-256 proven here
+        except firmware_bundle.BundleError as exc:
+            raise ValueError(str(exc))
     ota_log.reset()
-    if not worker.start_fleet_ota(cabs, data, img.filename, soak_api.exports_dir()):
+    if not worker.start_fleet_ota(cabs, data, filename, soak_api.exports_dir()):
         raise ValueError("an update is already running, or this tool is connected to one of these gateways")
     return {"ok": True, "count": len(cabs), "modules": sum(len(c.ids) for c in cabs),
-            "image": img.filename, "size": len(data)}
+            "image": filename, "size": len(data)}
 
 
 # ── one gateway's network update ─────────────────────────────────────────────
