@@ -1055,7 +1055,12 @@ function soakViewDraw() {
     <div class="row" style="gap:8px"><button class="btn sm" type="button" data-act="soak-pick-all">${t("sAll")}</button><button class="btn sm" type="button" data-act="soak-pick-none">${t("insClear")}</button></div>
     <div class="cabgrid soakexp">${w.cabs.map((c) => `<label class="chk"><input type="checkbox" data-expcab="${esc(c)}"${w.pick.has(c) ? " checked" : ""}> ${esc(c)}</label>`).join("")}</div>
     <div class="row" style="gap:8px;flex-wrap:wrap"><select id="soakexpfmt">${[["csv", t("sFmtCsv")], ["zip", t("sFmtZip")]].map(([v, l]) => `<option value="${v}"${v === w.fmt ? " selected" : ""}>${l}</option>`).join("")}</select><button class="btn primary" type="button" data-act="soak-dl"${w.pick.size ? "" : " disabled"}>${t("sDownload")}</button></div></div>` : "";
-  $("#infobody").innerHTML = `<div style="max-height:72vh;overflow:auto;display:grid;gap:16px">${sum}${raw}</div>`;
+  $("#infobody").innerHTML = `<div style="max-height:72vh;overflow:auto;display:grid;gap:16px;padding:4px 6px">${sum}${raw}</div>`;
+}
+function soakViewSync() {
+  const w = S.soak.view; if (!w) return;
+  document.querySelectorAll("#infobody [data-expcab]").forEach((el) => { el.checked = w.pick.has(el.dataset.expcab); });
+  const dl = document.querySelector('#infobody [data-act="soak-dl"]'); if (dl) dl.disabled = !w.pick.size;
 }
 function soakAdvWarn() {
   const k = S.soak, w = [];
@@ -1691,7 +1696,7 @@ document.addEventListener("click", async (ev) => {
       const w = S.soak.view; if (!w || !w.txt) return;
       const blob = await verdictPng(w.txt); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `soak-${w.stamp}.png`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
     } else if (act.dataset.act === "soak-pick-all" || act.dataset.act === "soak-pick-none") {
-      const w = S.soak.view; if (!w) return; w.pick = act.dataset.act === "soak-pick-all" ? new Set(w.cabs) : new Set(); soakViewDraw();
+      const w = S.soak.view; if (!w) return; w.pick = act.dataset.act === "soak-pick-all" ? new Set(w.cabs) : new Set(); soakViewSync();
     } else if (act.dataset.act === "soak-dl") {
       const w = S.soak.view; if (!w || !w.pick.size) return;
       const a = document.createElement("a"); a.href = `/api/v2/soak/export?stamp=${encodeURIComponent(w.stamp)}&cabs=${encodeURIComponent([...w.pick].join(","))}&format=${w.fmt}`; a.click();
@@ -1877,7 +1882,7 @@ document.addEventListener("change", async (ev) => {
   if (ev.target.id === "modall") { S.mod.showAll = ev.target.checked; renderKeep(); }
   if (ev.target.id === "modauto") { S.mod.auto = ev.target.checked; modAutoSync(); }
   if (ev.target.id === "gwsel") { S.gw.id = ev.target.value; S.gw.data = null; S.gw.edits = {}; if (S.gw.id) gwRead(); else render(); }
-  if (ev.target.dataset && ev.target.dataset.expcab !== undefined && S.soak.view) { const w = S.soak.view; if (ev.target.checked) w.pick.add(ev.target.dataset.expcab); else w.pick.delete(ev.target.dataset.expcab); soakViewDraw(); }
+  if (ev.target.dataset && ev.target.dataset.expcab !== undefined && S.soak.view) { const w = S.soak.view; if (ev.target.checked) w.pick.add(ev.target.dataset.expcab); else w.pick.delete(ev.target.dataset.expcab); soakViewSync(); }
   if (ev.target.id === "soakexpfmt" && S.soak.view) S.soak.view.fmt = ev.target.value;
   if (ev.target.id === "soakgap") { S.soak.gap = Math.max(0.1, Math.min(30, +ev.target.value || 2)); $("#soakadvwarn").innerHTML = soakAdvWarn(); }
   if (ev.target.id === "soakevery") S.soak.every = Math.max(1, Math.min(100, Math.round(+ev.target.value) || 5));
