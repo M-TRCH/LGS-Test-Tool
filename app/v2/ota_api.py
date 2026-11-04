@@ -137,6 +137,59 @@ def depot_fetch(site: dict, slot: int) -> tuple:
             c.close()
 
 
+# ── module OTA run by the gateway itself ────────────────────────────────────
+def _each_gateway(sites_list: list, fn) -> list:
+    """Run fn(link) against every gateway in parallel, one short connection each -> [{id, name, ...} | {id, name, error}]."""
+    from concurrent.futures import ThreadPoolExecutor
+    from .. import gw_ota
+    from ..gateway_config import GatewayError
+
+    def one(site):
+        row = {"id": site["id"], "name": site["name"], "host": site["host"]}
+        try:
+            with gateway_api._lock(site["host"], int(site["port"])):
+                c, link = _depot_link(site)
+                try:
+                    row.update(fn(link))
+                finally:
+                    c.close()
+        except (ValueError, OSError, GatewayError, gw_ota.OtaError, Exception) as exc:      # noqa: BLE001
+            row["error"] = str(exc)[:160]
+        return row
+
+    with ThreadPoolExecutor(max_workers=min(6, max(1, len(sites_list)))) as pool:
+        return list(pool.map(one, sites_list))
+
+
+def gwota_status(sites_list: list) -> dict:
+    from .. import gw_ota
+    return {"rows": _each_gateway(sites_list, gw_ota.status_row)}
+
+
+def gwota_start(sites_list: list, image_name: str, opts: dict) -> dict:
+    from .. import gw_ota
+    if not sites_list:
+        raise ValueError("choose at least one cabinet")
+    try:
+        gw_ota.options(opts)
+    except gw_ota.OtaError as exc:
+        raise ValueError(str(exc))
+    return {"rows": _each_gateway(sites_list, lambda link: gw_ota.start(link, image_name, opts))}
+
+
+def gwota_abort(sites_list: list) -> dict:
+    from .. import gw_ota
+    return {"rows": _each_gateway(sites_list, lambda link: (gw_ota.abort(link), {"ok": True})[1])}
+
+
+def gwota_result(site: dict, n: int) -> dict:
+    from .. import gw_ota
+    rows = _each_gateway([site], lambda link: gw_ota.result(link, n))
+    if rows[0].get("error"):
+        raise ValueError(rows[0]["error"])
+    return rows[0]
+
+
 # ── module OTA across cabinets ───────────────────────────────────────────────
 class _OtaLog:
     def __init__(self) -> None:

@@ -528,6 +528,41 @@ def install(app, cfg, worker) -> None:
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=422)
 
+    # ── module OTA run by the gateway itself ───────────────────────────────
+    @app.get("/api/v2/fw/gwota/status")
+    async def fw_gwota_status(ids: str = ""):
+        chosen = [s for s in sites.load() if s["id"] in set(i for i in ids.split(",") if i)]
+        return await asyncio.to_thread(ota_api.gwota_status, chosen)
+
+    @app.post("/api/v2/fw/gwota/start")
+    async def fw_gwota_start(request: Request):
+        if not _mutating(request):
+            return _forbidden()
+        body = await request.json()
+        chosen = [s for s in sites.load() if s["id"] in set(body.get("ids") or [])]
+        try:
+            return await asyncio.to_thread(ota_api.gwota_start, chosen, str(body.get("image", "")), body.get("opts") or {})
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=422)
+
+    @app.post("/api/v2/fw/gwota/abort")
+    async def fw_gwota_abort(request: Request):
+        if not _mutating(request):
+            return _forbidden()
+        body = await request.json()
+        chosen = [s for s in sites.load() if s["id"] in set(body.get("ids") or [])]
+        return await asyncio.to_thread(ota_api.gwota_abort, chosen)
+
+    @app.get("/api/v2/fw/gwota/result")
+    async def fw_gwota_result(id: str, n: int = 0):
+        site = sites.find(id)
+        if not site:
+            return JSONResponse({"error": "unknown cabinet"}, status_code=422)
+        try:
+            return await asyncio.to_thread(ota_api.gwota_result, site, n)
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=422)
+
     @app.post("/api/v2/fw/kept/delete")
     async def fw_kept_delete(request: Request):
         if not _mutating(request):

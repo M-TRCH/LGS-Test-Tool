@@ -41,6 +41,8 @@ const TXT = {
     labels_page: "ป้าย", firmware_page: "เฟิร์มแวร์", lbWard: "ชื่อวอร์ด (พิมพ์บนป้าย)", lbSerial: "ซีเรียลจากคลัง (ไม่เก็บ)", lbLayout: "แบบป้าย", lbPlate: "กรอบ",
     lbPreview: "ดูตัวอย่างข้อมูล", lbDownload: "ดาวน์โหลด .lbx", expCfg: "ส่งออก config", impCfg: "นำเข้า config", impDone: "นำเข้า {n} ค่า (ยังไม่บันทึก ตรวจแล้วกดบันทึกลงเกตเวย์)", impNone: "ไม่มีค่าที่ต่างจากเกตเวย์",
     shapeBad: "ชนิดตู้ใน รายการตู้ ({l}) ไม่ตรงกับเกตเวย์: {w}", shapeFix: "ตั้งค่าที่ตรงให้ (ยังไม่บันทึก)", shapeNoFix: "เกตเวย์รุ่นนี้แก้เองไม่ได้ (ไม่มี panel.shape)",
+    fwGoP_pick: "เลือกกลุ่ม", fwGoP_probe: "ตรวจโมดูล", fwGoP_metadata: "ส่งข้อมูลไฟล์", fwGoP_enter: "เข้าโหมดรับไฟล์", fwGoP_enter_wait: "รอโมดูลลบพื้นที่", fwGoP_enter_check: "ตรวจการเข้าโหมด", fwGoP_stream: "ส่งไฟล์", fwGoP_repair: "ตรวจก้อนที่ขาด", fwGoP_repair_send: "ส่งก้อนที่ขาดซ้ำ", fwGoP_finalize: "ให้โมดูลตรวจไฟล์", fwGoP_finalize_wait: "รอตรวจไฟล์", fwGoP_finalize_check: "อ่านผลตรวจ", fwGoP_apply: "สั่งใช้ไฟล์", fwGoP_apply_wait: "รอโมดูลรีบูต", fwGoP_apply_confirm: "ยืนยันเวอร์ชันใหม่", fwGoP_waiting_for_quiet: "รอจังหวะที่ไม่มีคนใช้", 
+    fwGo: "ให้เกตเวย์อัปเดตโมดูลเอง (เบื้องหลัง)", fwGoNote: "เกตเวย์อ่านไฟล์จากคลังของตัวเอง ส่งในช่วงที่บัสว่าง และหยุดพักเองเมื่อมีคำสั่งเข้ามา เริ่มแล้วปิด Tool ได้", fwGoImage: "ไฟล์ในคลัง", fwGoNoImage: "เลือกตู้ก่อน หรือคลังของตู้นั้นยังว่าง", fwGoStart: "เริ่มให้เกตเวย์อัปเดต", fwGoStartQ: "ให้เกตเวย์ {n} ตู้อัปเดตโมดูลด้วย {i}? โมดูลจะรีบูตทีละตัวตอนที่ไม่มีคนใช้", fwGoAbort: "หยุด", fwGoAbortQ: "สั่งหยุดการอัปเดตของ {n} ตู้?", fwGoResult: "ดูผล", fwGoAdv: "ตัวเลือกขั้นสูง", fwGoIdle: "บัสว่างก่อนส่ง (วินาที)", fwGoGroup: "โมดูลต่อรอบ", fwGoApplyIdle: "บัสว่างก่อนรีบูตโมดูล (วินาที)", fwGoApplyQuiet: "โมดูลไม่ถูกสั่งมานาน (วินาที)", fwGoCab: "ตู้", fwGoState: "สถานะ", fwGoPhase: "ขั้นตอน", fwGoProg: "ความคืบหน้า", fwGoWait: "รออัปเดต", fwGoDone: "อัปเดตแล้ว", fwGoFail: "ไม่สำเร็จ", fwGoPaused: "พักมา (วินาที)", fwGoS_running: "กำลังทำ", fwGoS_done_ok: "เสร็จ", fwGoS_done_with_failures: "เสร็จ มีที่ไม่สำเร็จ", fwGoS_aborted: "หยุดแล้ว", fwGoS_interrupted: "ถูกขัดจังหวะ", fwGoS_none: "ไม่เคยรัน", fwGoS_unreachable: "ต่อไม่ได้", fwGoS_unsupported: "เฟิร์มแวร์เก่า ไม่รองรับ", fwGoStarted: "เริ่มแล้ว {n} ตู้", fwGoSkipped: "{n} ตู้เริ่มไม่ได้: {why}", fwGoMod: "โมดูล", fwGoFw: "เฟิร์มแวร์", fwGoErr: "รหัสผิดพลาด", 
     fwDepot: "คลังไฟล์โมดูลบนเกตเวย์", fwDepotNote: "ฝากไฟล์อัปเดตโมดูลไว้ในเกตเวย์ แล้วอัปเดตภายหลังจากเครื่องอื่นได้ โดยเครื่องที่สั่งไม่ต้องมีไฟล์", fwDpPut: "ฝากลงเกตเวย์นี้", fwDpBusy: "กำลังฝากไฟล์…", fwDpSlot: "ช่อง", fwDpName: "ชื่อไฟล์", fwDpSize: "ขนาด", fwDpState: "สถานะ", fwDpEmpty: "ว่าง", fwDpPartial: "ไม่สมบูรณ์", fwDpOk: "สมบูรณ์", fwDpDel: "ลบ", fwDpKeep: "เก็บไว้ใน Tool", fwDpKept: "เก็บไว้ใน Tool แล้ว: {n}", fwKeptTitle: "ไฟล์ที่ Tool เก็บไว้เอง", fwKeptDelQ: "ลบ {n} ออกจาก Tool? (ในเกตเวย์ไม่ถูกลบ)", fwKeptNone: "ยังไม่มี", fwDpDelQ: "ลบ {n} ออกจากคลังของ {g}?", fwDpDone: "ฝาก {n} ลง {g} แล้ว", fwSrc: "ที่มาของไฟล์", fwSrcBundle: "ไฟล์ในเครื่องมือ", fwSrcDepot: "อ่านจากคลังของเกตเวย์", fwSrcGw: "เกตเวย์ที่ถือไฟล์", fwSrcNone: "คลังนี้ยังไม่มีไฟล์ที่สมบูรณ์", fwOta: "อัปเดตโมดูลผ่าน OTA (หลายตู้)", fwImage: "อิมเมจ", fwStart: "เริ่มอัปเดต", fwCancel: "ยกเลิก", fwCancelQ: "ยกเลิกการอัปเดต? โมดูลที่ค้างอยู่ในเซสชันอาจต้องอัปเดตซ้ำ",
     fwStartQ: "อัปเดตเฟิร์มแวร์โมดูลทุกตัวใน {n} ตู้ด้วย {i}? ทำย้อนจากหน้านี้ไม่ได้ ตู้ที่ใช้งานอยู่จะใช้ไม่ได้ระหว่างอัปเดต", fwRun: "กำลังอัปเดต", fwNoOta: "ยังไม่มีอิมเมจ OTA ในโปรแกรมนี้",
     fwGw: "อัปเดตเกตเวย์ผ่านเครือข่าย (ทีละตู้)", fwGwNote: "เกตเวย์รีบูตตอนจบ และตัดไฟเลี้ยงโมดูลชั่วครู่ (โมดูลทุกตัวรีบูตด้วย) พิมพ์ชื่อตู้เพื่อยืนยัน", fwUpload: "หรือเลือกไฟล์ .bin เอง", fwConfirm: "พิมพ์ชื่อตู้เพื่อยืนยัน",
@@ -101,6 +103,8 @@ const TXT = {
     labels_page: "Labels", firmware_page: "Firmware", lbWard: "Ward name (printed)", lbSerial: "Serial from the warehouse (not stored)", lbLayout: "Label layout", lbPlate: "Frame",
     lbPreview: "Preview data", lbDownload: "Download .lbx", expCfg: "Export config", impCfg: "Import config", impDone: "Imported {n} values (not saved yet: review, then Save to gateway)", impNone: "Nothing differs from the gateway",
     shapeBad: "The cabinet type on the Sites page ({l}) does not match the gateway: {w}", shapeFix: "Stage the matching values (not saved yet)", shapeNoFix: "This firmware cannot be told (no panel.shape)",
+    fwGoP_pick: "choosing a group", fwGoP_probe: "checking modules", fwGoP_metadata: "sending image info", fwGoP_enter: "entering update mode", fwGoP_enter_wait: "modules erasing", fwGoP_enter_check: "checking update mode", fwGoP_stream: "sending the image", fwGoP_repair: "checking for missing chunks", fwGoP_repair_send: "re-sending missing chunks", fwGoP_finalize: "modules checking the image", fwGoP_finalize_wait: "waiting for the check", fwGoP_finalize_check: "reading the check", fwGoP_apply: "applying", fwGoP_apply_wait: "module rebooting", fwGoP_apply_confirm: "confirming the new version", fwGoP_waiting_for_quiet: "waiting for a quiet moment", 
+    fwGo: "Gateway runs the module update itself (in the background)", fwGoNote: "The gateway reads the image from its own depot, sends it in the gaps of the bus and pauses by itself when a request arrives. Once started the tool can be closed.", fwGoImage: "Image in the depot", fwGoNoImage: "Choose a cabinet first, or its depot is empty", fwGoStart: "Start on the gateways", fwGoStartQ: "Have the gateways of {n} cabinets update their modules with {i}? Modules reboot one at a time while nobody is using them.", fwGoAbort: "Stop", fwGoAbortQ: "Stop the update on {n} cabinets?", fwGoResult: "Result", fwGoAdv: "Advanced options", fwGoIdle: "Bus quiet before sending (s)", fwGoGroup: "Modules per round", fwGoApplyIdle: "Bus quiet before a module reboots (s)", fwGoApplyQuiet: "Module not written for (s)", fwGoCab: "Cabinet", fwGoState: "State", fwGoPhase: "Step", fwGoProg: "Progress", fwGoWait: "Waiting to apply", fwGoDone: "Updated", fwGoFail: "Failed", fwGoPaused: "Paused for (s)", fwGoS_running: "running", fwGoS_done_ok: "done", fwGoS_done_with_failures: "done, some failed", fwGoS_aborted: "stopped", fwGoS_interrupted: "interrupted", fwGoS_none: "never run", fwGoS_unreachable: "unreachable", fwGoS_unsupported: "old firmware, not supported", fwGoStarted: "Started on {n} cabinets", fwGoSkipped: "{n} cabinets could not start: {why}", fwGoMod: "Module", fwGoFw: "Firmware", fwGoErr: "Error code", 
     fwDepot: "Module images kept on a gateway", fwDepotNote: "Leave a module update file in the gateway, then update later from another PC that does not have the file", fwDpPut: "Put it on this gateway", fwDpBusy: "Putting the file…", fwDpSlot: "Slot", fwDpName: "File", fwDpSize: "Size", fwDpState: "State", fwDpEmpty: "empty", fwDpPartial: "incomplete", fwDpOk: "complete", fwDpDel: "Delete", fwDpKeep: "Keep in the tool", fwDpKept: "Kept in the tool: {n}", fwKeptTitle: "Images the tool keeps itself", fwKeptDelQ: "Remove {n} from the tool? (the gateway keeps its copy)", fwKeptNone: "None yet", fwDpDelQ: "Delete {n} from {g}?", fwDpDone: "{n} put on {g}", fwSrc: "Image source", fwSrcBundle: "Bundled with the tool", fwSrcDepot: "Read from a gateway", fwSrcGw: "Gateway holding the image", fwSrcNone: "This gateway holds no complete image", fwOta: "Module update over OTA (several cabinets)", fwImage: "Image", fwStart: "Start update", fwCancel: "Cancel", fwCancelQ: "Cancel the update? Modules left in a session may need updating again.",
     fwStartQ: "Update the firmware of every module in {n} cabinets with {i}? This cannot be undone from this page, and cabinets in use are unusable during the update.", fwRun: "Updating", fwNoOta: "No OTA image is bundled in this build",
     fwGw: "Gateway update over the network (one at a time)", fwGwNote: "The gateway reboots at the end and cuts the shelf's power for a moment (every module reboots too). Type the cabinet's name to confirm.", fwUpload: "or choose a .bin file", fwConfirm: "Type the cabinet's name to confirm",
@@ -128,7 +132,7 @@ const t = (k, p) => { let s = (TXT[lang] && TXT[lang][k]) || TXT.en[k] || k; for
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const $ = (s, r = document) => r.querySelector(s);
 
-let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: new Set(), types: new Set(), client: new Set(), unit: new Set(), from: "", to: "", tfrom: "00:00", tto: "23:59", page: 0, size: 10, facets: null, open: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, lab: { id: "", ward: "", serial: "", layout: "", plate: "", opts: null, info: null, busy: false }, fw: { images: null, sel: new Set(), image: "", src: "bundle", srcId: "", srcSlots: null, srcSlot: -1, dp: { id: "", slots: null, image: "", file: null, fileName: "", busy: false }, ota: null, gwId: "", gwImage: "", gwConfirm: "", gwFile: null, gwFileName: "", gw: null, timer: null }, soak: { view: null, gap: 2, every: 5, slow: 400, tmo: 6, adv: false, anP: 0, sel: new Set(), mode: "pharmacy", picks: 2000, dwell: 20, windows: 8, est: null, durMode: "hours", hours: 8, startMode: "now", sh: 21, sm: 0, eh: 8, em: 0, status: null, runs: [], timer: null, was: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 },
+let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: new Set(), types: new Set(), client: new Set(), unit: new Set(), from: "", to: "", tfrom: "00:00", tto: "23:59", page: 0, size: 10, facets: null, open: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, lab: { id: "", ward: "", serial: "", layout: "", plate: "", opts: null, info: null, busy: false }, fw: { images: null, sel: new Set(), image: "", go: { sel: new Set(), image: "", names: [], adv: false, opts: { idle: 5, group: 8, apply_idle: 20, apply_quiet: 300 }, rows: null, at: 0, busy: false }, src: "bundle", srcId: "", srcSlots: null, srcSlot: -1, dp: { id: "", slots: null, image: "", file: null, fileName: "", busy: false }, ota: null, gwId: "", gwImage: "", gwConfirm: "", gwFile: null, gwFileName: "", gw: null, timer: null }, soak: { view: null, gap: 2, every: 5, slow: 400, tmo: 6, adv: false, anP: 0, sel: new Set(), mode: "pharmacy", picks: 2000, dwell: 20, windows: 8, est: null, durMode: "hours", hours: 8, startMode: "now", sh: 21, sm: 0, eh: 8, em: 0, status: null, runs: [], timer: null, was: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 },
   ins: { id: "", layout: null, sel: new Set(), mode: "check", action: "light", unlock: false, identify: false, hold: 1, preset: 1, batch: 4, timeout: 60, display: true, punlock: true, off: "btnshut", order: "ch", running: false, since: 0, res: {}, rows: [], lit: new Set(), closing: new Set(), testing: null, text: "", banner: "", summary: "", file: false, err: "" },
   scan: { running: false, found: [], asked: new Set(), at: 0, text: "", err: "", file: false },
   sweep: { running: false, loops: 1, lights: true, latch: false, text: "", banner: "", phases: [], bad: [], err: "", file: false },
@@ -1232,6 +1236,23 @@ function viewFirmware() {
   const keptList = im ? im.module.filter((i) => i.kept) : [];
   const stateTxt = (x) => (x.state === 2 ? `<span class="chip ok"><i class="dot"></i>${t("fwDpOk")}</span>` : x.state === 1 ? `<span class="chip warn"><i class="dot"></i>${t("fwDpPartial")}</span>` : `<span class="muted small">${t("fwDpEmpty")}</span>`);
   const dpTable = dp.slots ? `<div style="overflow-x:auto"><table class="evtab"><tr><th>${t("fwDpSlot")}</th><th>${t("fwDpName")}</th><th class="num">${t("fwDpSize")}</th><th>CRC</th><th>${t("fwDpState")}</th><th></th></tr>${dp.slots.map((x) => `<tr><td>${x.slot + 1}</td><td>${x.state ? esc(x.name) : "—"}</td><td class="num">${x.state ? fmtN(x.size) + " B" : ""}</td><td class="mono small">${x.state === 2 ? x.crc.toString(16).toUpperCase().padStart(8, "0") : ""}</td><td>${stateTxt(x)}</td><td>${x.state === 2 ? `<button class="btn sm" type="button" data-act="fw-dpkeep" data-slot="${x.slot}">${t("fwDpKeep")}</button> ` : ""}${x.state ? `<button class="btn sm" type="button" data-act="fw-dpdel" data-slot="${x.slot}" data-name="${esc(x.name)}">${t("fwDpDel")}</button>` : ""}</td></tr>`).join("")}</table></div>` : "";
+  const go = f.go;
+  const goRows = (go.rows || []).filter((r) => go.sel.has(r.id));
+  const goTable = goRows.length ? `<div style="overflow-x:auto"><table class="evtab"><tr><th>${t("fwGoCab")}</th><th>${t("fwGoState")}</th><th>${t("fwGoPhase")}</th><th class="num">${t("fwGoProg")}</th><th class="num">${t("fwGoWait")}</th><th class="num">${t("fwGoDone")}</th><th class="num">${t("fwGoFail")}</th><th class="num">${t("fwGoPaused")}</th><th></th></tr>${goRows.map((r) => {
+    const o = r.ota || {}, run = o.state === "running", bad = o.state === "done_with_failures" || o.state === "interrupted" || o.state === "unreachable" || o.state === "unsupported";
+    const cls = o.state === "done_ok" ? "ok" : run ? "warn" : bad ? "bad" : "";
+    return `<tr><td><b>${esc(r.name)}</b></td><td><span class="chip ${cls}"><i class="dot"></i>${t("fwGoS_" + (o.state || "none"))}</span></td><td class="small">${run ? esc(TXT[lang]["fwGoP_" + o.phase] ? t("fwGoP_" + o.phase) : (o.phase || "")) : ""}</td><td class="num">${run && o.chunk ? esc(o.chunk) : ""}</td><td class="num">${run ? esc(o.verified || "0") : ""}</td><td class="num">${run ? esc(o.applied || "0") : ""}</td><td class="num${run && +o.failed ? " vbad" : ""}">${run ? esc(o.failed || "0") : ""}</td><td class="num">${run ? esc(o.paused_s || "0") : ""}</td><td>${run ? "" : `<button class="btn sm" type="button" data-act="fw-goresult" data-id="${esc(r.id)}">${t("fwGoResult")}</button>`}</td></tr>`;
+  }).join("")}</table></div>` : "";
+  const goAnyRun = goRows.some((r) => (r.ota || {}).state === "running");
+  const goBlock = `<section class="card stack"><b>${t("fwGo")}</b><p class="small muted">${t("fwGoNote")}</p>
+    ${S.sites.map((x) => `<label class="row" style="min-height:40px"><input type="checkbox" data-gopick="${esc(x.id)}"${go.sel.has(x.id) ? " checked" : ""}> <span>${esc(x.name)}</span> <span class="small muted mono">${esc(x.host)}</span></label>`).join("") || `<p class="muted">${t("noSites")}</p>`}
+    <div class="field"><label>${t("fwGoImage")}</label><select id="fwgoimage">${go.names.length ? go.names.map((n) => `<option value="${esc(n)}"${n === go.image ? " selected" : ""}>${esc(n)}</option>`).join("") : `<option value="">${t("fwGoNoImage")}</option>`}</select></div>
+    <details class="advbox" id="fwgoadv"${go.adv ? " open" : ""}><summary>${t("fwGoAdv")}</summary><div class="fgrid" style="margin-top:10px">
+      <div class="field"><label>${t("fwGoIdle")}</label><input id="fwgoidle" type="number" min="1" max="600" value="${go.opts.idle}"></div>
+      <div class="field"><label>${t("fwGoGroup")}</label><input id="fwgogroup" type="number" min="1" max="8" value="${go.opts.group}"></div>
+      <div class="field"><label>${t("fwGoApplyIdle")}</label><input id="fwgoapplyidle" type="number" min="1" max="3600" value="${go.opts.apply_idle}"></div>
+      <div class="field"><label>${t("fwGoApplyQuiet")}</label><input id="fwgoapplyquiet" type="number" min="0" max="86400" value="${go.opts.apply_quiet}"></div></div></details>
+    <div class="row" style="gap:8px"><button class="btn primary" data-act="fw-gostart"${go.sel.size && go.image && !go.busy ? "" : " disabled"}>${t("fwGoStart")}</button>${goAnyRun ? `<button class="btn" style="color:var(--bad)" data-act="fw-goabort">${t("fwGoAbort")}</button>` : ""}</div>${goTable}</section>`;
   const depotBlock = `<section class="card stack"><b>${t("fwDepot")}</b><p class="small muted">${t("fwDepotNote")}</p><div class="fgrid">
       <div class="field"><label>${t("pick")}</label><select id="fwdpsel"><option value="">—</option>${gwOpts(dp.id)}</select></div>
       <div class="field"><label>${t("fwImage")}</label><select id="fwdpimage">${dpImgs || `<option value="">${t("fwNoOta")}</option>`}</select></div>
@@ -1250,7 +1271,7 @@ function viewFirmware() {
   const outcome = ota.outcome && !ota.running ? `<section class="card stack"><pre class="mono small" style="white-space:pre-wrap;overflow-x:auto;margin:0">${esc(ota.outcome.text)}</pre></section>` : "";
   const gwStat = gw.name ? `<div class="notice ${gw.done ? (gw.ok ? "info" : "bad") : ""}">${gw.running ? t("fwGwRun") + " " + gw.pct + "%" : gw.done ? (gw.ok ? t("fwDone") : t("fwFail")) + " · " + esc(gw.summary) : ""}
       <div class="mono tiny" style="white-space:pre-wrap;margin-top:6px">${esc((gw.lines || []).join("\n"))}</div></div>` : "";
-  return `<h1>${t("firmware_page")}</h1><div class="stack">${otaBlock}${fwRows(ota.rows || [])}${log}${outcome}${depotBlock}
+  return `<h1>${t("firmware_page")}</h1><div class="stack">${otaBlock}${fwRows(ota.rows || [])}${log}${outcome}${goBlock}${depotBlock}
     <section class="card stack"><b>${t("fwGw")}</b><p class="small muted">${t("fwGwNote")}</p><div class="fgrid">
       <div class="field"><label>${t("pick")}</label><select id="fwgwsel"><option value="">—</option>${gsite}</select></div>
       <div class="field"><label>${t("fwImage")}</label><select id="fwgwimage"><option value="">—</option>${gwImgs}</select></div>
@@ -1269,7 +1290,26 @@ async function fwDepotLoad(which) {
   }
   render();
 }
+async function fwGoNames() {
+  const go = S.fw.go, first = [...go.sel][0];
+  go.names = [];
+  if (first) {
+    try {
+      const r = await api("GET", "/api/v2/fw/depot?id=" + encodeURIComponent(first));
+      go.names = r.slots.filter((x) => x.state === 2).map((x) => x.name);
+    } catch (e) { /* the card says "choose a cabinet or its depot is empty" */ }
+  }
+  if (!go.names.includes(go.image)) go.image = go.names[0] || "";
+  render();
+}
+async function fwGoPoll(force) {
+  const go = S.fw.go;
+  if (!go.sel.size || (!force && Date.now() - go.at < 10000)) return;
+  go.at = Date.now();
+  try { go.rows = (await api("GET", "/api/v2/fw/gwota/status?ids=" + encodeURIComponent([...go.sel].join(",")))).rows; } catch (e) { /* next tick */ }
+}
 async function fwRefresh() {
+  fwGoPoll(false);
   try {
     S.fw.ota = await api("GET", "/api/v2/fw/ota/status");
     S.fw.gw = await api("GET", "/api/v2/fw/gateway/status");
@@ -1765,6 +1805,27 @@ document.addEventListener("click", async (ev) => {
       const label = fromDepot ? `${im.name} (${(S.sites.find((x) => x.id === f.srcId) || {}).name || ""})` : im.label;
       if (!await ask(t("fwStartQ", { n: cabs.length, i: label }) + "\n\n" + cabs.map((c) => c.name).join(", "))) return;
       await api("POST", "/api/v2/fw/ota/start", fromDepot ? { ids: [...f.sel], depot: { id: f.srcId, slot: f.srcSlot } } : { ids: [...f.sel], image: f.image }); await fwRefresh();
+    } else if (act.dataset.act === "fw-gostart") {
+      const go = S.fw.go; if (!go.sel.size || !go.image) return;
+      if (!await ask(t("fwGoStartQ", { n: go.sel.size, i: go.image }))) return;
+      go.busy = true; render();
+      try {
+        const r = await api("POST", "/api/v2/fw/gwota/start", { ids: [...go.sel], image: go.image, opts: go.opts });
+        const ok = r.rows.filter((x) => !x.error), bad = r.rows.filter((x) => x.error);
+        toast(t("fwGoStarted", { n: ok.length }) + (bad.length ? " · " + t("fwGoSkipped", { n: bad.length, why: bad[0].error }) : ""));
+      } catch (e) { fail(e); } finally { go.busy = false; await fwGoPoll(true); render(); }
+    } else if (act.dataset.act === "fw-goabort") {
+      const go = S.fw.go, ids = (go.rows || []).filter((r) => (r.ota || {}).state === "running").map((r) => r.id);
+      if (!ids.length || !await ask(t("fwGoAbortQ", { n: ids.length }))) return;
+      try { await api("POST", "/api/v2/fw/gwota/abort", { ids }); } catch (e) { fail(e); }
+      await fwGoPoll(true); render();
+    } else if (act.dataset.act === "fw-goresult") {
+      try {
+        const r = await api("GET", "/api/v2/fw/gwota/result?id=" + encodeURIComponent(act.dataset.id) + "&n=0");
+        const run = r.run || {}, mods = r.modules || [];
+        $("#infobody").innerHTML = `<div class="stack"><div class="small muted">${esc(run.image || "")} · ${esc(run.state || "")} · ${esc(String(run.size || ""))} B</div><div style="max-height:60vh;overflow:auto"><table class="evtab"><tr><th>${t("fwGoMod")}</th><th>${t("fwGoState")}</th><th class="num">${t("fwGoFw")}</th><th class="num">${t("fwGoErr")}</th></tr>${mods.map((m) => `<tr><td>${esc(m.id)}</td><td class="${/failed|gave_up|no_reply/.test(m.st) ? "vbad" : /updated|same/.test(m.st) ? "" : "vwarn"}">${esc(m.st)}</td><td class="num">${esc(m.fw || "")}</td><td class="num">${esc(m.err || "")}</td></tr>`).join("")}</table></div></div>`;
+        const d = $("#info"); d.classList.add("wide"); d.onclose = () => d.classList.remove("wide"); if (d.showModal) d.showModal(); else d.setAttribute("open", "");
+      } catch (e) { fail(e); }
     } else if (act.dataset.act === "fw-dpput") {
       const d = S.fw.dp; if (!d.id || d.busy) return;
       const g = S.sites.find((x) => x.id === d.id) || {};
@@ -1929,7 +1990,7 @@ function evCloseGroups(except) {
   for (const g of document.querySelectorAll(".fgrp[open]")) if (g !== except) g.open = false;
   for (const k of [...S.ev.open]) if (!except || k !== except.dataset.g) S.ev.open.delete(k);
 }
-document.addEventListener("toggle", (e) => { if (e.target.id === "soakadv") S.soak.adv = e.target.open; }, true);
+document.addEventListener("toggle", (e) => { if (e.target.id === "soakadv") S.soak.adv = e.target.open; if (e.target.id === "fwgoadv") S.fw.go.adv = e.target.open; }, true);
 document.addEventListener("toggle", (e) => {
   const g = e.target.closest && e.target.closest(".fgrp"); if (!g) return;
   if (g.open) { if (evWide()) evCloseGroups(g); S.ev.open.add(g.dataset.g); } else S.ev.open.delete(g.dataset.g);
@@ -1976,6 +2037,12 @@ document.addEventListener("change", async (ev) => {
   if (ev.target.id === "cmow") { S.cm.overwrite = ev.target.checked; }
   if (ev.target.id === "cmfile" && ev.target.files[0]) { S.cm.file = await ev.target.files[0].arrayBuffer(); S.cm.fileName = ev.target.files[0].name; S.cm.image = ""; render(); }
   if (ev.target.id === "fwimage") S.fw.image = ev.target.value;
+  if (ev.target.dataset && ev.target.dataset.gopick !== undefined) { const g = S.fw.go; if (ev.target.checked) g.sel.add(ev.target.dataset.gopick); else g.sel.delete(ev.target.dataset.gopick); g.rows = null; fwGoNames().then(() => fwGoPoll(true)); }
+  if (ev.target.id === "fwgoimage") S.fw.go.image = ev.target.value;
+  if (ev.target.id === "fwgoidle") S.fw.go.opts.idle = +ev.target.value || 5;
+  if (ev.target.id === "fwgogroup") S.fw.go.opts.group = Math.max(1, Math.min(8, +ev.target.value || 8));
+  if (ev.target.id === "fwgoapplyidle") S.fw.go.opts.apply_idle = +ev.target.value || 20;
+  if (ev.target.id === "fwgoapplyquiet") S.fw.go.opts.apply_quiet = Math.max(0, +ev.target.value || 0);
   if (ev.target.id === "fwsrc") { S.fw.src = ev.target.value; render(); }
   if (ev.target.id === "fwsrcgw") { S.fw.srcId = ev.target.value; fwDepotLoad("src"); }
   if (ev.target.id === "fwsrcslot") S.fw.srcSlot = +ev.target.value;
