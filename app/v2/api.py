@@ -534,16 +534,17 @@ def install(app, cfg, worker) -> None:
         return {"gateways": events_api.gateways()}
 
     @app.get("/api/v2/events")
-    async def events(gw: str = "", days: int = 1, ev: str = "", q: str = "", limit: int = 500):
-        return await asyncio.to_thread(events_api.query, gw, days, ev, q, limit)
+    async def events(gw: str = "", days: int = 1, ev: str = "", q: str = "", limit: int = 500,
+                     start: str = "", end: str = "", offset: int = 0):
+        return await asyncio.to_thread(events_api.query, gw, days, ev, q, limit, False, start, end, offset)
 
     @app.get("/api/v2/events/summary")
-    async def events_summary(gw: str = "", days: int = 1):
-        return await asyncio.to_thread(events_api.summary, gw, days)
+    async def events_summary(gw: str = "", days: int = 1, start: str = "", end: str = ""):
+        return await asyncio.to_thread(events_api.summary, gw, days, start, end)
 
     @app.get("/api/v2/events/csv")
-    async def events_csv(gw: str = "", days: int = 1, ev: str = "", q: str = ""):
-        data = await asyncio.to_thread(events_api.csv_bytes, gw, days, ev, q)
+    async def events_csv(gw: str = "", days: int = 1, ev: str = "", q: str = "", start: str = "", end: str = ""):
+        data = await asyncio.to_thread(events_api.csv_bytes, gw, days, ev, q, start, end)
         from datetime import datetime
         name = f"events-{(gw or 'all')[:40]}-{datetime.now():%Y%m%d-%H%M}.csv".replace("/", "_").replace("\\", "_")
         return Response(data, media_type="text/csv; charset=utf-8",

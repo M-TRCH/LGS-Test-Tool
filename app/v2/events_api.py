@@ -25,14 +25,37 @@ def gateways() -> list[dict]:
     return out
 
 
+def window(days: int = 1, start: str = "", end: str = "") -> tuple:
+    """(since, until) as YYYY-MM-DD, both inclusive. A calendar range (`start`, optional `end`) wins over
+    `days`; both are clamped to the last 366 days and today, and swapped if given the wrong way round."""
+    today = datetime.now().date()
+    oldest = today - timedelta(days=366)
+
+    def day(text, default):
+        try:
+            d = datetime.strptime(str(text)[:10], "%Y-%m-%d").date()
+        except ValueError:
+            return default
+        return min(max(d, oldest), today)
+
+    if start:
+        a, b = day(start, today), day(end, today) if end else today
+    else:
+        a, b = today - timedelta(days=max(1, min(int(days), 366)) - 1), today
+    if a > b:
+        a, b = b, a
+    return a.strftime("%Y-%m-%d"), b.strftime("%Y-%m-%d")
+
+
 def query(gw: str = "", days: int = 1, ev: str = "", q: str = "", limit: int = 500,
-          everything: bool = False) -> dict:
+          everything: bool = False, start: str = "", end: str = "", offset: int = 0) -> dict:
     """Newest first. `gw` is a folder name from gateways(); empty = every gateway.
-    `everything` lifts the row cap (the screen shows a page; the CSV export wants all)."""
+    `everything` lifts the row cap (the screen shows a page; the CSV export wants all);
+    `offset` skips that many matches, for paging."""
     root = event_collector.events_root()
-    days = max(1, min(int(days), 366))   # the longest retention the page offers, plus today
     limit = 10 ** 9 if everything else max(1, min(int(limit), 2000))
-    since = (datetime.now() - timedelta(days=days - 1)).strftime("%Y-%m-%d")
+    offset = max(0, int(offset))
+    since, until = window(days, start, end)
     evs = {e for e in re.split(r"[,\s]+", ev) if e}
     needle = q.strip().lower()
     rows, scanned = [], 0
@@ -41,6 +64,8 @@ def query(gw: str = "", days: int = 1, ev: str = "", q: str = "", limit: int = 5
         if not d.is_dir() or d.resolve().parent != root.resolve():
             continue                                  # no path walking out of the events folder
         for f in sorted(d.glob("events-*.jsonl"), reverse=True):
+            if f.name[7:17] > until:
+                continue
             if f.name[7:17] < since:
                 break
             for line in f.read_text(encoding="utf-8").splitlines():
@@ -55,7 +80,7 @@ def query(gw: str = "", days: int = 1, ev: str = "", q: str = "", limit: int = 5
                     continue
                 rows.append(r)
     rows.sort(key=lambda r: (r.get("t") or r.get("collected", ""), r.get("seq", 0)), reverse=True)
-    return {"rows": rows[:limit], "matched": len(rows), "scanned": scanned, "limit": limit}
+    return {"rows": rows[offset:offset + limit], "matched": len(rows), "scanned": scanned, "limit": limit, "offset": offset}
 
 
 # What the dashboard counts: "problems" are the events that mean something went wrong on the bus or the
@@ -64,14 +89,14 @@ PROBLEM_EVENTS = ("bus_quiet", "rtu_heal", "tcp_refused", "link_down", "boot")
 TILE_EVENTS = ("coil", "tcp_accept", "tcp_refused", "bus_quiet", "rtu_heal", "boot")
 
 
-def summary(gw: str = "", days: int = 1) -> dict:
+def summary(gw: str = "", days: int = 1, start: str = "", end: str = "") -> dict:
     """Counts for the dashboard over the same window as the list: totals, one row per gateway, and
     a time series (by hour when the window is two days or less, otherwise by day) of lights and problems.
     Buckets are the gateway's own timestamps (local wall time), so a bucket is the hour on the cabinet's clock."""
     root = event_collector.events_root()
-    days = max(1, min(int(days), 366))
-    since = (datetime.now() - timedelta(days=days - 1)).strftime("%Y-%m-%d")
-    hourly = days <= 2
+    since, until = window(days, start, end)
+    span = (datetime.strptime(until, "%Y-%m-%d") - datetime.strptime(since, "%Y-%m-%d")).days + 1
+    hourly = span <= 2
     totals = {k: 0 for k in TILE_EVENTS}
     per, buckets = {}, {}
     dirs = [root / gw] if gw else sorted(p for p in root.iterdir() if p.is_dir())
@@ -80,6 +105,8 @@ def summary(gw: str = "", days: int = 1) -> dict:
             continue
         row = per.setdefault(d.name, {"gw": d.name, "last": "", **{k: 0 for k in TILE_EVENTS}})
         for f in sorted(d.glob("events-*.jsonl"), reverse=True):
+            if f.name[7:17] > until:
+                continue
             if f.name[7:17] < since:
                 break
             for line in f.read_text(encoding="utf-8").splitlines():
@@ -95,7 +122,7 @@ def summary(gw: str = "", days: int = 1) -> dict:
                 if len(t) >= 13 and t[0] == "2":
                     row["last"] = max(row["last"], t)
                     key = t[:13] if hourly else t[:10]
-                    if key[:10] >= since:
+                    if since <= key[:10] <= until:
                         b = buckets.setdefault(key, {"lights": 0, "problems": 0})
                         if ev == "coil":
                             b["lights"] += 1
@@ -104,32 +131,33 @@ def summary(gw: str = "", days: int = 1) -> dict:
     series = []
     if buckets:
         if hourly:
-            start = datetime.strptime(since + "T00", "%Y-%m-%dT%H")
-            end = datetime.now().replace(minute=0, second=0, microsecond=0)
+            first = datetime.strptime(since + "T00", "%Y-%m-%dT%H")
+            last = min(datetime.now().replace(minute=0, second=0, microsecond=0),
+                       datetime.strptime(until + "T23", "%Y-%m-%dT%H"))
             step, fmt = timedelta(hours=1), "%Y-%m-%dT%H"
         else:
-            start = datetime.strptime(since, "%Y-%m-%d")
-            end = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            first = datetime.strptime(since, "%Y-%m-%d")
+            last = datetime.strptime(until, "%Y-%m-%d")
             step, fmt = timedelta(days=1), "%Y-%m-%d"
-        cur = start
-        while cur <= end:                                        # empty buckets are real zeros, not gaps
+        cur = first
+        while cur <= last:                                        # empty buckets are real zeros, not gaps
             k = cur.strftime(fmt)
             series.append({"t": k, **buckets.get(k, {"lights": 0, "problems": 0})})
             cur += step
-    return {"days": days, "hourly": hourly, "totals": totals,
+    return {"since": since, "until": until, "hourly": hourly, "totals": totals,
             "gateways": sorted(per.values(), key=lambda r: r["gw"]), "series": series}
 
 
 CSV_COLUMNS = ("t", "gw", "ev", "text", "client", "seq", "up", "a", "p", "collected")
 
 
-def csv_bytes(gw: str = "", days: int = 1, ev: str = "", q: str = "") -> bytes:
+def csv_bytes(gw: str = "", days: int = 1, ev: str = "", q: str = "", start: str = "", end: str = "") -> bytes:
     """The same filter as the screen, every matching row, oldest first. UTF-8 with a BOM so
     Excel reads the Thai text; a leading =,+,-,@ in any cell is defused so a log line can never
     be read back as a formula."""
     import csv
     import io
-    rows = query(gw, days, ev, q, everything=True)["rows"]
+    rows = query(gw, days, ev, q, everything=True, start=start, end=end)["rows"]
     rows.reverse()
     out = io.StringIO()
     w = csv.writer(out)
