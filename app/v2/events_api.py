@@ -58,7 +58,7 @@ def time_window(tfrom: str = "", tto: str = ""):
 
 def query(gw: str = "", days: int = 1, ev: str = "", q: str = "", limit: int = 500,
           everything: bool = False, start: str = "", end: str = "", offset: int = 0,
-          tfrom: str = "", tto: str = "") -> dict:
+          tfrom: str = "", tto: str = "", client: str = "", unit: str = "") -> dict:
     """Newest first. `gw` is a folder name from gateways(); empty = every gateway.
     `everything` lifts the row cap (the screen shows a page; the CSV export wants all);
     `offset` skips that many matches, for paging."""
@@ -89,6 +89,10 @@ def query(gw: str = "", days: int = 1, ev: str = "", q: str = "", limit: int = 5
                     continue
                 if needle and needle not in (r.get("text", "") + " " + r.get("client", "")).lower():
                     continue
+                if client and r.get("client") != client:
+                    continue                                  # exact client address, from a tcp_accept / tcp_refused record
+                if unit != "" and (r.get("ev") != "coil" or str(r.get("a")) != str(unit)):
+                    continue                                  # a module id: its light commands
                 if tw:
                     stamp = r.get("t") or ""
                     if len(stamp) < 16 or stamp[0] != "2":
@@ -116,7 +120,7 @@ def summary(gw: str = "", days: int = 1, start: str = "", end: str = "") -> dict
     span = (datetime.strptime(until, "%Y-%m-%d") - datetime.strptime(since, "%Y-%m-%d")).days + 1
     hourly = span <= 2
     totals = {k: 0 for k in TILE_EVENTS}
-    per, buckets = {}, {}
+    per, buckets, clients, units = {}, {}, set(), set()
     dirs = [root / gw] if gw else sorted(p for p in root.iterdir() if p.is_dir())
     for d in dirs:
         if not d.is_dir() or d.resolve().parent != root.resolve():
@@ -133,6 +137,10 @@ def summary(gw: str = "", days: int = 1, start: str = "", end: str = "") -> dict
                 except ValueError:
                     continue
                 ev = r.get("ev", "")
+                if r.get("client"):
+                    clients.add(r["client"])                  # the pick-lists on the page: who connected, which modules were driven
+                if ev == "coil":
+                    units.add(int(r.get("a", 0)))
                 if ev in TILE_EVENTS:
                     totals[ev] += 1
                     row[ev] += 1
@@ -162,7 +170,11 @@ def summary(gw: str = "", days: int = 1, start: str = "", end: str = "") -> dict
             k = cur.strftime(fmt)
             series.append({"t": k, **buckets.get(k, {"lights": 0, "problems": 0})})
             cur += step
+    def ip_key(x):
+        return tuple(int(p) if p.isdigit() else 0 for p in x.split("."))
+
     return {"since": since, "until": until, "hourly": hourly, "totals": totals,
+            "clients": sorted(clients, key=ip_key), "units": sorted(units),
             "gateways": sorted(per.values(), key=lambda r: r["gw"]), "series": series}
 
 
@@ -170,13 +182,13 @@ CSV_COLUMNS = ("t", "gw", "ev", "text", "client", "seq", "up", "a", "p", "collec
 
 
 def csv_bytes(gw: str = "", days: int = 1, ev: str = "", q: str = "", start: str = "", end: str = "",
-              tfrom: str = "", tto: str = "") -> bytes:
+              tfrom: str = "", tto: str = "", client: str = "", unit: str = "") -> bytes:
     """The same filter as the screen, every matching row, oldest first. UTF-8 with a BOM so
     Excel reads the Thai text; a leading =,+,-,@ in any cell is defused so a log line can never
     be read back as a formula."""
     import csv
     import io
-    rows = query(gw, days, ev, q, everything=True, start=start, end=end, tfrom=tfrom, tto=tto)["rows"]
+    rows = query(gw, days, ev, q, everything=True, start=start, end=end, tfrom=tfrom, tto=tto, client=client, unit=unit)["rows"]
     rows.reverse()
     out = io.StringIO()
     w = csv.writer(out)
