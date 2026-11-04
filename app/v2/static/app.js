@@ -35,7 +35,7 @@ const TXT = {
     sPicks: "จำนวนครั้งที่จ่ายต่อวัน", sHours: "ชั่วโมง (0 = จนกว่าจะหยุด)", sStartAt: "เริ่มเวลา (เช่น 21:00 เว้นว่าง = ทันที)", sStart: "เริ่มทดสอบ",
     sStop: "หยุด", sStopQ: "หยุดการทดสอบที่กำลังรัน? ข้อมูลถึงตอนนี้ถูกเก็บไว้", sRunning: "กำลังรัน", sArmed: "ตั้งเวลาไว้ เริ่มในอีก {t}", sLeft: "เหลือ {t}",
     sNoEnd: "ไม่มีเวลาจบ", sCab: "ตู้", sState: "สถานะ", sPass: "รอบ", sReads: "อ่าน", sFails: "พลาด", sRbt: "รีบูต", sWdt: "วอตช์ด็อก", sWorst: "ช้าสุด (ms)", sHeal: "เกตเวย์ซ่อมบัส",
-    sClean: "สะอาด", sWarn: "ควรดู", sNotClean: "ไม่สะอาด", sDidNot: "ไม่ได้รัน", sStarting: "กำลังเริ่ม", sAnoms: "เหตุผิดปกติล่าสุด", sNone: "ไม่มี",
+    sClean: "สะอาด", sWarn: "ควรดู", sNotClean: "ไม่สะอาด", sDidNot: "ไม่ได้รัน", sStarting: "กำลังเริ่ม", sAnoms: "เหตุผิดปกติล่าสุด", sMoreAn: "ดูเพิ่มเติม", sNone: "ไม่มี",
     sVerdict: "สรุปผลรอบล่าสุด", sHistory: "รอบที่ผ่านมา", sView: "ดูสรุป", sNoRuns: "ยังไม่มีรอบที่ผ่านมา", sFrames: "เฟรมที่ถูกทิ้ง: {n}",
     sNeedType: "ตู้ที่ไม่ได้กำหนดชนิดจะเริ่มไม่ได้ ตั้งที่หน้า รายการตู้", sStarted: "เริ่มแล้ว {n} ตู้", sCsv: "ไฟล์ CSV", sLongNote: "รันบนเซิร์ฟเวอร์ ปิดหน้านี้ได้ ผลเก็บใน data/exports",
     labels_page: "ป้าย", firmware_page: "เฟิร์มแวร์", lbWard: "ชื่อวอร์ด (พิมพ์บนป้าย)", lbSerial: "ซีเรียลจากคลัง (ไม่เก็บ)", lbLayout: "แบบป้าย", lbPlate: "กรอบ",
@@ -95,7 +95,7 @@ const TXT = {
     sPicks: "Picks per day", sHours: "Hours (0 = until stopped)", sStartAt: "Start at (e.g. 21:00, empty = now)", sStart: "Start soak",
     sStop: "Stop", sStopQ: "Stop the running soak? Data up to now is kept.", sRunning: "Running", sArmed: "Armed, starts in {t}", sLeft: "{t} left",
     sNoEnd: "no end time", sCab: "Cabinet", sState: "State", sPass: "Passes", sReads: "Reads", sFails: "Fails", sRbt: "Reboots", sWdt: "WDT", sWorst: "Worst ms", sHeal: "Gateway repairs",
-    sClean: "clean", sWarn: "look", sNotClean: "not clean", sDidNot: "did not run", sStarting: "starting", sAnoms: "Latest anomalies", sNone: "none",
+    sClean: "clean", sWarn: "look", sNotClean: "not clean", sDidNot: "did not run", sStarting: "starting", sAnoms: "Latest anomalies", sMoreAn: "Show more", sNone: "none",
     sVerdict: "Latest run verdict", sHistory: "Past runs", sView: "View verdict", sNoRuns: "No past runs yet", sFrames: "Frames pymodbus discarded: {n}",
     sNeedType: "A cabinet with no type cannot start. Set it on the Sites page.", sStarted: "Started {n} cabinets", sCsv: "CSV files", sLongNote: "Runs on the server: you can close this page. Results go to data/exports.",
     labels_page: "Labels", firmware_page: "Firmware", lbWard: "Ward name (printed)", lbSerial: "Serial from the warehouse (not stored)", lbLayout: "Label layout", lbPlate: "Frame",
@@ -128,7 +128,7 @@ const t = (k, p) => { let s = (TXT[lang] && TXT[lang][k]) || TXT.en[k] || k; for
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const $ = (s, r = document) => r.querySelector(s);
 
-let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: new Set(), types: new Set(), client: new Set(), unit: new Set(), from: "", to: "", tfrom: "00:00", tto: "23:59", page: 0, size: 10, facets: null, open: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, lab: { id: "", ward: "", serial: "", layout: "", plate: "", opts: null, info: null, busy: false }, fw: { images: null, sel: new Set(), image: "", ota: null, gwId: "", gwImage: "", gwConfirm: "", gwFile: null, gwFileName: "", gw: null, timer: null }, soak: { sel: new Set(), mode: "pharmacy", picks: 2000, dwell: 20, windows: 8, est: null, durMode: "hours", hours: 8, startMode: "now", sh: 21, sm: 0, eh: 8, em: 0, status: null, runs: [], timer: null, was: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 },
+let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: new Set(), types: new Set(), client: new Set(), unit: new Set(), from: "", to: "", tfrom: "00:00", tto: "23:59", page: 0, size: 10, facets: null, open: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, lab: { id: "", ward: "", serial: "", layout: "", plate: "", opts: null, info: null, busy: false }, fw: { images: null, sel: new Set(), image: "", ota: null, gwId: "", gwImage: "", gwConfirm: "", gwFile: null, gwFileName: "", gw: null, timer: null }, soak: { anN: 5, sel: new Set(), mode: "pharmacy", picks: 2000, dwell: 20, windows: 8, est: null, durMode: "hours", hours: 8, startMode: "now", sh: 21, sm: 0, eh: 8, em: 0, status: null, runs: [], timer: null, was: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 },
   ins: { id: "", layout: null, sel: new Set(), mode: "check", action: "light", unlock: false, identify: false, hold: 1, preset: 1, batch: 4, timeout: 60, display: true, punlock: true, off: "btnshut", order: "ch", running: false, since: 0, res: {}, rows: [], lit: new Set(), closing: new Set(), testing: null, text: "", banner: "", summary: "", file: false, err: "" },
   scan: { running: false, found: [], asked: new Set(), at: 0, text: "", err: "", file: false },
   sweep: { running: false, loops: 1, lights: true, latch: false, text: "", banner: "", phases: [], bad: [], err: "", file: false },
@@ -920,7 +920,8 @@ function verdictHtml(txt) {
     const cut = (ln) => { const w = ln.trim().split(/\s+/); return [...w.slice(0, 10), w.slice(10).join(" ")]; };
     const [head, ...rows] = tbl;
     const hd = cut(head), cls = (i) => (i > 0 && i < 10 ? ' class="num"' : "");
-    out += `<div style="overflow-x:auto"><table class="evtab"><tr>${hd.map((c, i) => `<th${cls(i)}>${esc(c)}</th>`).join("")}</tr>`
+    out += (t("sColLegend") ? `<details class="collg"><summary class="why" aria-label="${t("explain")}">?</summary><div class="small muted">${esc(t("sColLegend"))}</div></details>` : "")
+      + `<div style="overflow-x:auto"><table class="evtab"><tr>${hd.map((c, i) => `<th${cls(i)}>${esc(c)}</th>`).join("")}</tr>`
       + rows.filter((r) => !/^-{5,}/.test(r.trim())).map((r) => /did not run/.test(r) ? `<tr><td><b>${esc(r.trim().split(/\s+/)[0])}</b></td><td colspan="10" style="color:var(--bad)">${t("sDidNot")}</td></tr>` : `<tr>${cut(r).map((c, i) => `<td${cls(i)}>${i === 0 ? `<b>${esc(c)}</b>` : esc(c)}</td>`).join("")}</tr>`).join("") + "</table></div>";
     tbl = null;
   };
@@ -944,7 +945,14 @@ function verdictHtml(txt) {
   flushProse(); flushTable(); flushGw();
   return out;
 }
+// the title and the run length / timeout lines read as one line
 function verdictText(txt) {
+  const out = verdictText0(txt).split("\n");
+  if (out.length > 1 && out[0].trim() && out[1].trim() && !/^cabinet\s/.test(out[1].trim()))
+    out.splice(0, 2, out[0].trim() + " · " + out[1].trim().replace(/\s{2,}/g, " · "));
+  return out.join("\n");
+}
+function verdictText0(txt) {
   if (lang !== "th") return txt;
   const map = [[/^fleet soak /, "ทดสอบต่อเนื่องทุกตู้ "], [/ran for ([\d.]+) h/, "รันนาน $1 ชม."], [/client timeout/, "timeout ฝั่ง client"],
     [/^(\d+) of (\d+) cabinets completely clean/, "สะอาดสมบูรณ์ $1 จาก $2 ตู้"],
@@ -952,8 +960,6 @@ function verdictText(txt) {
     [/repair failed/, "ซ่อมไม่ได้"], [/repaired/, "ซ่อมได้"], [/final timeouts/, "timeout สุดท้าย"], [/bad crc/, "CRC เสีย"], [/other /, "อื่นๆ "],
     [/^reply frames discarded as the wrong unit id: none/, "เฟรมตอบที่ถูกทิ้งเพราะ unit id ผิด: ไม่มี"], [/^reply frames discarded as the wrong unit id:/, "เฟรมตอบที่ถูกทิ้งเพราะ unit id ผิด:"]];
   const out = txt.split("\n").map((ln) => { if (/^\s*(cabinet|-{5,})/.test(ln)) return ln; let o = ln; for (const [re, to] of map) o = o.replace(re, to); return o; });
-  const i = out.findIndex((l) => /^cabinet\s/.test(l));
-  if (i >= 0) out.splice(i, 0, t("sColLegend"), "");
   return out.join("\n");
 }
 /* Continuous test, in the same four numbered steps as the installation check: what kind, which cabinets, how long, go.
@@ -1041,7 +1047,7 @@ function viewSoak() {
   const cabs = (st.cabinets || []).length ? `<section class="card" style="overflow-x:auto"><table><tr><th>${t("sCab")}</th><th>${t("sState")}</th><th>${t("sReads")}</th>${pharm ? `<th>${t("sPicksCol")}</th>` : ""}<th>${t("sFails")}</th><th>${t("sRbt")}</th><th>${t("sWdt")}</th><th>${t("sWorst")}</th><th>${t("sHeal")}</th></tr>
     ${st.cabinets.map((c) => `<tr><td><b>${esc(c.name)}</b>${c.note ? `<div class="tiny" style="color:var(--bad)">${esc(c.note)}</div>` : ""}</td><td>${chip(c.state)}</td><td>${c.reads.toLocaleString()}</td>${pharm ? `<td>${picksCell(c)}</td>` : ""}<td>${c.fails}</td><td>${c.reboots}</td><td>${c.watchdogs}</td><td>${c.worst_ms}</td>
       <td>${c.gw_seen ? `${c.gw_healed} (${c.heal_per_h}/h)${c.gw_heal_failed ? ` · ✗${c.gw_heal_failed}` : ""}${c.gw_timeouts ? ` · ⏱${c.gw_timeouts}` : ""}${c.gw_bad_crc ? ` · CRC ${c.gw_bad_crc}` : ""}` : "—"}</td></tr>`).join("")}</table></section>` : "";
-  const an = (st.anomalies || []).length ? `<section class="card stack"><h3>${t("sAnoms")}</h3>${st.anomalies.slice(0, 15).map((a) => `<div class="evrow"><span class="when">${esc(a.at)}</span><span><b>${esc(a.cabinet)}</b> ${a.id ? "id " + a.id + " " : ""}${esc(a.kind)} ${esc(a.detail)}</span></div>`).join("")}</section>` : "";
+  const an = (st.anomalies || []).length ? `<section class="card stack"><h3>${t("sAnoms")}</h3>${st.anomalies.slice(0, S.soak.anN).map((a) => `<div class="evrow"><span class="when">${esc(a.at)}</span><span><b>${esc(a.cabinet)}</b> ${a.id ? "id " + a.id + " " : ""}${esc(a.kind)} ${esc(a.detail)}</span></div>`).join("")}${st.anomalies.length > S.soak.anN ? `<button class="btn" type="button" data-act="soak-more-an">${t("sMoreAn")}</button>` : ""}</section>` : "";
   const fin = st.finished && !running ? `<section class="card stack"><h3>${t("sVerdict")}</h3><div class="soakv">${verdictHtml(st.finished.text)}</div></section>` : "";
   const runDate = (stamp) => { const m = /^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})/.exec(stamp || ""); return m ? `${fmtDay(m[1])} ${m[2]}` : stamp; };
   const hist = `<section class="card stack"><h3>${t("sHistory")}</h3>${(k.runs || []).length ? `<div class="soakruns">${k.runs.map((r) => `<div class="soakrun"><div class="row between"><b>${esc(runDate(r.started))}</b>
@@ -1557,6 +1563,7 @@ document.addEventListener("click", async (ev) => {
       const raw = typed.trim(), v = Number(raw);
       if (raw === "" || !Number.isInteger(v) || v < 0 || v > 9999) { await ask(t("numRange"), true); return; }
       const r = await api("POST", "/api/v2/mod/number", { id: S.mod.id, device_id: S.mod.dev, value: v }); if (!r.ok) throw new Error(r.error); toast(t("sent"));
+    } else if (act.dataset.act === "soak-more-an") { S.soak.anN += 5; render();
     } else if (act.dataset.act === "soak-all") { S.sites.forEach((x) => { if (x.cabinet) S.soak.sel.add(x.id); }); render();
     } else if (act.dataset.act === "soak-none") { S.soak.sel.clear(); render();
     } else if (act.dataset.act === "soak-mode") { S.soak.mode = act.dataset.m; render();
