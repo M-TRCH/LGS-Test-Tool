@@ -1261,7 +1261,7 @@ function filterPanel() {
     const body = items.map((o) => `<label class="fopt${o.n ? "" : " zero"}"><input type="checkbox" data-f="${k}" value="${esc(o.v)}"${sel.has(o.v) ? " checked" : ""}><span>${esc(evLabel(k, o.v))}</span><em>${fmtN(o.n)}</em></label>`).join("");
     return `<details class="fgrp" data-g="${k}"${S.ev.open.has(k) ? " open" : ""}><summary><span>${t(title)}</span>${sel.size ? `<span class="fcnt">${sel.size}</span>` : ""}</summary><div class="fbody">${body || `<p class="small muted" style="margin:6px 4px">${S.ev.facets ? t("evNone") : t("reading")}</p>`}</div></details>`;
   }).join("");
-  return `<div class="fhead"><b>${t("evFilters")}</b><button class="btn sm" type="button" data-act="ev-clear"${evActive() ? "" : " disabled"}>${t("evClear")}</button></div>
+  return `<div class="fhead"><b>${t("evFilters")}</b></div>
     <div class="field"><label>${t("evRange")}</label><button class="rangebtn" id="evrange" type="button" data-act="ev-pick">${RANGE_ICON}<span id="evrangetxt">${esc(fmtRange(S.ev.from, S.ev.to))}</span></button></div>
     <div class="field"><label>${t("evTime")}</label><button class="rangebtn${timeOn() ? " on" : ""}" id="evtime" type="button" data-act="ev-time">${CLOCK_ICON}<span id="evtimetxt">${esc(timeText())}</span></button></div>
     ${groups}`;
@@ -1276,6 +1276,7 @@ function renderFilters() {
   const chips = [];
   for (const [k] of EV_GROUPS) for (const v of evSet(k)) chips.push(`<button class="fchip" type="button" data-f="${k}" data-v="${esc(v)}">${esc(evLabel(k, v))} <b>×</b></button>`);
   if (timeOn()) chips.push(`<button class="fchip" type="button" data-f="time">${esc(timeText())} <b>×</b></button>`);
+  if (chips.length) chips.push(`<button class="fclear" type="button" data-act="ev-clear">${t("evClear")}</button>`);   // beside what it clears
   ch.hidden = !chips.length; ch.innerHTML = chips.join("");
 }
 /* every query the page makes carries the same filters */
@@ -1674,7 +1675,6 @@ document.addEventListener("change", async (ev) => {
     const set = evSet(ev.target.dataset.f); ev.target.checked ? set.add(ev.target.value) : set.delete(ev.target.value);
     S.ev.page = 0; evRefresh();
     const g = ev.target.closest(".fgrp"), cnt = g && g.querySelector(".fcnt"); if (g && !cnt && set.size) renderFilters(); else if (cnt) cnt.textContent = set.size || "";
-    const clr = $('[data-act="ev-clear"]'); if (clr) clr.disabled = !evActive();
     const ch = $("#evchips"); if (ch) { renderFilters(); }
   }
   if (ev.target.id === "evsize") { S.ev.size = +ev.target.value; S.ev.page = 0; try { localStorage.setItem("lgs.evsize", String(S.ev.size)); } catch (e) { /* not remembered */ } loadEvents(); }
