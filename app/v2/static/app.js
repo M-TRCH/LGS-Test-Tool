@@ -36,7 +36,7 @@ const TXT = {
     sStop: "หยุด", sStopQ: "หยุดการทดสอบที่กำลังรัน? ข้อมูลถึงตอนนี้ถูกเก็บไว้", sRunning: "กำลังรัน", sArmed: "ตั้งเวลาไว้ เริ่มในอีก {t}", sLeft: "เหลือ {t}",
     sNoEnd: "ไม่มีเวลาจบ", sCab: "ตู้", sState: "สถานะ", sPass: "รอบ", sReads: "อ่าน", sFails: "พลาด", sRbt: "รีบูต", sWdt: "วอตช์ด็อก", sWorst: "ช้าสุด (ms)", sHeal: "เกตเวย์ซ่อมบัส",
     sClean: "สะอาด", sWarn: "ควรดู", sNotClean: "ไม่สะอาด", sDidNot: "ไม่ได้รัน", sStarting: "กำลังเริ่ม", sAnoms: "เหตุผิดปกติล่าสุด", sNewer: "ใหม่กว่า", sOlder: "เก่ากว่า", sOfN: "{a}–{b} จาก {n}", sNone: "ไม่มี",
-    sVerdict: "สรุปผลรอบล่าสุด", sHistory: "รอบที่ผ่านมา", sView: "ดูสรุป", sNoRuns: "ยังไม่มีรอบที่ผ่านมา", sFrames: "เฟรมที่ถูกทิ้ง: {n}",
+    sVerdict: "สรุปผลรอบล่าสุด", vClean: "สะอาด {a} จาก {b} ตู้", vMeta: "รันนาน {h} ชม. · timeout {to} วินาที", vEarly: "หยุดก่อนเวลา", vGw: "ตัวนับของเกตเวย์", vRestart: "เกตเวย์รีสตาร์ท {n} ครั้ง", vWrong: "เฟรมตอบผิดไอดีที่ถูกทิ้ง: {n} ครั้ง", soakColsTxt: "ตารางบน: ผลของโมดูลแต่ละตู้\nmod จำนวนโมดูล · pass รอบที่อ่านครบทุกตัว · reads จำนวนครั้งที่อ่าน · fail อ่านไม่ได้ · rbt โมดูลรีบูต · wdt โมดูลถูกวอตช์ด็อกรีเซ็ต · cross ครั้งที่สลับช่องฮับ · worst ตอบช้าสุด (ms) · drop เฟรมตอบผิดไอดีที่ถูกทิ้ง · silent ไอดีที่ไม่ตอบ\n\nตารางล่าง: ตัวนับของเกตเวย์\nซ่อมได้ = พลาดครั้งแรกแต่เกตเวย์ลองใหม่แล้วอ่านได้ · ซ่อมไม่ได้ = ลองใหม่แล้วยังไม่ได้ · timeout สุดท้าย = ไม่มีคำตอบเลย · CRC เสีย = ตอบมาแต่ข้อมูลเพี้ยน · อื่น ๆ = เฟรมแปลกอื่น\n\nสี: เทา = ศูนย์ · เหลือง = ควรดู · แดง = ผิดปกติ\nถ้าเฟรมตอบผิดไอดีมาก ให้เพิ่ม timeout ฝั่ง client", sHistory: "รอบที่ผ่านมา", sView: "ดูสรุป", sNoRuns: "ยังไม่มีรอบที่ผ่านมา", sFrames: "เฟรมที่ถูกทิ้ง: {n}",
     sNeedType: "ตู้ที่ไม่ได้กำหนดชนิดจะเริ่มไม่ได้ ตั้งที่หน้า รายการตู้", sStarted: "เริ่มแล้ว {n} ตู้", sCsv: "ไฟล์ CSV", sLongNote: "รันบนเซิร์ฟเวอร์ ปิดหน้านี้ได้ ผลเก็บใน data/exports",
     labels_page: "ป้าย", firmware_page: "เฟิร์มแวร์", lbWard: "ชื่อวอร์ด (พิมพ์บนป้าย)", lbSerial: "ซีเรียลจากคลัง (ไม่เก็บ)", lbLayout: "แบบป้าย", lbPlate: "กรอบ",
     lbPreview: "ดูตัวอย่างข้อมูล", lbDownload: "ดาวน์โหลด .lbx", expCfg: "ส่งออก config", impCfg: "นำเข้า config", impDone: "นำเข้า {n} ค่า (ยังไม่บันทึก ตรวจแล้วกดบันทึกลงเกตเวย์)", impNone: "ไม่มีค่าที่ต่างจากเกตเวย์",
@@ -58,7 +58,7 @@ const TXT = {
     g_sys: "ทั่วไป", g_rs485: "บัส RS485", g_usb: "พอร์ต USB", g_net: "เครือข่าย", g_time: "เวลา", g_bus: "ฮับ RS485", g_panel: "ปุ่มและไฟหน้าตู้", g_sched: "รีเซตตามเวลา",
     theme: "ธีม", th_auto: "ตามเครื่อง", th_light: "สว่าง", th_dark: "มืด", th_ocean: "ทะเล", th_forest: "ป่า", th_sand: "ทราย", th_midnight: "เที่ยงคืน", th_contrast: "คอนทราสต์สูง",
     lbPicture: "ตัวอย่างป้าย", lbPicNote: "ภาพจากไฟล์ .lbx จริง QR เป็นตัวจริง ฟอนต์ตรงกับไฟล์เมื่อเครื่องที่เปิดมีฟอนต์ Arial และ Browallia New",
-    sCsvFiles: "ไฟล์ข้อมูล", sColLegend: "คอลัมน์: mod = โมดูล · pass = รอบ · reads = อ่าน · fail = พลาด · rbt = รีบูต · wdt = วอตช์ด็อก · cross = ข้ามช่องฮับ · worst = ช้าสุด (ms) · drop = ตกหล่น · silent = เงียบ",
+    sCsvFiles: "ไฟล์ข้อมูล",
     close: "ปิด", noExplain: "ยังไม่มีคำอธิบายสำหรับค่านี้", curValue: "ค่าปัจจุบัน", newValue: "ค่าที่กำลังแก้",
     matched: "พบ {n} รายการ", evExport: "ส่งออก CSV", loginAgain: "ต้องเข้าสู่ระบบอีกครั้ง", error: "ผิดพลาด: {e}", d: "วัน", h: "ชม.",
   },
@@ -96,7 +96,7 @@ const TXT = {
     sStop: "Stop", sStopQ: "Stop the running soak? Data up to now is kept.", sRunning: "Running", sArmed: "Armed, starts in {t}", sLeft: "{t} left",
     sNoEnd: "no end time", sCab: "Cabinet", sState: "State", sPass: "Passes", sReads: "Reads", sFails: "Fails", sRbt: "Reboots", sWdt: "WDT", sWorst: "Worst ms", sHeal: "Gateway repairs",
     sClean: "clean", sWarn: "look", sNotClean: "not clean", sDidNot: "did not run", sStarting: "starting", sAnoms: "Latest anomalies", sNewer: "Newer", sOlder: "Older", sOfN: "{a}–{b} of {n}", sNone: "none",
-    sVerdict: "Latest run verdict", sHistory: "Past runs", sView: "View verdict", sNoRuns: "No past runs yet", sFrames: "Frames pymodbus discarded: {n}",
+    sVerdict: "Latest run verdict", vClean: "{a} of {b} cabinets clean", vMeta: "ran {h} h · timeout {to} s", vEarly: "stopped early", vGw: "Gateway counters", vRestart: "gateway restarted {n}x", vWrong: "Reply frames discarded as the wrong unit id: {n}", soakColsTxt: "Top table: modules of each cabinet\nmod modules · pass passes that read every module · reads reads · fail failed reads · rbt module reboots · wdt module watchdog resets · cross hub channel crossings · worst slowest reply (ms) · drop reply frames with the wrong unit id, discarded · silent ids that never answered\n\nBottom table: gateway counters\nRepaired = missed first try but the gateway retried and got it · Repair failed = retried and still nothing · Final timeouts = no reply at all · Bad CRC = a reply with damaged data · Other = other odd frames\n\nColour: grey = zero · amber = take a look · red = abnormal\nIf wrong-id frames are many, raise the client timeout", sHistory: "Past runs", sView: "View verdict", sNoRuns: "No past runs yet", sFrames: "Frames pymodbus discarded: {n}",
     sNeedType: "A cabinet with no type cannot start. Set it on the Sites page.", sStarted: "Started {n} cabinets", sCsv: "CSV files", sLongNote: "Runs on the server: you can close this page. Results go to data/exports.",
     labels_page: "Labels", firmware_page: "Firmware", lbWard: "Ward name (printed)", lbSerial: "Serial from the warehouse (not stored)", lbLayout: "Label layout", lbPlate: "Frame",
     lbPreview: "Preview data", lbDownload: "Download .lbx", expCfg: "Export config", impCfg: "Import config", impDone: "Imported {n} values (not saved yet: review, then Save to gateway)", impNone: "Nothing differs from the gateway",
@@ -118,7 +118,7 @@ const TXT = {
     g_sys: "General", g_rs485: "RS485 bus", g_usb: "USB port", g_net: "Network", g_time: "Time", g_bus: "RS485 hub", g_panel: "Panel buttons and lamps", g_sched: "Scheduled reset",
     theme: "Theme", th_auto: "Follow device", th_light: "Light", th_dark: "Dark", th_ocean: "Ocean", th_forest: "Forest", th_sand: "Sand", th_midnight: "Midnight", th_contrast: "High contrast",
     lbPicture: "Label preview", lbPicNote: "Drawn from the real .lbx with the real QR. Fonts match the file when this device has Arial and Browallia New.",
-    sCsvFiles: "Data files", sColLegend: "",
+    sCsvFiles: "Data files",
     close: "Close", noExplain: "No explanation for this setting yet", curValue: "Current value", newValue: "Value being edited",
     matched: "{n} found", evExport: "Export CSV", loginAgain: "Sign in again", error: "Error: {e}", d: "d", h: "h",
   },
@@ -555,8 +555,8 @@ function modAutoSync() {
 const INS_INFO = {
   soakDwell: ["ไฟแต่ละช่องติดค้างกี่วินาทีก่อนดับเอง (เหมือนรอคนกดยืนยัน) ตั้งนานขึ้นถ้าอยากให้ไฟติดซ้อนกันหลายดวง",
     "How many seconds a light stays on before it goes off by itself (as if waiting for a confirm). Make it longer to get several lights on at once."],
-  soakCols: ["mod = โมดูล · pass = รอบ · reads = อ่าน · fail = พลาด · rbt = รีบูต · wdt = วอตช์ด็อก · cross = ข้ามช่องฮับ · worst = ช้าสุด (ms) · drop = ตกหล่น · silent = เงียบ",
-    "mod = modules · pass = passes · reads = reads · fail = failed reads · rbt = reboots · wdt = watchdog resets · cross = hub channel crossings · worst = slowest (ms) · drop = dropped · silent = silent ids"],
+  soakCols: ["ตารางบน: ผลของโมดูลแต่ละตู้\nmod จำนวนโมดูล · pass รอบที่อ่านครบทุกตัว · reads จำนวนครั้งที่อ่าน · fail อ่านไม่ได้ · rbt โมดูลรีบูต · wdt โมดูลถูกวอตช์ด็อกรีเซ็ต · cross ครั้งที่สลับช่องฮับ · worst ตอบช้าสุด (ms) · drop เฟรมตอบผิดไอดีที่ถูกทิ้ง · silent ไอดีที่ไม่ตอบ\n\nตารางล่าง: ตัวนับของเกตเวย์\nซ่อมได้ = พลาดครั้งแรกแต่เกตเวย์ลองใหม่แล้วอ่านได้ · ซ่อมไม่ได้ = ลองใหม่แล้วยังไม่ได้ · timeout สุดท้าย = ไม่มีคำตอบเลย · CRC เสีย = ตอบมาแต่ข้อมูลเพี้ยน · อื่น ๆ = เฟรมแปลกอื่น\n\nสี: เทา = ศูนย์ · เหลือง = ควรดู · แดง = ผิดปกติ\nถ้าเฟรมตอบผิดไอดีมาก ให้เพิ่ม timeout ฝั่ง client",
+    "Top table: modules of each cabinet\nmod modules · pass passes that read every module · reads reads · fail failed reads · rbt module reboots · wdt module watchdog resets · cross hub channel crossings · worst slowest reply (ms) · drop reply frames with the wrong unit id, discarded · silent ids that never answered\n\nBottom table: gateway counters\nRepaired = missed first try but the gateway retried and got it · Repair failed = retried and still nothing · Final timeouts = no reply at all · Bad CRC = a reply with damaged data · Other = other odd frames\n\nColour: grey = zero · amber = take a look · red = abnormal\nIf wrong-id frames are many, raise the client timeout"],
   soakWins: ["จะสุ่มใช้กี่หน้าต่างจากสูงสุด 8 ต่อช่อง (ปกติ 8) ตู้ที่มีไฟวงแหวนจะติดได้ทีละดวง",
     "How many of the 8 windows per slot to pick from (normally 8). On cabinets with a ring light only one is lit at a time."],
   soakPicks: ["จำลองคนมาหยิบยา ทุกครั้งจะเปิดไฟหนึ่งช่อง (สุ่ม) ค้างไว้สักพักแล้วดับ ตัวเลขคือจำนวนครั้งต่อตู้ต่อวัน กระจายเท่า ๆ กัน เช่น 2,000 = ราว 1 ครั้งทุก 43 วินาที ไม่มีการปลดกลอน",
@@ -910,59 +910,58 @@ async function ntpApply() {
 }
 
 const fmtDur = (sec) => { sec = Math.max(0, Math.round(sec)); const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60); return h ? `${h} ${t("h")} ${m} m` : `${m} m ${sec % 60} s`; };
-/* The verdict is a plain-text report written by the engine (and kept as a file for the classic tool), so it stays English on disk; in Thai mode the prose lines are translated here and the fixed-width table is left alone. */
-/* The verdict as the page's own typography: prose lines in the theme font, and the cabinet table (fixed-width columns in the file)
-   as a real table, so no monospace font is needed and the Thai never falls back to a different face. */
+/* The verdict is a plain-text report written by the engine (and kept as a file for the classic tool). Here it is read back
+   from that text and drawn in the page's own typography: one headline, the cabinet table and the gateway table with colour
+   on what needs a look, and no paragraphs. What the columns mean lives behind the ? button. */
 function verdictHtml(txt, inCard) {
-  const lines = verdictText(txt).split("\n");
-  let out = "", prose = [], tbl = null;
-  const flushProse = () => { if (prose.length) out += `<div class="vprose">${esc(prose.join("\n").replace(/\n+$/, ""))}</div>`; prose = []; };
-  const flushTable = () => {
-    if (!tbl) return;
-    const cut = (ln) => { const w = ln.trim().split(/\s+/); return [...w.slice(0, 10), w.slice(10).join(" ")]; };
-    const [head, ...rows] = tbl;
-    const hd = cut(head), cls = (i) => (i > 0 && i < 10 ? ' class="num"' : "");
-    out += (!inCard && t("sColLegend") ? `<details class="collg"><summary class="why" aria-label="${t("explain")}">?</summary><div class="small muted">${esc(t("sColLegend"))}</div></details>` : "")
-      + `<div style="overflow-x:auto"><table class="evtab"><tr>${hd.map((c, i) => `<th${cls(i)}>${esc(c)}</th>`).join("")}</tr>`
-      + rows.filter((r) => !/^-{5,}/.test(r.trim())).map((r) => /did not run/.test(r) ? `<tr><td><b>${esc(r.trim().split(/\s+/)[0])}</b></td><td colspan="10" style="color:var(--bad)">${t("sDidNot")}</td></tr>` : `<tr>${cut(r).map((c, i) => `<td${cls(i)}>${i === 0 ? `<b>${esc(c)}</b>` : esc(c)}</td>`).join("")}</tr>`).join("") + "</table></div>";
-    tbl = null;
-  };
-  // the gateway's own counters, one line per cabinet in the file, are a second table
-  const GW = /^\s+(\S+)\s+(?:ซ่อมได้|repaired)\s+(\d+)\s+\(([\d.]+)\/h\)\s+(?:ซ่อมไม่ได้|repair failed)\s+(\d+)\s+(?:timeout สุดท้าย|final timeouts)\s+(\d+)\s+(?:CRC เสีย|bad crc)\s+(\d+)\s+(?:อื่นๆ|other)\s+(\d+)/;
-  let gw = [];
-  const flushGw = () => {
-    if (!gw.length) return;
-    out += `<div style="overflow-x:auto"><table class="evtab"><tr><th>${t("sCab")}</th><th class="num">${t("sRepaired")}</th><th class="num">${t("sRepairedH")}</th><th class="num">${t("sRepairFailed")}</th><th class="num">${t("sFinalTo")}</th><th class="num">${t("sBadCrc")}</th><th class="num">${t("sOther")}</th></tr>`
-      + gw.map((m) => `<tr><td><b>${esc(m[1])}</b></td>${m.slice(2).map((v) => `<td class="num">${esc(v)}</td>`).join("")}</tr>`).join("") + "</table></div>";
-    gw = [];
-  };
+  const lines = String(txt).split("\n");
+  const num = (v) => Number(String(v).replace(/,/g, "")) || 0;
+  const head = /^fleet soak\s+(.*)$/.exec(lines[0] || "");
+  const ran = /ran for ([\d.]+) h(\s+\(stopped early\))?\s+client timeout ([\d.]+) s/.exec(lines[1] || "");
+  const cleanM = /^(\d+) of (\d+) cabinets completely clean/m.exec(txt);
+  const cabs = [], gws = [];
+  let wrong = null;
   for (const ln of lines) {
-    if (tbl) { if (ln.trim()) { tbl.push(ln); continue; } flushTable(); }
-    if (/^cabinet\s/.test(ln)) { flushProse(); tbl = [ln]; continue; }
-    const m = GW.exec(ln);
-    if (m) { flushProse(); gw.push(m); continue; }
-    flushGw();
-    prose.push(ln);
+    if (/^(cabinet|-{5,})/.test(ln.trim()) || !ln.trim()) continue;
+    let m = /^(Chest-\S+|\S+)\s+(\d+)\s+--\s*did not run/.exec(ln);
+    if (m) { cabs.push({ name: m[1], dnr: true }); continue; }
+    m = /^(\S+)\s+(\d+)\s+(\d+)\s+([\d,]+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(.+)$/.exec(ln);
+    if (m && !/^\s/.test(ln)) { cabs.push({ name: m[1], mod: m[2], pass: m[3], reads: m[4], fail: num(m[5]), rbt: num(m[6]), wdt: num(m[7]), cross: m[8], worst: num(m[9]), drop: m[10], silent: m[11].trim() }); continue; }
+    m = /^\s+(\S+)\s+repaired\s+(\d+)\s+\(([\d.]+)\/h\)\s+repair failed\s+(\d+)\s+final timeouts\s+(\d+)\s+bad crc\s+(\d+)\s+other\s+(\d+)(.*)$/.exec(ln);
+    if (m) { gws.push({ name: m[1], rep: num(m[2]), perh: m[3], rfail: num(m[4]), to: num(m[5]), crc: num(m[6]), other: num(m[7]), rest: m[8] }); continue; }
+    m = /reply frames discarded as the wrong unit id:\s*(none|\d+)/.exec(ln);
+    if (m) wrong = m[1] === "none" ? 0 : Number(m[1]);
   }
-  flushProse(); flushTable(); flushGw();
+  const lvl = (bad, warn) => (bad ? "bad" : warn ? "warn" : "ok");
+  const cell = (v, bad, warn) => `<td class="num ${bad ? "vbad" : warn ? "vwarn" : v === 0 || v === "0" ? "vzero" : ""}">${esc(v)}</td>`;
+  const dot = (l) => `<i class="vdot ${l}"></i>`;
+  const total = cleanM ? Number(cleanM[2]) : cabs.length, clean = cleanM ? Number(cleanM[1]) : 0;
+  const gwBad = gws.some((g) => g.rfail || g.to || g.crc || /NOT CLEAN/.test(g.rest));
+  const hl = clean < total ? "bad" : gws.some((g) => g.rep || g.other || /warn/.test(g.rest)) ? "warn" : "ok";
+  let out = `<div class="vhead"><span class="chip ${hl}"><i class="dot"></i>${t("vClean", { a: clean, b: total })}</span>`
+    + `<span class="small muted">${ran ? t("vMeta", { h: ran[1], to: ran[3] }) + (ran[2] ? " · " + t("vEarly") : "") : ""}${head ? " · " + esc(head[1].trim()) : ""}</span></div>`;
+  if (!inCard && t("soakColsTxt")) out += `<details class="collg"><summary class="why" aria-label="${t("explain")}">?</summary><div class="small muted" style="white-space:pre-line">${esc(t("soakColsTxt"))}</div></details>`;
+  const th = (c, n) => `<th${n ? ' class="num"' : ""}>${esc(c)}</th>`;
+  out += `<div style="overflow-x:auto"><table class="evtab"><tr>${th("cabinet")}${["mod", "pass", "reads", "fail", "rbt", "wdt", "cross", "worst", "drop"].map((c) => th(c, 1)).join("")}${th("silent ids")}</tr>`
+    + cabs.map((c) => {
+      if (c.dnr) return `<tr><td>${dot("bad")}<b>${esc(c.name)}</b></td><td colspan="10" class="vbad">${t("sDidNot")}</td></tr>`;
+      const bad = c.fail || c.rbt || c.wdt || c.silent !== "none";
+      return `<tr class="${bad ? "vrow bad" : ""}"><td>${dot(lvl(bad, c.worst >= 1000))}<b>${esc(c.name)}</b></td><td class="num">${esc(c.mod)}</td><td class="num">${esc(c.pass)}</td><td class="num">${esc(c.reads)}</td>`
+        + cell(c.fail, c.fail) + cell(c.rbt, c.rbt) + cell(c.wdt, c.wdt) + `<td class="num">${esc(c.cross)}</td>` + cell(c.worst, false, c.worst >= 1000) + `<td class="num vzero">${esc(c.drop)}</td>`
+        + `<td class="${c.silent !== "none" ? "vbad" : "vzero"}">${esc(c.silent)}</td></tr>`;
+    }).join("") + "</table></div>";
+  if (gws.length) {
+    out += `<div class="vsub">${t("vGw")}</div><div style="overflow-x:auto"><table class="evtab"><tr><th>${t("sCab")}</th><th class="num">${t("sRepaired")}</th><th class="num">${t("sRepairedH")}</th><th class="num">${t("sRepairFailed")}</th><th class="num">${t("sFinalTo")}</th><th class="num">${t("sBadCrc")}</th><th class="num">${t("sOther")}</th></tr>`
+      + gws.map((g) => {
+        const bad = g.rfail || g.to || g.crc || /NOT CLEAN/.test(g.rest), warn = g.rep || g.other || /warn/.test(g.rest);
+        const rb = /gateway restarted (\d+)x/.exec(g.rest);
+        return `<tr class="${bad ? "vrow bad" : ""}"><td>${dot(lvl(bad, warn))}<b>${esc(g.name)}</b>${rb ? ` <span class="small vwarn">${t("vRestart", { n: rb[1] })}</span>` : ""}</td>`
+          + cell(g.rep, false, g.rep) + `<td class="num ${/warn/.test(g.rest) ? "vwarn" : g.rep ? "" : "vzero"}">${esc(g.perh)}</td>` + cell(g.rfail, g.rfail) + cell(g.to, g.to) + cell(g.crc, g.crc) + cell(g.other, false, g.other) + "</tr>";
+      }).join("") + "</table></div>";
+  }
+  if (wrong !== null) out += `<div class="small ${wrong ? "vwarn" : "muted"}">${t("vWrong", { n: wrong })}</div>`;
+  void gwBad;
   return out;
-}
-// the title and the run length / timeout lines read as one line
-function verdictText(txt) {
-  const out = verdictText0(txt).split("\n");
-  if (out.length > 1 && out[0].trim() && out[1].trim() && !/^cabinet\s/.test(out[1].trim()))
-    out.splice(0, 2, out[0].trim() + " · " + out[1].trim().replace(/\s{2,}/g, " · "));
-  return out.join("\n");
-}
-function verdictText0(txt) {
-  if (lang !== "th") return txt;
-  const map = [[/^fleet soak /, "ทดสอบต่อเนื่องทุกตู้ "], [/ran for ([\d.]+) h/, "รันนาน $1 ชม."], [/client timeout/, "timeout ฝั่ง client"],
-    [/^(\d+) of (\d+) cabinets completely clean/, "สะอาดสมบูรณ์ $1 จาก $2 ตู้"],
-    [/^gateway RS485 counters over the run.*$/, "ตัวนับ RS485 ของเกตเวย์ตลอดรอบ (พลาดครั้งแรกที่ซ่อมได้ และที่ซ่อมไม่ได้):"],
-    [/repair failed/, "ซ่อมไม่ได้"], [/repaired/, "ซ่อมได้"], [/final timeouts/, "timeout สุดท้าย"], [/bad crc/, "CRC เสีย"], [/other /, "อื่นๆ "],
-    [/^reply frames discarded as the wrong unit id: none/, "เฟรมตอบที่ถูกทิ้งเพราะ unit id ผิด: ไม่มี"], [/^reply frames discarded as the wrong unit id:/, "เฟรมตอบที่ถูกทิ้งเพราะ unit id ผิด:"]];
-  const out = txt.split("\n").map((ln) => { if (/^\s*(cabinet|-{5,})/.test(ln)) return ln; let o = ln; for (const [re, to] of map) o = o.replace(re, to); return o; });
-  return out.join("\n");
 }
 /* Continuous test, in the same four numbered steps as the installation check: what kind, which cabinets, how long, go.
    While a run is going the steps give way to its live status. */
