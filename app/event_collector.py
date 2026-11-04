@@ -289,7 +289,10 @@ class Collector:
         """Blocking loop for a daemon thread. Never raises."""
         while not stop.is_set():
             try:
-                self.poll_all()
+                with _poll_lock:
+                    if stop.is_set():
+                        break
+                    self.poll_all()
             except Exception as exc:                             # noqa: BLE001
                 applog.note(f"event collector: {type(exc).__name__}: {exc}")
             stop.wait(interval_s)
@@ -299,6 +302,12 @@ class Collector:
 _collector: Optional[Collector] = None
 _thread: Optional[threading.Thread] = None
 _stop: Optional[threading.Event] = None
+# Switching the collector off and on again while a poll is still running starts a
+# NEW thread (the old one keeps its own, already-set stop event and ends after its
+# poll). Treating "old thread still alive" as "running" used to leave the collector
+# dead with the setting on. The lock keeps the two from polling at the same time,
+# so the new one always starts from the cursor the old one saved.
+_poll_lock = threading.Lock()
 
 
 def _roster_from(cfg) -> list[tuple]:
@@ -329,7 +338,7 @@ def apply(cfg) -> None:
     Idempotent; safe to call on every change of the setting."""
     global _collector, _thread, _stop
     want = bool(getattr(cfg, "events_enabled", False))
-    running = _thread is not None and _thread.is_alive()
+    running = _thread is not None and _thread.is_alive() and not (_stop and _stop.is_set())
     if want and not running:
         _collector = Collector(lambda: _roster_from(cfg),
                                retention_days=int(getattr(cfg, "events_retention_days", 90)))
