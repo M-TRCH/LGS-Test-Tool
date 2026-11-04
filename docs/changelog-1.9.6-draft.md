@@ -89,11 +89,22 @@ installation check, scan, module management (advanced, last).
   refused if another module answers there) and then a yes/no; Software reset
   asks for the id to be typed (grey example in the field).
 
-### Events page
+### Events page (reviewed with the user, passed 2026-11-04)
 
-- **Export CSV** of the current filter: every matching row, oldest first, UTF-8
-  with BOM (opens in Excel with Thai intact), cells that start with `= + - @`
-  prefixed so a spreadsheet does not run them as formulas.
+- **Dashboard** over the chosen filters: six counters, lights and problems charts (per hour for a window of two days or
+  less, otherwise per day, hover for the number) and one row per gateway. `GET /api/v2/events/summary`.
+- **Filters in the manner of a parametric part search**: tick lists with counts for gateway, event type, client and
+  module (several ticks in a group = any of them, groups combine, each count leaves out its own group), a date range and
+  a time-of-day window (applies on every chosen day, wraps past midnight). Wide screens: one row of drop-downs; phones:
+  stacked, collapsible groups. Selected values show as chips with "clear all" beside them. The dashboard follows every
+  filter except the event type.
+- **Calendar popup** for the date range with Today / 7 / 30 day shortcuts; the choice is held until the popup is
+  closed and then applied once. Only days the collector still keeps can be picked.
+- **List** paged 10 / 20 / 50 / 100 at a time (the choice is remembered), **Export CSV** of every row matching the
+  filters (UTF-8 with BOM, cells starting `= + - @` defused).
+- **Collector settings moved to Settings** (on/off and days kept: 30 / 90 / 180 / 365); the events page keeps a status
+  chip and a notice when the collector is off. Fixed: switching the collector off and on while a poll was running left
+  it dead with the setting on.
 
 ## Verification
 
@@ -126,5 +137,5 @@ installation check, scan, module management (advanced, last).
 
 ## Review status (page by page with the user)
 
-Passed: Commission, Labels, Sites, Cabinets, Gateway, Module, Events (CSV export
-added, collection verified). To do: Soak (needs another round), Firmware.
+Passed: Commission, Labels, Sites, Cabinets, Gateway, Module, Events. To do: Soak (needs another
+round), Firmware.
