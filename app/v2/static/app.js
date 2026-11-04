@@ -11,7 +11,7 @@ const TXT = {
     add: "เพิ่มตู้", save: "บันทึก", saved: "บันทึกแล้ว", del: "ลบ", name: "ชื่อตู้", host: "ไอพี / โฮสต์", port: "พอร์ต",
     cabinet: "ชนิดตู้", site: "ไซต์", note: "หมายเหตุ", exportCsv: "ส่งออก CSV", importCsv: "นำเข้า CSV",
     importMerge: "เพิ่มเฉพาะที่ยังไม่มี", importReplace: "แทนที่ทั้งรายการ", imported: "นำเข้า {n} แถว",
-    dupWarn: "ไอพีซ้ำกับแถวอื่น", unsaved: "มีการแก้ที่ยังไม่บันทึก", gateway: "เกตเวย์", days: "ย้อนหลัง", evFrom: "ตั้งแต่วันที่", evTo: "ถึงวันที่", prev: "ก่อนหน้า", next: "ถัดไป", day1: "วันนี้", day7: "7 วัน", day30: "30 วัน", day90: "90 วัน", all: "ทั้งหมด",
+    dupWarn: "ไอพีซ้ำกับแถวอื่น", unsaved: "มีการแก้ที่ยังไม่บันทึก", gateway: "เกตเวย์", days: "ย้อนหลัง", evRange: "ช่วงวันที่", evSize: "ดูทีละ", rangeStart: "แตะวันแรกของช่วง", rangeEnd: "แตะวันสุดท้ายของช่วง (แตะวันเดิมซ้ำถ้าเอาวันเดียว)", prev: "ก่อนหน้า", next: "ถัดไป", day1: "วันนี้", day7: "7 วัน", day30: "30 วัน", day90: "90 วัน", all: "ทั้งหมด",
     search: "ค้นหา (ชื่อ, ไอพี)", noEvents: "ไม่มีเหตุการณ์ในช่วงนี้", noEventsOff: "ยังไม่มีข้อมูล ตัวเก็บเหตุการณ์ปิดอยู่", collect: "เก็บเหตุการณ์อัตโนมัติ",
     dashLights: "สั่งไฟ", dashConn: "เชื่อมต่อ", dashRefused: "ปฏิเสธการเชื่อมต่อ", dashQuiet: "บัสเงียบ", dashHeal: "ซ่อมบัส", dashBoot: "บูต", dashLast: "เหตุการณ์ล่าสุด", dashProblems: "ปัญหา", dashHour: "รายชั่วโมง", dashDay: "รายวัน", dashLightsBy: "จำนวนครั้งที่สั่งไฟ ({u})", dashProblemsBy: "ปัญหา: บัสเงียบ ซ่อมบัส ปฏิเสธการเชื่อมต่อ บูต ({u})", colOff: "ปิดอยู่", colOffNote: "ตัวเก็บเหตุการณ์ปิดอยู่ เปิดได้ที่ ⚙ ตั้งค่า (โหมดขั้นสูง)", colNote: "ดึงบันทึกจากเกตเวย์ทุกตู้ทุก 5 นาที ต้องใช้เฟิร์มแวร์เกตเวย์ 1.14.0 ขึ้นไป", colWait: "รออ่านรอบแรก", colChip: "ปกติ {n}/{total} ตู้", colKeep: "เก็บเหตุการณ์ไว้ในเครื่องนี้", colKeepQ: "เหตุการณ์ที่เก่ากว่า {n} วันจะถูกลบในรอบเก็บถัดไป ดำเนินการต่อไหม?", dayN: "{n} วัน", colLast: "อ่านล่าสุด {at} · ปกติ {n}/{total} ตู้ · ได้เพิ่ม {add} รายการ", colOld: "ยังอ่านไม่ได้ เฟิร์มแวร์ต่ำกว่า 1.14.0: {names}", colErr: "{name}: อ่านไม่สำเร็จ ({e})", evT_coil: "สั่งไฟ", evT_tcp_accept: "เชื่อมต่อ", evT_tcp_close: "ตัดการเชื่อมต่อ", evT_tcp_refused: "ปฏิเสธการเชื่อมต่อ", evT_bus_quiet: "บัสเงียบ", evT_rtu_heal: "ซ่อมบัส", evT_boot: "บูต", evT_link_down: "สายแลนหลุด", evT_cfg_saved: "บันทึกค่า", evT_sched_reset: "รีเซ็ตตามเวลา",
     gateway_page: "เกตเวย์", pick: "เลือกตู้", read: "อ่านค่า", reading: "กำลังอ่าน...",
@@ -71,7 +71,7 @@ const TXT = {
     add: "Add cabinet", save: "Save", saved: "Saved", del: "Delete", name: "Name", host: "IP / host", port: "Port",
     cabinet: "Cabinet type", site: "Site", note: "Note", exportCsv: "Export CSV", importCsv: "Import CSV",
     importMerge: "Add only new rows", importReplace: "Replace the list", imported: "Imported {n} rows",
-    dupWarn: "same address as another row", unsaved: "Unsaved changes", gateway: "Gateway", days: "Range", evFrom: "From", evTo: "To", prev: "Previous", next: "Next", day1: "Today", day7: "7 days", day30: "30 days", day90: "90 days", all: "All",
+    dupWarn: "same address as another row", unsaved: "Unsaved changes", gateway: "Gateway", days: "Range", evRange: "Date range", evSize: "Show", rangeStart: "Tap the first day", rangeEnd: "Tap the last day (tap the same day again for a single day)", prev: "Previous", next: "Next", day1: "Today", day7: "7 days", day30: "30 days", day90: "90 days", all: "All",
     search: "Search (name, IP)", noEvents: "No events in this range", noEventsOff: "No data yet: the event collector is off", collect: "Collect events automatically",
     dashLights: "Light commands", dashConn: "Connections", dashRefused: "Refused", dashQuiet: "Bus quiet", dashHeal: "Bus repairs", dashBoot: "Boots", dashLast: "Last event", dashProblems: "Problems", dashHour: "per hour", dashDay: "per day", dashLightsBy: "Light commands ({u})", dashProblemsBy: "Problems: bus quiet, repairs, refused, boots ({u})", colOff: "Off", colOffNote: "The event collector is off; switch it on in ⚙ Settings (advanced mode).", colNote: "Pulls every gateway's log every 5 minutes; needs gateway firmware 1.14.0 or newer.", colWait: "waiting for the first read", colChip: "{n}/{total} OK", colKeep: "Keep on this PC", colKeepQ: "Events older than {n} days will be deleted at the next collection. Continue?", dayN: "{n} days", colLast: "Last read {at} · {n}/{total} OK · {add} new", colOld: "Not readable, firmware older than 1.14.0: {names}", colErr: "{name}: read failed ({e})", evT_coil: "Coil", evT_tcp_accept: "Connect", evT_tcp_close: "Disconnect", evT_tcp_refused: "Refused", evT_bus_quiet: "Bus quiet", evT_rtu_heal: "Bus repair", evT_boot: "Boot", evT_link_down: "Link down", evT_cfg_saved: "Settings saved", evT_sched_reset: "Scheduled reset",
     gateway_page: "Gateway", pick: "Choose cabinet", read: "Read", reading: "Reading...",
@@ -128,7 +128,7 @@ const t = (k, p) => { let s = (TXT[lang] && TXT[lang][k]) || TXT.en[k] || k; for
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const $ = (s, r = document) => r.querySelector(s);
 
-let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: "", from: "", to: "", page: 0, q: "", types: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, lab: { id: "", ward: "", serial: "", layout: "", plate: "", opts: null, info: null, busy: false }, fw: { images: null, sel: new Set(), image: "", ota: null, gwId: "", gwImage: "", gwConfirm: "", gwFile: null, gwFileName: "", gw: null, timer: null }, soak: { sel: new Set(), mode: "pharmacy", picks: 2000, hours: 12, startAt: "", status: null, runs: [], verdict: "", timer: null, was: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 },
+let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: "", from: "", to: "", page: 0, size: 20, q: "", types: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, lab: { id: "", ward: "", serial: "", layout: "", plate: "", opts: null, info: null, busy: false }, fw: { images: null, sel: new Set(), image: "", ota: null, gwId: "", gwImage: "", gwConfirm: "", gwFile: null, gwFileName: "", gw: null, timer: null }, soak: { sel: new Set(), mode: "pharmacy", picks: 2000, hours: 12, startAt: "", status: null, runs: [], verdict: "", timer: null, was: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 },
   ins: { id: "", layout: null, sel: new Set(), mode: "check", action: "light", unlock: false, identify: false, hold: 1, preset: 1, batch: 4, timeout: 60, display: true, punlock: true, off: "btnshut", order: "ch", running: false, since: 0, res: {}, rows: [], lit: new Set(), closing: new Set(), testing: null, text: "", banner: "", summary: "", file: false, err: "" },
   scan: { running: false, found: [], asked: new Set(), at: 0, text: "", err: "", file: false },
   sweep: { running: false, loops: 1, lights: true, latch: false, text: "", banner: "", phases: [], bad: [], err: "", file: false },
@@ -252,20 +252,19 @@ function viewEvents() {
   const chip = colChip(c);
   const keep = c.retention_days || 90;
   const types = ["coil", "tcp_accept", "tcp_close", "tcp_refused", "bus_quiet", "rtu_heal", "boot", "link_down", "cfg_saved", "sched_reset"];
-  const today = ymd(new Date()), oldest = ymd(new Date(Date.now() - 86400000 * Math.max(7, keep)));
+  const today = ymd(new Date());
   if (!S.ev.from) S.ev.from = S.ev.to = today;
   return `<div class="evpage"><div class="row" style="gap:10px;align-items:center"><h1>${t("events")}</h1>${chip}</div>
     ${c.enabled ? "" : `<div class="notice info">${t("colOffNote")}</div>`}
     <section class="card stack"><div class="row" style="align-items:flex-end">
       <div class="field"><label>${t("gateway")}</label><select id="evgw"><option value="">${t("all")}</option>${(S.evGw || []).map((g) => `<option value="${esc(g.gw)}"${g.gw === S.ev.gw ? " selected" : ""}>${esc(g.gw)}</option>`).join("")}</select></div>
-      <div class="field"><label>${t("evFrom")}</label><input type="date" id="evfrom" value="${S.ev.from}" min="${oldest}" max="${today}"></div>
-      <div class="field"><label>${t("evTo")}</label><input type="date" id="evto" value="${S.ev.to}" min="${oldest}" max="${today}"></div>
-      <div class="row" style="gap:6px">${[1, 7, 30].map((d) => `<button class="btn sm" type="button" data-act="ev-range" data-d="${d}">${d === 1 ? t("day1") : t("dayN", { n: d })}</button>`).join("")}</div></div></section>
+      <div class="field"><label>${t("evRange")}</label><button class="rangebtn" id="evrange" type="button" data-act="ev-pick"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span id="evrangetxt">${esc(fmtRange(S.ev.from, S.ev.to))}</span></button></div>
+      <div class="segctl" id="evshort">${[1, 7, 30].map((d) => `<button type="button" data-act="ev-range" data-d="${d}" aria-pressed="${rangeIs(d)}">${d === 1 ? t("day1") : t("dayN", { n: d })}</button>`).join("")}</div></div></section>
     <div id="evdash" class="stack"></div>
     <section class="card stack"><div class="row">
       <div class="field"><label>${t("search")}</label><input id="evq" value="${esc(S.ev.q)}"></div></div>
       <div class="seg">${types.map((x) => `<button data-type="${x}" aria-pressed="${S.ev.types.has(x)}" title="${x}">${t("evT_" + x)}</button>`).join("")}</div>
-      <div class="row between"><div class="small muted" id="evcount"></div><a class="btn" id="evcsv" href="#" download>${t("evExport")}</a></div><div id="evlist"></div><div class="row between" id="evpager"></div></section></div>`;
+      <div class="row between"><div class="small muted" id="evcount"></div><div class="row" style="gap:10px"><label class="small muted" for="evsize">${t("evSize")}</label><select id="evsize">${[10, 20, 50, 100].map((n) => `<option value="${n}"${n === S.ev.size ? " selected" : ""}>${n}</option>`).join("")}</select><a class="btn" id="evcsv" href="#" download>${t("evExport")}</a></div></div><div id="evlist"></div><div class="row between" id="evpager"></div></section></div>`;
 }
 
 
@@ -1241,19 +1240,62 @@ async function loadSummary() {
     });
   } catch (e) { fail(e); }
 }
-const EV_PAGE = 20;
+try { const n = +localStorage.getItem("lgs.evsize"); if ([10, 20, 50, 100].includes(n)) S.ev.size = n; } catch (e) { /* default */ }
 const ymd = (d) => d.toLocaleDateString("sv-SE");
+const MON = { th: ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."], en: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] };
+const DOW = { th: ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"], en: ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] };
+const fmtDay = (s) => { const [y, m, d] = s.split("-").map(Number); return `${d} ${MON[lang === "th" ? "th" : "en"][m - 1]} ${y}`; };
+const fmtRange = (a, b) => (a === b ? fmtDay(a) : `${fmtDay(a)} – ${fmtDay(b)}`);
+/* Is the chosen range exactly "the last n days, ending today"? Lights the matching shortcut. */
+const rangeIs = (n) => S.ev.to === ymd(new Date()) && S.ev.from === ymd(new Date(Date.now() - 86400000 * (n - 1)));
+function evRangeSync() {
+  const x = $("#evrangetxt"); if (x) x.textContent = fmtRange(S.ev.from, S.ev.to);
+  document.querySelectorAll("#evshort [data-d]").forEach((b) => b.setAttribute("aria-pressed", String(rangeIs(+b.dataset.d))));
+}
+/* A calendar popup for a from/to range: tap the first day, then the last (tap the same day twice for one day).
+   Only days the collector still keeps are selectable. Resolves {from, to} or null. */
+function pickRange(from, to, min, max) {
+  return new Promise((resolve) => {
+    const d = $("#rangepick"), g = $("#rpgrid"); let a = from, b = to, step = 0;
+    let [vy, vm] = to.split("-").map(Number); vm -= 1;
+    const [ny, nm] = min.split("-").map(Number), [xy, xm] = max.split("-").map(Number);
+    const paint = () => {
+      $("#rptitle").textContent = new Date(vy, vm, 1).toLocaleDateString(lang === "th" ? "th-TH-u-ca-gregory" : "en-US", { month: "long", year: "numeric" });
+      $("#rpprev").disabled = vy * 12 + vm <= ny * 12 + nm - 1; $("#rpnext").disabled = vy * 12 + vm >= xy * 12 + xm - 1;
+      const first = new Date(vy, vm, 1).getDay(), days = new Date(vy, vm + 1, 0).getDate();
+      let h = DOW[lang === "th" ? "th" : "en"].map((x) => `<div class="dow">${x}</div>`).join("") + "<span></span>".repeat(first);
+      for (let i = 1; i <= days; i++) {
+        const s = `${vy}-${String(vm + 1).padStart(2, "0")}-${String(i).padStart(2, "0")}`, hi = b || a;
+        const cls = [s === a || s === b ? "edge" : a && s > a && s < hi ? "in" : "", s === max ? "today" : ""].join(" ");
+        h += `<button type="button" class="${cls}" data-d="${s}"${s < min || s > max ? " disabled" : ""}>${i}</button>`;
+      }
+      g.innerHTML = h;
+      $("#rphint").textContent = t(step ? "rangeEnd" : "rangeStart");
+    };
+    const done = (v) => { d.onclose = null; if (d.open) d.close(); resolve(v); };
+    g.onclick = (e) => {
+      const x = e.target.closest("[data-d]"); if (!x) return;
+      if (!step) { a = x.dataset.d; b = null; step = 1; paint(); return; }
+      done(x.dataset.d < a ? { from: x.dataset.d, to: a } : { from: a, to: x.dataset.d });
+    };
+    $("#rpprev").onclick = () => { vm -= 1; if (vm < 0) { vm = 11; vy -= 1; } paint(); };
+    $("#rpnext").onclick = () => { vm += 1; if (vm > 11) { vm = 0; vy += 1; } paint(); };
+    $("#rpno").textContent = t("insCancel"); $("#rpno").onclick = () => done(null); d.onclose = () => resolve(null);
+    paint();
+    if (d.showModal) d.showModal(); else d.setAttribute("open", "");
+  });
+}
 async function loadEvents() {
   try {
     const q = new URLSearchParams({ gw: S.ev.gw, start: S.ev.from, end: S.ev.to, q: S.ev.q, ev: [...S.ev.types].join(",") });
     const mine = (loadEvents.n = (loadEvents.n || 0) + 1);
-    const r = await api("GET", "/api/v2/events?" + q + "&limit=" + EV_PAGE + "&offset=" + S.ev.page * EV_PAGE);
+    const r = await api("GET", "/api/v2/events?" + q + "&limit=" + S.ev.size + "&offset=" + S.ev.page * S.ev.size);
     if (mine !== loadEvents.n || !$("#evcount")) return;
     $("#evcount").textContent = t("matched", { n: r.matched });
-    const last = Math.max(0, Math.ceil(r.matched / EV_PAGE) - 1);
+    const last = Math.max(0, Math.ceil(r.matched / S.ev.size) - 1);
     if (S.ev.page > last) { S.ev.page = last; return loadEvents(); }
     const pg = $("#evpager");
-    if (pg) pg.innerHTML = r.matched > EV_PAGE ? `<button class="btn sm" type="button" data-act="ev-page" data-d="-1"${S.ev.page ? "" : " disabled"}>‹ ${t("prev")}</button><span class="small muted">${S.ev.page * EV_PAGE + 1}–${Math.min(r.matched, (S.ev.page + 1) * EV_PAGE)} / ${fmtN(r.matched)}</span><button class="btn sm" type="button" data-act="ev-page" data-d="1"${S.ev.page < last ? "" : " disabled"}>${t("next")} ›</button>` : "";
+    if (pg) pg.innerHTML = r.matched > S.ev.size ? `<button class="btn sm" type="button" data-act="ev-page" data-d="-1"${S.ev.page ? "" : " disabled"}>‹ ${t("prev")}</button><span class="small muted">${S.ev.page * S.ev.size + 1}–${Math.min(r.matched, (S.ev.page + 1) * S.ev.size)} / ${fmtN(r.matched)}</span><button class="btn sm" type="button" data-act="ev-page" data-d="1"${S.ev.page < last ? "" : " disabled"}>${t("next")} ›</button>` : "";
     const csv = $("#evcsv"); if (csv) { csv.href = "/api/v2/events/csv?" + q; csv.classList.toggle("disabled", !r.matched); csv.setAttribute("aria-disabled", String(!r.matched)); }
     $("#evlist").innerHTML = r.rows.length ? r.rows.map((e) => `<div class="evrow"><span class="when">${esc((e.t || e.collected || "").replace("T", " ").slice(5, 19))}</span><span><b>${esc(e.gw)}</b> ${esc(e.text)}</span></div>`).join("") : `<p class="muted">${t(S.me && S.me.collector && S.me.collector.enabled ? "noEvents" : "noEventsOff")}</p>`;
   } catch (e) { fail(e); }
@@ -1284,7 +1326,13 @@ document.addEventListener("click", async (ev) => {
   const type = ev.target.closest("[data-type]");
   if (type) { const x = type.dataset.type; S.ev.types.has(x) ? S.ev.types.delete(x) : S.ev.types.add(x); type.setAttribute("aria-pressed", S.ev.types.has(x)); S.ev.page = 0; loadEvents(); return; }
   const rng = ev.target.closest('[data-act="ev-range"]');
-  if (rng) { const d = +rng.dataset.d, now = new Date(); S.ev.from = ymd(new Date(now.getTime() - 86400000 * (d - 1))); S.ev.to = ymd(now); S.ev.page = 0; $("#evfrom").value = S.ev.from; $("#evto").value = S.ev.to; loadEvents(); loadSummary(); return; }
+  if (rng) { const d = +rng.dataset.d, now = new Date(); S.ev.from = ymd(new Date(now.getTime() - 86400000 * (d - 1))); S.ev.to = ymd(now); S.ev.page = 0; evRangeSync(); loadEvents(); loadSummary(); return; }
+  if (ev.target.closest('[data-act="ev-pick"]')) {
+    const keep = (S.me.collector || {}).retention_days || 90, now = new Date();
+    const r = await pickRange(S.ev.from, S.ev.to, ymd(new Date(now.getTime() - 86400000 * Math.max(7, keep))), ymd(now));
+    if (r) { S.ev.from = r.from; S.ev.to = r.to; S.ev.page = 0; evRangeSync(); loadEvents(); loadSummary(); }
+    return;
+  }
   const pgb = ev.target.closest('[data-act="ev-page"]');
   if (pgb) { S.ev.page = Math.max(0, S.ev.page + +pgb.dataset.d); loadEvents(); return; }
   const act = ev.target.closest("[data-act]"); if (!act) return;
@@ -1546,11 +1594,7 @@ document.addEventListener("change", async (ev) => {
     } catch (e) { fail(e); }
   }
   if (ev.target.id === "evgw") { S.ev.gw = ev.target.value; S.ev.page = 0; loadEvents(); loadSummary(); }
-  if (ev.target.id === "evfrom" || ev.target.id === "evto") {
-    const f = $("#evfrom"), o = $("#evto"); if (!f.value || !o.value) return;
-    if (f.value > o.value) { if (ev.target === f) o.value = f.value; else f.value = o.value; }
-    S.ev.from = f.value; S.ev.to = o.value; S.ev.page = 0; loadEvents(); loadSummary();
-  }
+  if (ev.target.id === "evsize") { S.ev.size = +ev.target.value; S.ev.page = 0; try { localStorage.setItem("lgs.evsize", String(S.ev.size)); } catch (e) { /* not remembered */ } loadEvents(); }
   if (ev.target.id === "csvfile" && ev.target.files[0]) {
     try {
       const r = await api("POST", "/api/v2/sites/import?mode=" + (S.csvMode || "merge"), await ev.target.files[0].arrayBuffer(), true);
