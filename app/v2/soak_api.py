@@ -148,7 +148,16 @@ def start(worker, sites_list: list, opts: dict) -> dict:
     dupes = soak_fleet.duplicate_hosts(cabs)
     if dupes:
         raise ValueError("two rows on one gateway: " + ", ".join(dupes))
-    cfg = soak.SoakConfig(ids=cabs[0].ids, pass_gap_s=gap, counter_every=5, slow_ms=400,
+    every = int(opts.get("counter_every") or 5)
+    if not 1 <= every <= 100:
+        raise ValueError("counter read must be every 1-100 passes")
+    slow = int(opts.get("slow_ms") or 400)
+    if not 50 <= slow <= 5000:
+        raise ValueError("slow threshold must be 50-5000 ms")
+    tmo = float(opts.get("timeout_s") or 0)
+    if tmo and not 4 <= tmo <= 30:
+        raise ValueError("client timeout must be 4-30 s")
+    cfg = soak.SoakConfig(ids=cabs[0].ids, pass_gap_s=gap, counter_every=every, slow_ms=slow, timeout_s=tmo,
                           mode=mode, picks_per_day=picks,
                           dwell_s=float(opts.get("dwell_s") or 20.0),
                           windows=int(opts.get("windows") or 8))
@@ -158,6 +167,8 @@ def start(worker, sites_list: list, opts: dict) -> dict:
     warns = []
     if 0.4 <= gap <= 0.9:
         warns.append("a pass gap of 0.4-0.9 s makes the hub lose first reads and creates false 'slow module' findings")
+    if tmo and tmo < 6:
+        warns.append("a client timeout under 6 s can leave the bus out of step behind a hub")
     if hours == 0:
         warns.append("no end time: it runs until stopped")
     return {"ok": True, "count": len(cabs), "armed": bool(start_epoch), "warnings": warns}

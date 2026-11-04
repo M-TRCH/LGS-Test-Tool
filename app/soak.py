@@ -130,6 +130,9 @@ class SoakConfig:
     # is radio -- so only the last one drawn stays lit there. Harmless, and
     # the clear still lands on what was lit.
     windows: int = 8
+    # Client timeout for a fleet run, seconds. 0 = the transport default (SOAK_TIMEOUT_S = 6.0, which exists because
+    # a client that gives up before a hub-held reply arrives desynchronises the bus).
+    timeout_s: float = 0.0
 
 
 @dataclass

@@ -562,7 +562,7 @@ def run_fleet(cabinets: Sequence[FleetCabinet], cfg: soak.SoakConfig,
 
     def one(cab: FleetCabinet) -> None:
         settings = TcpSettings(host=cab.host, port=cab.port,
-                               timeout_s=timeout_s)
+                               timeout_s=(cfg.timeout_s or timeout_s))
         ops = _ClientOps(settings, cancel)
         if not ops.connect():
             tell(FleetFailed(cabinet=cab.name,
@@ -663,7 +663,8 @@ def run_fleet(cabinets: Sequence[FleetCabinet], cfg: soak.SoakConfig,
     with tally_lock:
         text = summarise(list(tallies.values()), framer_watch.snapshot(),
                          started=started_h, duration_s=duration_s,
-                         stopped_early=bool(hours > 0 and not clock_fired))
+                         stopped_early=bool(hours > 0 and not clock_fired),
+                         timeout_s=(cfg.timeout_s or timeout_s))
     path = log_dir / f"fleet-{stamp}.txt"       # same stamp as the CSVs
     written = ""
     try:
@@ -779,13 +780,14 @@ class CabinetTally:
 
 
 def summarise(tallies, framer=None, *, started: str = "",
-              duration_s: float = 0.0, stopped_early: bool = False) -> str:
+              duration_s: float = 0.0, stopped_early: bool = False,
+              timeout_s: float = SOAK_TIMEOUT_S) -> str:
     """The whole run as text: a table, then a sentence that judges it."""
     out = []
     out.append(f"fleet soak  {started}")
     out.append(f"  ran for {duration_s / 3600:.2f} h"
                + ("  (stopped early)" if stopped_early else "")
-               + f"   client timeout {SOAK_TIMEOUT_S} s")
+               + f"   client timeout {timeout_s} s")
     out.append("")
     head = (f"{'cabinet':<15}{'mod':>5}{'pass':>6}{'reads':>9}{'fail':>6}"
             f"{'rbt':>5}{'wdt':>5}{'cross':>7}{'worst':>8}{'drop':>6}  silent ids")

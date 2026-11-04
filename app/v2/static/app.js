@@ -35,7 +35,7 @@ const TXT = {
     sPicks: "จำนวนครั้งที่จ่ายต่อวัน", sHours: "ชั่วโมง (0 = จนกว่าจะหยุด)", sStartAt: "เริ่มเวลา (เช่น 21:00 เว้นว่าง = ทันที)", sStart: "เริ่มทดสอบ",
     sStop: "หยุด", sStopQ: "หยุดการทดสอบที่กำลังรัน? ข้อมูลถึงตอนนี้ถูกเก็บไว้", sRunning: "กำลังรัน", sArmed: "ตั้งเวลาไว้ เริ่มในอีก {t}", sLeft: "เหลือ {t}",
     sNoEnd: "ไม่มีเวลาจบ", sCab: "ตู้", sState: "สถานะ", sPass: "รอบ", sReads: "อ่าน", sFails: "พลาด", sRbt: "รีบูต", sWdt: "วอตช์ด็อก", sWorst: "ช้าสุด (ms)", sHeal: "เกตเวย์ซ่อมบัส",
-    sClean: "สะอาด", sWarn: "ควรดู", sNotClean: "ไม่สะอาด", sDidNot: "ไม่ได้รัน", sStarting: "กำลังเริ่ม", sAnoms: "เหตุผิดปกติล่าสุด", sNewer: "ใหม่กว่า", sOlder: "เก่ากว่า", sOfN: "{a}–{b} จาก {n}", sNone: "ไม่มี",
+    sClean: "สะอาด", sWarn: "ควรดู", sNotClean: "ไม่สะอาด", sDidNot: "ไม่ได้รัน", sStarting: "กำลังเริ่ม", sAnoms: "เหตุผิดปกติล่าสุด", sAdv: "ตัวเลือกขั้นสูง", sGap: "พักระหว่างรอบ (วินาที)", sEvery: "อ่านตัวนับทุกกี่รอบ", sSlow: "บันทึกเมื่อตอบช้ากว่า (ms)", sTmo: "timeout ฝั่ง client (วินาที)", sGapWarn: "0.4–0.9 วินาทีทำให้ฮับพลาดการอ่านครั้งแรก และเกิดผล \"โมดูลช้า\" ปลอม", sTmoWarn: "ต่ำกว่า 6 วินาทีอาจทำให้บัสเหลื่อมกันหลังฮับ", sNewer: "ใหม่กว่า", sOlder: "เก่ากว่า", sOfN: "{a}–{b} จาก {n}", sNone: "ไม่มี",
     sVerdict: "สรุปผลรอบล่าสุด", vClean: "สะอาด {a} จาก {b} ตู้", vMeta: "รันนาน {h} ชม. · timeout {to} วินาที", vEarly: "หยุดก่อนเวลา", vGw: "ตัวนับของเกตเวย์", vRestart: "เกตเวย์รีสตาร์ท {n} ครั้ง", vWrong: "เฟรมตอบผิดไอดีถูกทิ้ง {n} ครั้ง", vNoGw: "อ่านตัวนับเกตเวย์ไม่ได้ (ไม่มีคอนโซลหรือเฟิร์มแวร์เก่ากว่า 1.13): {names}", soakColsTxt: "ตารางบน (โมดูลของแต่ละตู้)\n• mod = จำนวนโมดูล\n• pass = รอบที่อ่านครบทุกตัว\n• reads = จำนวนครั้งที่อ่าน\n• fail = อ่านไม่ได้\n• rbt = โมดูลรีบูต\n• wdt = โมดูลถูกวอตช์ด็อกรีเซ็ต\n• cross = ครั้งที่สลับช่องฮับ\n• worst = ตอบช้าสุด (ms)\n• drop = เฟรมตอบผิดไอดีถูกทิ้ง\n• silent = ไอดีที่ไม่ตอบ\n\nตารางล่าง (ตัวนับของเกตเวย์)\n• ซ่อมได้ = พลาดครั้งแรก แต่เกตเวย์ลองใหม่แล้วอ่านได้\n• ซ่อมไม่ได้ = ลองใหม่แล้วยังไม่ได้\n• timeout สุดท้าย = ไม่มีคำตอบเลย\n• CRC เสีย = ตอบมาแต่ข้อมูลเพี้ยน\n• อื่น ๆ = เฟรมแปลกอื่น\n\nสี\n• เทา = ศูนย์\n• เหลือง = ควรดู\n• แดง = ผิดปกติ\n\nถ้าเฟรมตอบผิดไอดีมาก ให้เพิ่ม timeout ฝั่ง client", sHistory: "รอบที่ผ่านมา", sView: "ดูสรุป", sNoRuns: "ยังไม่มีรอบที่ผ่านมา", sFrames: "เฟรมที่ถูกทิ้ง: {n}",
     sNeedType: "ตู้ที่ไม่ได้กำหนดชนิดจะเริ่มไม่ได้ ตั้งที่หน้า รายการตู้", sStarted: "เริ่มแล้ว {n} ตู้", sCsv: "ไฟล์ CSV", sLongNote: "รันบนเซิร์ฟเวอร์ ปิดหน้านี้ได้ ผลเก็บใน data/exports",
     labels_page: "ป้าย", firmware_page: "เฟิร์มแวร์", lbWard: "ชื่อวอร์ด (พิมพ์บนป้าย)", lbSerial: "ซีเรียลจากคลัง (ไม่เก็บ)", lbLayout: "แบบป้าย", lbPlate: "กรอบ",
@@ -95,7 +95,7 @@ const TXT = {
     sPicks: "Picks per day", sHours: "Hours (0 = until stopped)", sStartAt: "Start at (e.g. 21:00, empty = now)", sStart: "Start soak",
     sStop: "Stop", sStopQ: "Stop the running soak? Data up to now is kept.", sRunning: "Running", sArmed: "Armed, starts in {t}", sLeft: "{t} left",
     sNoEnd: "no end time", sCab: "Cabinet", sState: "State", sPass: "Passes", sReads: "Reads", sFails: "Fails", sRbt: "Reboots", sWdt: "WDT", sWorst: "Worst ms", sHeal: "Gateway repairs",
-    sClean: "clean", sWarn: "look", sNotClean: "not clean", sDidNot: "did not run", sStarting: "starting", sAnoms: "Latest anomalies", sNewer: "Newer", sOlder: "Older", sOfN: "{a}–{b} of {n}", sNone: "none",
+    sClean: "clean", sWarn: "look", sNotClean: "not clean", sDidNot: "did not run", sStarting: "starting", sAnoms: "Latest anomalies", sAdv: "Advanced options", sGap: "Pause between passes (s)", sEvery: "Read counters every N passes", sSlow: "Log replies slower than (ms)", sTmo: "Client timeout (s)", sGapWarn: "0.4-0.9 s makes the hub lose first reads and creates false slow-module findings", sTmoWarn: "Under 6 s can leave the bus out of step behind a hub", sNewer: "Newer", sOlder: "Older", sOfN: "{a}–{b} of {n}", sNone: "none",
     sVerdict: "Latest run verdict", vClean: "{a} of {b} cabinets clean", vMeta: "ran {h} h · timeout {to} s", vEarly: "stopped early", vGw: "Gateway counters", vRestart: "gateway restarted {n}x", vWrong: "Reply frames discarded as the wrong unit id: {n}", vNoGw: "Gateway counters not available (no console or firmware older than 1.13): {names}", soakColsTxt: "Top table (modules of each cabinet)\n• mod = modules\n• pass = passes that read every module\n• reads = reads\n• fail = failed reads\n• rbt = module reboots\n• wdt = module watchdog resets\n• cross = hub channel crossings\n• worst = slowest reply (ms)\n• drop = reply frames with the wrong unit id, discarded\n• silent = ids that never answered\n\nBottom table (gateway counters)\n• Repaired = missed first try, retried by the gateway and got it\n• Repair failed = retried and still nothing\n• Final timeouts = no reply at all\n• Bad CRC = a reply with damaged data\n• Other = other odd frames\n\nColour\n• grey = zero\n• amber = take a look\n• red = abnormal\n\nIf wrong-id frames are many, raise the client timeout", sHistory: "Past runs", sView: "View verdict", sNoRuns: "No past runs yet", sFrames: "Frames pymodbus discarded: {n}",
     sNeedType: "A cabinet with no type cannot start. Set it on the Sites page.", sStarted: "Started {n} cabinets", sCsv: "CSV files", sLongNote: "Runs on the server: you can close this page. Results go to data/exports.",
     labels_page: "Labels", firmware_page: "Firmware", lbWard: "Ward name (printed)", lbSerial: "Serial from the warehouse (not stored)", lbLayout: "Label layout", lbPlate: "Frame",
@@ -128,7 +128,7 @@ const t = (k, p) => { let s = (TXT[lang] && TXT[lang][k]) || TXT.en[k] || k; for
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const $ = (s, r = document) => r.querySelector(s);
 
-let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: new Set(), types: new Set(), client: new Set(), unit: new Set(), from: "", to: "", tfrom: "00:00", tto: "23:59", page: 0, size: 10, facets: null, open: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, lab: { id: "", ward: "", serial: "", layout: "", plate: "", opts: null, info: null, busy: false }, fw: { images: null, sel: new Set(), image: "", ota: null, gwId: "", gwImage: "", gwConfirm: "", gwFile: null, gwFileName: "", gw: null, timer: null }, soak: { anP: 0, sel: new Set(), mode: "pharmacy", picks: 2000, dwell: 20, windows: 8, est: null, durMode: "hours", hours: 8, startMode: "now", sh: 21, sm: 0, eh: 8, em: 0, status: null, runs: [], timer: null, was: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 },
+let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: new Set(), types: new Set(), client: new Set(), unit: new Set(), from: "", to: "", tfrom: "00:00", tto: "23:59", page: 0, size: 10, facets: null, open: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, lab: { id: "", ward: "", serial: "", layout: "", plate: "", opts: null, info: null, busy: false }, fw: { images: null, sel: new Set(), image: "", ota: null, gwId: "", gwImage: "", gwConfirm: "", gwFile: null, gwFileName: "", gw: null, timer: null }, soak: { gap: 2, every: 5, slow: 400, tmo: 6, adv: false, anP: 0, sel: new Set(), mode: "pharmacy", picks: 2000, dwell: 20, windows: 8, est: null, durMode: "hours", hours: 8, startMode: "now", sh: 21, sm: 0, eh: 8, em: 0, status: null, runs: [], timer: null, was: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 },
   ins: { id: "", layout: null, sel: new Set(), mode: "check", action: "light", unlock: false, identify: false, hold: 1, preset: 1, batch: 4, timeout: 60, display: true, punlock: true, off: "btnshut", order: "ch", running: false, since: 0, res: {}, rows: [], lit: new Set(), closing: new Set(), testing: null, text: "", banner: "", summary: "", file: false, err: "" },
   scan: { running: false, found: [], asked: new Set(), at: 0, text: "", err: "", file: false },
   sweep: { running: false, loops: 1, lights: true, latch: false, text: "", banner: "", phases: [], bad: [], err: "", file: false },
@@ -557,6 +557,14 @@ const INS_INFO = {
     "How many seconds a light stays on before it goes off by itself (as if waiting for a confirm). Make it longer to get several lights on at once."],
   soakCols: ["ตารางบน (โมดูลของแต่ละตู้)\n• mod = จำนวนโมดูล\n• pass = รอบที่อ่านครบทุกตัว\n• reads = จำนวนครั้งที่อ่าน\n• fail = อ่านไม่ได้\n• rbt = โมดูลรีบูต\n• wdt = โมดูลถูกวอตช์ด็อกรีเซ็ต\n• cross = ครั้งที่สลับช่องฮับ\n• worst = ตอบช้าสุด (ms)\n• drop = เฟรมตอบผิดไอดีถูกทิ้ง\n• silent = ไอดีที่ไม่ตอบ\n\nตารางล่าง (ตัวนับของเกตเวย์)\n• ซ่อมได้ = พลาดครั้งแรก แต่เกตเวย์ลองใหม่แล้วอ่านได้\n• ซ่อมไม่ได้ = ลองใหม่แล้วยังไม่ได้\n• timeout สุดท้าย = ไม่มีคำตอบเลย\n• CRC เสีย = ตอบมาแต่ข้อมูลเพี้ยน\n• อื่น ๆ = เฟรมแปลกอื่น\n\nสี\n• เทา = ศูนย์\n• เหลือง = ควรดู\n• แดง = ผิดปกติ\n\nถ้าเฟรมตอบผิดไอดีมาก ให้เพิ่ม timeout ฝั่ง client",
     "Top table (modules of each cabinet)\n• mod = modules\n• pass = passes that read every module\n• reads = reads\n• fail = failed reads\n• rbt = module reboots\n• wdt = module watchdog resets\n• cross = hub channel crossings\n• worst = slowest reply (ms)\n• drop = reply frames with the wrong unit id, discarded\n• silent = ids that never answered\n\nBottom table (gateway counters)\n• Repaired = missed first try, retried by the gateway and got it\n• Repair failed = retried and still nothing\n• Final timeouts = no reply at all\n• Bad CRC = a reply with damaged data\n• Other = other odd frames\n\nColour\n• grey = zero\n• amber = take a look\n• red = abnormal\n\nIf wrong-id frames are many, raise the client timeout"],
+  soakGap: ["เวลาพักหลังอ่านครบหนึ่งรอบ ก่อนเริ่มรอบถัดไป ค่าปกติ 2.0 วินาที อย่าตั้ง 0.4–0.9 เพราะจะทำให้ฮับพลาดการอ่านครั้งแรกเอง",
+    "Pause after each full pass before the next one. Normal is 2.0 s. Avoid 0.4-0.9 s: it makes the hub lose first reads by itself."],
+  soakEvery: ["อ่านตัวนับรีบูตและวอตช์ด็อกของโมดูลทุกกี่รอบ ค่าปกติ 5 ถี่ขึ้นเจอรีบูตเร็วขึ้น แต่ใช้บัสมากขึ้น",
+    "How often the modules' reboot and watchdog counters are read. Normal is 5. More often finds a reboot sooner but uses more bus time."],
+  soakSlow: ["โมดูลที่ตอบช้ากว่าค่านี้จะขึ้นเป็นเหตุผิดปกติ ค่าปกติ 400 ms",
+    "A module that replies slower than this is listed as an anomaly. Normal is 400 ms."],
+  soakTmo: ["เวลาที่โปรแกรมรอคำตอบหนึ่งครั้งก่อนยอมแพ้ ค่าปกติ 6 วินาที ต้องไม่ต่ำกว่าเวลาที่ฮับถือคำตอบ (ราว 2 วินาที) ไม่งั้นบัสอาจเหลื่อมกัน ใช้เฉพาะการทดสอบต่อเนื่อง",
+    "How long the tool waits for one reply before giving up. Normal is 6 s. It must stay above the time a hub holds a reply (about 2 s) or the bus can fall out of step. Applies to the continuous test only."],
   soakWins: ["จะสุ่มใช้กี่หน้าต่างจากสูงสุด 8 ต่อช่อง (ปกติ 8) ตู้ที่มีไฟวงแหวนจะติดได้ทีละดวง",
     "How many of the 8 windows per slot to pick from (normally 8). On cabinets with a ring light only one is lit at a time."],
   soakPicks: ["จำลองคนมาหยิบยา ทุกครั้งจะเปิดไฟหนึ่งช่อง (สุ่ม) ค้างไว้สักพักแล้วดับ ตัวเลขคือจำนวนครั้งต่อตู้ต่อวัน กระจายเท่า ๆ กัน เช่น 2,000 = ราว 1 ครั้งทุก 43 วินาที ไม่มีการปลดกลอน",
@@ -969,6 +977,12 @@ function verdictHtml(txt, inCard) {
 /* Continuous test, in the same four numbered steps as the installation check: what kind, which cabinets, how long, go.
    While a run is going the steps give way to its live status. */
 const SOAK_HOURS = [1, 2, 4, 6, 8, 10, 12, 24, 48, 72];
+function soakAdvWarn() {
+  const k = S.soak, w = [];
+  if (k.gap >= 0.4 && k.gap <= 0.9) w.push(t("sGapWarn"));
+  if (k.tmo < 6) w.push(t("sTmoWarn"));
+  return w.map(esc).join("<br>");
+}
 /* When the run would start and end, from the page's own choices (the server keeps its own rule: a clock time already past means tomorrow). */
 function soakPlan() {
   const k = S.soak, now = new Date();
@@ -1037,7 +1051,13 @@ function viewSoak() {
         ${k.mode === "pharmacy" ? `<div class="field"><label>${t("sPicks")}${infoBtn("soakPicks")}</label><input id="soakpicks" type="number" min="1" max="200000" value="${k.picks}"></div>
         <div class="field"><label>${t("sDwell")}${infoBtn("soakDwell")}</label><input id="soakdwell" type="number" min="1" max="3600" value="${k.dwell}"></div>
         <div class="field"><label>${t("sWins")}${infoBtn("soakWins")}</label><input id="soakwins" type="number" min="1" max="8" value="${k.windows}"></div>` : ""}</div>
-      ${k.mode === "pharmacy" ? `<div id="soakcalc" class="stack tight">${soakCalcHtml()}</div>` : ""}`;
+      ${k.mode === "pharmacy" ? `<div id="soakcalc" class="stack tight">${soakCalcHtml()}</div>` : ""}
+      <details class="advbox" id="soakadv"${k.adv ? " open" : ""}><summary>${t("sAdv")}</summary><div class="fgrid" style="margin-top:10px">
+        <div class="field"><label>${t("sGap")}${infoBtn("soakGap")}</label><input id="soakgap" type="number" min="0.1" max="30" step="0.5" value="${k.gap}"></div>
+        <div class="field"><label>${t("sEvery")}${infoBtn("soakEvery")}</label><input id="soakevery" type="number" min="1" max="100" value="${k.every}"></div>
+        <div class="field"><label>${t("sSlow")}${infoBtn("soakSlow")}</label><input id="soakslow" type="number" min="50" max="5000" value="${k.slow}"></div>
+        <div class="field"><label>${t("sTmo")}${infoBtn("soakTmo")}</label><input id="soaktmo" type="number" min="4" max="30" step="0.5" value="${k.tmo}"></div></div>
+        <div id="soakadvwarn" class="small vwarn">${soakAdvWarn()}</div></details>`;
     head = `<section class="card stack">
       ${step(1, t("sStep1"), `<div class="row" style="gap:8px">${modes}</div>`)}
       ${step(2, t("sStep2"), `<div class="row" style="gap:8px"><button class="btn" type="button" data-act="soak-all">${t("sAll")}</button><button class="btn" type="button" data-act="soak-none">${t("insClear")}</button></div>
@@ -1576,7 +1596,7 @@ document.addEventListener("click", async (ev) => {
       const k = S.soak;
       if (!k.sel.size) { toast(t("sPickOne")); return; }
       const hh = (n) => String(n).padStart(2, "0");
-      const r = await api("POST", "/api/v2/soak/start", { ids: [...k.sel], mode: k.mode, picks: k.picks, dwell_s: k.dwell, windows: k.windows, hours: soakPlan().hours, start_at: k.startMode === "at" ? `${hh(k.sh)}:${hh(k.sm)}` : "" });
+      const r = await api("POST", "/api/v2/soak/start", { ids: [...k.sel], mode: k.mode, picks: k.picks, dwell_s: k.dwell, windows: k.windows, gap_s: k.gap, counter_every: k.every, slow_ms: k.slow, timeout_s: k.tmo, hours: soakPlan().hours, start_at: k.startMode === "at" ? `${hh(k.sh)}:${hh(k.sm)}` : "" });
       toast(t("sStarted", { n: r.count }) + (r.warnings && r.warnings.length ? " · " + r.warnings[0] : "")); await soakRefresh(); render();
     } else if (act.dataset.act === "soak-stop") {
       if (!await ask(t("sStopQ"))) return; await api("POST", "/api/v2/soak/stop", {}); S.soak.was = true; await soakRefresh();
@@ -1744,6 +1764,7 @@ function evCloseGroups(except) {
   for (const g of document.querySelectorAll(".fgrp[open]")) if (g !== except) g.open = false;
   for (const k of [...S.ev.open]) if (!except || k !== except.dataset.g) S.ev.open.delete(k);
 }
+document.addEventListener("toggle", (e) => { if (e.target.id === "soakadv") S.soak.adv = e.target.open; }, true);
 document.addEventListener("toggle", (e) => {
   const g = e.target.closest && e.target.closest(".fgrp"); if (!g) return;
   if (g.open) { if (evWide()) evCloseGroups(g); S.ev.open.add(g.dataset.g); } else S.ev.open.delete(g.dataset.g);
@@ -1765,6 +1786,10 @@ document.addEventListener("change", async (ev) => {
   if (ev.target.id === "modall") { S.mod.showAll = ev.target.checked; renderKeep(); }
   if (ev.target.id === "modauto") { S.mod.auto = ev.target.checked; modAutoSync(); }
   if (ev.target.id === "gwsel") { S.gw.id = ev.target.value; S.gw.data = null; S.gw.edits = {}; if (S.gw.id) gwRead(); else render(); }
+  if (ev.target.id === "soakgap") { S.soak.gap = Math.max(0.1, Math.min(30, +ev.target.value || 2)); $("#soakadvwarn").innerHTML = soakAdvWarn(); }
+  if (ev.target.id === "soakevery") S.soak.every = Math.max(1, Math.min(100, Math.round(+ev.target.value) || 5));
+  if (ev.target.id === "soakslow") S.soak.slow = Math.max(50, Math.min(5000, Math.round(+ev.target.value) || 400));
+  if (ev.target.id === "soaktmo") { S.soak.tmo = Math.max(4, Math.min(30, +ev.target.value || 6)); $("#soakadvwarn").innerHTML = soakAdvWarn(); }
   if (ev.target.id === "soakpicks") { S.soak.picks = +ev.target.value; soakEstimate(); }
   if (ev.target.id === "soakdwell") { S.soak.dwell = +ev.target.value; soakEstimate(); }
   if (ev.target.id === "soakwins") { S.soak.windows = Math.max(1, Math.min(8, +ev.target.value || 8)); soakEstimate(); }
