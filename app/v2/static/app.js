@@ -259,7 +259,7 @@ function viewEvents() {
     <section class="card stack"><div class="row" style="align-items:flex-end">
       <div class="field"><label>${t("gateway")}</label><select id="evgw"><option value="">${t("all")}</option>${(S.evGw || []).map((g) => `<option value="${esc(g.gw)}"${g.gw === S.ev.gw ? " selected" : ""}>${esc(g.gw)}</option>`).join("")}</select></div>
       <div class="field"><label>${t("evRange")}</label><button class="rangebtn" id="evrange" type="button" data-act="ev-pick"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span id="evrangetxt">${esc(fmtRange(S.ev.from, S.ev.to))}</span></button></div>
-      <div class="segctl" id="evshort">${[1, 7, 30].map((d) => `<button type="button" data-act="ev-range" data-d="${d}" aria-pressed="${rangeIs(d)}">${d === 1 ? t("day1") : t("dayN", { n: d })}</button>`).join("")}</div></div></section>
+</div></section>
     <div id="evdash" class="stack"></div>
     <section class="card stack"><div class="row">
       <div class="field"><label>${t("search")}</label><input id="evq" value="${esc(S.ev.q)}"></div></div>
@@ -1250,7 +1250,6 @@ const fmtRange = (a, b) => (a === b ? fmtDay(a) : `${fmtDay(a)} – ${fmtDay(b)}
 const rangeIs = (n) => S.ev.to === ymd(new Date()) && S.ev.from === ymd(new Date(Date.now() - 86400000 * (n - 1)));
 function evRangeSync() {
   const x = $("#evrangetxt"); if (x) x.textContent = fmtRange(S.ev.from, S.ev.to);
-  document.querySelectorAll("#evshort [data-d]").forEach((b) => b.setAttribute("aria-pressed", String(rangeIs(+b.dataset.d))));
 }
 /* A calendar popup for a from/to range: tap the first day, then the last (tap the same day twice for one day).
    Only days the collector still keeps are selectable. Resolves {from, to} or null. */
@@ -1273,6 +1272,9 @@ function pickRange(from, to, min, max) {
       $("#rphint").textContent = t(step ? "rangeEnd" : "rangeStart");
     };
     const done = (v) => { d.onclose = null; if (d.open) d.close(); resolve(v); };
+    const sc = $("#rpshort");
+    sc.innerHTML = [1, 7, 30].map((n) => `<button type="button" data-n="${n}" aria-pressed="${rangeIs(n)}">${n === 1 ? t("day1") : t("dayN", { n })}</button>`).join("");
+    sc.onclick = (e) => { const x = e.target.closest("[data-n]"); if (x) done({ from: ymd(new Date(Date.now() - 86400000 * (+x.dataset.n - 1))), to: max }); };
     g.onclick = (e) => {
       const x = e.target.closest("[data-d]"); if (!x) return;
       if (!step) { a = x.dataset.d; b = null; step = 1; paint(); return; }
@@ -1325,8 +1327,6 @@ document.addEventListener("click", async (ev) => {
   const cmm = ev.target.closest("[data-cmmode]"); if (cmm) { S.cm.mode = cmm.dataset.cmmode; render(); return; }
   const type = ev.target.closest("[data-type]");
   if (type) { const x = type.dataset.type; S.ev.types.has(x) ? S.ev.types.delete(x) : S.ev.types.add(x); type.setAttribute("aria-pressed", S.ev.types.has(x)); S.ev.page = 0; loadEvents(); return; }
-  const rng = ev.target.closest('[data-act="ev-range"]');
-  if (rng) { const d = +rng.dataset.d, now = new Date(); S.ev.from = ymd(new Date(now.getTime() - 86400000 * (d - 1))); S.ev.to = ymd(now); S.ev.page = 0; evRangeSync(); loadEvents(); loadSummary(); return; }
   if (ev.target.closest('[data-act="ev-pick"]')) {
     const keep = (S.me.collector || {}).retention_days || 90, now = new Date();
     const r = await pickRange(S.ev.from, S.ev.to, ymd(new Date(now.getTime() - 86400000 * Math.max(7, keep))), ymd(now));
