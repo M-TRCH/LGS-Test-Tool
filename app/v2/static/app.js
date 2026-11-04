@@ -41,7 +41,7 @@ const TXT = {
     labels_page: "ป้าย", firmware_page: "เฟิร์มแวร์", lbWard: "ชื่อวอร์ด (พิมพ์บนป้าย)", lbSerial: "ซีเรียลจากคลัง (ไม่เก็บ)", lbLayout: "แบบป้าย", lbPlate: "กรอบ",
     lbPreview: "ดูตัวอย่างข้อมูล", lbDownload: "ดาวน์โหลด .lbx", expCfg: "ส่งออก config", impCfg: "นำเข้า config", impDone: "นำเข้า {n} ค่า (ยังไม่บันทึก ตรวจแล้วกดบันทึกลงเกตเวย์)", impNone: "ไม่มีค่าที่ต่างจากเกตเวย์",
     shapeBad: "ชนิดตู้ใน รายการตู้ ({l}) ไม่ตรงกับเกตเวย์: {w}", shapeFix: "ตั้งค่าที่ตรงให้ (ยังไม่บันทึก)", shapeNoFix: "เกตเวย์รุ่นนี้แก้เองไม่ได้ (ไม่มี panel.shape)",
-    fwOta: "อัปเดตโมดูลผ่าน OTA (หลายตู้)", fwImage: "อิมเมจ", fwStart: "เริ่มอัปเดต", fwCancel: "ยกเลิก", fwCancelQ: "ยกเลิกการอัปเดต? โมดูลที่ค้างอยู่ในเซสชันอาจต้องอัปเดตซ้ำ",
+    fwDepot: "คลังไฟล์โมดูลบนเกตเวย์", fwDepotNote: "ฝากไฟล์อัปเดตโมดูลไว้ในเกตเวย์ แล้วอัปเดตภายหลังจากเครื่องอื่นได้ โดยเครื่องที่สั่งไม่ต้องมีไฟล์", fwDpPut: "ฝากลงเกตเวย์นี้", fwDpBusy: "กำลังฝากไฟล์…", fwDpSlot: "ช่อง", fwDpName: "ชื่อไฟล์", fwDpSize: "ขนาด", fwDpState: "สถานะ", fwDpEmpty: "ว่าง", fwDpPartial: "ไม่สมบูรณ์", fwDpOk: "สมบูรณ์", fwDpDel: "ลบ", fwDpDelQ: "ลบ {n} ออกจากคลังของ {g}?", fwDpDone: "ฝาก {n} ลง {g} แล้ว", fwSrc: "ที่มาของไฟล์", fwSrcBundle: "ไฟล์ในเครื่องมือ", fwSrcDepot: "อ่านจากคลังของเกตเวย์", fwSrcGw: "เกตเวย์ที่ถือไฟล์", fwSrcNone: "คลังนี้ยังไม่มีไฟล์ที่สมบูรณ์", fwOta: "อัปเดตโมดูลผ่าน OTA (หลายตู้)", fwImage: "อิมเมจ", fwStart: "เริ่มอัปเดต", fwCancel: "ยกเลิก", fwCancelQ: "ยกเลิกการอัปเดต? โมดูลที่ค้างอยู่ในเซสชันอาจต้องอัปเดตซ้ำ",
     fwStartQ: "อัปเดตเฟิร์มแวร์โมดูลทุกตัวใน {n} ตู้ด้วย {i}? ทำย้อนจากหน้านี้ไม่ได้ ตู้ที่ใช้งานอยู่จะใช้ไม่ได้ระหว่างอัปเดต", fwRun: "กำลังอัปเดต", fwNoOta: "ยังไม่มีอิมเมจ OTA ในโปรแกรมนี้",
     fwGw: "อัปเดตเกตเวย์ผ่านเครือข่าย (ทีละตู้)", fwGwNote: "เกตเวย์รีบูตตอนจบ และตัดไฟเลี้ยงโมดูลชั่วครู่ (โมดูลทุกตัวรีบูตด้วย) พิมพ์ชื่อตู้เพื่อยืนยัน", fwUpload: "หรือเลือกไฟล์ .bin เอง", fwConfirm: "พิมพ์ชื่อตู้เพื่อยืนยัน",
     fwGwStart: "อัปเดตเกตเวย์", fwGwRun: "กำลังอัปเดตเกตเวย์", fwDone: "เสร็จ", fwFail: "ไม่สำเร็จ", fwLog: "บันทึกการทำงาน", fwNone: "—", fwCensus: "ผลตรวจ", fwLeft: "ยังไม่ใช่รุ่นใหม่", fwPhase: "ขั้น",
@@ -101,7 +101,7 @@ const TXT = {
     labels_page: "Labels", firmware_page: "Firmware", lbWard: "Ward name (printed)", lbSerial: "Serial from the warehouse (not stored)", lbLayout: "Label layout", lbPlate: "Frame",
     lbPreview: "Preview data", lbDownload: "Download .lbx", expCfg: "Export config", impCfg: "Import config", impDone: "Imported {n} values (not saved yet: review, then Save to gateway)", impNone: "Nothing differs from the gateway",
     shapeBad: "The cabinet type on the Sites page ({l}) does not match the gateway: {w}", shapeFix: "Stage the matching values (not saved yet)", shapeNoFix: "This firmware cannot be told (no panel.shape)",
-    fwOta: "Module update over OTA (several cabinets)", fwImage: "Image", fwStart: "Start update", fwCancel: "Cancel", fwCancelQ: "Cancel the update? Modules left in a session may need updating again.",
+    fwDepot: "Module images kept on a gateway", fwDepotNote: "Leave a module update file in the gateway, then update later from another PC that does not have the file", fwDpPut: "Put it on this gateway", fwDpBusy: "Putting the file…", fwDpSlot: "Slot", fwDpName: "File", fwDpSize: "Size", fwDpState: "State", fwDpEmpty: "empty", fwDpPartial: "incomplete", fwDpOk: "complete", fwDpDel: "Delete", fwDpDelQ: "Delete {n} from {g}?", fwDpDone: "{n} put on {g}", fwSrc: "Image source", fwSrcBundle: "Bundled with the tool", fwSrcDepot: "Read from a gateway", fwSrcGw: "Gateway holding the image", fwSrcNone: "This gateway holds no complete image", fwOta: "Module update over OTA (several cabinets)", fwImage: "Image", fwStart: "Start update", fwCancel: "Cancel", fwCancelQ: "Cancel the update? Modules left in a session may need updating again.",
     fwStartQ: "Update the firmware of every module in {n} cabinets with {i}? This cannot be undone from this page, and cabinets in use are unusable during the update.", fwRun: "Updating", fwNoOta: "No OTA image is bundled in this build",
     fwGw: "Gateway update over the network (one at a time)", fwGwNote: "The gateway reboots at the end and cuts the shelf's power for a moment (every module reboots too). Type the cabinet's name to confirm.", fwUpload: "or choose a .bin file", fwConfirm: "Type the cabinet's name to confirm",
     fwGwStart: "Update gateway", fwGwRun: "Updating gateway", fwDone: "Done", fwFail: "Failed", fwLog: "Log", fwNone: "—", fwCensus: "Result", fwLeft: "not on the new image", fwPhase: "Phase",
@@ -128,7 +128,7 @@ const t = (k, p) => { let s = (TXT[lang] && TXT[lang][k]) || TXT.en[k] || k; for
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const $ = (s, r = document) => r.querySelector(s);
 
-let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: new Set(), types: new Set(), client: new Set(), unit: new Set(), from: "", to: "", tfrom: "00:00", tto: "23:59", page: 0, size: 10, facets: null, open: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, lab: { id: "", ward: "", serial: "", layout: "", plate: "", opts: null, info: null, busy: false }, fw: { images: null, sel: new Set(), image: "", ota: null, gwId: "", gwImage: "", gwConfirm: "", gwFile: null, gwFileName: "", gw: null, timer: null }, soak: { view: null, gap: 2, every: 5, slow: 400, tmo: 6, adv: false, anP: 0, sel: new Set(), mode: "pharmacy", picks: 2000, dwell: 20, windows: 8, est: null, durMode: "hours", hours: 8, startMode: "now", sh: 21, sm: 0, eh: 8, em: 0, status: null, runs: [], timer: null, was: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 },
+let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: new Set(), types: new Set(), client: new Set(), unit: new Set(), from: "", to: "", tfrom: "00:00", tto: "23:59", page: 0, size: 10, facets: null, open: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, lab: { id: "", ward: "", serial: "", layout: "", plate: "", opts: null, info: null, busy: false }, fw: { images: null, sel: new Set(), image: "", src: "bundle", srcId: "", srcSlots: null, srcSlot: -1, dp: { id: "", slots: null, image: "", file: null, fileName: "", busy: false }, ota: null, gwId: "", gwImage: "", gwConfirm: "", gwFile: null, gwFileName: "", gw: null, timer: null }, soak: { view: null, gap: 2, every: 5, slow: 400, tmo: 6, adv: false, anP: 0, sel: new Set(), mode: "pharmacy", picks: 2000, dwell: 20, windows: 8, est: null, durMode: "hours", hours: 8, startMode: "now", sh: 21, sm: 0, eh: 8, em: 0, status: null, runs: [], timer: null, was: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 },
   ins: { id: "", layout: null, sel: new Set(), mode: "check", action: "light", unlock: false, identify: false, hold: 1, preset: 1, batch: 4, timeout: 60, display: true, punlock: true, off: "btnshut", order: "ch", running: false, since: 0, res: {}, rows: [], lit: new Set(), closing: new Set(), testing: null, text: "", banner: "", summary: "", file: false, err: "" },
   scan: { running: false, found: [], asked: new Set(), at: 0, text: "", err: "", file: false },
   sweep: { running: false, loops: 1, lights: true, latch: false, text: "", banner: "", phases: [], bad: [], err: "", file: false },
@@ -1222,24 +1222,50 @@ function viewFirmware() {
   const f = S.fw, im = f.images, ota = f.ota || {}, gw = f.gw || {};
   const sitesRows = S.sites.map((x) => `<label class="row" style="min-height:40px"><input type="checkbox" data-fwpick="${esc(x.id)}"${f.sel.has(x.id) ? " checked" : ""}> <span>${esc(x.name)}</span> <span class="small muted mono">${esc(x.host)} · ${esc(x.cabinet || "?")}</span></label>`).join("");
   const modImgs = im ? im.module.map((i) => `<option value="${esc(i.key)}"${i.key === f.image ? " selected" : ""}>${esc(i.label)}</option>`).join("") : "";
+  const dpImgs = im ? im.module.map((i) => `<option value="${esc(i.key)}"${i.key === (f.dp.image || (im.module[0] || {}).key) ? " selected" : ""}>${esc(i.label)}</option>`).join("") : "";
   const gwImgs = im ? im.gateway.map((i) => `<option value="${esc(i.key)}"${i.key === f.gwImage ? " selected" : ""}>${esc(i.label)}</option>`).join("") : "";
   const gsite = S.sites.map((x) => `<option value="${esc(x.id)}"${x.id === f.gwId ? " selected" : ""}>${esc(x.name)} · ${esc(x.host)}</option>`).join("");
+  const gwOpts = (cur) => S.sites.map((x) => `<option value="${esc(x.id)}"${x.id === cur ? " selected" : ""}>${esc(x.name)} · ${esc(x.host)}</option>`).join("");
+  const doneSlots = (f.srcSlots || []).filter((x) => x.state === 2);
+  const srcOpts = doneSlots.length ? doneSlots.map((x) => `<option value="${x.slot}"${x.slot === f.srcSlot ? " selected" : ""}>${esc(x.name)} · ${fmtN(x.size)} B</option>`).join("") : `<option value="-1">${f.srcId ? t("fwSrcNone") : "—"}</option>`;
+  const dp = f.dp;
+  const stateTxt = (x) => (x.state === 2 ? `<span class="chip ok"><i class="dot"></i>${t("fwDpOk")}</span>` : x.state === 1 ? `<span class="chip warn"><i class="dot"></i>${t("fwDpPartial")}</span>` : `<span class="muted small">${t("fwDpEmpty")}</span>`);
+  const dpTable = dp.slots ? `<div style="overflow-x:auto"><table class="evtab"><tr><th>${t("fwDpSlot")}</th><th>${t("fwDpName")}</th><th class="num">${t("fwDpSize")}</th><th>CRC</th><th>${t("fwDpState")}</th><th></th></tr>${dp.slots.map((x) => `<tr><td>${x.slot + 1}</td><td>${x.state ? esc(x.name) : "—"}</td><td class="num">${x.state ? fmtN(x.size) + " B" : ""}</td><td class="mono small">${x.state === 2 ? x.crc.toString(16).toUpperCase().padStart(8, "0") : ""}</td><td>${stateTxt(x)}</td><td>${x.state ? `<button class="btn sm" type="button" data-act="fw-dpdel" data-slot="${x.slot}" data-name="${esc(x.name)}">${t("fwDpDel")}</button>` : ""}</td></tr>`).join("")}</table></div>` : "";
+  const depotBlock = `<section class="card stack"><b>${t("fwDepot")}</b><p class="small muted">${t("fwDepotNote")}</p><div class="fgrid">
+      <div class="field"><label>${t("pick")}</label><select id="fwdpsel"><option value="">—</option>${gwOpts(dp.id)}</select></div>
+      <div class="field"><label>${t("fwImage")}</label><select id="fwdpimage">${dpImgs || `<option value="">${t("fwNoOta")}</option>`}</select></div>
+      <div class="field"><label>${t("fwUpload")}</label>${fileBox("fwdpfile", dp.fileName)}</div></div>${dpTable}
+    <div class="row"><button class="btn primary" data-act="fw-dpput"${dp.id && !dp.busy ? "" : " disabled"}>${dp.busy ? t("fwDpBusy") : t("fwDpPut")}</button></div></section>`;
   const otaBlock = ota.running
     ? `<section class="card stack"><div class="row between"><b>${t("fwRun")}</b><button class="btn" style="color:var(--bad)" data-act="fw-cancel">${t("fwCancel")}</button></div></section>`
     : `<section class="card stack"><b>${t("fwOta")}</b>${sitesRows || `<p class="muted">${t("noSites")}</p>`}
-        <div class="field"><label>${t("fwImage")}</label><select id="fwimage">${modImgs || `<option value="">${t("fwNoOta")}</option>`}</select></div>
+        <div class="fgrid"><div class="field"><label>${t("fwSrc")}</label><select id="fwsrc"><option value="bundle"${f.src === "bundle" ? " selected" : ""}>${t("fwSrcBundle")}</option><option value="depot"${f.src === "depot" ? " selected" : ""}>${t("fwSrcDepot")}</option></select></div>
+        ${f.src === "depot" ? `<div class="field"><label>${t("fwSrcGw")}</label><select id="fwsrcgw"><option value="">—</option>${gwOpts(f.srcId)}</select></div>
+          <div class="field"><label>${t("fwImage")}</label><select id="fwsrcslot">${srcOpts}</select></div>`
+          : `<div class="field"><label>${t("fwImage")}</label><select id="fwimage">${modImgs || `<option value="">${t("fwNoOta")}</option>`}</select></div>`}</div>
         <div class="row"><button class="btn primary" data-act="fw-start">${t("fwStart")}</button></div></section>`;
   const log = (ota.log || []).length ? `<section class="card stack"><h3>${t("fwLog")}</h3><div style="max-height:260px;overflow:auto">${ota.log.slice(-60).map((l) => `<div class="evrow"><span class="when">${esc(l.at)}</span><span><b>${esc(l.cabinet)}</b> ${esc(l.text)}</span></div>`).join("")}</div></section>` : "";
   const outcome = ota.outcome && !ota.running ? `<section class="card stack"><pre class="mono small" style="white-space:pre-wrap;overflow-x:auto;margin:0">${esc(ota.outcome.text)}</pre></section>` : "";
   const gwStat = gw.name ? `<div class="notice ${gw.done ? (gw.ok ? "info" : "bad") : ""}">${gw.running ? t("fwGwRun") + " " + gw.pct + "%" : gw.done ? (gw.ok ? t("fwDone") : t("fwFail")) + " · " + esc(gw.summary) : ""}
       <div class="mono tiny" style="white-space:pre-wrap;margin-top:6px">${esc((gw.lines || []).join("\n"))}</div></div>` : "";
-  return `<h1>${t("firmware_page")}</h1><div class="stack">${otaBlock}${fwRows(ota.rows || [])}${log}${outcome}
+  return `<h1>${t("firmware_page")}</h1><div class="stack">${otaBlock}${fwRows(ota.rows || [])}${log}${outcome}${depotBlock}
     <section class="card stack"><b>${t("fwGw")}</b><p class="small muted">${t("fwGwNote")}</p><div class="fgrid">
       <div class="field"><label>${t("pick")}</label><select id="fwgwsel"><option value="">—</option>${gsite}</select></div>
       <div class="field"><label>${t("fwImage")}</label><select id="fwgwimage"><option value="">—</option>${gwImgs}</select></div>
       <div class="field"><label>${t("fwUpload")}</label>${fileBox("fwgwfile", f.gwFileName)}</div>
       <div class="field"><label>${t("fwConfirm")}</label><input id="fwgwconfirm" value="${esc(f.gwConfirm)}" autocomplete="off"></div></div>
       <div class="row"><button class="btn" style="color:var(--bad)" data-act="fw-gwstart"${gw.running ? " disabled" : ""}>${t("fwGwStart")}</button></div>${gwStat}</section></div>`;
+}
+async function fwDepotLoad(which) {
+  const f = S.fw, d = f.dp, id = which === "src" ? f.srcId : d.id;
+  if (which === "src") { f.srcSlots = null; f.srcSlot = -1; } else d.slots = null;
+  if (id) {
+    try {
+      const r = await api("GET", "/api/v2/fw/depot?id=" + encodeURIComponent(id));
+      if (which === "src") { f.srcSlots = r.slots; const ok = r.slots.find((x) => x.state === 2); f.srcSlot = ok ? ok.slot : -1; } else d.slots = r.slots;
+    } catch (e) { fail(e); }
+  }
+  render();
 }
 async function fwRefresh() {
   try {
@@ -1730,10 +1756,28 @@ document.addEventListener("click", async (ev) => {
       if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
       const name = (r.headers.get("content-disposition") || "").match(/filename="([^"]+)"/); const a = document.createElement("a"); a.href = URL.createObjectURL(await r.blob()); a.download = name ? name[1] : "label.lbx"; a.click();
     } else if (act.dataset.act === "fw-start") {
-      const f = S.fw, im = (f.images && f.images.module.find((x) => x.key === f.image)); if (!f.sel.size || !im) return;
+      const f = S.fw, fromDepot = f.src === "depot";
+      const im = fromDepot ? (f.srcSlots || []).find((x) => x.slot === f.srcSlot && x.state === 2) : (f.images && f.images.module.find((x) => x.key === f.image));
+      if (!f.sel.size || !im) return;
       const cabs = S.sites.filter((x) => f.sel.has(x.id));
-      if (!await ask(t("fwStartQ", { n: cabs.length, i: im.label }) + "\n\n" + cabs.map((c) => c.name).join(", "))) return;
-      await api("POST", "/api/v2/fw/ota/start", { ids: [...f.sel], image: f.image }); await fwRefresh();
+      const label = fromDepot ? `${im.name} (${(S.sites.find((x) => x.id === f.srcId) || {}).name || ""})` : im.label;
+      if (!await ask(t("fwStartQ", { n: cabs.length, i: label }) + "\n\n" + cabs.map((c) => c.name).join(", "))) return;
+      await api("POST", "/api/v2/fw/ota/start", fromDepot ? { ids: [...f.sel], depot: { id: f.srcId, slot: f.srcSlot } } : { ids: [...f.sel], image: f.image }); await fwRefresh();
+    } else if (act.dataset.act === "fw-dpput") {
+      const d = S.fw.dp; if (!d.id || d.busy) return;
+      const g = S.sites.find((x) => x.id === d.id) || {};
+      d.busy = true; render();
+      try {
+        const key = d.image || ((S.fw.images && S.fw.images.module[0]) || {}).key;
+        const r = d.file ? await api("POST", `/api/v2/fw/depot/put?id=${encodeURIComponent(d.id)}&name=${encodeURIComponent(d.fileName)}`, d.file, true)
+          : await api("POST", "/api/v2/fw/depot/put", { id: d.id, image: key });
+        d.slots = r.slots; toast(t("fwDpDone", { n: r.name, g: g.name }));
+      } catch (e) { fail(e); } finally { d.busy = false; render(); }
+    } else if (act.dataset.act === "fw-dpdel") {
+      const d = S.fw.dp, g = S.sites.find((x) => x.id === d.id) || {};
+      if (!await ask(t("fwDpDelQ", { n: act.dataset.name, g: g.name }))) return;
+      try { const r = await api("POST", "/api/v2/fw/depot/delete", { id: d.id, slot: +act.dataset.slot }); d.slots = r.slots; } catch (e) { fail(e); }
+      render();
     } else if (act.dataset.act === "fw-cancel") {
       if (!await ask(t("fwCancelQ"))) return; await api("POST", "/api/v2/fw/ota/cancel", {}); await fwRefresh();
     } else if (act.dataset.act === "fw-gwstart") {
@@ -1922,6 +1966,12 @@ document.addEventListener("change", async (ev) => {
   if (ev.target.id === "cmow") { S.cm.overwrite = ev.target.checked; }
   if (ev.target.id === "cmfile" && ev.target.files[0]) { S.cm.file = await ev.target.files[0].arrayBuffer(); S.cm.fileName = ev.target.files[0].name; S.cm.image = ""; render(); }
   if (ev.target.id === "fwimage") S.fw.image = ev.target.value;
+  if (ev.target.id === "fwsrc") { S.fw.src = ev.target.value; render(); }
+  if (ev.target.id === "fwsrcgw") { S.fw.srcId = ev.target.value; fwDepotLoad("src"); }
+  if (ev.target.id === "fwsrcslot") S.fw.srcSlot = +ev.target.value;
+  if (ev.target.id === "fwdpsel") { S.fw.dp.id = ev.target.value; fwDepotLoad("dp"); }
+  if (ev.target.id === "fwdpimage") { S.fw.dp.image = ev.target.value; S.fw.dp.file = null; S.fw.dp.fileName = ""; }
+  if (ev.target.id === "fwdpfile" && ev.target.files[0]) { S.fw.dp.file = await ev.target.files[0].arrayBuffer(); S.fw.dp.fileName = ev.target.files[0].name; render(); }
   if (ev.target.id === "fwgwsel") S.fw.gwId = ev.target.value;
   if (ev.target.id === "fwgwimage") { S.fw.gwImage = ev.target.value; if (ev.target.value) { S.fw.gwFile = null; S.fw.gwFileName = ""; } }
   if (ev.target.id === "fwgwconfirm") S.fw.gwConfirm = ev.target.value;
