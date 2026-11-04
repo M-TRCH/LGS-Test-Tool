@@ -553,12 +553,12 @@ function modAutoSync() {
    into the state of that kind (S.ins / S.scan / S.sweep / S.rpt) and repaints only that kind's box. Everything shown lives
    in S, so a full render() (the module auto-read does one) loses nothing. */
 const INS_INFO = {
-  soakDwell: ["ไฟแต่ละช่องจะติดค้างกี่วินาทีก่อนดับเอง เหมือนรอให้คนกดยืนยัน\nค่านี้ใช้ร่วมกับจำนวนครั้งต่อวันเพื่อกำหนดว่าไฟจะติดพร้อมกันกี่ดวง (ดูบรรทัดสรุปใต้ช่องกรอก) ที่ค่าเริ่มต้น 20 วินาที ไฟแทบไม่เคยติดพร้อมกันสองดวง\nถ้าอยากทดสอบให้มีไฟติดซ้อนกันหลายดวง ให้ตั้งนานขึ้น เช่น 300 วินาที เหมือนตอนเภสัชกรโดนขัดจังหวะแล้วปล่อยไฟค้างไว้",
-    "How many seconds each slot stays lit before it goes off by itself, as if waiting for someone to confirm.\nTogether with picks per day it decides how many lights are on at the same time (see the line under the fields). At the default 20 seconds, two are almost never lit together.\nTo get several lights on at once, make it longer, e.g. 300 seconds, as when a pharmacist is interrupted and leaves a light on."],
-  soakWins: ["แต่ละช่องของตู้ใช้ได้สูงสุด 8 หน้าต่าง (แต่ละหน้าต่างแทนคนละคน) ตั้งว่าจะสุ่มใช้กี่หน้าต่าง ปกติใช้ 8\nตู้ที่ไฟแต่ละหน้าต่างติดพร้อมกันได้ จะติดหลายหน้าต่างในช่องเดียวกัน ส่วนตู้ที่มีไฟวงแหวนจะเปลี่ยนเป็นเลือกสีแทน จึงติดได้ทีละหนึ่งดวง",
-    "Each slot has up to 8 windows (each stands for a different person). This sets how many of them to pick from; normally 8.\nOn cabinets where the windows can light together, several can be on in one slot. On cabinets with a ring light the same commands choose a colour instead, so only one is lit at a time."],
-  soakPicks: ["จำลองคนมาหยิบยาจากตู้ ทุกครั้งที่หยิบ ระบบจะเปิดไฟหนึ่งช่อง (สุ่มช่อง) ค้างไว้สักพักแล้วดับ\nตัวเลขนี้คือจำนวนครั้งที่หยิบต่อตู้ต่อวัน กระจายเท่า ๆ กันตลอดการทดสอบ เช่น 2,000 ครั้งต่อวัน = ราว 1 ครั้งทุก 43 วินาที เทียบได้กับการใช้งานจริง ไม่ได้ตั้งใจให้บัสทำงานหนักสุด\nทุกช่องจะถูกใช้จำนวนครั้งเท่ากัน และไม่มีการปลดกลอน ใช้เฉพาะโหมดจำลองการจ่ายยา",
-    "Simulates people taking medicine from the cabinet. Each time, one random slot is lit for a while and then switched off.\nThe number is how many picks per cabinet per day, spread evenly over the test: 2,000 a day is about one every 43 seconds, like real use rather than the most the bus can take.\nEvery slot gets the same number of picks, and the latch is never fired. Pharmacy mode only."],
+  soakDwell: ["ไฟแต่ละช่องติดค้างกี่วินาทีก่อนดับเอง (เหมือนรอคนกดยืนยัน) ตั้งนานขึ้นถ้าอยากให้ไฟติดซ้อนกันหลายดวง",
+    "How many seconds a light stays on before it goes off by itself (as if waiting for a confirm). Make it longer to get several lights on at once."],
+  soakWins: ["จะสุ่มใช้กี่หน้าต่างจากสูงสุด 8 ต่อช่อง (ปกติ 8) ตู้ที่มีไฟวงแหวนจะติดได้ทีละดวง",
+    "How many of the 8 windows per slot to pick from (normally 8). On cabinets with a ring light only one is lit at a time."],
+  soakPicks: ["จำลองคนมาหยิบยา ทุกครั้งจะเปิดไฟหนึ่งช่อง (สุ่ม) ค้างไว้สักพักแล้วดับ ตัวเลขคือจำนวนครั้งต่อตู้ต่อวัน กระจายเท่า ๆ กัน เช่น 2,000 = ราว 1 ครั้งทุก 43 วินาที ไม่มีการปลดกลอน",
+    "Simulates people picking medicine: each time one random slot is lit for a while, then switched off. The number is picks per cabinet per day, spread evenly: 2,000 is about one every 43 seconds. The latch is never fired."],
   unlockHow: ["ปลอดภัย: ปลดเฉพาะเมื่อกลอนล็อกอยู่ ลิ้นชักที่เปิดค้างจะไม่ถูกสั่งซ้ำ\nบังคับ: ปลดทันทีโดยไม่ดูสถานะกลอน",
     "Safe: only when the latch reads locked; an open drawer is left alone.\nForce: pulse now, whatever the latch reads."],
   pick: ["ซ้อมขั้นตอนจ่ายยาจริง: ไฟติดพร้อมกันเป็นชุด เหมือนตอนใบสั่งยาสั่งงานจริง คนที่หน้าตู้หยิบช่องไหนก่อนก็ได้ ไฟแต่ละช่องจะดับเมื่อกดปุ่มหน้าช่องนั้น ครบชุดแล้วชุดถัดไปจะติดต่อ พิสูจน์ไฟ ปุ่ม และวงจรยืนยันครบในรอบเดียว ต้องใช้เฟิร์มแวร์โมดูล v3.2.0",
