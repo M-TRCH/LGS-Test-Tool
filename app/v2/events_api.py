@@ -30,7 +30,7 @@ def query(gw: str = "", days: int = 1, ev: str = "", q: str = "", limit: int = 5
     """Newest first. `gw` is a folder name from gateways(); empty = every gateway.
     `everything` lifts the row cap (the screen shows a page; the CSV export wants all)."""
     root = event_collector.events_root()
-    days = max(1, min(int(days), 120))
+    days = max(1, min(int(days), 366))   # the longest retention the page offers, plus today
     limit = 10 ** 9 if everything else max(1, min(int(limit), 2000))
     since = (datetime.now() - timedelta(days=days - 1)).strftime("%Y-%m-%d")
     evs = {e for e in re.split(r"[,\s]+", ev) if e}

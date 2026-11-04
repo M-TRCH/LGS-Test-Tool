@@ -15,6 +15,7 @@ from ..version import APP_VERSION
 from . import commission_api, events_api, gateway_api, health, install_api, labels_api, module_api, ota_api, sites, soak_api
 
 STATIC = Path(__file__).resolve().parent / "static"
+RETENTION_CHOICES = (30, 90, 180, 365)   # days the event collector keeps on this PC; the page offers exactly these
 PROBE_PARALLEL = 6            # gateways asked at once; each probe is one short connection
 
 
@@ -551,6 +552,15 @@ def install(app, cfg, worker) -> None:
         body = await request.json()
         if "enabled" in body:
             cfg.events_enabled = bool(body["enabled"])
+        if "retention_days" in body:
+            try:
+                days = int(body["retention_days"])
+            except (TypeError, ValueError):
+                days = 0
+            if days not in RETENTION_CHOICES:
+                return JSONResponse({"error": "retention_days must be one of "
+                                     + ", ".join(map(str, RETENTION_CHOICES))}, status_code=422)
+            cfg.events_retention_days = days
         config_store.save(cfg)
         event_collector.apply(cfg)
-        return {"enabled": cfg.events_enabled}
+        return {"enabled": cfg.events_enabled, "retention_days": cfg.events_retention_days}
