@@ -89,6 +89,26 @@ installation check, scan, module management (advanced, last).
   refused if another module answers there) and then a yes/no; Software reset
   asks for the id to be typed (grey example in the field).
 
+### Soak page, "ทดสอบต่อเนื่อง" (reviewed with the user, passed 2026-11-04)
+
+- **Four numbered steps**, in the manner of the installation check: what kind (simulate dispensing / read only), which
+  cabinets (toggle cells, All / Clear), the settings, then a plan line ("starts ... ends ...") and Start. Start now or at a
+  time of day; duration 1-72 h, until a time of day, or until stopped. Pharmacy mode keeps picks per day, how long a light
+  stays on and how many windows, each with an info popup and a live reading under the fields (lights on at once, bus use).
+- **Advanced options** (folded under step 3, same defaults as the classic card): pause between passes (2.0 s), how often
+  module counters are read (every 5 passes), log replies slower than (400 ms), and the **client timeout (6 s)**, which the
+  classic UI never exposed. Warnings under the fields for a pause of 0.4-0.9 s and a timeout under 6 s. The server validates
+  every value (`SoakConfig.timeout_s`, 0 = the transport default; the verdict prints the timeout actually used).
+- **Live table** per cabinet with a picks column (`pick`, `lit`, `skip`, `err`) and a gateway-repair column (`fix`, `/h`,
+  `fail`, `to`, `crc`), each with an info popup in the same bulleted form; latest anomalies five at a time with Newer / Older.
+- **Summary** as a headline chip, a coloured cabinet table, a coloured gateway-counters table and two note lines, with the
+  column meanings behind one ? button. Also shows the gateway-counters-unavailable line and the reason a cabinet did not run.
+- **Past runs**: one "view summary" button per run opens a dialog with the summary, **Save as image** (PNG on white paper
+  in the light colours, sized to its content) and **raw data** (tick cabinets; one merged CSV with a `cabinet` column in time
+  order, or a ZIP of the per-cabinet files). `GET /api/v2/soak/export`.
+- A run is still lit and read by the server, not the browser: closing the page does not stop it, and a run that reaches its
+  deadline stops by itself and writes its verdict (seen on the 2-hour 12-cabinet run).
+
 ### Events page (reviewed with the user, passed 2026-11-04)
 
 - **Dashboard** over the chosen filters: six counters, lights and problems charts (per hour for a window of two days or
@@ -131,11 +151,16 @@ installation check, scan, module management (advanced, last).
 - Pick walkthrough "drawer shut" tested against a fake bus only (locked -> open
   -> locked = pass), not yet on Nar-01.
 - `tools/v2_selftest.py` 14/14.
-- Not tested: a phone (only a 375 px emulation), the exe build, Docker, the
+- **Soak, 2-hour fleet run on 12 cabinets (2026-11-04 11:28)**, pharmacy mode, started from the v2 page: ended by itself at its
+  deadline and wrote the verdict. 11 cabinets clean (0 failed reads, 0 reboots, 0 watchdogs); Chest-Ref-12 repaired 43 first-try
+  misses (21.5/h, none unrepaired); Chest-Std-09 not clean (modules 41-44 silent, 1,070 final timeouts at the gateway, a
+  cabinet fault that predates the run). A 72-second run with a pause of 3 s, counters every 2 passes, slow 300 ms and a timeout
+  of 8 s printed `client timeout 8.0 s` in its verdict. Server-side validation refuses out-of-range values.
+- Not tested: the picture and raw-data buttons were exercised through their code and endpoints, not clicked as a download in a
+  browser; a phone (only a 375 px emulation), the exe build, Docker, the
   events CSV download in a browser, the full module test, the NTP server
   switched on, a web password set from the v2 page.
 
 ## Review status (page by page with the user)
 
-Passed: Commission, Labels, Sites, Cabinets, Gateway, Module, Events. To do: Soak (needs another
-round), Firmware.
+Passed: Commission, Labels, Sites, Cabinets, Gateway, Module, Events, Soak. To do: Firmware.
