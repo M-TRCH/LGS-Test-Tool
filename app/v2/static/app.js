@@ -31,7 +31,7 @@ const TXT = {
     mUnlockedAgo: "ปลดล่าสุด {s} วินาทีก่อน", mDisplay: "ตัวเลขบนจอ", na: "ไม่มี", presets: "พรีเซ็ตสี", pLight: "ไฟ", pLightDisp: "ไฟ + เลข", pUnlock: "ปลดกลอน", pUnlockDisp: "ปลดกลอน + เลข", grpLight: "ไฟ", grpLatch: "กลอน", grpDisp: "จอ", grpOther: "อื่น ๆ", cLight: "เปิดไฟ", cLightNum: "เปิดไฟ + เลข", dispOff: "ปิดจอ", qShowAll: "แสดงทั้งหมด", qHidden: "ซ่อนคำสั่งจอและกลอน: โมดูลนี้ไม่มีจอและกลอน", cLightUnlock: "เปิดไฟ + ปลดกลอน", cLightNumUnlock: "เปิดไฟ + เลข + ปลดกลอน", unlockTitle: "ปลดกลอน · เลือกวิธี", unlockSafe: "ปลอดภัย", unlockSafeD: "ปลดเฉพาะเมื่อกลอนล็อกอยู่ ลิ้นชักที่เปิดค้างจะไม่ถูกสั่งซ้ำ", unlockForce: "บังคับ", unlockForceD: "ปลดทันทีโดยไม่ดูสถานะกลอน", colorTitle: "{c} · เลือกสี", colorN: "สี {n}",
     quick: "คำสั่งด่วน", identify: "ระบุตำแหน่ง", allOff: "ดับทั้งหมด", latchSafety: "ปลดกลอน (ปลอดภัย)", latchForce: "ปลดกลอน (บังคับ)", dispPower: "เปิดจอ",
     number: "ตัวเลข", numAsk: "ตัวเลขที่จะแสดงบนจอโมดูล {id}", numRange: "ตัวเลขต้องเป็นจำนวนเต็ม 0 ถึง 9999", writeNumber: "เขียนตัวเลข", cooldownNote: "กลอนต้องเว้น 2.2 วินาทีระหว่างการปลด", sent: "ส่งแล้ว", fires: "ยิงกลอน {c} ครั้ง · {s} วินาที", count: "ครั้ง", seconds: "วินาที",
-    soak_page: "ทดสอบต่อเนื่อง", sPick: "เลือกตู้ที่จะทดสอบ", sAll: "ทั้งหมด", sMode: "โหมด", sPoll: "อ่านอย่างเดียว", sPharm: "จำลองการจ่ายยา",
+    soak_page: "ทดสอบต่อเนื่อง", sStep1: "เลือกแบบการทดสอบ", sStep2: "เลือกตู้", sStep3: "ตั้งค่า", sStep4: "เริ่มทดสอบ", sNoType: "ยังไม่ได้กำหนดชนิดตู้", sStartLbl: "เริ่ม", sNow: "ทันที", sAtTime: "ตั้งเวลา", sDur: "ทดสอบนาน", sHoursN: "{n} ชั่วโมง", sUntilTime: "จนถึงเวลา", sUntilStop: "จนกว่าจะหยุด", sEndOnStop: "เมื่อกดหยุด", sToday: "วันนี้", sTomorrow: "พรุ่งนี้", sPlan: "เริ่ม {s} · จบ {e}", sCabs: "{n} ตู้", sPickOne: "เลือกอย่างน้อยหนึ่งตู้", sPick: "เลือกตู้ที่จะทดสอบ", sAll: "ทั้งหมด", sMode: "โหมด", sPoll: "อ่านอย่างเดียว", sPharm: "จำลองการจ่ายยา",
     sPicks: "จำนวนครั้งที่จ่ายต่อวัน", sHours: "ชั่วโมง (0 = จนกว่าจะหยุด)", sStartAt: "เริ่มเวลา (เช่น 21:00 เว้นว่าง = ทันที)", sStart: "เริ่มทดสอบ",
     sStop: "หยุด", sStopQ: "หยุดการทดสอบที่กำลังรัน? ข้อมูลถึงตอนนี้ถูกเก็บไว้", sRunning: "กำลังรัน", sArmed: "ตั้งเวลาไว้ เริ่มในอีก {t}", sLeft: "เหลือ {t}",
     sNoEnd: "ไม่มีเวลาจบ", sCab: "ตู้", sState: "สถานะ", sPass: "รอบ", sReads: "อ่าน", sFails: "พลาด", sRbt: "รีบูต", sWdt: "วอตช์ด็อก", sWorst: "ช้าสุด (ms)", sHeal: "เกตเวย์ซ่อมบัส",
@@ -91,7 +91,7 @@ const TXT = {
     mUnlockedAgo: "last unlock {s} s ago", mDisplay: "Display number", na: "n/a", presets: "Colour presets", pLight: "Light", pLightDisp: "Light + number", pUnlock: "Unlock", pUnlockDisp: "Unlock + number", grpLight: "Light", grpLatch: "Latch", grpDisp: "Display", grpOther: "Other", cLight: "Light", cLightNum: "Light + number", dispOff: "Display off", qShowAll: "Show all", qHidden: "Display and latch commands hidden: this module has neither", cLightUnlock: "Light + unlock", cLightNumUnlock: "Light + number + unlock", unlockTitle: "Unlock · choose how", unlockSafe: "Safe", unlockSafeD: "Only when the latch reads locked; an open drawer is left alone", unlockForce: "Force", unlockForceD: "Pulse now, whatever the latch reads", colorTitle: "{c} · pick a colour", colorN: "Colour {n}",
     quick: "Quick commands", identify: "Identify", allOff: "All off", latchSafety: "Unlock (safe)", latchForce: "Unlock (force)", dispPower: "Display on",
     number: "Number", numAsk: "Number to show on module {id}'s display", numRange: "The number must be a whole number from 0 to 9999", writeNumber: "Write number", cooldownNote: "A latch needs 2.2 s between unlocks", sent: "Sent", fires: "{c} fires · {s} s", count: "count", seconds: "seconds",
-    soak_page: "Soak", sPick: "Choose the cabinets to test", sAll: "All", sMode: "Mode", sPoll: "Read only", sPharm: "Pharmacy simulation",
+    soak_page: "Soak", sStep1: "Choose the test", sStep2: "Choose cabinets", sStep3: "Settings", sStep4: "Run", sNoType: "no cabinet type set", sStartLbl: "Start", sNow: "Now", sAtTime: "At a time", sDur: "Run for", sHoursN: "{n} hours", sUntilTime: "Until a time", sUntilStop: "Until stopped", sEndOnStop: "when you stop it", sToday: "today", sTomorrow: "tomorrow", sPlan: "Starts {s} - ends {e}", sCabs: "{n} cabinet(s)", sPickOne: "Choose at least one cabinet", sPick: "Choose the cabinets to test", sAll: "All", sMode: "Mode", sPoll: "Read only", sPharm: "Pharmacy simulation",
     sPicks: "Picks per day", sHours: "Hours (0 = until stopped)", sStartAt: "Start at (e.g. 21:00, empty = now)", sStart: "Start soak",
     sStop: "Stop", sStopQ: "Stop the running soak? Data up to now is kept.", sRunning: "Running", sArmed: "Armed, starts in {t}", sLeft: "{t} left",
     sNoEnd: "no end time", sCab: "Cabinet", sState: "State", sPass: "Passes", sReads: "Reads", sFails: "Fails", sRbt: "Reboots", sWdt: "WDT", sWorst: "Worst ms", sHeal: "Gateway repairs",
@@ -128,7 +128,7 @@ const t = (k, p) => { let s = (TXT[lang] && TXT[lang][k]) || TXT.en[k] || k; for
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const $ = (s, r = document) => r.querySelector(s);
 
-let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: new Set(), types: new Set(), client: new Set(), unit: new Set(), from: "", to: "", tfrom: "00:00", tto: "23:59", page: 0, size: 10, facets: null, open: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, lab: { id: "", ward: "", serial: "", layout: "", plate: "", opts: null, info: null, busy: false }, fw: { images: null, sel: new Set(), image: "", ota: null, gwId: "", gwImage: "", gwConfirm: "", gwFile: null, gwFileName: "", gw: null, timer: null }, soak: { sel: new Set(), mode: "pharmacy", picks: 2000, hours: 12, startAt: "", status: null, runs: [], verdict: "", timer: null, was: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 },
+let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: new Set(), types: new Set(), client: new Set(), unit: new Set(), from: "", to: "", tfrom: "00:00", tto: "23:59", page: 0, size: 10, facets: null, open: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, lab: { id: "", ward: "", serial: "", layout: "", plate: "", opts: null, info: null, busy: false }, fw: { images: null, sel: new Set(), image: "", ota: null, gwId: "", gwImage: "", gwConfirm: "", gwFile: null, gwFileName: "", gw: null, timer: null }, soak: { sel: new Set(), mode: "pharmacy", picks: 2000, durMode: "hours", hours: 8, startMode: "now", sh: 21, sm: 0, eh: 8, em: 0, status: null, runs: [], timer: null, was: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 },
   ins: { id: "", layout: null, sel: new Set(), mode: "check", action: "light", unlock: false, identify: false, hold: 1, preset: 1, batch: 4, timeout: 60, display: true, punlock: true, off: "btnshut", order: "ch", running: false, since: 0, res: {}, rows: [], lit: new Set(), closing: new Set(), testing: null, text: "", banner: "", summary: "", file: false, err: "" },
   scan: { running: false, found: [], asked: new Set(), at: 0, text: "", err: "", file: false },
   sweep: { running: false, loops: 1, lights: true, latch: false, text: "", banner: "", phases: [], bad: [], err: "", file: false },
@@ -915,35 +915,65 @@ function verdictText(txt) {
   if (i >= 0) out.splice(i, 0, t("sColLegend"), "");
   return out.join("\n");
 }
+/* Continuous test, in the same four numbered steps as the installation check: what kind, which cabinets, how long, go.
+   While a run is going the steps give way to its live status. */
+const SOAK_HOURS = [1, 2, 4, 6, 8, 10, 12, 24, 48, 72];
+/* When the run would start and end, from the page's own choices (the server keeps its own rule: a clock time already past means tomorrow). */
+function soakPlan() {
+  const k = S.soak, now = new Date();
+  const next = (h, m, after) => { const d = new Date(after); d.setHours(h, m, 0, 0); if (d <= after) d.setDate(d.getDate() + 1); return d; };
+  const start = k.startMode === "at" ? next(k.sh, k.sm, now) : now;
+  const hours = k.durMode === "until" ? Math.round(((next(k.eh, k.em, start) - start) / 3600000) * 100) / 100 : k.hours;
+  return { start, hours, end: hours ? new Date(start.getTime() + hours * 3600000) : null };
+}
+function soakWhen(d) {
+  const day = ymd(d) === ymd(new Date()) ? t("sToday") : ymd(d) === ymd(new Date(Date.now() + 86400000)) ? t("sTomorrow") : fmtDay(ymd(d));
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")} ${day}`;
+}
 function viewSoak() {
   const k = S.soak, st = k.status || {};
   const running = !!st.running;
-  const chip = (state) => { const cls = { clean: "ok", warn: "warn", "not clean": "bad", "did not run": "bad", starting: "info" }[state] || "info"; const key = { clean: "sClean", warn: "sWarn", "not clean": "sNotClean", "did not run": "sDidNot", starting: "sStarting" }[state]; return `<span class="chip ${cls}"><i class="dot"></i>${t(key)}</span>`; };
+  const chip = (state) => { const cls = { clean: "ok", warn: "warn", "not clean": "bad", "did not run": "bad", starting: "info" }[state] || "info"; const key = { clean: "sClean", warn: "sWarn", "not clean": "sNotClean", "did not run": "sDidNot", starting: "sStarting" }[state]; return `<span class="chip ${cls}"><i class="dot"></i>${t(key || "sStarting")}</span>`; };
+  const step = (n, title, body, extra) => `<div class="istep"><div class="row" style="gap:8px;align-items:center"><span class="inum">${n}</span><b>${title}</b>${extra || ""}</div>${body}</div>`;
+  const sel = (id, opts, cur) => `<select id="${id}">${opts.map(([v, l]) => `<option value="${v}"${String(v) === String(cur) ? " selected" : ""}>${l}</option>`).join("")}</select>`;
+  const pad = (n) => String(n).padStart(2, "0");
+  const clock = (idh, idm, h, m) => `<div class="row" style="gap:6px;flex-wrap:nowrap"><div style="flex:1;min-width:0">${sel(idh, Array.from({ length: 24 }, (_, i) => [i, pad(i)]), h)}</div><b>:</b><div style="flex:1;min-width:0">${sel(idm, Array.from({ length: 60 }, (_, i) => [i, pad(i)]), m)}</div></div>`;
   let head = "";
   if (running) {
     const when = st.starts_in_s != null ? t("sArmed", { t: fmtDur(st.starts_in_s) }) : (st.left_s != null ? t("sLeft", { t: fmtDur(st.left_s) }) : t("sNoEnd"));
-    head = `<section class="card stack"><div class="row between"><div><b>${t("sRunning")}</b> · ${st.count} · ${esc(when)}</div><button class="btn" style="color:var(--bad)" data-act="soak-stop">${t("sStop")}</button></div>
+    head = `<section class="card stack"><div class="row between"><div><b>${t("sRunning")}</b> · ${t("sCabs", { n: st.count })} · ${esc(when)}</div><button class="btn" style="color:var(--bad)" data-act="soak-stop">${t("sStop")}</button></div>
       <div class="small muted">${t("sLongNote")}${st.frames_discarded ? " · " + t("sFrames", { n: st.frames_discarded }) : ""}</div></section>`;
   } else {
-    const rows = S.sites.map((x) => `<label class="row" style="min-height:40px"><input type="checkbox" data-pick="${esc(x.id)}"${k.sel.has(x.id) ? " checked" : ""}> <span>${esc(x.name)}</span> <span class="small muted mono">${esc(x.host)} · ${esc(x.cabinet || "?")}</span></label>`).join("");
-    head = `<section class="card stack"><b>${t("sPick")}</b><div class="row"><button class="btn" data-act="soak-all">${t("sAll")}</button></div>${rows || `<p class="muted">${t("noSites")}</p>`}<p class="small muted">${t("sNeedType")}</p></section>
-      <section class="card stack"><div class="fgrid">
-        <div class="field"><label>${t("sMode")}</label><select id="soakmode"><option value="pharmacy"${k.mode === "pharmacy" ? " selected" : ""}>${t("sPharm")}</option><option value="poll"${k.mode === "poll" ? " selected" : ""}>${t("sPoll")}</option></select></div>
-        <div class="field"><label>${t("sPicks")}</label><input id="soakpicks" type="number" min="1" value="${k.picks}"></div>
-        <div class="field"><label>${t("sHours")}</label><input id="soakhours" type="number" min="0" max="336" step="0.5" value="${k.hours}"></div>
-        <div class="field"><label>${t("sStartAt")}</label><input id="soakat" value="${esc(k.startAt)}" placeholder="21:00"></div></div>
-        <div class="row"><button class="btn primary" data-act="soak-start">${t("sStart")}</button></div></section>`;
+    const modes = ["pharmacy", "poll"].map((m) => `<button class="btn${k.mode === m ? " primary" : ""}" type="button" data-act="soak-mode" data-m="${m}" aria-pressed="${k.mode === m}">${t(m === "pharmacy" ? "sPharm" : "sPoll")}</button>`).join("");
+    const cells = S.sites.map((x) => {
+      const ok = !!x.cabinet, on = k.sel.has(x.id);
+      return `<button class="cabcell${on ? " on" : ""}" type="button" data-cab="${esc(x.id)}" aria-pressed="${on}"${ok ? "" : " disabled"}><b>${esc(x.name)}</b><span>${ok ? esc(x.host) : t("sNoType")}</span></button>`;
+    }).join("");
+    const plan = soakPlan();
+    const planText = t("sPlan", { s: k.startMode === "at" ? soakWhen(plan.start) : t("sNow"), e: plan.end ? soakWhen(plan.end) : t("sEndOnStop") });
+    const durOpts = [...SOAK_HOURS.map((h) => [h, t("sHoursN", { n: h })]), ["until", t("sUntilTime")], [0, t("sUntilStop")]];
+    const settings = `<div class="fgrid">
+        <div class="field"><label>${t("sStartLbl")}</label>${sel("soakstart", [["now", t("sNow")], ["at", t("sAtTime")]], k.startMode)}${k.startMode === "at" ? clock("soaksh", "soaksm", k.sh, k.sm) : ""}</div>
+        <div class="field"><label>${t("sDur")}</label>${sel("soakdur", durOpts, k.durMode === "until" ? "until" : k.hours)}${k.durMode === "until" ? clock("soakeh", "soakem", k.eh, k.em) : ""}</div>
+        ${k.mode === "pharmacy" ? `<div class="field"><label>${t("sPicks")}</label><input id="soakpicks" type="number" min="1" max="200000" value="${k.picks}" style="width:200px"></div>` : ""}</div>`;
+    head = `<section class="card stack">
+      ${step(1, t("sStep1"), `<div class="row" style="gap:8px">${modes}</div>`)}
+      ${step(2, t("sStep2"), `<div class="row" style="gap:8px"><button class="btn" type="button" data-act="soak-all">${t("sAll")}</button><button class="btn" type="button" data-act="soak-none">${t("insClear")}</button></div>
+        ${S.sites.length ? `<div class="cabgrid">${cells}</div>` : `<p class="muted">${t("noSites")}</p>`}`, `<span class="small muted">${t("insSel", { n: k.sel.size })}</span>`)}
+      ${step(3, t("sStep3"), settings)}
+      ${step(4, t("sStep4"), `<div class="small muted">${esc(planText)}</div><div class="row" style="gap:8px"><button class="btn primary" type="button" data-act="soak-start">${t("sStart")}</button></div>`)}
+    </section>`;
   }
-  const cabs = (st.cabinets || []).length ? `<section class="card" style="overflow-x:auto"><table><tr><th>${t("sCab")}</th><th>${t("sState")}</th><th>${t("sPass")}</th><th>${t("sReads")}</th><th>${t("sFails")}</th><th>${t("sRbt")}</th><th>${t("sWdt")}</th><th>${t("sWorst")}</th><th>${t("sHeal")}</th></tr>
-    ${st.cabinets.map((c) => `<tr><td><b>${esc(c.name)}</b>${c.note ? `<div class="tiny" style="color:var(--bad)">${esc(c.note)}</div>` : ""}</td><td>${chip(c.state)}</td><td>${c.passes}</td><td>${c.reads.toLocaleString()}</td><td>${c.fails}</td><td>${c.reboots}</td><td>${c.watchdogs}</td><td>${c.worst_ms}</td>
+  const cabs = (st.cabinets || []).length ? `<section class="card" style="overflow-x:auto"><table><tr><th>${t("sCab")}</th><th>${t("sState")}</th><th>${t("sReads")}</th><th>${t("sFails")}</th><th>${t("sRbt")}</th><th>${t("sWdt")}</th><th>${t("sWorst")}</th><th>${t("sHeal")}</th></tr>
+    ${st.cabinets.map((c) => `<tr><td><b>${esc(c.name)}</b>${c.note ? `<div class="tiny" style="color:var(--bad)">${esc(c.note)}</div>` : ""}</td><td>${chip(c.state)}</td><td>${c.reads.toLocaleString()}</td><td>${c.fails}</td><td>${c.reboots}</td><td>${c.watchdogs}</td><td>${c.worst_ms}</td>
       <td>${c.gw_seen ? `${c.gw_healed} (${c.heal_per_h}/h)${c.gw_heal_failed ? ` · ✗${c.gw_heal_failed}` : ""}${c.gw_timeouts ? ` · ⏱${c.gw_timeouts}` : ""}${c.gw_bad_crc ? ` · CRC ${c.gw_bad_crc}` : ""}` : "—"}</td></tr>`).join("")}</table></section>` : "";
   const an = (st.anomalies || []).length ? `<section class="card stack"><h3>${t("sAnoms")}</h3>${st.anomalies.slice(0, 15).map((a) => `<div class="evrow"><span class="when">${esc(a.at)}</span><span><b>${esc(a.cabinet)}</b> ${a.id ? "id " + a.id + " " : ""}${esc(a.kind)} ${esc(a.detail)}</span></div>`).join("")}</section>` : "";
   const fin = st.finished && !running ? `<section class="card stack"><h3>${t("sVerdict")}</h3><pre class="mono small" style="white-space:pre-wrap;overflow-x:auto;margin:0">${esc(verdictText(st.finished.text))}</pre></section>` : "";
-  const hist = `<section class="card stack"><h3>${t("sHistory")}</h3>${(k.runs || []).length ? k.runs.map((r) => `<div class="stack tight" style="padding:8px 0;border-bottom:1px solid var(--line)"><div class="row between"><b>${esc(r.started)}</b>
-      ${r.verdict ? `<button class="btn" data-act="soak-view" data-name="${esc(r.verdict)}">${t("sView")}</button>` : ""}</div>
-      <div class="small">${r.csv.length ? t("sCsvFiles") + ": " : ""}${r.csv.map((c) => `<a href="/api/v2/soak/file?name=${encodeURIComponent(c)}&download=1">${esc(c.replace(/^soak-/, "").replace(/-\d{8}-\d{6}\.csv$/, ""))}</a>`).join(" · ")}</div></div>`).join("") : `<p class="muted">${t("sNoRuns")}</p>`}
-      ${k.verdict ? `<pre class="mono small" style="white-space:pre-wrap;overflow-x:auto;margin:0">${esc(verdictText(k.verdict))}</pre>` : ""}</section>`;
-  return `<h1>${t("soak_page")}${lang === "th" ? " (Soak)" : ""}</h1><div class="stack">${head}${cabs}${an}${fin}${hist}</div>`;
+  const runDate = (stamp) => { const m = /^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})/.exec(stamp || ""); return m ? `${fmtDay(m[1])} ${m[2]}` : stamp; };
+  const hist = `<section class="card stack"><h3>${t("sHistory")}</h3>${(k.runs || []).length ? `<div class="soakruns">${k.runs.map((r) => `<div class="soakrun"><div class="row between"><b>${esc(runDate(r.started))}</b>
+      ${r.verdict ? `<button class="btn sm" type="button" data-act="soak-view" data-name="${esc(r.verdict)}">${t("sView")}</button>` : ""}</div>
+      ${r.csv.length ? `<div class="small">${t("sCsvFiles")}: ${r.csv.map((c) => `<a href="/api/v2/soak/file?name=${encodeURIComponent(c)}&download=1">${esc(c.replace(/^soak-/, "").replace(/-\d{8}-\d{6}\.csv$/, ""))}</a>`).join(" · ")}</div>` : ""}</div>`).join("")}</div>` : `<p class="muted">${t("sNoRuns")}</p>`}</section>`;
+  return `<h1>${t("soak_page")}</h1><div class="stack">${head}${cabs}${an}${fin}${hist}</div>`;
 }
 async function soakRefresh() {
   try {
@@ -1379,6 +1409,8 @@ document.addEventListener("click", async (ev) => {
   if (crow) { const r = +crow.dataset.cmrow, g = (S.cm.opts && S.cm.opts.grid) || { cols: 8 }, ids = Array.from({ length: g.cols }, (_, k) => r * 10 + k + 1); const all = ids.every((i) => S.cm.sel.has(i)); ids.forEach((i) => (all ? S.cm.sel.delete(i) : S.cm.sel.add(i))); render(); return; }
   document.querySelectorAll("details.menu[open]").forEach((d) => { if (!d.contains(ev.target)) d.open = false; });
   const cmm = ev.target.closest("[data-cmmode]"); if (cmm) { S.cm.mode = cmm.dataset.cmmode; render(); return; }
+  const cab = ev.target.closest("[data-cab]");
+  if (cab) { const id = cab.dataset.cab; S.soak.sel.has(id) ? S.soak.sel.delete(id) : S.soak.sel.add(id); render(); return; }
   const chip = ev.target.closest(".fchip");
   if (chip) {
     if (chip.dataset.f === "time") { S.ev.tfrom = "00:00"; S.ev.tto = "23:59"; } else evSet(chip.dataset.f).delete(chip.dataset.v);
@@ -1450,15 +1482,21 @@ document.addEventListener("click", async (ev) => {
       const raw = typed.trim(), v = Number(raw);
       if (raw === "" || !Number.isInteger(v) || v < 0 || v > 9999) { await ask(t("numRange"), true); return; }
       const r = await api("POST", "/api/v2/mod/number", { id: S.mod.id, device_id: S.mod.dev, value: v }); if (!r.ok) throw new Error(r.error); toast(t("sent"));
-    } else if (act.dataset.act === "soak-all") { S.sites.forEach((x) => S.soak.sel.add(x.id)); render();
+    } else if (act.dataset.act === "soak-all") { S.sites.forEach((x) => { if (x.cabinet) S.soak.sel.add(x.id); }); render();
+    } else if (act.dataset.act === "soak-none") { S.soak.sel.clear(); render();
+    } else if (act.dataset.act === "soak-mode") { S.soak.mode = act.dataset.m; render();
     } else if (act.dataset.act === "soak-start") {
       const k = S.soak;
-      const r = await api("POST", "/api/v2/soak/start", { ids: [...k.sel], mode: k.mode, picks: k.picks, hours: k.hours, start_at: k.startAt });
+      if (!k.sel.size) { toast(t("sPickOne")); return; }
+      const hh = (n) => String(n).padStart(2, "0");
+      const r = await api("POST", "/api/v2/soak/start", { ids: [...k.sel], mode: k.mode, picks: k.picks, hours: soakPlan().hours, start_at: k.startMode === "at" ? `${hh(k.sh)}:${hh(k.sm)}` : "" });
       toast(t("sStarted", { n: r.count }) + (r.warnings && r.warnings.length ? " · " + r.warnings[0] : "")); await soakRefresh(); render();
     } else if (act.dataset.act === "soak-stop") {
       if (!await ask(t("sStopQ"))) return; await api("POST", "/api/v2/soak/stop", {}); S.soak.was = true; await soakRefresh();
     } else if (act.dataset.act === "soak-view") {
-      const r = await fetch("/api/v2/soak/file?name=" + encodeURIComponent(act.dataset.name)); S.soak.verdict = await r.text(); render();
+      const r = await fetch("/api/v2/soak/file?name=" + encodeURIComponent(act.dataset.name)); const txt = await r.text();
+      $("#infobody").innerHTML = `<pre class="mono small" style="white-space:pre;overflow:auto;margin:0;max-height:70vh">${esc(verdictText(txt))}</pre>`;
+      const d = $("#info"); d.classList.add("wide"); d.onclose = () => d.classList.remove("wide"); if (d.showModal) d.showModal(); else d.setAttribute("open", "");
     } else if (act.dataset.act === "gw-export") {
       const d = S.gw.data; const out = { format: "lgs-gateway-config", version: 2, gateway: d.info["sys.name"] || "", fw: d.info.fw, exported: new Date().toISOString(), settings: {} };
       d.keys.forEach((k) => { if (!k.ro) out.settings[k.key] = k.value; });
@@ -1640,11 +1678,10 @@ document.addEventListener("change", async (ev) => {
   if (ev.target.id === "modall") { S.mod.showAll = ev.target.checked; renderKeep(); }
   if (ev.target.id === "modauto") { S.mod.auto = ev.target.checked; modAutoSync(); }
   if (ev.target.id === "gwsel") { S.gw.id = ev.target.value; S.gw.data = null; S.gw.edits = {}; if (S.gw.id) gwRead(); else render(); }
-  if (ev.target.dataset && ev.target.dataset.pick) { ev.target.checked ? S.soak.sel.add(ev.target.dataset.pick) : S.soak.sel.delete(ev.target.dataset.pick); }
-  if (ev.target.id === "soakmode") S.soak.mode = ev.target.value;
   if (ev.target.id === "soakpicks") S.soak.picks = +ev.target.value;
-  if (ev.target.id === "soakhours") S.soak.hours = +ev.target.value;
-  if (ev.target.id === "soakat") S.soak.startAt = ev.target.value;
+  if (ev.target.id === "soakstart") { S.soak.startMode = ev.target.value; render(); }
+  if (ev.target.id === "soakdur") { if (ev.target.value === "until") S.soak.durMode = "until"; else { S.soak.durMode = "hours"; S.soak.hours = +ev.target.value; } render(); }
+  for (const [id, key] of [["soaksh", "sh"], ["soaksm", "sm"], ["soakeh", "eh"], ["soakem", "em"]]) if (ev.target.id === id) { S.soak[key] = +ev.target.value; render(); }
   if (ev.target.id === "lbsel") { S.lab.id = ev.target.value; S.lab.info = null; }
   if (ev.target.id === "lbward") S.lab.ward = ev.target.value;
   if (ev.target.id === "lbserial") S.lab.serial = ev.target.value;
