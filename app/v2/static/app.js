@@ -555,6 +555,8 @@ function modAutoSync() {
 const INS_INFO = {
   soakDwell: ["ไฟแต่ละช่องติดค้างกี่วินาทีก่อนดับเอง (เหมือนรอคนกดยืนยัน) ตั้งนานขึ้นถ้าอยากให้ไฟติดซ้อนกันหลายดวง",
     "How many seconds a light stays on before it goes off by itself (as if waiting for a confirm). Make it longer to get several lights on at once."],
+  soakCols: ["mod = โมดูล · pass = รอบ · reads = อ่าน · fail = พลาด · rbt = รีบูต · wdt = วอตช์ด็อก · cross = ข้ามช่องฮับ · worst = ช้าสุด (ms) · drop = ตกหล่น · silent = เงียบ",
+    "mod = modules · pass = passes · reads = reads · fail = failed reads · rbt = reboots · wdt = watchdog resets · cross = hub channel crossings · worst = slowest (ms) · drop = dropped · silent = silent ids"],
   soakWins: ["จะสุ่มใช้กี่หน้าต่างจากสูงสุด 8 ต่อช่อง (ปกติ 8) ตู้ที่มีไฟวงแหวนจะติดได้ทีละดวง",
     "How many of the 8 windows per slot to pick from (normally 8). On cabinets with a ring light only one is lit at a time."],
   soakPicks: ["จำลองคนมาหยิบยา ทุกครั้งจะเปิดไฟหนึ่งช่อง (สุ่ม) ค้างไว้สักพักแล้วดับ ตัวเลขคือจำนวนครั้งต่อตู้ต่อวัน กระจายเท่า ๆ กัน เช่น 2,000 = ราว 1 ครั้งทุก 43 วินาที ไม่มีการปลดกลอน",
@@ -911,7 +913,7 @@ const fmtDur = (sec) => { sec = Math.max(0, Math.round(sec)); const h = Math.flo
 /* The verdict is a plain-text report written by the engine (and kept as a file for the classic tool), so it stays English on disk; in Thai mode the prose lines are translated here and the fixed-width table is left alone. */
 /* The verdict as the page's own typography: prose lines in the theme font, and the cabinet table (fixed-width columns in the file)
    as a real table, so no monospace font is needed and the Thai never falls back to a different face. */
-function verdictHtml(txt) {
+function verdictHtml(txt, inCard) {
   const lines = verdictText(txt).split("\n");
   let out = "", prose = [], tbl = null;
   const flushProse = () => { if (prose.length) out += `<div class="vprose">${esc(prose.join("\n").replace(/\n+$/, ""))}</div>`; prose = []; };
@@ -920,7 +922,7 @@ function verdictHtml(txt) {
     const cut = (ln) => { const w = ln.trim().split(/\s+/); return [...w.slice(0, 10), w.slice(10).join(" ")]; };
     const [head, ...rows] = tbl;
     const hd = cut(head), cls = (i) => (i > 0 && i < 10 ? ' class="num"' : "");
-    out += (t("sColLegend") ? `<details class="collg"><summary class="why" aria-label="${t("explain")}">?</summary><div class="small muted">${esc(t("sColLegend"))}</div></details>` : "")
+    out += (!inCard && t("sColLegend") ? `<details class="collg"><summary class="why" aria-label="${t("explain")}">?</summary><div class="small muted">${esc(t("sColLegend"))}</div></details>` : "")
       + `<div style="overflow-x:auto"><table class="evtab"><tr>${hd.map((c, i) => `<th${cls(i)}>${esc(c)}</th>`).join("")}</tr>`
       + rows.filter((r) => !/^-{5,}/.test(r.trim())).map((r) => /did not run/.test(r) ? `<tr><td><b>${esc(r.trim().split(/\s+/)[0])}</b></td><td colspan="10" style="color:var(--bad)">${t("sDidNot")}</td></tr>` : `<tr>${cut(r).map((c, i) => `<td${cls(i)}>${i === 0 ? `<b>${esc(c)}</b>` : esc(c)}</td>`).join("")}</tr>`).join("") + "</table></div>";
     tbl = null;
@@ -1049,7 +1051,7 @@ function viewSoak() {
       <td>${c.gw_seen ? `${c.gw_healed} (${c.heal_per_h}/h)${c.gw_heal_failed ? ` · ✗${c.gw_heal_failed}` : ""}${c.gw_timeouts ? ` · ⏱${c.gw_timeouts}` : ""}${c.gw_bad_crc ? ` · CRC ${c.gw_bad_crc}` : ""}` : "—"}</td></tr>`).join("")}</table></section>` : "";
   S.soak.anP = Math.min(S.soak.anP, Math.max(0, Math.ceil((st.anomalies || []).length / 5) - 1));
   const an = (st.anomalies || []).length ? `<section class="card stack"><h3>${t("sAnoms")}</h3>${st.anomalies.slice(S.soak.anP * 5, S.soak.anP * 5 + 5).map((a) => `<div class="evrow"><span class="when">${esc(a.at)}</span><span><b>${esc(a.cabinet)}</b> ${a.id ? "id " + a.id + " " : ""}${esc(a.kind)} ${esc(a.detail)}</span></div>`).join("")}${st.anomalies.length > 5 ? `<div class="row between"><button class="btn sm" type="button" data-act="soak-an-pg" data-d="-1"${S.soak.anP <= 0 ? " disabled" : ""}>‹ ${t("sNewer")}</button><span class="small muted">${t("sOfN", { a: S.soak.anP * 5 + 1, b: Math.min(S.soak.anP * 5 + 5, st.anomalies.length), n: st.anomalies.length })}</span><button class="btn sm" type="button" data-act="soak-an-pg" data-d="1"${(S.soak.anP + 1) * 5 >= st.anomalies.length ? " disabled" : ""}>${t("sOlder")} ›</button></div>` : ""}</section>` : "";
-  const fin = st.finished && !running ? `<section class="card stack"><h3>${t("sVerdict")}</h3><div class="soakv">${verdictHtml(st.finished.text)}</div></section>` : "";
+  const fin = st.finished && !running ? `<section class="card stack"><h3>${t("sVerdict")}${infoBtn("soakCols")}</h3><div class="soakv">${verdictHtml(st.finished.text, true)}</div></section>` : "";
   const runDate = (stamp) => { const m = /^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})/.exec(stamp || ""); return m ? `${fmtDay(m[1])} ${m[2]}` : stamp; };
   const hist = `<section class="card stack"><h3>${t("sHistory")}</h3>${(k.runs || []).length ? `<div class="soakruns">${k.runs.map((r) => `<div class="soakrun"><div class="row between"><b>${esc(runDate(r.started))}</b>
       ${r.verdict ? `<button class="btn sm" type="button" data-act="soak-view" data-name="${esc(r.verdict)}">${t("sView")}</button>` : ""}</div>
