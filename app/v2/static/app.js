@@ -249,7 +249,7 @@ function viewEvents() {
   const keep = c.retention_days || 90;
   const types = ["coil", "tcp_accept", "tcp_close", "tcp_refused", "bus_quiet", "rtu_heal", "boot", "link_down", "cfg_saved", "sched_reset"];
   return `<h1>${t("events")}</h1>
-    <section class="card stack"><div class="switch"><div class="row" style="gap:6px;align-items:center"><b>${t("collect")}</b>${infoBtn("collect")}${chip}</div>
+    <section class="card stack"><div class="switch"><div class="row" style="gap:6px;align-items:center"><b>${t("collect")}</b>${chip}</div>
       <div class="row" style="gap:10px;align-items:center"><button class="btn sm" data-act="col-keep" type="button" title="${t("colKeep")}" aria-label="${t("colKeep")}">⚙</button>
       <button class="sw" role="switch" aria-checked="${!!c.enabled}" data-act="collector"></button></div></div></section>
     <section class="card stack" style="margin-top:12px"><div class="row">
@@ -548,8 +548,6 @@ function modAutoSync() {
    into the state of that kind (S.ins / S.scan / S.sweep / S.rpt) and repaints only that kind's box. Everything shown lives
    in S, so a full render() (the module auto-read does one) loses nothing. */
 const INS_INFO = {
-  collect: ["ดึงบันทึกจากเกตเวย์ทุกตู้ในรายการตู้ทุก 5 นาที เก็บ 90 วัน เก็บไว้ในเครื่องนี้ตามจำนวนวันที่ตั้งที่ปุ่ม ⚙ ต้องใช้เฟิร์มแวร์เกตเวย์ 1.14.0 ขึ้นไป",
-    "Pulls every saved cabinet's gateway log every 5 minutes and keeps them on this PC for the number of days set with the ⚙ button. Needs gateway firmware 1.14.0 or newer."],
   unlockHow: ["ปลอดภัย: ปลดเฉพาะเมื่อกลอนล็อกอยู่ ลิ้นชักที่เปิดค้างจะไม่ถูกสั่งซ้ำ\nบังคับ: ปลดทันทีโดยไม่ดูสถานะกลอน",
     "Safe: only when the latch reads locked; an open drawer is left alone.\nForce: pulse now, whatever the latch reads."],
   pick: ["ซ้อมขั้นตอนจ่ายยาจริง: ไฟติดพร้อมกันเป็นชุด เหมือนตอนใบสั่งยาสั่งงานจริง คนที่หน้าตู้หยิบช่องไหนก่อนก็ได้ ไฟแต่ละช่องจะดับเมื่อกดปุ่มหน้าช่องนั้น ครบชุดแล้วชุดถัดไปจะติดต่อ พิสูจน์ไฟ ปุ่ม และวงจรยืนยันครบในรอบเดียว ต้องใช้เฟิร์มแวร์โมดูล v3.2.0",
