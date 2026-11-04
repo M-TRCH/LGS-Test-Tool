@@ -128,7 +128,7 @@ const t = (k, p) => { let s = (TXT[lang] && TXT[lang][k]) || TXT.en[k] || k; for
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const $ = (s, r = document) => r.querySelector(s);
 
-let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: new Set(), types: new Set(), client: new Set(), unit: new Set(), from: "", to: "", tfrom: "00:00", tto: "23:59", page: 0, size: 10, facets: null, open: new Set(innerWidth < 900 ? [] : ["gw", "ev"]) }, gw: { id: "", data: null, edits: {}, busy: false }, lab: { id: "", ward: "", serial: "", layout: "", plate: "", opts: null, info: null, busy: false }, fw: { images: null, sel: new Set(), image: "", ota: null, gwId: "", gwImage: "", gwConfirm: "", gwFile: null, gwFileName: "", gw: null, timer: null }, soak: { sel: new Set(), mode: "pharmacy", picks: 2000, hours: 12, startAt: "", status: null, runs: [], verdict: "", timer: null, was: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 },
+let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: new Set(), types: new Set(), client: new Set(), unit: new Set(), from: "", to: "", tfrom: "00:00", tto: "23:59", page: 0, size: 10, facets: null, open: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, lab: { id: "", ward: "", serial: "", layout: "", plate: "", opts: null, info: null, busy: false }, fw: { images: null, sel: new Set(), image: "", ota: null, gwId: "", gwImage: "", gwConfirm: "", gwFile: null, gwFileName: "", gw: null, timer: null }, soak: { sel: new Set(), mode: "pharmacy", picks: 2000, hours: 12, startAt: "", status: null, runs: [], verdict: "", timer: null, was: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 },
   ins: { id: "", layout: null, sel: new Set(), mode: "check", action: "light", unlock: false, identify: false, hold: 1, preset: 1, batch: 4, timeout: 60, display: true, punlock: true, off: "btnshut", order: "ch", running: false, since: 0, res: {}, rows: [], lit: new Set(), closing: new Set(), testing: null, text: "", banner: "", summary: "", file: false, err: "" },
   scan: { running: false, found: [], asked: new Set(), at: 0, text: "", err: "", file: false },
   sweep: { running: false, loops: 1, lights: true, latch: false, text: "", banner: "", phases: [], bad: [], err: "", file: false },
@@ -1612,7 +1612,19 @@ document.addEventListener("input", (ev) => {
     ev.target.style.borderColor = k in S.gw.edits ? "var(--brand)" : ""; gwBar();
   }
 });
-document.addEventListener("toggle", (e) => { const g = e.target.closest && e.target.closest(".fgrp"); if (g) (g.open ? S.ev.open.add(g.dataset.g) : S.ev.open.delete(g.dataset.g)); }, true);
+/* Filter groups: stacked and collapsible on a phone; on a wide screen they are drop-downs in one row, one open at a time,
+   closed again by a click anywhere else or Esc. */
+const evWide = () => matchMedia("(min-width: 900px)").matches;
+function evCloseGroups(except) {
+  for (const g of document.querySelectorAll(".fgrp[open]")) if (g !== except) g.open = false;
+  for (const k of [...S.ev.open]) if (!except || k !== except.dataset.g) S.ev.open.delete(k);
+}
+document.addEventListener("toggle", (e) => {
+  const g = e.target.closest && e.target.closest(".fgrp"); if (!g) return;
+  if (g.open) { if (evWide()) evCloseGroups(g); S.ev.open.add(g.dataset.g); } else S.ev.open.delete(g.dataset.g);
+}, true);
+document.addEventListener("pointerdown", (e) => { if (evWide() && S.ev.open.size && !e.target.closest(".fgrp")) evCloseGroups(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && evWide() && S.ev.open.size) evCloseGroups(); });
 document.addEventListener("change", async (ev) => {
   if (ev.target.id === "modsel") { S.mod.id = ev.target.value; S.mod.data = null; if (S.mod.id) modRead(); else render(); insLayout(); }
   if (ev.target.dataset && ev.target.dataset.sw) { const k = ev.target.dataset.sw, el = ev.target; S.sweep[k] = el.type === "checkbox" ? el.checked : Math.max(1, Math.min(10, +el.value || 1)); }
