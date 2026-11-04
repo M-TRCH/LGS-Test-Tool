@@ -122,6 +122,14 @@ system through a laptop plugged straight into an Opta. So the Opta holds the mod
 - **Keep in the tool**: a complete slot has a button that reads the image back, checks its CRC and keeps it in the tool's own
   `firmware` data folder (`.bin` + `.json` with SHA-256). Kept images appear next to the bundled ones in the module OTA and deposit
   pickers and can be removed; the SHA-256 is checked on every use. `app/kept_images.py`.
+- **The gateway runs the module update itself** ("Gateway runs the module update itself" card): choose cabinets, choose an image from
+  the depot, Start. Each gateway reads the image from its own depot, sends it in the gaps between everybody else's bus traffic
+  (a pick or poll always goes first; the update pauses and re-enters by itself), applies a module only when that module has not
+  been written for a while, and keeps the record of its last two runs. The Tool only starts it and reads status and results
+  (`OTA START/STATUS/RESULT/ABORT` over the unit 255 tunnel), so it can be closed after Start. Status table polls every 10 s
+  while the page is open. Advanced options: quiet time before sending, modules per round, quiet time and write-quiet time before a
+  module reboots. `app/gw_ota.py`, `tools/gwota_selftest.py` (19 cases). Bench numbers in the gateway repo's design note
+  (108 picks answered with 0 failures during an 8-module update; worst added latency one chunk frame).
 - Needs gateway firmware with the depot (LGS-Gateway-Arduino-Opta, subfunctions 0x20-0x24 of the unit 255 / FC 0x41 tunnel);
   an older gateway answers "no depot". `app/gw_depot.py`, `tools/depot_selftest.py` (in-memory gateway, 11 cases).
 
