@@ -995,9 +995,21 @@ function verdictPng(txt) {
   const m = verdictModel(txt), body = getComputedStyle(document.body);
   // a picture for a report: always white paper and the light-theme colours, whatever theme the page is in
   const C = { ink: "#1b2430", muted: "#6b7785", line: "#dfe4ea", bg: "#ffffff", ok: "#0f8a4f", warn: "#9a6700", bad: "#c62828", okbg: "#e3f4ea", warnbg: "#fff1d6", badbg: "#fde7e7" };
-  const font = body.fontFamily || "sans-serif", W = 1200, PAD = 28, RH = 32, S = 2;
+  const font = body.fontFamily || "sans-serif", PAD = 28, RH = 32, S = 2;
   const lvlColor = (l) => (l === "bad" ? C.bad : l === "warn" ? C.warn : C.ok);
   const cabW = [170, 60, 70, 96, 60, 60, 60, 76, 76, 60], gwW = [260, 120, 100, 130, 150, 110, 100];
+  // the picture is as wide as its widest table (or note line), not a fixed size: measure first
+  const mc = document.createElement("canvas").getContext("2d");
+  const mw = (str, px, bold) => { mc.font = `${bold ? "600 " : ""}${px}px ${font}`; return mc.measureText(String(str)).width; };
+  const cabBase = cabW.reduce((a, b) => a + b, 0), gwBase = gwW.reduce((a, b) => a + b, 0);
+  const silentW = Math.max(110, ...m.cabs.filter((c) => !c.dnr).map((c) => mw(c.cells[9].v, 14) + 24));
+  const dnrW = Math.max(0, ...m.cabs.filter((c) => c.dnr).map((c) => cabW[0] + mw(t("sDidNot") + (c.note ? " " + c.note : ""), 14, 1) + 16));
+  const noteW = Math.max(0, m.noGw ? mw(t("vNoGw", { names: m.noGw }), 13) : 0, m.wrong !== null ? mw(t("vWrong", { n: m.wrong }), 13) : 0);
+  const titleW = Math.max(mw(t("soak_page"), 22, 1), mw([m.ran ? t("vMeta", { h: m.ran.h, to: m.ran.to }) + (m.ran.early ? " · " + t("vEarly") : "") : "", m.started].filter(Boolean).join(" · "), 13));
+  const tableW = Math.max(cabBase + silentW, gwBase, dnrW, noteW, titleW);
+  const W = Math.ceil(tableW + PAD * 2);
+  cabW.push(tableW - cabBase);                 // the last column takes what is left, so both tables end at the same edge
+  gwW[0] += tableW - gwBase;
   const rows = (m.cabs.length + 1) + (m.gws.length ? m.gws.length + 1 : 0);
   const notes = (m.noGw ? 1 : 0) + (m.wrong !== null ? 1 : 0);
   const H = PAD * 2 + 34 + 26 + 44 + rows * RH + (m.gws.length ? 44 : 0) + notes * 26 + 10;
@@ -1033,7 +1045,7 @@ function verdictPng(txt) {
       y += RH; g.strokeStyle = C.line; g.beginPath(); g.moveTo(PAD, y - 0.5); g.lineTo(PAD + tw, y - 0.5); g.stroke();
     }
   };
-  drawTable(m.cabHead, m.cabs, cabW.concat([W - PAD * 2 - cabW.reduce((a, b) => a + b, 0)]), 1, 10);
+  drawTable(m.cabHead, m.cabs, cabW, 1, 10);
   if (m.gws.length) {
     y += 14; txtAt(t("vGw"), PAD, y + 8, { b: 1, size: 15 }); y += 30;
     drawTable(m.gwHead, m.gws.map((r) => ({ ...r, name: r.name + (r.restart ? "  " + t("vRestart", { n: r.restart }) : "") })), gwW, 1, 7);
