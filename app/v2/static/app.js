@@ -36,7 +36,7 @@ const TXT = {
     sStop: "หยุด", sStopQ: "หยุดการทดสอบที่กำลังรัน? ข้อมูลถึงตอนนี้ถูกเก็บไว้", sRunning: "กำลังรัน", sArmed: "ตั้งเวลาไว้ เริ่มในอีก {t}", sLeft: "เหลือ {t}",
     sNoEnd: "ไม่มีเวลาจบ", sCab: "ตู้", sState: "สถานะ", sPass: "รอบ", sReads: "อ่าน", sFails: "พลาด", sRbt: "รีบูต", sWdt: "วอตช์ด็อก", sWorst: "ช้าสุด (ms)", sHeal: "เกตเวย์ซ่อมบัส",
     sClean: "สะอาด", sWarn: "ควรดู", sNotClean: "ไม่สะอาด", sDidNot: "ไม่ได้รัน", sStarting: "กำลังเริ่ม", sAnoms: "เหตุผิดปกติล่าสุด", sNewer: "ใหม่กว่า", sOlder: "เก่ากว่า", sOfN: "{a}–{b} จาก {n}", sNone: "ไม่มี",
-    sVerdict: "สรุปผลรอบล่าสุด", vClean: "สะอาด {a} จาก {b} ตู้", vMeta: "รันนาน {h} ชม. · timeout {to} วินาที", vEarly: "หยุดก่อนเวลา", vGw: "ตัวนับของเกตเวย์", vRestart: "เกตเวย์รีสตาร์ท {n} ครั้ง", vWrong: "เฟรมตอบผิดไอดีที่ถูกทิ้ง: {n} ครั้ง", soakColsTxt: "ตารางบน (โมดูลของแต่ละตู้)\n• mod = จำนวนโมดูล\n• pass = รอบที่อ่านครบทุกตัว\n• reads = จำนวนครั้งที่อ่าน\n• fail = อ่านไม่ได้\n• rbt = โมดูลรีบูต\n• wdt = โมดูลถูกวอตช์ด็อกรีเซ็ต\n• cross = ครั้งที่สลับช่องฮับ\n• worst = ตอบช้าสุด (ms)\n• drop = เฟรมตอบผิดไอดีที่ถูกทิ้ง\n• silent = ไอดีที่ไม่ตอบ\n\nตารางล่าง (ตัวนับของเกตเวย์)\n• ซ่อมได้ = พลาดครั้งแรก แต่เกตเวย์ลองใหม่แล้วอ่านได้\n• ซ่อมไม่ได้ = ลองใหม่แล้วยังไม่ได้\n• timeout สุดท้าย = ไม่มีคำตอบเลย\n• CRC เสีย = ตอบมาแต่ข้อมูลเพี้ยน\n• อื่น ๆ = เฟรมแปลกอื่น\n\nสี\n• เทา = ศูนย์\n• เหลือง = ควรดู\n• แดง = ผิดปกติ\n\nถ้าเฟรมตอบผิดไอดีมาก ให้เพิ่ม timeout ฝั่ง client", sHistory: "รอบที่ผ่านมา", sView: "ดูสรุป", sNoRuns: "ยังไม่มีรอบที่ผ่านมา", sFrames: "เฟรมที่ถูกทิ้ง: {n}",
+    sVerdict: "สรุปผลรอบล่าสุด", vClean: "สะอาด {a} จาก {b} ตู้", vMeta: "รันนาน {h} ชม. · timeout {to} วินาที", vEarly: "หยุดก่อนเวลา", vGw: "ตัวนับของเกตเวย์", vRestart: "เกตเวย์รีสตาร์ท {n} ครั้ง", vWrong: "เฟรมตอบผิดไอดีที่ถูกทิ้ง: {n} ครั้ง", vNoGw: "อ่านตัวนับเกตเวย์ไม่ได้ (ไม่มีคอนโซลหรือเฟิร์มแวร์เก่ากว่า 1.13): {names}", soakColsTxt: "ตารางบน (โมดูลของแต่ละตู้)\n• mod = จำนวนโมดูล\n• pass = รอบที่อ่านครบทุกตัว\n• reads = จำนวนครั้งที่อ่าน\n• fail = อ่านไม่ได้\n• rbt = โมดูลรีบูต\n• wdt = โมดูลถูกวอตช์ด็อกรีเซ็ต\n• cross = ครั้งที่สลับช่องฮับ\n• worst = ตอบช้าสุด (ms)\n• drop = เฟรมตอบผิดไอดีที่ถูกทิ้ง\n• silent = ไอดีที่ไม่ตอบ\n\nตารางล่าง (ตัวนับของเกตเวย์)\n• ซ่อมได้ = พลาดครั้งแรก แต่เกตเวย์ลองใหม่แล้วอ่านได้\n• ซ่อมไม่ได้ = ลองใหม่แล้วยังไม่ได้\n• timeout สุดท้าย = ไม่มีคำตอบเลย\n• CRC เสีย = ตอบมาแต่ข้อมูลเพี้ยน\n• อื่น ๆ = เฟรมแปลกอื่น\n\nสี\n• เทา = ศูนย์\n• เหลือง = ควรดู\n• แดง = ผิดปกติ\n\nถ้าเฟรมตอบผิดไอดีมาก ให้เพิ่ม timeout ฝั่ง client", sHistory: "รอบที่ผ่านมา", sView: "ดูสรุป", sNoRuns: "ยังไม่มีรอบที่ผ่านมา", sFrames: "เฟรมที่ถูกทิ้ง: {n}",
     sNeedType: "ตู้ที่ไม่ได้กำหนดชนิดจะเริ่มไม่ได้ ตั้งที่หน้า รายการตู้", sStarted: "เริ่มแล้ว {n} ตู้", sCsv: "ไฟล์ CSV", sLongNote: "รันบนเซิร์ฟเวอร์ ปิดหน้านี้ได้ ผลเก็บใน data/exports",
     labels_page: "ป้าย", firmware_page: "เฟิร์มแวร์", lbWard: "ชื่อวอร์ด (พิมพ์บนป้าย)", lbSerial: "ซีเรียลจากคลัง (ไม่เก็บ)", lbLayout: "แบบป้าย", lbPlate: "กรอบ",
     lbPreview: "ดูตัวอย่างข้อมูล", lbDownload: "ดาวน์โหลด .lbx", expCfg: "ส่งออก config", impCfg: "นำเข้า config", impDone: "นำเข้า {n} ค่า (ยังไม่บันทึก ตรวจแล้วกดบันทึกลงเกตเวย์)", impNone: "ไม่มีค่าที่ต่างจากเกตเวย์",
@@ -96,7 +96,7 @@ const TXT = {
     sStop: "Stop", sStopQ: "Stop the running soak? Data up to now is kept.", sRunning: "Running", sArmed: "Armed, starts in {t}", sLeft: "{t} left",
     sNoEnd: "no end time", sCab: "Cabinet", sState: "State", sPass: "Passes", sReads: "Reads", sFails: "Fails", sRbt: "Reboots", sWdt: "WDT", sWorst: "Worst ms", sHeal: "Gateway repairs",
     sClean: "clean", sWarn: "look", sNotClean: "not clean", sDidNot: "did not run", sStarting: "starting", sAnoms: "Latest anomalies", sNewer: "Newer", sOlder: "Older", sOfN: "{a}–{b} of {n}", sNone: "none",
-    sVerdict: "Latest run verdict", vClean: "{a} of {b} cabinets clean", vMeta: "ran {h} h · timeout {to} s", vEarly: "stopped early", vGw: "Gateway counters", vRestart: "gateway restarted {n}x", vWrong: "Reply frames discarded as the wrong unit id: {n}", soakColsTxt: "Top table (modules of each cabinet)\n• mod = modules\n• pass = passes that read every module\n• reads = reads\n• fail = failed reads\n• rbt = module reboots\n• wdt = module watchdog resets\n• cross = hub channel crossings\n• worst = slowest reply (ms)\n• drop = reply frames with the wrong unit id, discarded\n• silent = ids that never answered\n\nBottom table (gateway counters)\n• Repaired = missed first try, retried by the gateway and got it\n• Repair failed = retried and still nothing\n• Final timeouts = no reply at all\n• Bad CRC = a reply with damaged data\n• Other = other odd frames\n\nColour\n• grey = zero\n• amber = take a look\n• red = abnormal\n\nIf wrong-id frames are many, raise the client timeout", sHistory: "Past runs", sView: "View verdict", sNoRuns: "No past runs yet", sFrames: "Frames pymodbus discarded: {n}",
+    sVerdict: "Latest run verdict", vClean: "{a} of {b} cabinets clean", vMeta: "ran {h} h · timeout {to} s", vEarly: "stopped early", vGw: "Gateway counters", vRestart: "gateway restarted {n}x", vWrong: "Reply frames discarded as the wrong unit id: {n}", vNoGw: "Gateway counters not available (no console or firmware older than 1.13): {names}", soakColsTxt: "Top table (modules of each cabinet)\n• mod = modules\n• pass = passes that read every module\n• reads = reads\n• fail = failed reads\n• rbt = module reboots\n• wdt = module watchdog resets\n• cross = hub channel crossings\n• worst = slowest reply (ms)\n• drop = reply frames with the wrong unit id, discarded\n• silent = ids that never answered\n\nBottom table (gateway counters)\n• Repaired = missed first try, retried by the gateway and got it\n• Repair failed = retried and still nothing\n• Final timeouts = no reply at all\n• Bad CRC = a reply with damaged data\n• Other = other odd frames\n\nColour\n• grey = zero\n• amber = take a look\n• red = abnormal\n\nIf wrong-id frames are many, raise the client timeout", sHistory: "Past runs", sView: "View verdict", sNoRuns: "No past runs yet", sFrames: "Frames pymodbus discarded: {n}",
     sNeedType: "A cabinet with no type cannot start. Set it on the Sites page.", sStarted: "Started {n} cabinets", sCsv: "CSV files", sLongNote: "Runs on the server: you can close this page. Results go to data/exports.",
     labels_page: "Labels", firmware_page: "Firmware", lbWard: "Ward name (printed)", lbSerial: "Serial from the warehouse (not stored)", lbLayout: "Label layout", lbPlate: "Frame",
     lbPreview: "Preview data", lbDownload: "Download .lbx", expCfg: "Export config", impCfg: "Import config", impDone: "Imported {n} values (not saved yet: review, then Save to gateway)", impNone: "Nothing differs from the gateway",
@@ -920,11 +920,13 @@ function verdictHtml(txt, inCard) {
   const ran = /ran for ([\d.]+) h(\s+\(stopped early\))?\s+client timeout ([\d.]+) s/.exec(lines[1] || "");
   const cleanM = /^(\d+) of (\d+) cabinets completely clean/m.exec(txt);
   const cabs = [], gws = [];
-  let wrong = null;
+  let wrong = null, noGw = "";
   for (const ln of lines) {
     if (/^(cabinet|-{5,})/.test(ln.trim()) || !ln.trim()) continue;
-    let m = /^(Chest-\S+|\S+)\s+(\d+)\s+--\s*did not run/.exec(ln);
-    if (m) { cabs.push({ name: m[1], dnr: true }); continue; }
+    let m = /^(\S+)\s+(\d+)\s+--\s*did not run\s*--\s*(.*)$/.exec(ln);
+    if (m) { cabs.push({ name: m[1], dnr: true, note: m[3].trim() }); continue; }
+    m = /^gateway counters not available[^:]*:\s*(.*)$/.exec(ln);
+    if (m) { noGw = m[1].trim(); continue; }
     m = /^(\S+)\s+(\d+)\s+(\d+)\s+([\d,]+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(.+)$/.exec(ln);
     if (m && !/^\s/.test(ln)) { cabs.push({ name: m[1], mod: m[2], pass: m[3], reads: m[4], fail: num(m[5]), rbt: num(m[6]), wdt: num(m[7]), cross: m[8], worst: num(m[9]), drop: m[10], silent: m[11].trim() }); continue; }
     m = /^\s+(\S+)\s+repaired\s+(\d+)\s+\(([\d.]+)\/h\)\s+repair failed\s+(\d+)\s+final timeouts\s+(\d+)\s+bad crc\s+(\d+)\s+other\s+(\d+)(.*)$/.exec(ln);
@@ -944,7 +946,7 @@ function verdictHtml(txt, inCard) {
   const th = (c, n) => `<th${n ? ' class="num"' : ""}>${esc(c)}</th>`;
   out += `<div style="overflow-x:auto"><table class="evtab"><tr>${th("cabinet")}${["mod", "pass", "reads", "fail", "rbt", "wdt", "cross", "worst", "drop"].map((c) => th(c, 1)).join("")}${th("silent ids")}</tr>`
     + cabs.map((c) => {
-      if (c.dnr) return `<tr><td>${dot("bad")}<b>${esc(c.name)}</b></td><td colspan="10" class="vbad">${t("sDidNot")}</td></tr>`;
+      if (c.dnr) return `<tr><td>${dot("bad")}<b>${esc(c.name)}</b></td><td colspan="10" class="vbad">${t("sDidNot")}${c.note ? ` <span class="small">${esc(c.note)}</span>` : ""}</td></tr>`;
       const bad = c.fail || c.rbt || c.wdt || c.silent !== "none";
       return `<tr class="${bad ? "vrow bad" : ""}"><td>${dot(lvl(bad, c.worst >= 1000))}<b>${esc(c.name)}</b></td><td class="num">${esc(c.mod)}</td><td class="num">${esc(c.pass)}</td><td class="num">${esc(c.reads)}</td>`
         + cell(c.fail, c.fail) + cell(c.rbt, c.rbt) + cell(c.wdt, c.wdt) + `<td class="num">${esc(c.cross)}</td>` + cell(c.worst, false, c.worst >= 1000) + `<td class="num vzero">${esc(c.drop)}</td>`
@@ -959,6 +961,7 @@ function verdictHtml(txt, inCard) {
           + cell(g.rep, false, g.rep) + `<td class="num ${/warn/.test(g.rest) ? "vwarn" : g.rep ? "" : "vzero"}">${esc(g.perh)}</td>` + cell(g.rfail, g.rfail) + cell(g.to, g.to) + cell(g.crc, g.crc) + cell(g.other, false, g.other) + "</tr>";
       }).join("") + "</table></div>";
   }
+  if (noGw) out += `<div class="small vwarn">${t("vNoGw", { names: esc(noGw) })}</div>`;
   if (wrong !== null) out += `<div class="small ${wrong ? "vwarn" : "muted"}">${t("vWrong", { n: wrong })}</div>`;
   void gwBad;
   return out;
