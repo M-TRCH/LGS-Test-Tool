@@ -11,7 +11,7 @@ const TXT = {
     add: "เพิ่มตู้", save: "บันทึก", saved: "บันทึกแล้ว", del: "ลบ", name: "ชื่อตู้", host: "ไอพี / โฮสต์", port: "พอร์ต",
     cabinet: "ชนิดตู้", site: "ไซต์", note: "หมายเหตุ", exportCsv: "ส่งออก CSV", importCsv: "นำเข้า CSV",
     importMerge: "เพิ่มเฉพาะที่ยังไม่มี", importReplace: "แทนที่ทั้งรายการ", imported: "นำเข้า {n} แถว",
-    dupWarn: "ไอพีซ้ำกับแถวอื่น", unsaved: "มีการแก้ที่ยังไม่บันทึก", gateway: "เกตเวย์", days: "ย้อนหลัง", evRange: "ช่วงวันที่", evSize: "ดูทีละ", rangeEnd: "แตะอีกวันเพื่อเลือกเป็นช่วง หรือกดปิดถ้าต้องการวันเดียว", prev: "ก่อนหน้า", next: "ถัดไป", day1: "วันนี้", day7: "7 วัน", day30: "30 วัน", day90: "90 วัน", all: "ทั้งหมด",
+    dupWarn: "ไอพีซ้ำกับแถวอื่น", unsaved: "มีการแก้ที่ยังไม่บันทึก", gateway: "เกตเวย์", days: "ย้อนหลัง", evRange: "ช่วงวันที่", evTime: "ช่วงเวลา", evTimeFrom: "ตั้งแต่", evTimeTo: "ถึง", evAllDay: "ทั้งวัน", evTimeWrap: "เริ่มหลังเวลาสิ้นสุด จึงนับข้ามเที่ยงคืน เช่น 22:00 – 02:00",  evSize: "ดูทีละ", rangeEnd: "แตะอีกวันเพื่อเลือกเป็นช่วง หรือกดปิดถ้าต้องการวันเดียว", prev: "ก่อนหน้า", next: "ถัดไป", day1: "วันนี้", day7: "7 วัน", day30: "30 วัน", day90: "90 วัน", all: "ทั้งหมด",
     search: "ค้นหา (ชื่อ, ไอพี)", noEvents: "ไม่มีเหตุการณ์ในช่วงนี้", noEventsOff: "ยังไม่มีข้อมูล ตัวเก็บเหตุการณ์ปิดอยู่", collect: "เก็บเหตุการณ์อัตโนมัติ",
     dashLights: "สั่งไฟ", dashConn: "เชื่อมต่อ", dashRefused: "ปฏิเสธการเชื่อมต่อ", dashQuiet: "บัสเงียบ", dashHeal: "ซ่อมบัส", dashBoot: "บูต", dashLast: "เหตุการณ์ล่าสุด", dashProblems: "ปัญหา", dashHour: "รายชั่วโมง", dashDay: "รายวัน", dashLightsBy: "จำนวนครั้งที่สั่งไฟ ({u})", dashProblemsBy: "ปัญหา: บัสเงียบ ซ่อมบัส ปฏิเสธการเชื่อมต่อ บูต ({u})", colOff: "ปิดอยู่", colOffNote: "ตัวเก็บเหตุการณ์ปิดอยู่ เปิดได้ที่ ⚙ ตั้งค่า (โหมดขั้นสูง)", colNote: "ดึงบันทึกจากเกตเวย์ทุกตู้ทุก 5 นาที ต้องใช้เฟิร์มแวร์เกตเวย์ 1.14.0 ขึ้นไป", colWait: "รออ่านรอบแรก", colChip: "ปกติ {n}/{total} ตู้", colKeep: "เก็บเหตุการณ์ไว้ในเครื่องนี้", colKeepQ: "เหตุการณ์ที่เก่ากว่า {n} วันจะถูกลบในรอบเก็บถัดไป ดำเนินการต่อไหม?", dayN: "{n} วัน", colLast: "อ่านล่าสุด {at} · ปกติ {n}/{total} ตู้ · ได้เพิ่ม {add} รายการ", colOld: "ยังอ่านไม่ได้ เฟิร์มแวร์ต่ำกว่า 1.14.0: {names}", colErr: "{name}: อ่านไม่สำเร็จ ({e})", evT_coil: "สั่งไฟ", evT_tcp_accept: "เชื่อมต่อ", evT_tcp_close: "ตัดการเชื่อมต่อ", evT_tcp_refused: "ปฏิเสธการเชื่อมต่อ", evT_bus_quiet: "บัสเงียบ", evT_rtu_heal: "ซ่อมบัส", evT_boot: "บูต", evT_link_down: "สายแลนหลุด", evT_cfg_saved: "บันทึกค่า", evT_sched_reset: "รีเซ็ตตามเวลา",
     gateway_page: "เกตเวย์", pick: "เลือกตู้", read: "อ่านค่า", reading: "กำลังอ่าน...",
@@ -71,7 +71,7 @@ const TXT = {
     add: "Add cabinet", save: "Save", saved: "Saved", del: "Delete", name: "Name", host: "IP / host", port: "Port",
     cabinet: "Cabinet type", site: "Site", note: "Note", exportCsv: "Export CSV", importCsv: "Import CSV",
     importMerge: "Add only new rows", importReplace: "Replace the list", imported: "Imported {n} rows",
-    dupWarn: "same address as another row", unsaved: "Unsaved changes", gateway: "Gateway", days: "Range", evRange: "Date range", evSize: "Show", rangeEnd: "Tap another day for a range, or close for a single day", prev: "Previous", next: "Next", day1: "Today", day7: "7 days", day30: "30 days", day90: "90 days", all: "All",
+    dupWarn: "same address as another row", unsaved: "Unsaved changes", gateway: "Gateway", days: "Range", evRange: "Date range", evTime: "Time of day", evTimeFrom: "From", evTimeTo: "To", evAllDay: "All day", evTimeWrap: "From is later than to, so this runs past midnight, e.g. 22:00 – 02:00",  evSize: "Show", rangeEnd: "Tap another day for a range, or close for a single day", prev: "Previous", next: "Next", day1: "Today", day7: "7 days", day30: "30 days", day90: "90 days", all: "All",
     search: "Search (name, IP)", noEvents: "No events in this range", noEventsOff: "No data yet: the event collector is off", collect: "Collect events automatically",
     dashLights: "Light commands", dashConn: "Connections", dashRefused: "Refused", dashQuiet: "Bus quiet", dashHeal: "Bus repairs", dashBoot: "Boots", dashLast: "Last event", dashProblems: "Problems", dashHour: "per hour", dashDay: "per day", dashLightsBy: "Light commands ({u})", dashProblemsBy: "Problems: bus quiet, repairs, refused, boots ({u})", colOff: "Off", colOffNote: "The event collector is off; switch it on in ⚙ Settings (advanced mode).", colNote: "Pulls every gateway's log every 5 minutes; needs gateway firmware 1.14.0 or newer.", colWait: "waiting for the first read", colChip: "{n}/{total} OK", colKeep: "Keep on this PC", colKeepQ: "Events older than {n} days will be deleted at the next collection. Continue?", dayN: "{n} days", colLast: "Last read {at} · {n}/{total} OK · {add} new", colOld: "Not readable, firmware older than 1.14.0: {names}", colErr: "{name}: read failed ({e})", evT_coil: "Coil", evT_tcp_accept: "Connect", evT_tcp_close: "Disconnect", evT_tcp_refused: "Refused", evT_bus_quiet: "Bus quiet", evT_rtu_heal: "Bus repair", evT_boot: "Boot", evT_link_down: "Link down", evT_cfg_saved: "Settings saved", evT_sched_reset: "Scheduled reset",
     gateway_page: "Gateway", pick: "Choose cabinet", read: "Read", reading: "Reading...",
@@ -128,7 +128,7 @@ const t = (k, p) => { let s = (TXT[lang] && TXT[lang][k]) || TXT.en[k] || k; for
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const $ = (s, r = document) => r.querySelector(s);
 
-let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: "", from: "", to: "", page: 0, size: 20, q: "", types: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, lab: { id: "", ward: "", serial: "", layout: "", plate: "", opts: null, info: null, busy: false }, fw: { images: null, sel: new Set(), image: "", ota: null, gwId: "", gwImage: "", gwConfirm: "", gwFile: null, gwFileName: "", gw: null, timer: null }, soak: { sel: new Set(), mode: "pharmacy", picks: 2000, hours: 12, startAt: "", status: null, runs: [], verdict: "", timer: null, was: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 },
+let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: "", from: "", to: "", tfrom: "00:00", tto: "23:59", page: 0, size: 20, q: "", types: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, lab: { id: "", ward: "", serial: "", layout: "", plate: "", opts: null, info: null, busy: false }, fw: { images: null, sel: new Set(), image: "", ota: null, gwId: "", gwImage: "", gwConfirm: "", gwFile: null, gwFileName: "", gw: null, timer: null }, soak: { sel: new Set(), mode: "pharmacy", picks: 2000, hours: 12, startAt: "", status: null, runs: [], verdict: "", timer: null, was: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 },
   ins: { id: "", layout: null, sel: new Set(), mode: "check", action: "light", unlock: false, identify: false, hold: 1, preset: 1, batch: 4, timeout: 60, display: true, punlock: true, off: "btnshut", order: "ch", running: false, since: 0, res: {}, rows: [], lit: new Set(), closing: new Set(), testing: null, text: "", banner: "", summary: "", file: false, err: "" },
   scan: { running: false, found: [], asked: new Set(), at: 0, text: "", err: "", file: false },
   sweep: { running: false, loops: 1, lights: true, latch: false, text: "", banner: "", phases: [], bad: [], err: "", file: false },
@@ -262,7 +262,8 @@ function viewEvents() {
 </div></section>
     <div id="evdash" class="stack"></div>
     <section class="card stack"><div class="row">
-      <div class="field"><label>${t("search")}</label><input id="evq" value="${esc(S.ev.q)}"></div></div>
+      <div class="field"><label>${t("search")}</label><input id="evq" value="${esc(S.ev.q)}"></div>
+      <div class="field"><label>${t("evTime")}</label><button class="rangebtn${timeOn() ? " on" : ""}" id="evtime" type="button" data-act="ev-time" style="min-width:170px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="evtimetxt">${esc(timeText())}</span></button></div></div>
       <div class="seg">${types.map((x) => `<button data-type="${x}" aria-pressed="${S.ev.types.has(x)}" title="${x}">${t("evT_" + x)}</button>`).join("")}</div>
       <div class="row between"><div class="small muted" id="evcount"></div><div class="row" style="gap:10px"><label class="small muted" for="evsize">${t("evSize")}</label><select id="evsize">${[10, 20, 50, 100].map((n) => `<option value="${n}"${n === S.ev.size ? " selected" : ""}>${n}</option>`).join("")}</select><a class="btn" id="evcsv" href="#" download>${t("evExport")}</a></div></div><div id="evlist"></div><div class="row between" id="evpager"></div></section></div>`;
 }
@@ -1251,6 +1252,24 @@ const rangeIs = (n) => S.ev.to === ymd(new Date()) && S.ev.from === ymd(new Date
 function evRangeSync() {
   const x = $("#evrangetxt"); if (x) x.textContent = fmtRange(S.ev.from, S.ev.to);
 }
+const timeOn = () => !(S.ev.tfrom === "00:00" && S.ev.tto === "23:59");
+const timeText = () => (timeOn() ? `${S.ev.tfrom} – ${S.ev.tto}` : t("evAllDay"));
+/* A time-of-day window popup: it applies on every chosen day (03:00–04:00 over a week = that hour each night), and a
+   "from" later than "to" runs past midnight. Like the calendar it holds the choice until it is closed, then applies once. */
+function openTime(from, to, apply) {
+  const d = $("#timepick"), pad = (n) => String(n).padStart(2, "0");
+  const sel = (p, n, v) => `<select data-p="${p}">${Array.from({ length: n }, (_, i) => `<option value="${i}"${i === v ? " selected" : ""}>${pad(i)}</option>`).join("")}</select>`;
+  const [fh, fm] = from.split(":").map(Number), [th, tm] = to.split(":").map(Number);
+  $("#tmtitle").textContent = t("evTime");
+  $("#tmbody").innerHTML = [["evTimeFrom", "f", fh, fm], ["evTimeTo", "t", th, tm]].map(([k, p, h, m]) => `<div class="tmrow"><span class="small muted">${t(k)}</span>${sel(p + "h", 24, h)}<b>:</b>${sel(p + "m", 60, m)}</div>`).join("");
+  const val = () => { const v = (p) => pad(+$(`#tmbody [data-p="${p}"]`).value); return { from: `${v("fh")}:${v("fm")}`, to: `${v("th")}:${v("tm")}` }; };
+  const hint = () => { const x = val(); $("#tmhint").textContent = x.from > x.to ? t("evTimeWrap") : ""; };
+  $("#tmbody").onchange = hint; hint();
+  $("#tmall").textContent = t("evAllDay"); $("#tmall").onclick = () => { for (const [p, v] of [["fh", 0], ["fm", 0], ["th", 23], ["tm", 59]]) $(`#tmbody [data-p="${p}"]`).value = v; hint(); };
+  $("#tmno").textContent = t("close"); $("#tmno").onclick = () => d.close();
+  d.onclose = () => { d.onclose = null; const x = val(); if (x.from !== from || x.to !== to) apply(x); };
+  if (d.showModal) d.showModal(); else d.setAttribute("open", "");
+}
 /* A calendar popup for a from/to range. The popup stays open until the close button (or Esc); choices are only held
    while it is open and `apply({from, to})` runs once, on close, if the range changed. Tap a day for that single day,
    tap a second day to stretch it into a range, or use a shortcut.
@@ -1291,6 +1310,7 @@ function openRange(from, to, min, max, apply) {
 async function loadEvents() {
   try {
     const q = new URLSearchParams({ gw: S.ev.gw, start: S.ev.from, end: S.ev.to, q: S.ev.q, ev: [...S.ev.types].join(",") });
+    if (timeOn()) { q.set("tfrom", S.ev.tfrom); q.set("tto", S.ev.tto); }
     const mine = (loadEvents.n = (loadEvents.n || 0) + 1);
     const r = await api("GET", "/api/v2/events?" + q + "&limit=" + S.ev.size + "&offset=" + S.ev.page * S.ev.size);
     if (mine !== loadEvents.n || !$("#evcount")) return;
@@ -1328,6 +1348,10 @@ document.addEventListener("click", async (ev) => {
   const cmm = ev.target.closest("[data-cmmode]"); if (cmm) { S.cm.mode = cmm.dataset.cmmode; render(); return; }
   const type = ev.target.closest("[data-type]");
   if (type) { const x = type.dataset.type; S.ev.types.has(x) ? S.ev.types.delete(x) : S.ev.types.add(x); type.setAttribute("aria-pressed", S.ev.types.has(x)); S.ev.page = 0; loadEvents(); return; }
+  if (ev.target.closest('[data-act="ev-time"]')) {
+    openTime(S.ev.tfrom, S.ev.tto, (r) => { S.ev.tfrom = r.from; S.ev.tto = r.to; S.ev.page = 0; const b = $("#evtime"); if (b) { b.classList.toggle("on", timeOn()); $("#evtimetxt").textContent = timeText(); } loadEvents(); });
+    return;
+  }
   if (ev.target.closest('[data-act="ev-pick"]')) {
     const keep = (S.me.collector || {}).retention_days || 90, now = new Date();
     openRange(S.ev.from, S.ev.to, ymd(new Date(now.getTime() - 86400000 * Math.max(7, keep))), ymd(now),

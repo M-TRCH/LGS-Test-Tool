@@ -47,8 +47,18 @@ def window(days: int = 1, start: str = "", end: str = "") -> tuple:
     return a.strftime("%Y-%m-%d"), b.strftime("%Y-%m-%d")
 
 
+def time_window(tfrom: str = "", tto: str = ""):
+    """(from, to) as "HH:MM", or None when no time filter applies (both empty, malformed, or the whole day)."""
+    ok = lambda x: len(x) == 5 and x[2] == ":" and x[:2].isdigit() and x[3:].isdigit() and int(x[:2]) < 24 and int(x[3:]) < 60  # noqa: E731
+    a, b = (tfrom or "00:00"), (tto or "23:59")
+    if not (ok(a) and ok(b)) or (a, b) == ("00:00", "23:59"):
+        return None
+    return a, b
+
+
 def query(gw: str = "", days: int = 1, ev: str = "", q: str = "", limit: int = 500,
-          everything: bool = False, start: str = "", end: str = "", offset: int = 0) -> dict:
+          everything: bool = False, start: str = "", end: str = "", offset: int = 0,
+          tfrom: str = "", tto: str = "") -> dict:
     """Newest first. `gw` is a folder name from gateways(); empty = every gateway.
     `everything` lifts the row cap (the screen shows a page; the CSV export wants all);
     `offset` skips that many matches, for paging."""
@@ -56,6 +66,7 @@ def query(gw: str = "", days: int = 1, ev: str = "", q: str = "", limit: int = 5
     limit = 10 ** 9 if everything else max(1, min(int(limit), 2000))
     offset = max(0, int(offset))
     since, until = window(days, start, end)
+    tw = time_window(tfrom, tto)   # a time of day on every chosen day; a later "from" than "to" wraps past midnight
     evs = {e for e in re.split(r"[,\s]+", ev) if e}
     needle = q.strip().lower()
     rows, scanned = [], 0
@@ -78,6 +89,13 @@ def query(gw: str = "", days: int = 1, ev: str = "", q: str = "", limit: int = 5
                     continue
                 if needle and needle not in (r.get("text", "") + " " + r.get("client", "")).lower():
                     continue
+                if tw:
+                    stamp = r.get("t") or ""
+                    if len(stamp) < 16 or stamp[0] != "2":
+                        continue                              # no gateway time on it, so it cannot be placed in a window
+                    hm = stamp[11:16]
+                    if not (tw[0] <= hm <= tw[1] if tw[0] <= tw[1] else hm >= tw[0] or hm <= tw[1]):
+                        continue
                 rows.append(r)
     rows.sort(key=lambda r: (r.get("t") or r.get("collected", ""), r.get("seq", 0)), reverse=True)
     return {"rows": rows[offset:offset + limit], "matched": len(rows), "scanned": scanned, "limit": limit, "offset": offset}
@@ -151,13 +169,14 @@ def summary(gw: str = "", days: int = 1, start: str = "", end: str = "") -> dict
 CSV_COLUMNS = ("t", "gw", "ev", "text", "client", "seq", "up", "a", "p", "collected")
 
 
-def csv_bytes(gw: str = "", days: int = 1, ev: str = "", q: str = "", start: str = "", end: str = "") -> bytes:
+def csv_bytes(gw: str = "", days: int = 1, ev: str = "", q: str = "", start: str = "", end: str = "",
+              tfrom: str = "", tto: str = "") -> bytes:
     """The same filter as the screen, every matching row, oldest first. UTF-8 with a BOM so
     Excel reads the Thai text; a leading =,+,-,@ in any cell is defused so a log line can never
     be read back as a formula."""
     import csv
     import io
-    rows = query(gw, days, ev, q, everything=True, start=start, end=end)["rows"]
+    rows = query(gw, days, ev, q, everything=True, start=start, end=end, tfrom=tfrom, tto=tto)["rows"]
     rows.reverse()
     out = io.StringIO()
     w = csv.writer(out)
