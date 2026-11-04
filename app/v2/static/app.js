@@ -939,7 +939,7 @@ function viewSoak() {
   const step = (n, title, body, extra) => `<div class="istep"><div class="row" style="gap:8px;align-items:center"><span class="inum">${n}</span><b>${title}</b>${extra || ""}</div>${body}</div>`;
   const sel = (id, opts, cur) => `<select id="${id}">${opts.map(([v, l]) => `<option value="${v}"${String(v) === String(cur) ? " selected" : ""}>${l}</option>`).join("")}</select>`;
   const pad = (n) => String(n).padStart(2, "0");
-  const clock = (idh, idm, h, m) => `<div class="row" style="gap:6px;flex-wrap:nowrap"><div style="flex:1;min-width:0">${sel(idh, Array.from({ length: 24 }, (_, i) => [i, pad(i)]), h)}</div><b>:</b><div style="flex:1;min-width:0">${sel(idm, Array.from({ length: 60 }, (_, i) => [i, pad(i)]), m)}</div></div>`;
+  const withClock = (main, show, idh, idm, h, m) => `<div class="row" style="gap:6px;flex-wrap:nowrap"><div style="flex:2;min-width:0">${main}</div>${show ? `<div style="flex:1;min-width:0">${sel(idh, Array.from({ length: 24 }, (_, i) => [i, pad(i)]), h)}</div><b>:</b><div style="flex:1;min-width:0">${sel(idm, Array.from({ length: 60 }, (_, i) => [i, pad(i)]), m)}</div>` : ""}</div>`;
   let head = "";
   if (running) {
     const when = st.starts_in_s != null ? t("sArmed", { t: fmtDur(st.starts_in_s) }) : (st.left_s != null ? t("sLeft", { t: fmtDur(st.left_s) }) : t("sNoEnd"));
@@ -955,9 +955,9 @@ function viewSoak() {
     const planText = t("sPlan", { s: k.startMode === "at" ? soakWhen(plan.start) : t("sNow"), e: plan.end ? soakWhen(plan.end) : t("sEndOnStop") });
     const durOpts = [...SOAK_HOURS.map((h) => [h, t("sHoursN", { n: h })]), ["until", t("sUntilTime")], [0, t("sUntilStop")]];
     const settings = `<div class="fgrid">
-        <div class="field"><label>${t("sStartLbl")}</label>${sel("soakstart", [["now", t("sNow")], ["at", t("sAtTime")]], k.startMode)}${k.startMode === "at" ? clock("soaksh", "soaksm", k.sh, k.sm) : ""}</div>
-        <div class="field"><label>${t("sDur")}</label>${sel("soakdur", durOpts, k.durMode === "until" ? "until" : k.hours)}${k.durMode === "until" ? clock("soakeh", "soakem", k.eh, k.em) : ""}</div>
-        ${k.mode === "pharmacy" ? `<div class="field"><label>${t("sPicks")}${infoBtn("soakPicks")}</label><input id="soakpicks" type="number" min="1" max="200000" value="${k.picks}" style="width:200px"></div>` : ""}</div>`;
+        <div class="field"><label>${t("sStartLbl")}</label>${withClock(sel("soakstart", [["now", t("sNow")], ["at", t("sAtTime")]], k.startMode), k.startMode === "at", "soaksh", "soaksm", k.sh, k.sm)}</div>
+        <div class="field"><label>${t("sDur")}</label>${withClock(sel("soakdur", durOpts, k.durMode === "until" ? "until" : k.hours), k.durMode === "until", "soakeh", "soakem", k.eh, k.em)}</div>
+        ${k.mode === "pharmacy" ? `<div class="field"><label>${t("sPicks")}${infoBtn("soakPicks")}</label><input id="soakpicks" type="number" min="1" max="200000" value="${k.picks}"></div>` : ""}</div>`;
     head = `<section class="card stack">
       ${step(1, t("sStep1"), `<div class="row" style="gap:8px">${modes}</div>`)}
       ${step(2, t("sStep2"), `<div class="row" style="gap:8px"><button class="btn" type="button" data-act="soak-all">${t("sAll")}</button><button class="btn" type="button" data-act="soak-none">${t("insClear")}</button></div>
