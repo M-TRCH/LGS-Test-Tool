@@ -374,6 +374,17 @@ def install(app, cfg, worker) -> None:
         except (ValueError, TypeError) as exc:
             return JSONResponse({"error": str(exc)}, status_code=422)
 
+    @app.post("/api/v2/soak/estimate")
+    async def soak_estimate(request: Request):
+        body = await request.json()
+        ids = set(body.get("ids") or [])
+        chosen = [s for s in sites.load() if s["id"] in ids]
+        try:
+            return soak_api.estimate(chosen, int(body.get("picks") or 2000), float(body.get("dwell_s") or 20),
+                                     max(1, min(8, int(body.get("windows") or 8))))
+        except (ValueError, TypeError) as exc:
+            return JSONResponse({"error": str(exc)}, status_code=422)
+
     @app.post("/api/v2/soak/stop")
     async def soak_stop(request: Request):
         if not _mutating(request):

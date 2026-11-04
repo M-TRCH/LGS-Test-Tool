@@ -708,6 +708,13 @@ class CabinetTally:
     gw_bad_crc: int = 0
     gw_bad_other: int = 0
     gw_rebooted: int = 0
+    # Pharmacy mode only (all zero in a poll run): coil writes made and refused, windows lit so far, picks that found
+    # no dark window, windows lit right now.
+    writes: int = 0
+    write_fails: int = 0
+    picks: int = 0
+    dropped: int = 0
+    lit: int = 0
 
     # Healed first-try misses per hour above which a run is "warn": the
     # gateway is quietly repairing a bus that is not healthy. Chosen against
@@ -756,6 +763,11 @@ class CabinetTally:
             self.gw_bad_crc = inner.gw_bad_crc
             self.gw_bad_other = inner.gw_bad_other
             self.gw_rebooted = inner.gw_rebooted
+            self.writes = inner.writes
+            self.write_fails = inner.write_fails
+            self.picks = inner.picks
+            self.dropped = inner.dropped
+            self.lit = inner.lit
         elif isinstance(inner, soak.SoakAnomaly):
             item = inner.item
             self.kinds[item.kind] += 1

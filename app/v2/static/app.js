@@ -31,7 +31,7 @@ const TXT = {
     mUnlockedAgo: "ปลดล่าสุด {s} วินาทีก่อน", mDisplay: "ตัวเลขบนจอ", na: "ไม่มี", presets: "พรีเซ็ตสี", pLight: "ไฟ", pLightDisp: "ไฟ + เลข", pUnlock: "ปลดกลอน", pUnlockDisp: "ปลดกลอน + เลข", grpLight: "ไฟ", grpLatch: "กลอน", grpDisp: "จอ", grpOther: "อื่น ๆ", cLight: "เปิดไฟ", cLightNum: "เปิดไฟ + เลข", dispOff: "ปิดจอ", qShowAll: "แสดงทั้งหมด", qHidden: "ซ่อนคำสั่งจอและกลอน: โมดูลนี้ไม่มีจอและกลอน", cLightUnlock: "เปิดไฟ + ปลดกลอน", cLightNumUnlock: "เปิดไฟ + เลข + ปลดกลอน", unlockTitle: "ปลดกลอน · เลือกวิธี", unlockSafe: "ปลอดภัย", unlockSafeD: "ปลดเฉพาะเมื่อกลอนล็อกอยู่ ลิ้นชักที่เปิดค้างจะไม่ถูกสั่งซ้ำ", unlockForce: "บังคับ", unlockForceD: "ปลดทันทีโดยไม่ดูสถานะกลอน", colorTitle: "{c} · เลือกสี", colorN: "สี {n}",
     quick: "คำสั่งด่วน", identify: "ระบุตำแหน่ง", allOff: "ดับทั้งหมด", latchSafety: "ปลดกลอน (ปลอดภัย)", latchForce: "ปลดกลอน (บังคับ)", dispPower: "เปิดจอ",
     number: "ตัวเลข", numAsk: "ตัวเลขที่จะแสดงบนจอโมดูล {id}", numRange: "ตัวเลขต้องเป็นจำนวนเต็ม 0 ถึง 9999", writeNumber: "เขียนตัวเลข", cooldownNote: "กลอนต้องเว้น 2.2 วินาทีระหว่างการปลด", sent: "ส่งแล้ว", fires: "ยิงกลอน {c} ครั้ง · {s} วินาที", count: "ครั้ง", seconds: "วินาที",
-    soak_page: "ทดสอบต่อเนื่อง", sStep1: "เลือกแบบการทดสอบ", sStep2: "เลือกตู้", sStep3: "ตั้งค่า", sStep4: "เริ่มทดสอบ", sNoType: "ยังไม่ได้กำหนดชนิดตู้", sStartLbl: "เริ่ม", sNow: "ทันที", sAtTime: "ตั้งเวลา", sDur: "ทดสอบนาน", sHoursN: "{n} ชั่วโมง", sUntilTime: "จนถึงเวลา", sUntilStop: "จนกว่าจะหยุด", sEndOnStop: "เมื่อกดหยุด", sToday: "วันนี้", sTomorrow: "พรุ่งนี้", sPlan: "เริ่ม {s} · จบ {e}", sCabs: "{n} ตู้", sPickOne: "เลือกอย่างน้อยหนึ่งตู้", sPick: "เลือกตู้ที่จะทดสอบ", sAll: "ทั้งหมด", sMode: "โหมด", sPoll: "อ่านอย่างเดียว", sPharm: "จำลองการจ่ายยา",
+    soak_page: "ทดสอบต่อเนื่อง", sDwell: "ค้างไว้ (วินาที)", sWins: "หน้าต่าง", sPicksCol: "การหยิบ", sPicksLive: "หยิบ {n} · ติดอยู่ {lit}", sPicksDropped: "ทิ้ง {n} (ตู้เต็ม)", sConc: "ไฟติดพร้อมกันเฉลี่ย ~{n} จาก {cap} หน้าต่าง (ครั้งต่อวัน ÷ 86,400 × ค้างไว้)", sThin: "แทบไม่เคยติดพร้อมกันสองดวง เพิ่มเวลาค้างไว้เพื่อทดสอบหลายหน้าต่าง", sCrowded: "ตู้จะติดเกือบทั้งตู้ เหมาะทดสอบโหลด ไม่ใช่การใช้งานจริง", sFull: "เวลาค้างไว้นานเกินสำหรับอัตรานี้ ทั้ง {cap} หน้าต่างจะติดค้าง และจะมีการทิ้งครั้งหยิบ", sDuty: "เวลาบัสที่การหยิบใช้ ~{pct}% ของทั้งวัน ({rate} ครั้งต่อวัน × ~4.4 วินาที/ครั้ง เป้าออกแบบ 2,000 ครั้งต่อวัน ≈ 10%)", sDutyHot: "เกินเป้าออกแบบหลายเท่า นี่คือ stress test ไม่ใช่การจำลองการใช้งานจริง", sDutyOver: "บัสตามอัตรานี้ไม่ทัน การทดสอบจะทำได้ต่ำกว่าเป้าและรายงานเอง", sStep1: "เลือกแบบการทดสอบ", sStep2: "เลือกตู้", sStep3: "ตั้งค่า", sStep4: "เริ่มทดสอบ", sNoType: "ยังไม่ได้กำหนดชนิดตู้", sStartLbl: "เริ่ม", sNow: "ทันที", sAtTime: "ตั้งเวลา", sDur: "ทดสอบนาน", sHoursN: "{n} ชั่วโมง", sUntilTime: "จนถึงเวลา", sUntilStop: "จนกว่าจะหยุด", sEndOnStop: "เมื่อกดหยุด", sToday: "วันนี้", sTomorrow: "พรุ่งนี้", sPlan: "เริ่ม {s} · จบ {e}", sCabs: "{n} ตู้", sPickOne: "เลือกอย่างน้อยหนึ่งตู้", sPick: "เลือกตู้ที่จะทดสอบ", sAll: "ทั้งหมด", sMode: "โหมด", sPoll: "อ่านอย่างเดียว", sPharm: "จำลองการจ่ายยา",
     sPicks: "จำนวนครั้งที่จ่ายต่อวัน", sHours: "ชั่วโมง (0 = จนกว่าจะหยุด)", sStartAt: "เริ่มเวลา (เช่น 21:00 เว้นว่าง = ทันที)", sStart: "เริ่มทดสอบ",
     sStop: "หยุด", sStopQ: "หยุดการทดสอบที่กำลังรัน? ข้อมูลถึงตอนนี้ถูกเก็บไว้", sRunning: "กำลังรัน", sArmed: "ตั้งเวลาไว้ เริ่มในอีก {t}", sLeft: "เหลือ {t}",
     sNoEnd: "ไม่มีเวลาจบ", sCab: "ตู้", sState: "สถานะ", sPass: "รอบ", sReads: "อ่าน", sFails: "พลาด", sRbt: "รีบูต", sWdt: "วอตช์ด็อก", sWorst: "ช้าสุด (ms)", sHeal: "เกตเวย์ซ่อมบัส",
@@ -91,7 +91,7 @@ const TXT = {
     mUnlockedAgo: "last unlock {s} s ago", mDisplay: "Display number", na: "n/a", presets: "Colour presets", pLight: "Light", pLightDisp: "Light + number", pUnlock: "Unlock", pUnlockDisp: "Unlock + number", grpLight: "Light", grpLatch: "Latch", grpDisp: "Display", grpOther: "Other", cLight: "Light", cLightNum: "Light + number", dispOff: "Display off", qShowAll: "Show all", qHidden: "Display and latch commands hidden: this module has neither", cLightUnlock: "Light + unlock", cLightNumUnlock: "Light + number + unlock", unlockTitle: "Unlock · choose how", unlockSafe: "Safe", unlockSafeD: "Only when the latch reads locked; an open drawer is left alone", unlockForce: "Force", unlockForceD: "Pulse now, whatever the latch reads", colorTitle: "{c} · pick a colour", colorN: "Colour {n}",
     quick: "Quick commands", identify: "Identify", allOff: "All off", latchSafety: "Unlock (safe)", latchForce: "Unlock (force)", dispPower: "Display on",
     number: "Number", numAsk: "Number to show on module {id}'s display", numRange: "The number must be a whole number from 0 to 9999", writeNumber: "Write number", cooldownNote: "A latch needs 2.2 s between unlocks", sent: "Sent", fires: "{c} fires · {s} s", count: "count", seconds: "seconds",
-    soak_page: "Soak", sStep1: "Choose the test", sStep2: "Choose cabinets", sStep3: "Settings", sStep4: "Run", sNoType: "no cabinet type set", sStartLbl: "Start", sNow: "Now", sAtTime: "At a time", sDur: "Run for", sHoursN: "{n} hours", sUntilTime: "Until a time", sUntilStop: "Until stopped", sEndOnStop: "when you stop it", sToday: "today", sTomorrow: "tomorrow", sPlan: "Starts {s} - ends {e}", sCabs: "{n} cabinet(s)", sPickOne: "Choose at least one cabinet", sPick: "Choose the cabinets to test", sAll: "All", sMode: "Mode", sPoll: "Read only", sPharm: "Pharmacy simulation",
+    soak_page: "Soak", sDwell: "Stays lit (seconds)", sWins: "Windows", sPicksCol: "Picks", sPicksLive: "picks {n} · {lit} lit now", sPicksDropped: "{n} dropped (cabinet full)", sConc: "~{n} of {cap} windows lit at once (picks per day / 86,400 x stays lit)", sThin: "two are almost never lit together; raise the lit time to exercise several windows", sCrowded: "most of the cabinet will be lit: realistic for load, not for a ward", sFull: "the lit time is too long for this rate: all {cap} windows stay lit and picks will be dropped", sDuty: "bus time for picks: ~{pct}% of every day ({rate} per day x ~4.4 s each; the 2,000 a day target is ~10%)", sDutyHot: "several times the design target: this is a stress test, not a simulation", sDutyOver: "the bus cannot keep this rate: the run will fall behind and say so", sStep1: "Choose the test", sStep2: "Choose cabinets", sStep3: "Settings", sStep4: "Run", sNoType: "no cabinet type set", sStartLbl: "Start", sNow: "Now", sAtTime: "At a time", sDur: "Run for", sHoursN: "{n} hours", sUntilTime: "Until a time", sUntilStop: "Until stopped", sEndOnStop: "when you stop it", sToday: "today", sTomorrow: "tomorrow", sPlan: "Starts {s} - ends {e}", sCabs: "{n} cabinet(s)", sPickOne: "Choose at least one cabinet", sPick: "Choose the cabinets to test", sAll: "All", sMode: "Mode", sPoll: "Read only", sPharm: "Pharmacy simulation",
     sPicks: "Picks per day", sHours: "Hours (0 = until stopped)", sStartAt: "Start at (e.g. 21:00, empty = now)", sStart: "Start soak",
     sStop: "Stop", sStopQ: "Stop the running soak? Data up to now is kept.", sRunning: "Running", sArmed: "Armed, starts in {t}", sLeft: "{t} left",
     sNoEnd: "no end time", sCab: "Cabinet", sState: "State", sPass: "Passes", sReads: "Reads", sFails: "Fails", sRbt: "Reboots", sWdt: "WDT", sWorst: "Worst ms", sHeal: "Gateway repairs",
@@ -128,7 +128,7 @@ const t = (k, p) => { let s = (TXT[lang] && TXT[lang][k]) || TXT.en[k] || k; for
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const $ = (s, r = document) => r.querySelector(s);
 
-let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: new Set(), types: new Set(), client: new Set(), unit: new Set(), from: "", to: "", tfrom: "00:00", tto: "23:59", page: 0, size: 10, facets: null, open: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, lab: { id: "", ward: "", serial: "", layout: "", plate: "", opts: null, info: null, busy: false }, fw: { images: null, sel: new Set(), image: "", ota: null, gwId: "", gwImage: "", gwConfirm: "", gwFile: null, gwFileName: "", gw: null, timer: null }, soak: { sel: new Set(), mode: "pharmacy", picks: 2000, durMode: "hours", hours: 8, startMode: "now", sh: 21, sm: 0, eh: 8, em: 0, status: null, runs: [], timer: null, was: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 },
+let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: new Set(), types: new Set(), client: new Set(), unit: new Set(), from: "", to: "", tfrom: "00:00", tto: "23:59", page: 0, size: 10, facets: null, open: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, lab: { id: "", ward: "", serial: "", layout: "", plate: "", opts: null, info: null, busy: false }, fw: { images: null, sel: new Set(), image: "", ota: null, gwId: "", gwImage: "", gwConfirm: "", gwFile: null, gwFileName: "", gw: null, timer: null }, soak: { sel: new Set(), mode: "pharmacy", picks: 2000, dwell: 20, windows: 8, est: null, durMode: "hours", hours: 8, startMode: "now", sh: 21, sm: 0, eh: 8, em: 0, status: null, runs: [], timer: null, was: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 },
   ins: { id: "", layout: null, sel: new Set(), mode: "check", action: "light", unlock: false, identify: false, hold: 1, preset: 1, batch: 4, timeout: 60, display: true, punlock: true, off: "btnshut", order: "ch", running: false, since: 0, res: {}, rows: [], lit: new Set(), closing: new Set(), testing: null, text: "", banner: "", summary: "", file: false, err: "" },
   scan: { running: false, found: [], asked: new Set(), at: 0, text: "", err: "", file: false },
   sweep: { running: false, loops: 1, lights: true, latch: false, text: "", banner: "", phases: [], bad: [], err: "", file: false },
@@ -553,8 +553,12 @@ function modAutoSync() {
    into the state of that kind (S.ins / S.scan / S.sweep / S.rpt) and repaints only that kind's box. Everything shown lives
    in S, so a full render() (the module auto-read does one) loses nothing. */
 const INS_INFO = {
-  soakPicks: ["จำลองการใช้งานจริงของตู้ในโรงพยาบาล: แต่ละครั้งที่จ่ายคือสั่งเปิดไฟหนึ่งช่องแบบสุ่ม ค้างไว้ราว 20 วินาที (เหมือนรอให้ผู้ใช้กดยืนยัน) แล้วดับ ตัวเลขคือจำนวนครั้งต่อตู้ต่อวัน กระจายเท่า ๆ กันตลอดการทดสอบ เช่น 2,000 ครั้งต่อวันคือราวหนึ่งครั้งทุก 43 วินาที ไม่ได้ตั้งใจให้หนักสุดบัส แต่ให้เห็นรูปแบบการใช้งานจริง ใช้เฉพาะโหมดจำลองการจ่ายยา",
-    "Simulates a ward using the cabinet: each pick lights one random slot for about 20 seconds (as if waiting for the user's confirmation) and then clears it. The number is picks per cabinet per day, spread evenly over the run: 2,000 a day is about one every 43 seconds. It is meant to look like real use, not to push the bus to its limit. Pharmacy mode only."],
+  soakDwell: ["ไฟแต่ละช่องค้างกี่วินาทีก่อนถูกสั่งดับ แทนการกดยืนยันบน Tablet ที่จบการหยิบ จำนวนครั้งต่อวันกับเวลาค้างไว้ต้องดูด้วยกัน: ไฟที่ติดพร้อมกันเฉลี่ย = ครั้งต่อวัน ÷ 86,400 × ค้างไว้ (ดูบรรทัดสรุปใต้ช่องกรอก) ที่ค่าเริ่มต้นได้ราว 0.46 ช่อง แทบไม่เคยติดพร้อมกันสองดวง ถ้าอยากทดสอบหลายหน้าต่างพร้อมกันให้เพิ่มเวลาค้างไว้ เช่นเภสัชกรถูกขัดจังหวะแล้วปล่อยไฟค้างไว้หลายนาที",
+    "How long a window stays lit before the simulation clears it, standing in for the tablet confirm that ends a pick. Picks per day and this time belong together: windows lit at once = picks per day / 86,400 x this time (see the line under the fields). At the defaults that is about 0.46, so two are almost never lit together. To exercise several windows at once, raise it, as when a pharmacist is interrupted and leaves a light on for minutes."],
+  soakWins: ["จะสุ่มจากกี่หน้าต่างของแต่ละช่อง 8 สำหรับตู้ mask (หน้าต่าง n = คนที่ n ติดพร้อมกันได้) ส่วนตู้วงแหวน coil ชุดเดียวกันเลือกสี จึงติดได้ทีละดวง",
+    "How many of the eight windows of a slot to draw from. 8 on a mask cabinet, where window n is person n and several can be lit at once. On a ring cabinet the same coils pick a colour, so only one stays lit."],
+  soakPicks: ["จำลองการใช้งานจริงของตู้ในโรงพยาบาล: แต่ละครั้งที่จ่ายคือสั่งเปิดไฟหนึ่งช่องแบบสุ่ม ค้างไว้ราว 20 วินาที (เหมือนรอให้ผู้ใช้กดยืนยัน) แล้วดับ ตัวเลขคือจำนวนครั้งต่อตู้ต่อวัน กระจายเท่า ๆ กันตลอดการทดสอบ เช่น 2,000 ครั้งต่อวันคือราวหนึ่งครั้งทุก 43 วินาที ไม่ได้ตั้งใจให้หนักสุดบัส แต่ให้เห็นรูปแบบการใช้งานจริง สุ่มแบบสับสำรับ ทุกช่องจึงได้จำนวนครั้งเท่ากันตลอดการทดสอบ ถ้าสุ่มแบบธรรมดาจะกระจายไม่เท่ากันและเทียบรายช่องทีหลังไม่ได้ ไม่มีการสั่งกลอนเด็ดขาด ใช้เฉพาะโหมดจำลองการจ่ายยา",
+    "Simulates a ward using the cabinet: each pick lights one random slot for about 20 seconds (as if waiting for the user's confirmation) and then clears it. The number is picks per cabinet per day, spread evenly over the run: 2,000 a day is about one every 43 seconds. It is meant to look like real use, not to push the bus to its limit. Slots are drawn from a shuffled deck, so every slot gets the same number of picks over a run (a plain random draw would spread them unevenly and spoil any per-slot comparison). The latch is never fired. Pharmacy mode only."],
   unlockHow: ["ปลอดภัย: ปลดเฉพาะเมื่อกลอนล็อกอยู่ ลิ้นชักที่เปิดค้างจะไม่ถูกสั่งซ้ำ\nบังคับ: ปลดทันทีโดยไม่ดูสถานะกลอน",
     "Safe: only when the latch reads locked; an open drawer is left alone.\nForce: pulse now, whatever the latch reads."],
   pick: ["ซ้อมขั้นตอนจ่ายยาจริง: ไฟติดพร้อมกันเป็นชุด เหมือนตอนใบสั่งยาสั่งงานจริง คนที่หน้าตู้หยิบช่องไหนก่อนก็ได้ ไฟแต่ละช่องจะดับเมื่อกดปุ่มหน้าช่องนั้น ครบชุดแล้วชุดถัดไปจะติดต่อ พิสูจน์ไฟ ปุ่ม และวงจรยืนยันครบในรอบเดียว ต้องใช้เฟิร์มแวร์โมดูล v3.2.0",
@@ -932,6 +936,34 @@ function soakWhen(d) {
   const day = ymd(d) === ymd(new Date()) ? t("sToday") : ymd(d) === ymd(new Date(Date.now() + 86400000)) ? t("sTomorrow") : fmtDay(ymd(d));
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")} ${day}`;
 }
+/* The two numbers a pharmacy run is judged by before it starts, from the server (same functions as the classic page):
+   windows lit at once = picks/day / 86400 x dwell, against what the smallest chosen cabinet can hold, and the share of
+   every day the bus spends on picks. Colour: grey = fine or thin, green = exercises several windows, amber = a lot, red = too much. */
+function soakCalcHtml() {
+  const e = S.soak.est; if (!e) return "";
+  const line = (text, tone) => `<div class="small" style="color:var(--${tone})">${esc(text)}</div>`;
+  const rate = fmtN(S.soak.picks), pct = Math.round(e.duty * 100);
+  let conc, ct;
+  if (e.concurrent >= e.capacity) { conc = t("sFull", { cap: e.capacity }); ct = "bad"; }
+  else if (e.concurrent >= e.capacity * 0.5) { conc = t("sConc", { n: e.concurrent.toFixed(1), cap: e.capacity }) + " · " + t("sCrowded"); ct = "warn"; }
+  else if (e.concurrent < 1) { conc = t("sConc", { n: e.concurrent.toFixed(2), cap: e.capacity }) + " · " + t("sThin"); ct = "muted"; }
+  else { conc = t("sConc", { n: e.concurrent.toFixed(1), cap: e.capacity }); ct = "ok"; }
+  let duty = t("sDuty", { pct, rate }), dt = "muted";
+  if (e.duty >= 1) { duty += " · " + t("sDutyOver"); dt = "bad"; } else if (e.duty >= 0.25) { duty += " · " + t("sDutyHot"); dt = "warn"; }
+  return line(conc, ct) + line(duty, dt);
+}
+async function soakEstimate() {
+  clearTimeout(soakEstimate.t);
+  soakEstimate.t = setTimeout(async () => {
+    const k = S.soak; if (page !== "soak" || k.mode !== "pharmacy" || !k.sel.size) { k.est = null; const el0 = $("#soakcalc"); if (el0) el0.innerHTML = ""; return; }
+    try {
+      const mine = (soakEstimate.n = (soakEstimate.n || 0) + 1);
+      const r = await api("POST", "/api/v2/soak/estimate", { ids: [...k.sel], picks: k.picks, dwell_s: k.dwell, windows: k.windows });
+      if (mine !== soakEstimate.n) return;
+      k.est = r; const el = $("#soakcalc"); if (el) el.innerHTML = soakCalcHtml();
+    } catch (e) { /* the reading is a convenience; the run does not depend on it */ }
+  }, 250);
+}
 function viewSoak() {
   const k = S.soak, st = k.status || {};
   const running = !!st.running;
@@ -957,7 +989,10 @@ function viewSoak() {
     const settings = `<div class="fgrid">
         <div class="field"><label>${t("sStartLbl")}</label>${withClock(sel("soakstart", [["now", t("sNow")], ["at", t("sAtTime")]], k.startMode), k.startMode === "at", "soaksh", "soaksm", k.sh, k.sm)}</div>
         <div class="field"><label>${t("sDur")}</label>${withClock(sel("soakdur", durOpts, k.durMode === "until" ? "until" : k.hours), k.durMode === "until", "soakeh", "soakem", k.eh, k.em)}</div>
-        ${k.mode === "pharmacy" ? `<div class="field"><label>${t("sPicks")}${infoBtn("soakPicks")}</label><input id="soakpicks" type="number" min="1" max="200000" value="${k.picks}"></div>` : ""}</div>`;
+        ${k.mode === "pharmacy" ? `<div class="field"><label>${t("sPicks")}${infoBtn("soakPicks")}</label><input id="soakpicks" type="number" min="1" max="200000" value="${k.picks}"></div>
+        <div class="field"><label>${t("sDwell")}${infoBtn("soakDwell")}</label><input id="soakdwell" type="number" min="1" max="3600" value="${k.dwell}"></div>
+        <div class="field"><label>${t("sWins")}${infoBtn("soakWins")}</label><input id="soakwins" type="number" min="1" max="8" value="${k.windows}"></div>` : ""}</div>
+      ${k.mode === "pharmacy" ? `<div id="soakcalc" class="stack tight">${soakCalcHtml()}</div>` : ""}`;
     head = `<section class="card stack">
       ${step(1, t("sStep1"), `<div class="row" style="gap:8px">${modes}</div>`)}
       ${step(2, t("sStep2"), `<div class="row" style="gap:8px"><button class="btn" type="button" data-act="soak-all">${t("sAll")}</button><button class="btn" type="button" data-act="soak-none">${t("insClear")}</button></div>
@@ -966,8 +1001,10 @@ function viewSoak() {
       ${step(4, t("sStep4"), `<div class="small muted">${esc(planText)}</div><div class="row" style="gap:8px"><button class="btn primary" type="button" data-act="soak-start">${t("sStart")}</button></div>`)}
     </section>`;
   }
-  const cabs = (st.cabinets || []).length ? `<section class="card" style="overflow-x:auto"><table><tr><th>${t("sCab")}</th><th>${t("sState")}</th><th>${t("sReads")}</th><th>${t("sFails")}</th><th>${t("sRbt")}</th><th>${t("sWdt")}</th><th>${t("sWorst")}</th><th>${t("sHeal")}</th></tr>
-    ${st.cabinets.map((c) => `<tr><td><b>${esc(c.name)}</b>${c.note ? `<div class="tiny" style="color:var(--bad)">${esc(c.note)}</div>` : ""}</td><td>${chip(c.state)}</td><td>${c.reads.toLocaleString()}</td><td>${c.fails}</td><td>${c.reboots}</td><td>${c.watchdogs}</td><td>${c.worst_ms}</td>
+  const pharm = (st.cabinets || []).some((c) => c.writes || c.picks);
+  const picksCell = (c) => `${t("sPicksLive", { n: fmtN(c.picks), lit: c.lit })}${c.dropped ? ` · ${t("sPicksDropped", { n: c.dropped })}` : ""}${c.write_fails ? ` · ✗${c.write_fails}` : ""}`;
+  const cabs = (st.cabinets || []).length ? `<section class="card" style="overflow-x:auto"><table><tr><th>${t("sCab")}</th><th>${t("sState")}</th><th>${t("sReads")}</th>${pharm ? `<th>${t("sPicksCol")}</th>` : ""}<th>${t("sFails")}</th><th>${t("sRbt")}</th><th>${t("sWdt")}</th><th>${t("sWorst")}</th><th>${t("sHeal")}</th></tr>
+    ${st.cabinets.map((c) => `<tr><td><b>${esc(c.name)}</b>${c.note ? `<div class="tiny" style="color:var(--bad)">${esc(c.note)}</div>` : ""}</td><td>${chip(c.state)}</td><td>${c.reads.toLocaleString()}</td>${pharm ? `<td>${picksCell(c)}</td>` : ""}<td>${c.fails}</td><td>${c.reboots}</td><td>${c.watchdogs}</td><td>${c.worst_ms}</td>
       <td>${c.gw_seen ? `${c.gw_healed} (${c.heal_per_h}/h)${c.gw_heal_failed ? ` · ✗${c.gw_heal_failed}` : ""}${c.gw_timeouts ? ` · ⏱${c.gw_timeouts}` : ""}${c.gw_bad_crc ? ` · CRC ${c.gw_bad_crc}` : ""}` : "—"}</td></tr>`).join("")}</table></section>` : "";
   const an = (st.anomalies || []).length ? `<section class="card stack"><h3>${t("sAnoms")}</h3>${st.anomalies.slice(0, 15).map((a) => `<div class="evrow"><span class="when">${esc(a.at)}</span><span><b>${esc(a.cabinet)}</b> ${a.id ? "id " + a.id + " " : ""}${esc(a.kind)} ${esc(a.detail)}</span></div>`).join("")}</section>` : "";
   const fin = st.finished && !running ? `<section class="card stack"><h3>${t("sVerdict")}</h3><pre class="mono small" style="white-space:pre-wrap;overflow-x:auto;margin:0">${esc(verdictText(st.finished.text))}</pre></section>` : "";
@@ -1221,6 +1258,7 @@ function render() {
   if (page === "module") { modAutoSync(); insCaption(); insResFit(); insLayout(); jobResume(); }
   if (page === "gateway") jobResume();
   if (page === "soak" && !S.soak.timer) soakSync();
+  if (page === "soak") soakEstimate();
   if (page === "firmware" && !S.fw.timer) fwSync();
   if (page === "commission" && !S.cm.timer && !S.cm.syncing) { S.cm.syncing = true; cmSync().finally(() => { S.cm.syncing = false; }); }
 }
@@ -1491,7 +1529,7 @@ document.addEventListener("click", async (ev) => {
       const k = S.soak;
       if (!k.sel.size) { toast(t("sPickOne")); return; }
       const hh = (n) => String(n).padStart(2, "0");
-      const r = await api("POST", "/api/v2/soak/start", { ids: [...k.sel], mode: k.mode, picks: k.picks, hours: soakPlan().hours, start_at: k.startMode === "at" ? `${hh(k.sh)}:${hh(k.sm)}` : "" });
+      const r = await api("POST", "/api/v2/soak/start", { ids: [...k.sel], mode: k.mode, picks: k.picks, dwell_s: k.dwell, windows: k.windows, hours: soakPlan().hours, start_at: k.startMode === "at" ? `${hh(k.sh)}:${hh(k.sm)}` : "" });
       toast(t("sStarted", { n: r.count }) + (r.warnings && r.warnings.length ? " · " + r.warnings[0] : "")); await soakRefresh(); render();
     } else if (act.dataset.act === "soak-stop") {
       if (!await ask(t("sStopQ"))) return; await api("POST", "/api/v2/soak/stop", {}); S.soak.was = true; await soakRefresh();
@@ -1680,7 +1718,9 @@ document.addEventListener("change", async (ev) => {
   if (ev.target.id === "modall") { S.mod.showAll = ev.target.checked; renderKeep(); }
   if (ev.target.id === "modauto") { S.mod.auto = ev.target.checked; modAutoSync(); }
   if (ev.target.id === "gwsel") { S.gw.id = ev.target.value; S.gw.data = null; S.gw.edits = {}; if (S.gw.id) gwRead(); else render(); }
-  if (ev.target.id === "soakpicks") S.soak.picks = +ev.target.value;
+  if (ev.target.id === "soakpicks") { S.soak.picks = +ev.target.value; soakEstimate(); }
+  if (ev.target.id === "soakdwell") { S.soak.dwell = +ev.target.value; soakEstimate(); }
+  if (ev.target.id === "soakwins") { S.soak.windows = Math.max(1, Math.min(8, +ev.target.value || 8)); soakEstimate(); }
   if (ev.target.id === "soakstart") { S.soak.startMode = ev.target.value; render(); }
   if (ev.target.id === "soakdur") { if (ev.target.value === "until") S.soak.durMode = "until"; else { S.soak.durMode = "hours"; S.soak.hours = +ev.target.value; } render(); }
   for (const [id, key] of [["soaksh", "sh"], ["soaksm", "sm"], ["soakeh", "eh"], ["soakem", "em"]]) if (ev.target.id === id) { S.soak[key] = +ev.target.value; render(); }

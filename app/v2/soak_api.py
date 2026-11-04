@@ -88,6 +88,7 @@ class Live:
                              "gw_seen": t.gw_seen, "gw_healed": t.gw_healed,
                              "gw_heal_failed": t.gw_heal_failed, "gw_timeouts": t.gw_timeouts,
                              "gw_bad_crc": t.gw_bad_crc, "heal_per_h": round(t.heal_per_h, 1),
+                             "writes": t.writes, "write_fails": t.write_fails, "picks": t.picks, "dropped": t.dropped, "lit": t.lit,
                              "state": state, "note": t.note, "csv": self.paths.get(name, "")})
             anomalies = list(self.anomalies)
             finished = self.finished
@@ -103,6 +104,19 @@ class Live:
 
 
 live = Live()
+
+
+def estimate(sites_list: list, picks: int, dwell_s: float, windows: int) -> dict:
+    """What a pharmacy run would look like before it is started, by the same two functions the classic page uses:
+    windows lit at once (picks/day / 86400 x dwell) against the capacity of the SMALLEST chosen cabinet (modules x
+    windows), and the share of every day the bus spends on picks alone."""
+    caps = []
+    for s in sites_list:
+        if s.get("cabinet"):
+            ids = lgs_map.layout_by_key(s["cabinet"]).ids
+            caps.append(soak.estimate_concurrent(ids, windows, picks, dwell_s))
+    conc, cap = min(caps, key=lambda c: c[1]) if caps else (soak.estimate_concurrent([0], windows, picks, dwell_s))
+    return {"concurrent": conc, "capacity": cap, "duty": soak.pick_bus_duty(picks)}
 
 
 def start(worker, sites_list: list, opts: dict) -> dict:
