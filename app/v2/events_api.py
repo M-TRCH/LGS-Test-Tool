@@ -58,6 +58,68 @@ def query(gw: str = "", days: int = 1, ev: str = "", q: str = "", limit: int = 5
     return {"rows": rows[:limit], "matched": len(rows), "scanned": scanned, "limit": limit}
 
 
+# What the dashboard counts: "problems" are the events that mean something went wrong on the bus or the
+# network side; everything else (lights, connects, schedule, config) is activity.
+PROBLEM_EVENTS = ("bus_quiet", "rtu_heal", "tcp_refused", "link_down", "boot")
+TILE_EVENTS = ("coil", "tcp_accept", "tcp_refused", "bus_quiet", "rtu_heal", "boot")
+
+
+def summary(gw: str = "", days: int = 1) -> dict:
+    """Counts for the dashboard over the same window as the list: totals, one row per gateway, and
+    a time series (by hour when the window is two days or less, otherwise by day) of lights and problems.
+    Buckets are the gateway's own timestamps (local wall time), so a bucket is the hour on the cabinet's clock."""
+    root = event_collector.events_root()
+    days = max(1, min(int(days), 366))
+    since = (datetime.now() - timedelta(days=days - 1)).strftime("%Y-%m-%d")
+    hourly = days <= 2
+    totals = {k: 0 for k in TILE_EVENTS}
+    per, buckets = {}, {}
+    dirs = [root / gw] if gw else sorted(p for p in root.iterdir() if p.is_dir())
+    for d in dirs:
+        if not d.is_dir() or d.resolve().parent != root.resolve():
+            continue
+        row = per.setdefault(d.name, {"gw": d.name, "last": "", **{k: 0 for k in TILE_EVENTS}})
+        for f in sorted(d.glob("events-*.jsonl"), reverse=True):
+            if f.name[7:17] < since:
+                break
+            for line in f.read_text(encoding="utf-8").splitlines():
+                try:
+                    r = json.loads(line)
+                except ValueError:
+                    continue
+                ev = r.get("ev", "")
+                if ev in TILE_EVENTS:
+                    totals[ev] += 1
+                    row[ev] += 1
+                t = r.get("t") or r.get("collected", "")
+                if len(t) >= 13 and t[0] == "2":
+                    row["last"] = max(row["last"], t)
+                    key = t[:13] if hourly else t[:10]
+                    if key[:10] >= since:
+                        b = buckets.setdefault(key, {"lights": 0, "problems": 0})
+                        if ev == "coil":
+                            b["lights"] += 1
+                        elif ev in PROBLEM_EVENTS:
+                            b["problems"] += 1
+    series = []
+    if buckets:
+        if hourly:
+            start = datetime.strptime(since + "T00", "%Y-%m-%dT%H")
+            end = datetime.now().replace(minute=0, second=0, microsecond=0)
+            step, fmt = timedelta(hours=1), "%Y-%m-%dT%H"
+        else:
+            start = datetime.strptime(since, "%Y-%m-%d")
+            end = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            step, fmt = timedelta(days=1), "%Y-%m-%d"
+        cur = start
+        while cur <= end:                                        # empty buckets are real zeros, not gaps
+            k = cur.strftime(fmt)
+            series.append({"t": k, **buckets.get(k, {"lights": 0, "problems": 0})})
+            cur += step
+    return {"days": days, "hourly": hourly, "totals": totals,
+            "gateways": sorted(per.values(), key=lambda r: r["gw"]), "series": series}
+
+
 CSV_COLUMNS = ("t", "gw", "ev", "text", "client", "seq", "up", "a", "p", "collected")
 
 
