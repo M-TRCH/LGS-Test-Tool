@@ -31,7 +31,7 @@ const TXT = {
     mUnlockedAgo: "ปลดล่าสุด {s} วินาทีก่อน", mDisplay: "ตัวเลขบนจอ", na: "ไม่มี", presets: "พรีเซ็ตสี", pLight: "ไฟ", pLightDisp: "ไฟ + เลข", pUnlock: "ปลดกลอน", pUnlockDisp: "ปลดกลอน + เลข", grpLight: "ไฟ", grpLatch: "กลอน", grpDisp: "จอ", grpOther: "อื่น ๆ", cLight: "เปิดไฟ", cLightNum: "เปิดไฟ + เลข", dispOff: "ปิดจอ", qShowAll: "แสดงทั้งหมด", qHidden: "ซ่อนคำสั่งจอและกลอน: โมดูลนี้ไม่มีจอและกลอน", cLightUnlock: "เปิดไฟ + ปลดกลอน", cLightNumUnlock: "เปิดไฟ + เลข + ปลดกลอน", unlockTitle: "ปลดกลอน · เลือกวิธี", unlockSafe: "ปลอดภัย", unlockSafeD: "ปลดเฉพาะเมื่อกลอนล็อกอยู่ ลิ้นชักที่เปิดค้างจะไม่ถูกสั่งซ้ำ", unlockForce: "บังคับ", unlockForceD: "ปลดทันทีโดยไม่ดูสถานะกลอน", colorTitle: "{c} · เลือกสี", colorN: "สี {n}",
     quick: "คำสั่งด่วน", identify: "ระบุตำแหน่ง", allOff: "ดับทั้งหมด", latchSafety: "ปลดกลอน (ปลอดภัย)", latchForce: "ปลดกลอน (บังคับ)", dispPower: "เปิดจอ",
     number: "ตัวเลข", numAsk: "ตัวเลขที่จะแสดงบนจอโมดูล {id}", numRange: "ตัวเลขต้องเป็นจำนวนเต็ม 0 ถึง 9999", writeNumber: "เขียนตัวเลข", cooldownNote: "กลอนต้องเว้น 2.2 วินาทีระหว่างการปลด", sent: "ส่งแล้ว", fires: "ยิงกลอน {c} ครั้ง · {s} วินาที", count: "ครั้ง", seconds: "วินาที",
-    soak_page: "ทดสอบต่อเนื่อง", sDwell: "ค้างไว้ (วินาที)", sWins: "หน้าต่าง", sPicksCol: "การหยิบ", sPicksLive: "หยิบ {n} · ติดอยู่ {lit}", sPicksDropped: "ทิ้ง {n} (ตู้เต็ม)", sConc: "ไฟติดพร้อมกันเฉลี่ย {n} ดวง", sThin: "แทบไม่ซ้อนกัน", sCrowded: "เกือบเต็มตู้", sFull: "ไฟจะค้างเต็มตู้ และมีการทิ้งครั้งหยิบ", sDuty: "บัสใช้ ~{pct}% ของวัน", sDutyHot: "สูงกว่าการใช้งานจริงหลายเท่า", sDutyOver: "บัสตามไม่ทัน", sStep1: "เลือกแบบการทดสอบ", sStep2: "เลือกตู้", sStep3: "ตั้งค่า", sStep4: "เริ่มทดสอบ", sNoType: "ยังไม่ได้กำหนดชนิดตู้", sStartLbl: "เริ่ม", sNow: "ทันที", sAtTime: "ตั้งเวลา", sDur: "ทดสอบนาน", sHoursN: "{n} ชั่วโมง", sUntilTime: "จนถึงเวลา", sUntilStop: "จนกว่าจะหยุด", sEndOnStop: "เมื่อกดหยุด", sToday: "วันนี้", sTomorrow: "พรุ่งนี้", sPlan: "เริ่ม {s} · จบ {e}", sCabs: "{n} ตู้", sPickOne: "เลือกอย่างน้อยหนึ่งตู้", sPick: "เลือกตู้ที่จะทดสอบ", sAll: "ทั้งหมด", sMode: "โหมด", sPoll: "อ่านอย่างเดียว", sPharm: "จำลองการจ่ายยา",
+    soak_page: "ทดสอบต่อเนื่อง", sRepaired: "ซ่อมได้", sRepairedH: "ต่อชม.", sRepairFailed: "ซ่อมไม่ได้", sFinalTo: "timeout สุดท้าย", sBadCrc: "CRC เสีย", sOther: "อื่น ๆ", sDwell: "ค้างไว้ (วินาที)", sWins: "หน้าต่าง", sPicksCol: "การหยิบ", sPicksLive: "หยิบ {n} · ติดอยู่ {lit}", sPicksDropped: "ทิ้ง {n} (ตู้เต็ม)", sConc: "ไฟติดพร้อมกันเฉลี่ย {n} ดวง", sThin: "แทบไม่ซ้อนกัน", sCrowded: "เกือบเต็มตู้", sFull: "ไฟจะค้างเต็มตู้ และมีการทิ้งครั้งหยิบ", sDuty: "บัสใช้ ~{pct}% ของวัน", sDutyHot: "สูงกว่าการใช้งานจริงหลายเท่า", sDutyOver: "บัสตามไม่ทัน", sStep1: "เลือกแบบการทดสอบ", sStep2: "เลือกตู้", sStep3: "ตั้งค่า", sStep4: "เริ่มทดสอบ", sNoType: "ยังไม่ได้กำหนดชนิดตู้", sStartLbl: "เริ่ม", sNow: "ทันที", sAtTime: "ตั้งเวลา", sDur: "ทดสอบนาน", sHoursN: "{n} ชั่วโมง", sUntilTime: "จนถึงเวลา", sUntilStop: "จนกว่าจะหยุด", sEndOnStop: "เมื่อกดหยุด", sToday: "วันนี้", sTomorrow: "พรุ่งนี้", sPlan: "เริ่ม {s} · จบ {e}", sCabs: "{n} ตู้", sPickOne: "เลือกอย่างน้อยหนึ่งตู้", sPick: "เลือกตู้ที่จะทดสอบ", sAll: "ทั้งหมด", sMode: "โหมด", sPoll: "อ่านอย่างเดียว", sPharm: "จำลองการจ่ายยา",
     sPicks: "จำนวนครั้งที่จ่ายต่อวัน", sHours: "ชั่วโมง (0 = จนกว่าจะหยุด)", sStartAt: "เริ่มเวลา (เช่น 21:00 เว้นว่าง = ทันที)", sStart: "เริ่มทดสอบ",
     sStop: "หยุด", sStopQ: "หยุดการทดสอบที่กำลังรัน? ข้อมูลถึงตอนนี้ถูกเก็บไว้", sRunning: "กำลังรัน", sArmed: "ตั้งเวลาไว้ เริ่มในอีก {t}", sLeft: "เหลือ {t}",
     sNoEnd: "ไม่มีเวลาจบ", sCab: "ตู้", sState: "สถานะ", sPass: "รอบ", sReads: "อ่าน", sFails: "พลาด", sRbt: "รีบูต", sWdt: "วอตช์ด็อก", sWorst: "ช้าสุด (ms)", sHeal: "เกตเวย์ซ่อมบัส",
@@ -91,7 +91,7 @@ const TXT = {
     mUnlockedAgo: "last unlock {s} s ago", mDisplay: "Display number", na: "n/a", presets: "Colour presets", pLight: "Light", pLightDisp: "Light + number", pUnlock: "Unlock", pUnlockDisp: "Unlock + number", grpLight: "Light", grpLatch: "Latch", grpDisp: "Display", grpOther: "Other", cLight: "Light", cLightNum: "Light + number", dispOff: "Display off", qShowAll: "Show all", qHidden: "Display and latch commands hidden: this module has neither", cLightUnlock: "Light + unlock", cLightNumUnlock: "Light + number + unlock", unlockTitle: "Unlock · choose how", unlockSafe: "Safe", unlockSafeD: "Only when the latch reads locked; an open drawer is left alone", unlockForce: "Force", unlockForceD: "Pulse now, whatever the latch reads", colorTitle: "{c} · pick a colour", colorN: "Colour {n}",
     quick: "Quick commands", identify: "Identify", allOff: "All off", latchSafety: "Unlock (safe)", latchForce: "Unlock (force)", dispPower: "Display on",
     number: "Number", numAsk: "Number to show on module {id}'s display", numRange: "The number must be a whole number from 0 to 9999", writeNumber: "Write number", cooldownNote: "A latch needs 2.2 s between unlocks", sent: "Sent", fires: "{c} fires · {s} s", count: "count", seconds: "seconds",
-    soak_page: "Soak", sDwell: "Stays lit (seconds)", sWins: "Windows", sPicksCol: "Picks", sPicksLive: "picks {n} · {lit} lit now", sPicksDropped: "{n} dropped (cabinet full)", sConc: "{n} lights on at once on average", sThin: "almost never overlapping", sCrowded: "close to the whole cabinet", sFull: "the cabinet stays full and picks will be dropped", sDuty: "bus use ~{pct}% of the day", sDutyHot: "several times real use", sDutyOver: "the bus cannot keep up", sStep1: "Choose the test", sStep2: "Choose cabinets", sStep3: "Settings", sStep4: "Run", sNoType: "no cabinet type set", sStartLbl: "Start", sNow: "Now", sAtTime: "At a time", sDur: "Run for", sHoursN: "{n} hours", sUntilTime: "Until a time", sUntilStop: "Until stopped", sEndOnStop: "when you stop it", sToday: "today", sTomorrow: "tomorrow", sPlan: "Starts {s} - ends {e}", sCabs: "{n} cabinet(s)", sPickOne: "Choose at least one cabinet", sPick: "Choose the cabinets to test", sAll: "All", sMode: "Mode", sPoll: "Read only", sPharm: "Pharmacy simulation",
+    soak_page: "Soak", sRepaired: "Repaired", sRepairedH: "per hour", sRepairFailed: "Repair failed", sFinalTo: "Final timeouts", sBadCrc: "Bad CRC", sOther: "Other", sDwell: "Stays lit (seconds)", sWins: "Windows", sPicksCol: "Picks", sPicksLive: "picks {n} · {lit} lit now", sPicksDropped: "{n} dropped (cabinet full)", sConc: "{n} lights on at once on average", sThin: "almost never overlapping", sCrowded: "close to the whole cabinet", sFull: "the cabinet stays full and picks will be dropped", sDuty: "bus use ~{pct}% of the day", sDutyHot: "several times real use", sDutyOver: "the bus cannot keep up", sStep1: "Choose the test", sStep2: "Choose cabinets", sStep3: "Settings", sStep4: "Run", sNoType: "no cabinet type set", sStartLbl: "Start", sNow: "Now", sAtTime: "At a time", sDur: "Run for", sHoursN: "{n} hours", sUntilTime: "Until a time", sUntilStop: "Until stopped", sEndOnStop: "when you stop it", sToday: "today", sTomorrow: "tomorrow", sPlan: "Starts {s} - ends {e}", sCabs: "{n} cabinet(s)", sPickOne: "Choose at least one cabinet", sPick: "Choose the cabinets to test", sAll: "All", sMode: "Mode", sPoll: "Read only", sPharm: "Pharmacy simulation",
     sPicks: "Picks per day", sHours: "Hours (0 = until stopped)", sStartAt: "Start at (e.g. 21:00, empty = now)", sStart: "Start soak",
     sStop: "Stop", sStopQ: "Stop the running soak? Data up to now is kept.", sRunning: "Running", sArmed: "Armed, starts in {t}", sLeft: "{t} left",
     sNoEnd: "no end time", sCab: "Cabinet", sState: "State", sPass: "Passes", sReads: "Reads", sFails: "Fails", sRbt: "Reboots", sWdt: "WDT", sWorst: "Worst ms", sHeal: "Gateway repairs",
@@ -909,6 +909,41 @@ async function ntpApply() {
 
 const fmtDur = (sec) => { sec = Math.max(0, Math.round(sec)); const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60); return h ? `${h} ${t("h")} ${m} m` : `${m} m ${sec % 60} s`; };
 /* The verdict is a plain-text report written by the engine (and kept as a file for the classic tool), so it stays English on disk; in Thai mode the prose lines are translated here and the fixed-width table is left alone. */
+/* The verdict as the page's own typography: prose lines in the theme font, and the cabinet table (fixed-width columns in the file)
+   as a real table, so no monospace font is needed and the Thai never falls back to a different face. */
+function verdictHtml(txt) {
+  const lines = verdictText(txt).split("\n");
+  let out = "", prose = [], tbl = null;
+  const flushProse = () => { if (prose.length) out += `<div class="vprose">${esc(prose.join("\n").replace(/\n+$/, ""))}</div>`; prose = []; };
+  const flushTable = () => {
+    if (!tbl) return;
+    const cut = (ln) => { const w = ln.trim().split(/\s+/); return [...w.slice(0, 10), w.slice(10).join(" ")]; };
+    const [head, ...rows] = tbl;
+    const hd = cut(head), cls = (i) => (i > 0 && i < 10 ? ' class="num"' : "");
+    out += `<div style="overflow-x:auto"><table class="evtab"><tr>${hd.map((c, i) => `<th${cls(i)}>${esc(c)}</th>`).join("")}</tr>`
+      + rows.filter((r) => !/^-{5,}/.test(r.trim())).map((r) => /did not run/.test(r) ? `<tr><td><b>${esc(r.trim().split(/\s+/)[0])}</b></td><td colspan="10" style="color:var(--bad)">${t("sDidNot")}</td></tr>` : `<tr>${cut(r).map((c, i) => `<td${cls(i)}>${i === 0 ? `<b>${esc(c)}</b>` : esc(c)}</td>`).join("")}</tr>`).join("") + "</table></div>";
+    tbl = null;
+  };
+  // the gateway's own counters, one line per cabinet in the file, are a second table
+  const GW = /^\s+(\S+)\s+(?:ซ่อมได้|repaired)\s+(\d+)\s+\(([\d.]+)\/h\)\s+(?:ซ่อมไม่ได้|repair failed)\s+(\d+)\s+(?:timeout สุดท้าย|final timeouts)\s+(\d+)\s+(?:CRC เสีย|bad crc)\s+(\d+)\s+(?:อื่นๆ|other)\s+(\d+)/;
+  let gw = [];
+  const flushGw = () => {
+    if (!gw.length) return;
+    out += `<div style="overflow-x:auto"><table class="evtab"><tr><th>${t("sCab")}</th><th class="num">${t("sRepaired")}</th><th class="num">${t("sRepairedH")}</th><th class="num">${t("sRepairFailed")}</th><th class="num">${t("sFinalTo")}</th><th class="num">${t("sBadCrc")}</th><th class="num">${t("sOther")}</th></tr>`
+      + gw.map((m) => `<tr><td><b>${esc(m[1])}</b></td>${m.slice(2).map((v) => `<td class="num">${esc(v)}</td>`).join("")}</tr>`).join("") + "</table></div>";
+    gw = [];
+  };
+  for (const ln of lines) {
+    if (tbl) { if (ln.trim()) { tbl.push(ln); continue; } flushTable(); }
+    if (/^cabinet\s/.test(ln)) { flushProse(); tbl = [ln]; continue; }
+    const m = GW.exec(ln);
+    if (m) { flushProse(); gw.push(m); continue; }
+    flushGw();
+    prose.push(ln);
+  }
+  flushProse(); flushTable(); flushGw();
+  return out;
+}
 function verdictText(txt) {
   if (lang !== "th") return txt;
   const map = [[/^fleet soak /, "ทดสอบต่อเนื่องทุกตู้ "], [/ran for ([\d.]+) h/, "รันนาน $1 ชม."], [/client timeout/, "timeout ฝั่ง client"],
@@ -1007,7 +1042,7 @@ function viewSoak() {
     ${st.cabinets.map((c) => `<tr><td><b>${esc(c.name)}</b>${c.note ? `<div class="tiny" style="color:var(--bad)">${esc(c.note)}</div>` : ""}</td><td>${chip(c.state)}</td><td>${c.reads.toLocaleString()}</td>${pharm ? `<td>${picksCell(c)}</td>` : ""}<td>${c.fails}</td><td>${c.reboots}</td><td>${c.watchdogs}</td><td>${c.worst_ms}</td>
       <td>${c.gw_seen ? `${c.gw_healed} (${c.heal_per_h}/h)${c.gw_heal_failed ? ` · ✗${c.gw_heal_failed}` : ""}${c.gw_timeouts ? ` · ⏱${c.gw_timeouts}` : ""}${c.gw_bad_crc ? ` · CRC ${c.gw_bad_crc}` : ""}` : "—"}</td></tr>`).join("")}</table></section>` : "";
   const an = (st.anomalies || []).length ? `<section class="card stack"><h3>${t("sAnoms")}</h3>${st.anomalies.slice(0, 15).map((a) => `<div class="evrow"><span class="when">${esc(a.at)}</span><span><b>${esc(a.cabinet)}</b> ${a.id ? "id " + a.id + " " : ""}${esc(a.kind)} ${esc(a.detail)}</span></div>`).join("")}</section>` : "";
-  const fin = st.finished && !running ? `<section class="card stack"><h3>${t("sVerdict")}</h3><pre class="mono small" style="white-space:pre-wrap;overflow-x:auto;margin:0">${esc(verdictText(st.finished.text))}</pre></section>` : "";
+  const fin = st.finished && !running ? `<section class="card stack"><h3>${t("sVerdict")}</h3><div class="soakv">${verdictHtml(st.finished.text)}</div></section>` : "";
   const runDate = (stamp) => { const m = /^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})/.exec(stamp || ""); return m ? `${fmtDay(m[1])} ${m[2]}` : stamp; };
   const hist = `<section class="card stack"><h3>${t("sHistory")}</h3>${(k.runs || []).length ? `<div class="soakruns">${k.runs.map((r) => `<div class="soakrun"><div class="row between"><b>${esc(runDate(r.started))}</b>
       ${r.verdict ? `<button class="btn sm" type="button" data-act="soak-view" data-name="${esc(r.verdict)}">${t("sView")}</button>` : ""}</div>
@@ -1535,7 +1570,7 @@ document.addEventListener("click", async (ev) => {
       if (!await ask(t("sStopQ"))) return; await api("POST", "/api/v2/soak/stop", {}); S.soak.was = true; await soakRefresh();
     } else if (act.dataset.act === "soak-view") {
       const r = await fetch("/api/v2/soak/file?name=" + encodeURIComponent(act.dataset.name)); const txt = await r.text();
-      $("#infobody").innerHTML = `<pre class="mono small" style="white-space:pre;overflow:auto;margin:0;max-height:70vh">${esc(verdictText(txt))}</pre>`;
+      $("#infobody").innerHTML = `<div class="soakv" style="max-height:70vh;overflow:auto">${verdictHtml(txt)}</div>`;
       const d = $("#info"); d.classList.add("wide"); d.onclose = () => d.classList.remove("wide"); if (d.showModal) d.showModal(); else d.setAttribute("open", "");
     } else if (act.dataset.act === "gw-export") {
       const d = S.gw.data; const out = { format: "lgs-gateway-config", version: 2, gateway: d.info["sys.name"] || "", fw: d.info.fw, exported: new Date().toISOString(), settings: {} };
