@@ -514,6 +514,30 @@ def install(app, cfg, worker) -> None:
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=422)
 
+    @app.post("/api/v2/fw/depot/keep")
+    async def fw_depot_keep(request: Request):
+        """Read one stored image back out of a gateway and keep it in this tool's own folder."""
+        if not _mutating(request):
+            return _forbidden()
+        body = await request.json()
+        site = sites.find(str(body.get("id", "")))
+        if not site:
+            return JSONResponse({"error": "unknown cabinet"}, status_code=422)
+        try:
+            return await asyncio.to_thread(ota_api.keep_from_depot, site, int(body.get("slot", -1)))
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=422)
+
+    @app.post("/api/v2/fw/kept/delete")
+    async def fw_kept_delete(request: Request):
+        if not _mutating(request):
+            return _forbidden()
+        body = await request.json()
+        try:
+            return ota_api.delete_kept(str(body.get("name", "")))
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=422)
+
     @app.post("/api/v2/fw/depot/delete")
     async def fw_depot_delete(request: Request):
         if not _mutating(request):

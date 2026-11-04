@@ -119,6 +119,9 @@ system through a laptop plugged straight into an Opta. So the Opta holds the mod
   before a slot counts as complete.
 - **Update** (server): the module OTA card's image source can be "Read from a gateway"; the Tool reads the image back out of
   one gateway (~7 s, CRC-proven against the gateway's record) and runs the ordinary module OTA from memory.
+- **Keep in the tool**: a complete slot has a button that reads the image back, checks its CRC and keeps it in the tool's own
+  `firmware` data folder (`.bin` + `.json` with SHA-256). Kept images appear next to the bundled ones in the module OTA and deposit
+  pickers and can be removed; the SHA-256 is checked on every use. `app/kept_images.py`.
 - Needs gateway firmware with the depot (LGS-Gateway-Arduino-Opta, subfunctions 0x20-0x24 of the unit 255 / FC 0x41 tunnel);
   an older gateway answers "no depot". `app/gw_depot.py`, `tools/depot_selftest.py` (in-memory gateway, 11 cases).
 
@@ -170,8 +173,9 @@ system through a laptop plugged straight into an Opta. So the Opta holds the mod
   cabinet fault that predates the run). A 72-second run with a pause of 3 s, counters every 2 passes, slow 300 ms and a timeout
   of 8 s printed `client timeout 8.0 s` in its verdict. Server-side validation refuses out-of-range values.
 - **Depot on Chest-Std-11 (2026-11-04):** put module v3.5.5 (61,304 B) through the v2 route and read it back byte-identical to the
-  bundled image; the page lists it and the module OTA card offers it as a source. NOT run yet: a real module OTA from a depot
-  image, and the Firmware page has not been reviewed with the user.
+  bundled image; the page lists it and the module OTA card offers it as a source. **Real module OTA from the depot image on
+  Chest-Std-11 (16:16, 24.2 min, 8 hub channels): 40 of 40 modules updated, all reporting firmware 30505 (v3.5.5) afterwards.**
+  Keep-in-tool and deposit-from-a-kept-image tried against the same gateway. The Firmware page has not been reviewed with the user.
 - Not tested: the picture and raw-data buttons were exercised through their code and endpoints, not clicked as a download in a
   browser; a phone (only a 375 px emulation), the exe build, Docker, the
   events CSV download in a browser, the full module test, the NTP server

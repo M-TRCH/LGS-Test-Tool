@@ -15,7 +15,7 @@ import threading
 import time
 from collections import deque
 
-from .. import firmware_bundle, lgs_map, soak_fleet
+from .. import firmware_bundle, kept_images, lgs_map, soak_fleet
 from . import gateway_api, soak_api
 
 
@@ -23,8 +23,46 @@ def images() -> dict:
     def row(i):
         return {"key": i.key, "version": i.version, "note": i.note, "label": i.label,
                 "source": i.source, "sha256": i.sha256[:12]}
-    return {"module": [row(i) for i in firmware_bundle.for_kind(firmware_bundle.KIND_MODULE_OTA)],
+    # Images the tool kept after reading them out of a gateway are offered next to the bundled ones, under a "kept:" key.
+    kept = [{"key": kept_images.KEY_PREFIX + k["name"], "version": k["name"], "note": "kept from " + k["source"],
+             "label": f"{k['name']} — kept from {k['source']}", "source": k["source"], "sha256": k["sha256"][:12],
+             "kept": True, "size": k["size"]} for k in kept_images.listing()]
+    return {"module": [row(i) for i in firmware_bundle.for_kind(firmware_bundle.KIND_MODULE_OTA)] + kept,
             "gateway": [row(i) for i in firmware_bundle.for_kind(firmware_bundle.KIND_GATEWAY)]}
+
+
+def keep_from_depot(site: dict, slot: int) -> dict:
+    """Read an image back out of a gateway's depot and keep it in this tool's own folder."""
+    name, data = depot_fetch(site, slot)
+    try:
+        meta = kept_images.keep(name, data, site["name"])
+    except kept_images.KeptError as exc:
+        raise ValueError(str(exc))
+    return {"ok": True, "kept": meta, "images": images()}
+
+
+def delete_kept(name: str) -> dict:
+    try:
+        kept_images.delete(name)
+    except kept_images.KeptError as exc:
+        raise ValueError(str(exc))
+    return {"ok": True, "images": images()}
+
+
+def _image_bytes(image_key: str, kind: str) -> tuple:
+    """(filename, bytes) of a bundled release, or of a kept image when the key is `kept:<name>`."""
+    if image_key.startswith(kept_images.KEY_PREFIX):
+        try:
+            return kept_images.load(image_key[len(kept_images.KEY_PREFIX):])
+        except kept_images.KeptError as exc:
+            raise ValueError(str(exc))
+    img = firmware_bundle.by_key(image_key)
+    if img is None or img.kind != kind:
+        raise ValueError("choose a module OTA image" if kind == firmware_bundle.KIND_MODULE_OTA else "choose a gateway image")
+    try:
+        return img.filename, firmware_bundle.load(img)
+    except firmware_bundle.BundleError as exc:
+        raise ValueError(str(exc))
 
 
 # ── module images kept on a gateway ──────────────────────────────────────────
@@ -56,13 +94,7 @@ def depot_put(site: dict, *, image_key: str = "", data: bytes = b"", filename: s
     from .. import gw_depot
     from ..gateway_config import GatewayError
     if image_key:
-        img = firmware_bundle.by_key(image_key)
-        if img is None or img.kind != firmware_bundle.KIND_MODULE_OTA:
-            raise ValueError("choose a module OTA image")
-        try:
-            data, filename = firmware_bundle.load(img), img.filename
-        except firmware_bundle.BundleError as exc:
-            raise ValueError(str(exc))
+        filename, data = _image_bytes(image_key, firmware_bundle.KIND_MODULE_OTA)
     if not data:
         raise ValueError("no image")
     name = gw_depot.depot_name(filename)
@@ -145,11 +177,6 @@ def ota_status(worker) -> dict:
 
 def ota_start(worker, sites_list: list, image_key: str, depot_site: dict = None, depot_slot: int = -1) -> dict:
     """The image is a bundled release (image_key) or one read back out of a gateway's depot (depot_site + depot_slot)."""
-    img = None
-    if depot_site is None:
-        img = firmware_bundle.by_key(image_key)
-        if img is None or img.kind != firmware_bundle.KIND_MODULE_OTA:
-            raise ValueError("choose a module OTA image")
     cabs = []
     for s in sites_list:
         if not s.get("cabinet"):
@@ -169,10 +196,7 @@ def ota_start(worker, sites_list: list, image_key: str, depot_site: dict = None,
         if not 8 <= len(data) <= ota.MAX_IMAGE_SIZE:
             raise ValueError(f"{len(data):,} bytes is not a module image (the module slot holds {ota.MAX_IMAGE_SIZE:,})")
     else:
-        try:
-            data, filename = firmware_bundle.load(img), img.filename         # SHA-256 proven here
-        except firmware_bundle.BundleError as exc:
-            raise ValueError(str(exc))
+        filename, data = _image_bytes(image_key, firmware_bundle.KIND_MODULE_OTA)     # SHA-256 proven here
     ota_log.reset()
     if not worker.start_fleet_ota(cabs, data, filename, soak_api.exports_dir()):
         raise ValueError("an update is already running, or this tool is connected to one of these gateways")
