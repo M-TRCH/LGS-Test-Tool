@@ -11,7 +11,7 @@ const TXT = {
     add: "เพิ่มตู้", save: "บันทึก", saved: "บันทึกแล้ว", del: "ลบ", name: "ชื่อตู้", host: "ไอพี / โฮสต์", port: "พอร์ต",
     cabinet: "ชนิดตู้", site: "ไซต์", note: "หมายเหตุ", exportCsv: "ส่งออก CSV", importCsv: "นำเข้า CSV",
     importMerge: "เพิ่มเฉพาะที่ยังไม่มี", importReplace: "แทนที่ทั้งรายการ", imported: "นำเข้า {n} แถว",
-    dupWarn: "ไอพีซ้ำกับแถวอื่น", unsaved: "มีการแก้ที่ยังไม่บันทึก", gateway: "เกตเวย์", days: "ย้อนหลัง", evRange: "ช่วงวันที่", evSize: "ดูทีละ", rangeStart: "แตะวันที่ต้องการ", rangeEnd: "แตะอีกวันเพื่อเลือกเป็นช่วง หรือกดปิดถ้าต้องการวันเดียว", prev: "ก่อนหน้า", next: "ถัดไป", day1: "วันนี้", day7: "7 วัน", day30: "30 วัน", day90: "90 วัน", all: "ทั้งหมด",
+    dupWarn: "ไอพีซ้ำกับแถวอื่น", unsaved: "มีการแก้ที่ยังไม่บันทึก", gateway: "เกตเวย์", days: "ย้อนหลัง", evRange: "ช่วงวันที่", evSize: "ดูทีละ", rangeEnd: "แตะอีกวันเพื่อเลือกเป็นช่วง หรือกดปิดถ้าต้องการวันเดียว", prev: "ก่อนหน้า", next: "ถัดไป", day1: "วันนี้", day7: "7 วัน", day30: "30 วัน", day90: "90 วัน", all: "ทั้งหมด",
     search: "ค้นหา (ชื่อ, ไอพี)", noEvents: "ไม่มีเหตุการณ์ในช่วงนี้", noEventsOff: "ยังไม่มีข้อมูล ตัวเก็บเหตุการณ์ปิดอยู่", collect: "เก็บเหตุการณ์อัตโนมัติ",
     dashLights: "สั่งไฟ", dashConn: "เชื่อมต่อ", dashRefused: "ปฏิเสธการเชื่อมต่อ", dashQuiet: "บัสเงียบ", dashHeal: "ซ่อมบัส", dashBoot: "บูต", dashLast: "เหตุการณ์ล่าสุด", dashProblems: "ปัญหา", dashHour: "รายชั่วโมง", dashDay: "รายวัน", dashLightsBy: "จำนวนครั้งที่สั่งไฟ ({u})", dashProblemsBy: "ปัญหา: บัสเงียบ ซ่อมบัส ปฏิเสธการเชื่อมต่อ บูต ({u})", colOff: "ปิดอยู่", colOffNote: "ตัวเก็บเหตุการณ์ปิดอยู่ เปิดได้ที่ ⚙ ตั้งค่า (โหมดขั้นสูง)", colNote: "ดึงบันทึกจากเกตเวย์ทุกตู้ทุก 5 นาที ต้องใช้เฟิร์มแวร์เกตเวย์ 1.14.0 ขึ้นไป", colWait: "รออ่านรอบแรก", colChip: "ปกติ {n}/{total} ตู้", colKeep: "เก็บเหตุการณ์ไว้ในเครื่องนี้", colKeepQ: "เหตุการณ์ที่เก่ากว่า {n} วันจะถูกลบในรอบเก็บถัดไป ดำเนินการต่อไหม?", dayN: "{n} วัน", colLast: "อ่านล่าสุด {at} · ปกติ {n}/{total} ตู้ · ได้เพิ่ม {add} รายการ", colOld: "ยังอ่านไม่ได้ เฟิร์มแวร์ต่ำกว่า 1.14.0: {names}", colErr: "{name}: อ่านไม่สำเร็จ ({e})", evT_coil: "สั่งไฟ", evT_tcp_accept: "เชื่อมต่อ", evT_tcp_close: "ตัดการเชื่อมต่อ", evT_tcp_refused: "ปฏิเสธการเชื่อมต่อ", evT_bus_quiet: "บัสเงียบ", evT_rtu_heal: "ซ่อมบัส", evT_boot: "บูต", evT_link_down: "สายแลนหลุด", evT_cfg_saved: "บันทึกค่า", evT_sched_reset: "รีเซ็ตตามเวลา",
     gateway_page: "เกตเวย์", pick: "เลือกตู้", read: "อ่านค่า", reading: "กำลังอ่าน...",
@@ -71,7 +71,7 @@ const TXT = {
     add: "Add cabinet", save: "Save", saved: "Saved", del: "Delete", name: "Name", host: "IP / host", port: "Port",
     cabinet: "Cabinet type", site: "Site", note: "Note", exportCsv: "Export CSV", importCsv: "Import CSV",
     importMerge: "Add only new rows", importReplace: "Replace the list", imported: "Imported {n} rows",
-    dupWarn: "same address as another row", unsaved: "Unsaved changes", gateway: "Gateway", days: "Range", evRange: "Date range", evSize: "Show", rangeStart: "Tap a day", rangeEnd: "Tap another day for a range, or close for a single day", prev: "Previous", next: "Next", day1: "Today", day7: "7 days", day30: "30 days", day90: "90 days", all: "All",
+    dupWarn: "same address as another row", unsaved: "Unsaved changes", gateway: "Gateway", days: "Range", evRange: "Date range", evSize: "Show", rangeEnd: "Tap another day for a range, or close for a single day", prev: "Previous", next: "Next", day1: "Today", day7: "7 days", day30: "30 days", day90: "90 days", all: "All",
     search: "Search (name, IP)", noEvents: "No events in this range", noEventsOff: "No data yet: the event collector is off", collect: "Collect events automatically",
     dashLights: "Light commands", dashConn: "Connections", dashRefused: "Refused", dashQuiet: "Bus quiet", dashHeal: "Bus repairs", dashBoot: "Boots", dashLast: "Last event", dashProblems: "Problems", dashHour: "per hour", dashDay: "per day", dashLightsBy: "Light commands ({u})", dashProblemsBy: "Problems: bus quiet, repairs, refused, boots ({u})", colOff: "Off", colOffNote: "The event collector is off; switch it on in ⚙ Settings (advanced mode).", colNote: "Pulls every gateway's log every 5 minutes; needs gateway firmware 1.14.0 or newer.", colWait: "waiting for the first read", colChip: "{n}/{total} OK", colKeep: "Keep on this PC", colKeepQ: "Events older than {n} days will be deleted at the next collection. Continue?", dayN: "{n} days", colLast: "Last read {at} · {n}/{total} OK · {add} new", colOld: "Not readable, firmware older than 1.14.0: {names}", colErr: "{name}: read failed ({e})", evT_coil: "Coil", evT_tcp_accept: "Connect", evT_tcp_close: "Disconnect", evT_tcp_refused: "Refused", evT_bus_quiet: "Bus quiet", evT_rtu_heal: "Bus repair", evT_boot: "Boot", evT_link_down: "Link down", evT_cfg_saved: "Settings saved", evT_sched_reset: "Scheduled reset",
     gateway_page: "Gateway", pick: "Choose cabinet", read: "Read", reading: "Reading...",
@@ -1251,8 +1251,9 @@ const rangeIs = (n) => S.ev.to === ymd(new Date()) && S.ev.from === ymd(new Date
 function evRangeSync() {
   const x = $("#evrangetxt"); if (x) x.textContent = fmtRange(S.ev.from, S.ev.to);
 }
-/* A calendar popup for a from/to range. Every choice applies at once (`apply({from, to})`) and the popup stays open
-   until the close button: tap a day for that single day, tap a second day to stretch it into a range, or use a shortcut.
+/* A calendar popup for a from/to range. The popup stays open until the close button (or Esc); choices are only held
+   while it is open and `apply({from, to})` runs once, on close, if the range changed. Tap a day for that single day,
+   tap a second day to stretch it into a range, or use a shortcut.
    Only days the collector still keeps are selectable. */
 function openRange(from, to, min, max, apply) {
   const d = $("#rangepick"), g = $("#rpgrid"); let a = from, b = to, step = 0;
@@ -1270,9 +1271,9 @@ function openRange(from, to, min, max, apply) {
     }
     g.innerHTML = h;
     $("#rpshort").innerHTML = [1, 7, 30].map((n) => `<button type="button" data-n="${n}" aria-pressed="${a === ymd(new Date(Date.now() - 86400000 * (n - 1))) && b === max}">${n === 1 ? t("day1") : t("dayN", { n })}</button>`).join("");
-    $("#rphint").textContent = t(step ? "rangeEnd" : "rangeStart");
+    $("#rphint").textContent = step ? t("rangeEnd") : "";
   };
-  const set = (x, y) => { a = x; b = y; apply({ from: a, to: b }); };
+  const set = (x, y) => { a = x; b = y; };
   $("#rpshort").onclick = (e) => { const x = e.target.closest("[data-n]"); if (!x) return; step = 0; set(ymd(new Date(Date.now() - 86400000 * (+x.dataset.n - 1))), max); [vy, vm] = max.split("-").map(Number).slice(0, 2); vm -= 1; paint(); };
   g.onclick = (e) => {
     const x = e.target.closest("[data-d]"); if (!x) return;
@@ -1283,6 +1284,7 @@ function openRange(from, to, min, max, apply) {
   $("#rpprev").onclick = () => { vm -= 1; if (vm < 0) { vm = 11; vy -= 1; } paint(); };
   $("#rpnext").onclick = () => { vm += 1; if (vm > 11) { vm = 0; vy += 1; } paint(); };
   $("#rpno").textContent = t("close"); $("#rpno").onclick = () => d.close();
+  d.onclose = () => { d.onclose = null; if (a !== from || b !== to) apply({ from: a, to: b }); };
   paint();
   if (d.showModal) d.showModal(); else d.setAttribute("open", "");
 }
