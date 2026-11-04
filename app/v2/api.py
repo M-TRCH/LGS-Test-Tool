@@ -396,6 +396,15 @@ def install(app, cfg, worker) -> None:
     async def soak_runs():
         return {"runs": await asyncio.to_thread(soak_api.runs)}
 
+    @app.get("/api/v2/soak/export")
+    async def soak_export(stamp: str, cabs: str = "", format: str = "csv"):
+        try:
+            body, name, mime = await asyncio.to_thread(
+                soak_api.export, stamp, [c for c in cabs.split(",") if c], "zip" if format == "zip" else "csv")
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=404)
+        return Response(body, media_type=mime, headers={"Content-Disposition": f'attachment; filename="{name}"'})
+
     @app.get("/api/v2/soak/file")
     async def soak_file(name: str, download: int = 0):
         try:

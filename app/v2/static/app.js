@@ -35,7 +35,7 @@ const TXT = {
     sPicks: "จำนวนครั้งที่จ่ายต่อวัน", sHours: "ชั่วโมง (0 = จนกว่าจะหยุด)", sStartAt: "เริ่มเวลา (เช่น 21:00 เว้นว่าง = ทันที)", sStart: "เริ่มทดสอบ",
     sStop: "หยุด", sStopQ: "หยุดการทดสอบที่กำลังรัน? ข้อมูลถึงตอนนี้ถูกเก็บไว้", sRunning: "กำลังรัน", sArmed: "ตั้งเวลาไว้ เริ่มในอีก {t}", sLeft: "เหลือ {t}",
     sNoEnd: "ไม่มีเวลาจบ", sCab: "ตู้", sState: "สถานะ", sPass: "รอบ", sReads: "อ่าน", sFails: "พลาด", sRbt: "รีบูต", sWdt: "วอตช์ด็อก", sWorst: "ช้าสุด (ms)", sHeal: "เกตเวย์ซ่อมบัส",
-    sClean: "สะอาด", sWarn: "ควรดู", sNotClean: "ไม่สะอาด", sDidNot: "ไม่ได้รัน", sStarting: "กำลังเริ่ม", sAnoms: "เหตุผิดปกติล่าสุด", sWriteFail: "err {n}", sAdv: "ตัวเลือกขั้นสูง", sGap: "พักระหว่างรอบ (วินาที)", sEvery: "อ่านตัวนับทุกกี่รอบ", sSlow: "บันทึกเมื่อตอบช้ากว่า (ms)", sTmo: "timeout ฝั่ง client (วินาที)", sGapWarn: "0.4–0.9 วินาทีทำให้ฮับพลาดการอ่านครั้งแรก และเกิดผล \"โมดูลช้า\" ปลอม", sTmoWarn: "ต่ำกว่า 6 วินาทีอาจทำให้บัสเหลื่อมกันหลังฮับ", sNewer: "ใหม่กว่า", sOlder: "เก่ากว่า", sOfN: "{a}–{b} จาก {n}", sNone: "ไม่มี",
+    sClean: "สะอาด", sWarn: "ควรดู", sNotClean: "ไม่สะอาด", sDidNot: "ไม่ได้รัน", sStarting: "กำลังเริ่ม", sAnoms: "เหตุผิดปกติล่าสุด", sWriteFail: "err {n}", sAdv: "ตัวเลือกขั้นสูง", sSaveImg: "บันทึกเป็นรูปภาพ", sRawData: "ไฟล์ข้อมูลดิบ", sFmtCsv: "CSV ไฟล์เดียว รวมทุกตู้ที่เลือก", sFmtZip: "ZIP แยกไฟล์ต่อตู้", sDownload: "ดาวน์โหลด", sNoVerdict: "รอบนี้ไม่มีไฟล์สรุป (ไม่ได้จบตามปกติ) แต่ยังมีไฟล์ข้อมูลดิบ", sGap: "พักระหว่างรอบ (วินาที)", sEvery: "อ่านตัวนับทุกกี่รอบ", sSlow: "บันทึกเมื่อตอบช้ากว่า (ms)", sTmo: "timeout ฝั่ง client (วินาที)", sGapWarn: "0.4–0.9 วินาทีทำให้ฮับพลาดการอ่านครั้งแรก และเกิดผล \"โมดูลช้า\" ปลอม", sTmoWarn: "ต่ำกว่า 6 วินาทีอาจทำให้บัสเหลื่อมกันหลังฮับ", sNewer: "ใหม่กว่า", sOlder: "เก่ากว่า", sOfN: "{a}–{b} จาก {n}", sNone: "ไม่มี",
     sVerdict: "สรุปผลรอบล่าสุด", vClean: "สะอาด {a} จาก {b} ตู้", vMeta: "รันนาน {h} ชม. · timeout {to} วินาที", vEarly: "หยุดก่อนเวลา", vGw: "ตัวนับของเกตเวย์", vRestart: "เกตเวย์รีสตาร์ท {n} ครั้ง", vWrong: "เฟรมตอบผิดไอดีถูกทิ้ง {n} ครั้ง", vNoGw: "อ่านตัวนับเกตเวย์ไม่ได้ (ไม่มีคอนโซลหรือเฟิร์มแวร์เก่ากว่า 1.13): {names}", soakColsTxt: "ตารางบน (โมดูลของแต่ละตู้)\n• mod = จำนวนโมดูล\n• pass = รอบที่อ่านครบทุกตัว\n• reads = จำนวนครั้งที่อ่าน\n• fail = อ่านไม่ได้\n• rbt = โมดูลรีบูต\n• wdt = โมดูลถูกวอตช์ด็อกรีเซ็ต\n• cross = ครั้งที่สลับช่องฮับ\n• worst = ตอบช้าสุด (ms)\n• drop = เฟรมตอบผิดไอดีถูกทิ้ง\n• silent = ไอดีที่ไม่ตอบ\n\nตารางล่าง (ตัวนับของเกตเวย์)\n• ซ่อมได้ = พลาดครั้งแรก แต่เกตเวย์ลองใหม่แล้วอ่านได้\n• ซ่อมไม่ได้ = ลองใหม่แล้วยังไม่ได้\n• timeout สุดท้าย = ไม่มีคำตอบเลย\n• CRC เสีย = ตอบมาแต่ข้อมูลเพี้ยน\n• อื่น ๆ = เฟรมแปลกอื่น\n\nสี\n• เทา = ศูนย์\n• เหลือง = ควรดู\n• แดง = ผิดปกติ\n\nถ้าเฟรมตอบผิดไอดีมาก ให้เพิ่ม timeout ฝั่ง client", sHistory: "รอบที่ผ่านมา", sView: "ดูสรุป", sNoRuns: "ยังไม่มีรอบที่ผ่านมา", sFrames: "เฟรมที่ถูกทิ้ง: {n}",
     sNeedType: "ตู้ที่ไม่ได้กำหนดชนิดจะเริ่มไม่ได้ ตั้งที่หน้า รายการตู้", sStarted: "เริ่มแล้ว {n} ตู้", sCsv: "ไฟล์ CSV", sLongNote: "รันบนเซิร์ฟเวอร์ ปิดหน้านี้ได้ ผลเก็บใน data/exports",
     labels_page: "ป้าย", firmware_page: "เฟิร์มแวร์", lbWard: "ชื่อวอร์ด (พิมพ์บนป้าย)", lbSerial: "ซีเรียลจากคลัง (ไม่เก็บ)", lbLayout: "แบบป้าย", lbPlate: "กรอบ",
@@ -95,7 +95,7 @@ const TXT = {
     sPicks: "Picks per day", sHours: "Hours (0 = until stopped)", sStartAt: "Start at (e.g. 21:00, empty = now)", sStart: "Start soak",
     sStop: "Stop", sStopQ: "Stop the running soak? Data up to now is kept.", sRunning: "Running", sArmed: "Armed, starts in {t}", sLeft: "{t} left",
     sNoEnd: "no end time", sCab: "Cabinet", sState: "State", sPass: "Passes", sReads: "Reads", sFails: "Fails", sRbt: "Reboots", sWdt: "WDT", sWorst: "Worst ms", sHeal: "Gateway repairs",
-    sClean: "clean", sWarn: "look", sNotClean: "not clean", sDidNot: "did not run", sStarting: "starting", sAnoms: "Latest anomalies", sWriteFail: "err {n}", sAdv: "Advanced options", sGap: "Pause between passes (s)", sEvery: "Read counters every N passes", sSlow: "Log replies slower than (ms)", sTmo: "Client timeout (s)", sGapWarn: "0.4-0.9 s makes the hub lose first reads and creates false slow-module findings", sTmoWarn: "Under 6 s can leave the bus out of step behind a hub", sNewer: "Newer", sOlder: "Older", sOfN: "{a}–{b} of {n}", sNone: "none",
+    sClean: "clean", sWarn: "look", sNotClean: "not clean", sDidNot: "did not run", sStarting: "starting", sAnoms: "Latest anomalies", sWriteFail: "err {n}", sAdv: "Advanced options", sSaveImg: "Save as image", sRawData: "Raw data files", sFmtCsv: "One CSV, selected cabinets merged", sFmtZip: "ZIP, one file per cabinet", sDownload: "Download", sNoVerdict: "This run has no summary file (it did not end normally), but its raw data is still here", sGap: "Pause between passes (s)", sEvery: "Read counters every N passes", sSlow: "Log replies slower than (ms)", sTmo: "Client timeout (s)", sGapWarn: "0.4-0.9 s makes the hub lose first reads and creates false slow-module findings", sTmoWarn: "Under 6 s can leave the bus out of step behind a hub", sNewer: "Newer", sOlder: "Older", sOfN: "{a}–{b} of {n}", sNone: "none",
     sVerdict: "Latest run verdict", vClean: "{a} of {b} cabinets clean", vMeta: "ran {h} h · timeout {to} s", vEarly: "stopped early", vGw: "Gateway counters", vRestart: "gateway restarted {n}x", vWrong: "Reply frames discarded as the wrong unit id: {n}", vNoGw: "Gateway counters not available (no console or firmware older than 1.13): {names}", soakColsTxt: "Top table (modules of each cabinet)\n• mod = modules\n• pass = passes that read every module\n• reads = reads\n• fail = failed reads\n• rbt = module reboots\n• wdt = module watchdog resets\n• cross = hub channel crossings\n• worst = slowest reply (ms)\n• drop = reply frames with the wrong unit id, discarded\n• silent = ids that never answered\n\nBottom table (gateway counters)\n• Repaired = missed first try, retried by the gateway and got it\n• Repair failed = retried and still nothing\n• Final timeouts = no reply at all\n• Bad CRC = a reply with damaged data\n• Other = other odd frames\n\nColour\n• grey = zero\n• amber = take a look\n• red = abnormal\n\nIf wrong-id frames are many, raise the client timeout", sHistory: "Past runs", sView: "View verdict", sNoRuns: "No past runs yet", sFrames: "Frames pymodbus discarded: {n}",
     sNeedType: "A cabinet with no type cannot start. Set it on the Sites page.", sStarted: "Started {n} cabinets", sCsv: "CSV files", sLongNote: "Runs on the server: you can close this page. Results go to data/exports.",
     labels_page: "Labels", firmware_page: "Firmware", lbWard: "Ward name (printed)", lbSerial: "Serial from the warehouse (not stored)", lbLayout: "Label layout", lbPlate: "Frame",
@@ -128,7 +128,7 @@ const t = (k, p) => { let s = (TXT[lang] && TXT[lang][k]) || TXT.en[k] || k; for
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const $ = (s, r = document) => r.querySelector(s);
 
-let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: new Set(), types: new Set(), client: new Set(), unit: new Set(), from: "", to: "", tfrom: "00:00", tto: "23:59", page: 0, size: 10, facets: null, open: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, lab: { id: "", ward: "", serial: "", layout: "", plate: "", opts: null, info: null, busy: false }, fw: { images: null, sel: new Set(), image: "", ota: null, gwId: "", gwImage: "", gwConfirm: "", gwFile: null, gwFileName: "", gw: null, timer: null }, soak: { gap: 2, every: 5, slow: 400, tmo: 6, adv: false, anP: 0, sel: new Set(), mode: "pharmacy", picks: 2000, dwell: 20, windows: 8, est: null, durMode: "hours", hours: 8, startMode: "now", sh: 21, sm: 0, eh: 8, em: 0, status: null, runs: [], timer: null, was: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 },
+let S = { sites: [], warnings: [], layouts: [], health: {}, checkedAt: "", dirty: false, me: null, ev: { gw: new Set(), types: new Set(), client: new Set(), unit: new Set(), from: "", to: "", tfrom: "00:00", tto: "23:59", page: 0, size: 10, facets: null, open: new Set() }, gw: { id: "", data: null, edits: {}, busy: false }, lab: { id: "", ward: "", serial: "", layout: "", plate: "", opts: null, info: null, busy: false }, fw: { images: null, sel: new Set(), image: "", ota: null, gwId: "", gwImage: "", gwConfirm: "", gwFile: null, gwFileName: "", gw: null, timer: null }, soak: { view: null, gap: 2, every: 5, slow: 400, tmo: 6, adv: false, anP: 0, sel: new Set(), mode: "pharmacy", picks: 2000, dwell: 20, windows: 8, est: null, durMode: "hours", hours: 8, startMode: "now", sh: 21, sm: 0, eh: 8, em: 0, status: null, runs: [], timer: null, was: false }, mod: { id: "", dev: 11, data: null, busy: false, auto: false, stats: false, presets: [], lockUntil: 0 },
   ins: { id: "", layout: null, sel: new Set(), mode: "check", action: "light", unlock: false, identify: false, hold: 1, preset: 1, batch: 4, timeout: 60, display: true, punlock: true, off: "btnshut", order: "ch", running: false, since: 0, res: {}, rows: [], lit: new Set(), closing: new Set(), testing: null, text: "", banner: "", summary: "", file: false, err: "" },
   scan: { running: false, found: [], asked: new Set(), at: 0, text: "", err: "", file: false },
   sweep: { running: false, loops: 1, lights: true, latch: false, text: "", banner: "", phases: [], bad: [], err: "", file: false },
@@ -922,10 +922,10 @@ async function ntpApply() {
 }
 
 const fmtDur = (sec) => { sec = Math.max(0, Math.round(sec)); const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60); return h ? `${h} ${t("h")} ${m} m` : `${m} m ${sec % 60} s`; };
-/* The verdict is a plain-text report written by the engine (and kept as a file for the classic tool). Here it is read back
-   from that text and drawn in the page's own typography: one headline, the cabinet table and the gateway table with colour
-   on what needs a look, and no paragraphs. What the columns mean lives behind the ? button. */
-function verdictHtml(txt, inCard) {
+/* The verdict is a plain-text report written by the engine (and kept as a file for the classic tool). It is read back from
+   that text into a small model (one headline, the cabinet table, the gateway table, a few notes) and drawn twice: as HTML on
+   the page and as a PNG on a canvas. Colour on what needs a look; what the columns mean lives behind the ? button. */
+function verdictModel(txt) {
   const lines = String(txt).split("\n");
   const num = (v) => Number(String(v).replace(/,/g, "")) || 0;
   const head = /^fleet soak\s+(.*)$/.exec(lines[0] || "");
@@ -947,40 +947,116 @@ function verdictHtml(txt, inCard) {
     if (m) wrong = m[1] === "none" ? 0 : Number(m[1]);
   }
   const lvl = (bad, warn) => (bad ? "bad" : warn ? "warn" : "ok");
-  const cell = (v, bad, warn) => `<td class="num ${bad ? "vbad" : warn ? "vwarn" : v === 0 || v === "0" ? "vzero" : ""}">${esc(v)}</td>`;
-  const dot = (l) => `<i class="vdot ${l}"></i>`;
+  const cell = (v, bad, warn) => ({ v: String(v), n: true, cls: bad ? "vbad" : warn ? "vwarn" : v === 0 || v === "0" ? "vzero" : "" });
   const total = cleanM ? Number(cleanM[2]) : cabs.length, clean = cleanM ? Number(cleanM[1]) : 0;
-  const gwBad = gws.some((g) => g.rfail || g.to || g.crc || /NOT CLEAN/.test(g.rest));
-  const hl = clean < total ? "bad" : gws.some((g) => g.rep || g.other || /warn/.test(g.rest)) ? "warn" : "ok";
-  let out = `<div class="vhead"><span class="chip ${hl}"><i class="dot"></i>${t("vClean", { a: clean, b: total })}</span>`
-    + `<span class="small muted">${ran ? t("vMeta", { h: ran[1], to: ran[3] }) + (ran[2] ? " · " + t("vEarly") : "") : ""}${head ? " · " + esc(head[1].trim()) : ""}</span></div>`;
-  if (!inCard && t("soakColsTxt")) out += `<details class="collg"><summary class="why" aria-label="${t("explain")}">?</summary><div class="small muted" style="white-space:pre-line">${esc(t("soakColsTxt"))}</div></details>`;
+  const level = clean < total ? "bad" : gws.some((g) => g.rep || g.other || /warn/.test(g.rest)) ? "warn" : "ok";
+  return {
+    started: head ? head[1].trim() : "", ran: ran ? { h: ran[1], to: ran[3], early: !!ran[2] } : null, clean, total, level, noGw, wrong,
+    cabHead: ["cabinet", "mod", "pass", "reads", "fail", "rbt", "wdt", "cross", "worst", "drop", "silent ids"],
+    cabs: cabs.map((c) => {
+      if (c.dnr) return { name: c.name, level: "bad", rowBad: false, dnr: true, note: c.note, cells: [] };
+      const bad = !!(c.fail || c.rbt || c.wdt || c.silent !== "none");
+      return { name: c.name, level: lvl(bad, c.worst >= 1000), rowBad: bad, cells: [
+        cell(c.mod, 0, 0), cell(c.pass, 0, 0), cell(c.reads, 0, 0), cell(c.fail, c.fail), cell(c.rbt, c.rbt), cell(c.wdt, c.wdt), cell(c.cross, 0, 0),
+        cell(c.worst, false, c.worst >= 1000), { v: c.drop, n: true, cls: "vzero" }, { v: c.silent, n: false, cls: c.silent !== "none" ? "vbad" : "vzero" }] };
+    }),
+    gwHead: [t("sCab"), t("sRepaired"), t("sRepairedH"), t("sRepairFailed"), t("sFinalTo"), t("sBadCrc"), t("sOther")],
+    gws: gws.map((g) => {
+      const bad = !!(g.rfail || g.to || g.crc || /NOT CLEAN/.test(g.rest)), warn = !!(g.rep || g.other || /warn/.test(g.rest));
+      const rb = /gateway restarted (\d+)x/.exec(g.rest);
+      return { name: g.name, level: lvl(bad, warn), rowBad: bad, restart: rb ? rb[1] : "", cells: [
+        cell(g.rep, false, g.rep), { v: g.perh, n: true, cls: /warn/.test(g.rest) ? "vwarn" : g.rep ? "" : "vzero" }, cell(g.rfail, g.rfail), cell(g.to, g.to), cell(g.crc, g.crc), cell(g.other, false, g.other)] };
+    }),
+  };
+}
+function verdictHtml(txt, inCard) {
+  const m = verdictModel(txt);
+  const dot = (l) => `<i class="vdot ${l}"></i>`;
   const th = (c, n) => `<th${n ? ' class="num"' : ""}>${esc(c)}</th>`;
-  out += `<div style="overflow-x:auto"><table class="evtab"><tr>${th("cabinet")}${["mod", "pass", "reads", "fail", "rbt", "wdt", "cross", "worst", "drop"].map((c) => th(c, 1)).join("")}${th("silent ids")}</tr>`
-    + cabs.map((c) => {
-      if (c.dnr) return `<tr><td>${dot("bad")}<b>${esc(c.name)}</b></td><td colspan="10" class="vbad">${t("sDidNot")}${c.note ? ` <span class="small">${esc(c.note)}</span>` : ""}</td></tr>`;
-      const bad = c.fail || c.rbt || c.wdt || c.silent !== "none";
-      return `<tr class="${bad ? "vrow bad" : ""}"><td>${dot(lvl(bad, c.worst >= 1000))}<b>${esc(c.name)}</b></td><td class="num">${esc(c.mod)}</td><td class="num">${esc(c.pass)}</td><td class="num">${esc(c.reads)}</td>`
-        + cell(c.fail, c.fail) + cell(c.rbt, c.rbt) + cell(c.wdt, c.wdt) + `<td class="num">${esc(c.cross)}</td>` + cell(c.worst, false, c.worst >= 1000) + `<td class="num vzero">${esc(c.drop)}</td>`
-        + `<td class="${c.silent !== "none" ? "vbad" : "vzero"}">${esc(c.silent)}</td></tr>`;
-    }).join("") + "</table></div>";
-  if (gws.length) {
-    out += `<div class="vsub">${t("vGw")}</div><div style="overflow-x:auto"><table class="evtab"><tr><th>${t("sCab")}</th><th class="num">${t("sRepaired")}</th><th class="num">${t("sRepairedH")}</th><th class="num">${t("sRepairFailed")}</th><th class="num">${t("sFinalTo")}</th><th class="num">${t("sBadCrc")}</th><th class="num">${t("sOther")}</th></tr>`
-      + gws.map((g) => {
-        const bad = g.rfail || g.to || g.crc || /NOT CLEAN/.test(g.rest), warn = g.rep || g.other || /warn/.test(g.rest);
-        const rb = /gateway restarted (\d+)x/.exec(g.rest);
-        return `<tr class="${bad ? "vrow bad" : ""}"><td>${dot(lvl(bad, warn))}<b>${esc(g.name)}</b>${rb ? ` <span class="small vwarn">${t("vRestart", { n: rb[1] })}</span>` : ""}</td>`
-          + cell(g.rep, false, g.rep) + `<td class="num ${/warn/.test(g.rest) ? "vwarn" : g.rep ? "" : "vzero"}">${esc(g.perh)}</td>` + cell(g.rfail, g.rfail) + cell(g.to, g.to) + cell(g.crc, g.crc) + cell(g.other, false, g.other) + "</tr>";
-      }).join("") + "</table></div>";
+  const td = (c) => `<td class="${c.n ? "num " : ""}${c.cls}">${esc(c.v)}</td>`;
+  let out = `<div class="vhead"><span class="chip ${m.level}"><i class="dot"></i>${t("vClean", { a: m.clean, b: m.total })}</span>`
+    + `<span class="small muted">${m.ran ? t("vMeta", { h: m.ran.h, to: m.ran.to }) + (m.ran.early ? " · " + t("vEarly") : "") : ""}${m.started ? " · " + esc(m.started) : ""}</span></div>`;
+  if (!inCard && t("soakColsTxt")) out += `<details class="collg"><summary class="why" aria-label="${t("explain")}">?</summary><div class="small muted" style="white-space:pre-line">${esc(t("soakColsTxt"))}</div></details>`;
+  out += `<div style="overflow-x:auto"><table class="evtab"><tr>${m.cabHead.map((c, i) => th(c, i > 0 && i < 10)).join("")}</tr>`
+    + m.cabs.map((c) => c.dnr
+      ? `<tr><td>${dot("bad")}<b>${esc(c.name)}</b></td><td colspan="10" class="vbad">${t("sDidNot")}${c.note ? ` <span class="small">${esc(c.note)}</span>` : ""}</td></tr>`
+      : `<tr class="${c.rowBad ? "vrow bad" : ""}"><td>${dot(c.level)}<b>${esc(c.name)}</b></td>${c.cells.map(td).join("")}</tr>`).join("") + "</table></div>";
+  if (m.gws.length) {
+    out += `<div class="vsub">${t("vGw")}</div><div style="overflow-x:auto"><table class="evtab"><tr>${m.gwHead.map((c, i) => th(c, i > 0)).join("")}</tr>`
+      + m.gws.map((g) => `<tr class="${g.rowBad ? "vrow bad" : ""}"><td>${dot(g.level)}<b>${esc(g.name)}</b>${g.restart ? ` <span class="small vwarn">${t("vRestart", { n: g.restart })}</span>` : ""}</td>${g.cells.map(td).join("")}</tr>`).join("") + "</table></div>";
   }
-  if (noGw) out += `<div class="small vwarn">${t("vNoGw", { names: esc(noGw) })}</div>`;
-  if (wrong !== null) out += `<div class="small ${wrong ? "vwarn" : "muted"}">${t("vWrong", { n: wrong })}</div>`;
-  void gwBad;
+  if (m.noGw) out += `<div class="small vwarn">${t("vNoGw", { names: esc(m.noGw) })}</div>`;
+  if (m.wrong !== null) out += `<div class="small ${m.wrong ? "vwarn" : "muted"}">${t("vWrong", { n: m.wrong })}</div>`;
   return out;
+}
+/* The same verdict drawn on a canvas, to save as a picture: the page's own colours and font, two times the size so it stays
+   sharp when pasted into a report. Resolves to a PNG blob. */
+function verdictPng(txt) {
+  const m = verdictModel(txt), cs = getComputedStyle(document.documentElement), body = getComputedStyle(document.body);
+  const v = (n, d) => (cs.getPropertyValue(n).trim() || d);
+  const C = { ink: v("--ink", "#1b2430"), muted: v("--muted", "#6b7785"), line: v("--line", "#dfe4ea"), bg: body.backgroundColor && body.backgroundColor !== "rgba(0, 0, 0, 0)" ? body.backgroundColor : "#ffffff",
+    ok: v("--ok", "#0f8a4f"), warn: v("--warn", "#9a6700"), bad: v("--bad", "#c62828"), okbg: v("--ok-bg", "#e3f4ea"), warnbg: v("--warn-bg", "#fff1d6"), badbg: v("--bad-bg", "#fde7e7") };
+  const font = body.fontFamily || "sans-serif", W = 1200, PAD = 28, RH = 32, S = 2;
+  const lvlColor = (l) => (l === "bad" ? C.bad : l === "warn" ? C.warn : C.ok);
+  const cabW = [170, 60, 70, 96, 60, 60, 60, 76, 76, 60], gwW = [260, 120, 100, 130, 150, 110, 100];
+  const rows = (m.cabs.length + 1) + (m.gws.length ? m.gws.length + 1 : 0);
+  const notes = (m.noGw ? 1 : 0) + (m.wrong !== null ? 1 : 0);
+  const H = PAD * 2 + 34 + 26 + 44 + rows * RH + (m.gws.length ? 44 : 0) + notes * 26 + 10;
+  const cv = document.createElement("canvas"); cv.width = W * S; cv.height = H * S;
+  const g = cv.getContext("2d"); g.scale(S, S); g.textBaseline = "middle";
+  g.fillStyle = C.bg; g.fillRect(0, 0, W, H);
+  const txtAt = (s, x, y, o) => { g.font = `${o && o.b ? "600 " : ""}${(o && o.size) || 14}px ${font}`; g.fillStyle = (o && o.color) || C.ink; g.textAlign = (o && o.align) || "left"; g.fillText(String(s), x, y); };
+  let y = PAD;
+  txtAt(t("soak_page"), PAD, y + 17, { b: 1, size: 22 }); y += 34;
+  txtAt([m.ran ? t("vMeta", { h: m.ran.h, to: m.ran.to }) + (m.ran.early ? " · " + t("vEarly") : "") : "", m.started].filter(Boolean).join(" · "), PAD, y + 8, { size: 13, color: C.muted }); y += 26;
+  const chipTxt = t("vClean", { a: m.clean, b: m.total });
+  g.font = `600 15px ${font}`; const cw = g.measureText(chipTxt).width + 44;
+  g.fillStyle = m.level === "bad" ? C.badbg : m.level === "warn" ? C.warnbg : C.okbg; g.beginPath(); g.roundRect(PAD, y, cw, 32, 16); g.fill();
+  g.fillStyle = lvlColor(m.level); g.beginPath(); g.arc(PAD + 15, y + 16, 4, 0, 7); g.fill();
+  txtAt(chipTxt, PAD + 26, y + 17, { b: 1, size: 15, color: lvlColor(m.level) }); y += 44;
+  const drawTable = (head, body, widths, numFrom, numTo) => {
+    const tw = widths.reduce((a, b) => a + b, 0);
+    let x = PAD;
+    head.forEach((h, i) => { const num = i >= numFrom && i < numTo; txtAt(h, num ? x + widths[i] - 10 : x + 8, y + RH / 2, { size: 12, color: C.muted, align: num ? "right" : "left" }); x += widths[i]; });
+    y += RH; g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.moveTo(PAD, y - 0.5); g.lineTo(PAD + tw, y - 0.5); g.stroke();
+    for (const r of body) {
+      if (r.rowBad) { g.fillStyle = C.badbg; g.fillRect(PAD, y, tw, RH); }
+      g.fillStyle = lvlColor(r.level); g.beginPath(); g.arc(PAD + 14, y + RH / 2, 4, 0, 7); g.fill();
+      txtAt(r.name, PAD + 26, y + RH / 2, { b: 1 });
+      if (r.dnr) txtAt(t("sDidNot") + (r.note ? " " + r.note : ""), PAD + widths[0], y + RH / 2, { color: C.bad, b: 1 });
+      else {
+        let cx = PAD + widths[0];
+        r.cells.forEach((c, i) => {
+          const w = widths[i + 1], col = c.cls === "vbad" ? C.bad : c.cls === "vwarn" ? C.warn : c.cls === "vzero" ? C.muted : C.ink;
+          txtAt(c.v, c.n ? cx + w - 10 : cx + 8, y + RH / 2, { color: col, b: c.cls === "vbad" || c.cls === "vwarn", align: c.n ? "right" : "left" }); cx += w;
+        });
+      }
+      y += RH; g.strokeStyle = C.line; g.beginPath(); g.moveTo(PAD, y - 0.5); g.lineTo(PAD + tw, y - 0.5); g.stroke();
+    }
+  };
+  drawTable(m.cabHead, m.cabs, cabW.concat([W - PAD * 2 - cabW.reduce((a, b) => a + b, 0)]), 1, 10);
+  if (m.gws.length) {
+    y += 14; txtAt(t("vGw"), PAD, y + 8, { b: 1, size: 15 }); y += 30;
+    drawTable(m.gwHead, m.gws.map((r) => ({ ...r, name: r.name + (r.restart ? "  " + t("vRestart", { n: r.restart }) : "") })), gwW, 1, 7);
+  }
+  y += 8;
+  if (m.noGw) { txtAt(t("vNoGw", { names: m.noGw }), PAD, y + 8, { size: 13, color: C.warn }); y += 26; }
+  if (m.wrong !== null) txtAt(t("vWrong", { n: m.wrong }), PAD, y + 8, { size: 13, color: m.wrong ? C.warn : C.muted });
+  return new Promise((res) => cv.toBlob(res, "image/png"));
 }
 /* Continuous test, in the same four numbered steps as the installation check: what kind, which cabinets, how long, go.
    While a run is going the steps give way to its live status. */
 const SOAK_HOURS = [1, 2, 4, 6, 8, 10, 12, 24, 48, 72];
+/* The "view summary" dialog of a past run: the summary (and a button to save it as a picture) on top, the raw data below. */
+function soakViewDraw() {
+  const w = S.soak.view; if (!w) return;
+  const sum = w.txt ? `<div class="row" style="gap:8px;margin-bottom:12px"><button class="btn sm" type="button" data-act="soak-png">${t("sSaveImg")}</button></div><div class="soakv">${verdictHtml(w.txt)}</div>` : `<p class="muted">${t("sNoVerdict")}</p>`;
+  const raw = w.cabs.length ? `<div class="soakraw"><div class="vsub">${t("sRawData")}</div>
+    <div class="row" style="gap:8px"><button class="btn sm" type="button" data-act="soak-pick-all">${t("sAll")}</button><button class="btn sm" type="button" data-act="soak-pick-none">${t("insClear")}</button></div>
+    <div class="cabgrid soakexp">${w.cabs.map((c) => `<label class="chk"><input type="checkbox" data-expcab="${esc(c)}"${w.pick.has(c) ? " checked" : ""}> ${esc(c)}</label>`).join("")}</div>
+    <div class="row" style="gap:8px;flex-wrap:wrap"><select id="soakexpfmt">${[["csv", t("sFmtCsv")], ["zip", t("sFmtZip")]].map(([v, l]) => `<option value="${v}"${v === w.fmt ? " selected" : ""}>${l}</option>`).join("")}</select><button class="btn primary" type="button" data-act="soak-dl"${w.pick.size ? "" : " disabled"}>${t("sDownload")}</button></div></div>` : "";
+  $("#infobody").innerHTML = `<div style="max-height:72vh;overflow:auto;display:grid;gap:16px">${sum}${raw}</div>`;
+}
 function soakAdvWarn() {
   const k = S.soak, w = [];
   if (k.gap >= 0.4 && k.gap <= 0.9) w.push(t("sGapWarn"));
@@ -1080,8 +1156,7 @@ function viewSoak() {
   const fin = st.finished && !running ? `<section class="card stack"><h3>${t("sVerdict")}${infoBtn("soakCols")}</h3><div class="soakv">${verdictHtml(st.finished.text, true)}</div></section>` : "";
   const runDate = (stamp) => { const m = /^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})/.exec(stamp || ""); return m ? `${fmtDay(m[1])} ${m[2]}` : stamp; };
   const hist = `<section class="card stack"><h3>${t("sHistory")}</h3>${(k.runs || []).length ? `<div class="soakruns">${k.runs.map((r) => `<div class="soakrun"><div class="row between"><b>${esc(runDate(r.started))}</b>
-      ${r.verdict ? `<button class="btn sm" type="button" data-act="soak-view" data-name="${esc(r.verdict)}">${t("sView")}</button>` : ""}</div>
-      ${r.csv.length ? `<div class="small">${t("sCsvFiles")}: ${r.csv.map((c) => `<a href="/api/v2/soak/file?name=${encodeURIComponent(c)}&download=1">${esc(c.replace(/^soak-/, "").replace(/-\d{8}-\d{6}\.csv$/, ""))}</a>`).join(" · ")}</div>` : ""}</div>`).join("")}</div>` : `<p class="muted">${t("sNoRuns")}</p>`}</section>`;
+      <button class="btn sm" type="button" data-act="soak-view" data-stamp="${esc(r.stamp)}">${t("sView")}</button></div></div>`).join("")}</div>` : `<p class="muted">${t("sNoRuns")}</p>`}</section>`;
   return `<h1>${t("soak_page")}</h1><div class="stack">${head}${cabs}${an}${fin}${hist}</div>`;
 }
 async function soakRefresh() {
@@ -1605,9 +1680,21 @@ document.addEventListener("click", async (ev) => {
     } else if (act.dataset.act === "soak-stop") {
       if (!await ask(t("sStopQ"))) return; await api("POST", "/api/v2/soak/stop", {}); S.soak.was = true; await soakRefresh();
     } else if (act.dataset.act === "soak-view") {
-      const r = await fetch("/api/v2/soak/file?name=" + encodeURIComponent(act.dataset.name)); const txt = await r.text();
-      $("#infobody").innerHTML = `<div class="soakv" style="max-height:70vh;overflow:auto">${verdictHtml(txt)}</div>`;
-      const d = $("#info"); d.classList.add("wide"); d.onclose = () => d.classList.remove("wide"); if (d.showModal) d.showModal(); else d.setAttribute("open", "");
+      const run = (S.soak.runs || []).find((x) => x.stamp === act.dataset.stamp); if (!run) return;
+      let txt = "";
+      if (run.verdict) { const r = await fetch("/api/v2/soak/file?name=" + encodeURIComponent(run.verdict)); if (r.ok) txt = await r.text(); }
+      const cabs = run.csv.map((c) => c.replace(/^soak-/, "").replace(/-\d{8}-\d{6}\.csv$/, ""));
+      S.soak.view = { stamp: run.stamp, txt, cabs, pick: new Set(cabs), fmt: "csv" };
+      soakViewDraw();
+      const d = $("#info"); d.classList.add("wide"); d.onclose = () => { d.classList.remove("wide"); S.soak.view = null; }; if (d.showModal) d.showModal(); else d.setAttribute("open", "");
+    } else if (act.dataset.act === "soak-png") {
+      const w = S.soak.view; if (!w || !w.txt) return;
+      const blob = await verdictPng(w.txt); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `soak-${w.stamp}.png`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    } else if (act.dataset.act === "soak-pick-all" || act.dataset.act === "soak-pick-none") {
+      const w = S.soak.view; if (!w) return; w.pick = act.dataset.act === "soak-pick-all" ? new Set(w.cabs) : new Set(); soakViewDraw();
+    } else if (act.dataset.act === "soak-dl") {
+      const w = S.soak.view; if (!w || !w.pick.size) return;
+      const a = document.createElement("a"); a.href = `/api/v2/soak/export?stamp=${encodeURIComponent(w.stamp)}&cabs=${encodeURIComponent([...w.pick].join(","))}&format=${w.fmt}`; a.click();
     } else if (act.dataset.act === "gw-export") {
       const d = S.gw.data; const out = { format: "lgs-gateway-config", version: 2, gateway: d.info["sys.name"] || "", fw: d.info.fw, exported: new Date().toISOString(), settings: {} };
       d.keys.forEach((k) => { if (!k.ro) out.settings[k.key] = k.value; });
@@ -1790,6 +1877,8 @@ document.addEventListener("change", async (ev) => {
   if (ev.target.id === "modall") { S.mod.showAll = ev.target.checked; renderKeep(); }
   if (ev.target.id === "modauto") { S.mod.auto = ev.target.checked; modAutoSync(); }
   if (ev.target.id === "gwsel") { S.gw.id = ev.target.value; S.gw.data = null; S.gw.edits = {}; if (S.gw.id) gwRead(); else render(); }
+  if (ev.target.dataset && ev.target.dataset.expcab !== undefined && S.soak.view) { const w = S.soak.view; if (ev.target.checked) w.pick.add(ev.target.dataset.expcab); else w.pick.delete(ev.target.dataset.expcab); soakViewDraw(); }
+  if (ev.target.id === "soakexpfmt" && S.soak.view) S.soak.view.fmt = ev.target.value;
   if (ev.target.id === "soakgap") { S.soak.gap = Math.max(0.1, Math.min(30, +ev.target.value || 2)); $("#soakadvwarn").innerHTML = soakAdvWarn(); }
   if (ev.target.id === "soakevery") S.soak.every = Math.max(1, Math.min(100, Math.round(+ev.target.value) || 5));
   if (ev.target.id === "soakslow") S.soak.slow = Math.max(50, Math.min(5000, Math.round(+ev.target.value) || 400));

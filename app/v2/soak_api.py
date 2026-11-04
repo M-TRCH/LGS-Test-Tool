@@ -7,8 +7,11 @@ window onto it. Live numbers come from the worker's event list, folded into
 the same CabinetTally the verdict uses, so the screen and the file cannot
 disagree about what a cabinet did.
 """
+import csv
+import io
 import re
 import threading
+import zipfile
 from collections import deque
 from datetime import datetime
 
@@ -199,6 +202,46 @@ def runs(limit: int = 60) -> list:
         r["csv"].sort()
         out.append(r)
     return out
+
+
+def export(stamp: str, cabs: list, fmt: str) -> tuple:
+    """The raw per-cabinet CSVs of one run, as ONE download -> (bytes, filename, media_type).
+
+    fmt "csv": every chosen cabinet merged into a single file, a leading `cabinet` column added and the rows in time
+    order (the per-cabinet files carry time,device_id,kind,detail). fmt "zip": the chosen files as they are.
+    Only names the run itself produced can be asked for; nothing here takes a path."""
+    if not re.fullmatch(STAMP, stamp or ""):
+        raise ValueError("bad run stamp")
+    files = {}
+    for f in exports_dir().iterdir():
+        m = CSV_RE.match(f.name)
+        if m and m.group(2) == stamp:
+            files[m.group(1)] = f
+    if not files:
+        raise ValueError("no data files for this run")
+    chosen = sorted(set(cabs)) if cabs else sorted(files)
+    for c in chosen:
+        if c not in files:
+            raise ValueError(f"no data file for '{c}' in this run")
+    tag = "all" if len(chosen) == len(files) else f"{len(chosen)}cabinets"
+    if fmt == "zip":
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+            for c in chosen:
+                z.write(files[c], files[c].name)
+        return buf.getvalue(), f"soak-{stamp}-{tag}.zip", "application/zip"
+    rows = []
+    for c in chosen:
+        with open(files[c], encoding="utf-8", newline="") as fh:
+            rd = csv.reader(fh)
+            next(rd, None)
+            rows += [[c] + r for r in rd if r]
+    rows.sort(key=lambda r: r[1])          # ISO time strings sort as time; the sort is stable per cabinet
+    out = io.StringIO()
+    w = csv.writer(out, lineterminator="\r\n")
+    w.writerow(["cabinet", "time", "device_id", "kind", "detail"])
+    w.writerows(rows)
+    return ("\ufeff" + out.getvalue()).encode("utf-8"), f"soak-{stamp}-{tag}.csv", "text/csv; charset=utf-8"
 
 
 def read_file(name: str) -> tuple:
