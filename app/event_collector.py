@@ -35,7 +35,8 @@ from . import applog, config_store
 
 PAGE = 100                 # records per LOG SINCE (the firmware's cap)
 MAX_PAGES = 20             # per gateway per poll: 2,000 records, then next interval
-FIRST_BACKLOG = 1000       # first contact: start this far back, not at seq 1
+FIRST_BACKLOG = 1000       # first contact: start this far back, not at seq 1
+LOCK_WAIT_S = 10.0          # how long a poll waits for a gateway another Tool job is using, then skips it
 FILE_RE = re.compile(r"^events-(\d{4}-\d{2}-\d{2})\.jsonl$")
 
 
@@ -174,8 +175,21 @@ class Collector:
 
     # ── one gateway ─────────────────────────────────────────────────────────
     def poll_gateway(self, name: str, host: str, port: int = 502) -> dict:
+        """One poll, holding the Tool's per-gateway lock: the gateway has two client slots, and a collector visit that
+        took one while a depot upload or an update held the other would get (or cause) a refused connection."""
         out = {"name": name, "host": host, "ok": False, "new": 0, "error": "",
                "at": datetime.now().isoformat(timespec="seconds")}
+        from .v2.gateway_api import _lock
+        lock = _lock(host, int(port))
+        if not lock.acquire(timeout=LOCK_WAIT_S):
+            out["error"] = "busy: another job is using this gateway; next poll"
+            return out
+        try:
+            return self._poll_locked(name, host, port, out)
+        finally:
+            lock.release()
+
+    def _poll_locked(self, name: str, host: str, port: int, out: dict) -> dict:
         try:
             link, close = self._open(host, port)
         except Exception as exc:                                 # noqa: BLE001
@@ -214,9 +228,10 @@ class Collector:
                 if gap == "2":                       # a seq this board never reached
                     batch.append({"gw": name, "host": host, "seq": 0, "ev": "collector_gap",
                                   "text": f"gateway log restarted (had seq {last}, "
-                                          f"gateway is at {total}): board replaced or log erased",
+                                          f"gateway is at {total}): board replaced or log erased; "
+                                          f"taking its last {min(total, FIRST_BACKLOG)} events",
                                   "collected": collected})
-                    last = total
+                    last = max(0, total - FIRST_BACKLOG)     # the new log's own events, as on a first start
                     continue
                 if gap == "1":
                     batch.append({"gw": name, "host": host, "seq": 0, "ev": "collector_gap",

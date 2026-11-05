@@ -11,7 +11,7 @@ from . import gw_depot
 from .gateway_config import GatewayError
 
 STATE_TEXT = {"running", "done_ok", "done_with_failures", "aborted", "interrupted", "none"}
-DEFAULTS = {"idle": 5, "group": 8, "apply_idle": 20, "apply_quiet": 300}
+DEFAULTS = {"idle": 5, "group": 8, "apply_idle": 5, "apply_quiet": 300}   # = the gateway's own defaults (ota_runner.cpp)
 LIMITS = {"idle": (1, 600), "group": (1, 8), "apply_idle": (1, 3600), "apply_quiet": (0, 86400)}
 
 

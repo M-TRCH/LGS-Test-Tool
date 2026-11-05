@@ -272,10 +272,6 @@ def install(app, cfg, worker) -> None:
         return await _job(request, lambda site, b: install_api.run.start_scan(
             site, install_api.scan_ids(str(b.get("id", "")), bool(b.get("full")))))
 
-    @app.post("/api/v2/ins/sweep")
-    async def ins_sweep(request: Request):
-        return await _job(request, lambda site, b: install_api.run.start_sweep(site, int(b.get("device_id", 0)), b))
-
     @app.post("/api/v2/ins/report")
     async def ins_report(request: Request):
         return await _job(request, lambda site, b: install_api.run.start_report(site, str(b.get("id", ""))))
@@ -344,10 +340,18 @@ def install(app, cfg, worker) -> None:
     @app.post("/api/v2/auth")
     async def auth_set(request: Request):
         """{password} sets it (and signs every browser out, this one too);
-        {clear: true} removes it."""
+        {clear: true} removes it. Once a password is set, both need {current}: a
+        signed-in tab left open must not be enough to lock the owner out."""
         if not _mutating(request):
             return _forbidden()
         body = await request.json()
+        if auth.enabled():
+            addr = request.client.host if request.client else "?"
+            if auth._locked(addr):
+                return JSONResponse({"error": "too many attempts, wait 1 minute"}, status_code=429)
+            if not auth.verify(str(body.get("current", ""))):
+                auth._note_fail(addr)
+                return JSONResponse({"error": "current password is wrong"}, status_code=403)
         if body.get("clear"):
             auth.clear_password()
             return {"ok": True, "auth": False}

@@ -18,6 +18,10 @@ def build(ctx: Ctx) -> None:
         helps(ui.label(t("auth.card")).classes("font-bold"), t("auth.hint"))
         status = ui.label().classes("text-sm")
         with ui.row().classes("items-center gap-3 flex-wrap"):
+            # Once a password is set, changing or removing it needs the current one: an
+            # open, signed-in tab must not be enough to lock the owner out.
+            pw0 = ui.input(t("auth.current"), password=True) \
+                .props("dense outlined").classes("w-48")
             pw1 = ui.input(t("auth.new"), password=True, password_toggle_button=True) \
                 .props("dense outlined").classes("w-48")
             pw2 = ui.input(t("auth.repeat"), password=True) \
@@ -33,10 +37,19 @@ def build(ctx: Ctx) -> None:
             status.classes(replace="text-sm " + ("text-positive" if on else "text-warning"))
             off_btn.set_visibility(on)
             out_btn.set_visibility(on)
+            pw0.set_visibility(on)
+
+        def current_ok() -> bool:
+            if auth.enabled() and not auth.verify(pw0.value or ""):
+                ui.notify(t("auth.wrong_current"), type="negative")
+                return False
+            return True
 
         def do_set() -> None:
             if pw1.value != pw2.value:
                 ui.notify(t("auth.mismatch"), type="warning")
+                return
+            if not current_ok():
                 return
             try:
                 auth.set_password(pw1.value or "")
@@ -56,6 +69,9 @@ def build(ctx: Ctx) -> None:
                 ui.button(t("auth.cancel"), on_click=dlg.close).props("flat")
 
                 def do_remove() -> None:
+                    if not current_ok():
+                        dlg.close()
+                        return
                     auth.clear_password()
                     dlg.close()
                     ui.notify(t("auth.removed"), type="info")

@@ -941,6 +941,8 @@ TEXTS: dict[str, dict[str, str]] = {
     "auth.on": {"en": "Password is ON: sign-in required", "th": "เปิดรหัสผ่านอยู่: ต้องเข้าสู่ระบบ"},
     "auth.off": {"en": "No password: open to everyone on the network",
                  "th": "ยังไม่ตั้งรหัสผ่าน: ทุกคนในเครือข่ายเข้าได้"},
+    "auth.current": {"en": "Current password", "th": "รหัสผ่านปัจจุบัน"},
+    "auth.wrong_current": {"en": "The current password is wrong", "th": "รหัสผ่านปัจจุบันไม่ถูกต้อง"},
     "auth.new": {"en": "New password", "th": "รหัสผ่านใหม่"},
     "auth.repeat": {"en": "Repeat", "th": "พิมพ์ซ้ำ"},
     "auth.set": {"en": "Set password", "th": "ตั้งรหัสผ่าน"},

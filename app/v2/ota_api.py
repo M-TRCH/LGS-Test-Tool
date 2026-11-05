@@ -158,7 +158,12 @@ def depot_fetch(site: dict, slot: int) -> tuple:
 
 
 # ── module OTA run by the gateway itself ────────────────────────────────────
-def _each_gateway(sites_list: list, fn, lock_wait: float = -1) -> list:
+# START / ABORT / RESULT wait this long for a gateway another job is using (a depot upload, a gateway update), then answer
+# "busy" instead of hanging the page until that job ends.
+LONG_LOCK_WAIT_S = 15.0
+
+
+def _each_gateway(sites_list: list, fn, lock_wait: float = LONG_LOCK_WAIT_S) -> list:
     """Run fn(link) against every gateway in parallel, one short connection each -> [{id, name, ...} | {id, name, error}]."""
     from concurrent.futures import ThreadPoolExecutor
     from .. import gw_ota
@@ -200,17 +205,17 @@ def gwota_start(sites_list: list, image_name: str, opts: dict) -> dict:
         gw_ota.options(opts)
     except gw_ota.OtaError as exc:
         raise ValueError(str(exc))
-    return {"rows": _each_gateway(sites_list, lambda link: gw_ota.start(link, image_name, opts))}
+    return {"rows": _each_gateway(sites_list, lambda link: gw_ota.start(link, image_name, opts), lock_wait=LONG_LOCK_WAIT_S)}
 
 
 def gwota_abort(sites_list: list) -> dict:
     from .. import gw_ota
-    return {"rows": _each_gateway(sites_list, lambda link: (gw_ota.abort(link), {"ok": True})[1])}
+    return {"rows": _each_gateway(sites_list, lambda link: (gw_ota.abort(link), {"ok": True})[1], lock_wait=LONG_LOCK_WAIT_S)}
 
 
 def gwota_result(site: dict, n: int) -> dict:
     from .. import gw_ota
-    rows = _each_gateway([site], lambda link: gw_ota.result(link, n))
+    rows = _each_gateway([site], lambda link: gw_ota.result(link, n), lock_wait=LONG_LOCK_WAIT_S)
     if rows[0].get("error"):
         raise ValueError(rows[0]["error"])
     return rows[0]

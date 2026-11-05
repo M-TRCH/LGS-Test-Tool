@@ -1,5 +1,5 @@
 """Long module jobs for the v2 pages: installation check, pick walkthrough,
-bus scan, full module test sweep and the site report.
+bus scan and the site report.
 
 Each job is one of the classic tool's transport-independent runners
 (fieldcheck, fw_survey, testsuite) handed a small ops object over one Modbus
@@ -208,13 +208,6 @@ def pick_config(body: dict) -> fieldcheck.PickConfig:
                                  drawer_only=bool(body.get("drawer_only")))
 
 
-def sweep_config(body: dict) -> testsuite.SweepConfig:
-    return testsuite.SweepConfig(loops=int(_num(body, "loops", 1, 10, 1)),
-                                 include_led=bool(body.get("lights", True)),
-                                 include_latch=bool(body.get("latch")),
-                                 latch_fires=int(_num(body, "fires", 1, 5, 1)))
-
-
 def layout(site_id: str) -> dict:
     """The slots of the saved cabinet type, grouped by row, for the picker."""
     site = sites.find(str(site_id)) or {}
@@ -384,21 +377,6 @@ class Run:
             return None
 
         self._launch(site, work, timeout_s=PROBE_TIMEOUT_S)
-        return {"ok": True}
-
-    def start_sweep(self, site: dict, device_id: int, body: dict) -> dict:
-        if not lgs_map.valid_target_id(int(device_id)):
-            raise ValueError(f"invalid module id {device_id}")
-        cfg = sweep_config(body)
-        self._begin(site, "sweep", "")
-        host, port = site["host"], site["port"]
-
-        def work(client, _ctx):
-            ops = _OneModule(_TcpOps(client, host, port, self._cancel, testsuite.SweepCancelled), int(device_id))
-            report = testsuite.run_sweep(ops, cfg, self._emit, self._cancel)
-            return (f"module_test_{device_id}_{self._stamp()}.csv", testsuite.sweep_csv_bytes(report), "text/csv")
-
-        self._launch(site, work)
         return {"ok": True}
 
     def start_report(self, site: dict, site_id: str) -> dict:
