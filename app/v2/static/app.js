@@ -1428,23 +1428,23 @@ const FW_NOTES = {
       "Front-panel dial: SET_ID goes up to 108, hold to scroll through numbers, saves itself when left for the set time, bigger digits fill the frame, and OTA has its own screen.",
       "Device type at commissioning (the cabinet type chosen when the file is flashed) and the LED-8 mask for type 10.",
       "RTU framing fix: wait for bus silence before handing the buffer to the library. Before, a hub cutting a frame at a channel change left a module hung until the watchdog reset it (about 0.6 resets per module per run with channel crossings)."] } },
-  "v1.14.0-rc1": {
-    th: { date: "5 พ.ย. 2569", head: "รุ่นทดลอง: บันทึกเหตุการณ์ ซิงก์เวลา คอนโซลผ่านเครือข่าย คลังไฟล์โมดูล และอัปเดตโมดูลเบื้องหลัง", items: [
+  "v1.14.0": {
+    th: { date: "5 พ.ย. 2569", head: "บันทึกเหตุการณ์ ซิงก์เวลา คอนโซลผ่านเครือข่าย คลังไฟล์โมดูล และอัปเดตโมดูลเบื้องหลัง", items: [
       "บันทึกเหตุการณ์ในตัวเกตเวย์ (ใช้ $LGS LOG และ $LGS LOG SINCE) เก็บเหตุสำคัญ เช่น ไฟตู้ดับ (bus_quiet) การรีเซ็ตตามเวลา และการเชื่อมต่อของไคลเอนต์ ให้ Tool ดึงไปดูย้อนหลังได้โดยไม่ต้องมี PC ค้างไว้",
       "ซิงก์เวลาจากเซิร์ฟเวอร์ NTP (ตั้ง IP ที่ net.ntp และเขตเวลาที่ time.tz_min) ทำให้นาฬิกาถูกต้องเองหลังไฟดับ",
       "คอนโซลและอัปเดตเฟิร์มแวร์ผ่านเครือข่าย: ใช้ unit 255 / FC 0x41 ที่พอร์ต 502 ส่งคำสั่ง $LGS ได้แบบเดียวกับพอร์ต USB และอัปเดตเฟิร์มแวร์เกตเวย์ผ่านเครือข่าย (ปิดได้ด้วย net.console=0)",
       "คลังไฟล์เฟิร์มแวร์โมดูลบนเกตเวย์: อัปโหลดไฟล์ไว้ในเกตเวย์แล้วอัปเดตโมดูลภายหลังจากเครื่องอื่นได้ โดยเครื่องที่สั่งไม่ต้องมีไฟล์",
       "อัปเดตโมดูลเบื้องหลัง ($LGS OTA START/STATUS/RESULT/ABORT): เกตเวย์ทำเอง ส่งเฉพาะตอนบัสว่าง และสั่งโมดูลเปลี่ยนเฟิร์มแวร์เฉพาะตอนที่คาดว่าจะไม่มีใครมาอ่านโมดูลนั้นในอีก 8 วินาที (รู้จากจังหวะการอ่านที่ผ่านมา) บนโต๊ะทดสอบการรีบูตของโมดูลไม่ชนกับการอ่านเลยใน 32 ครั้ง",
-      "ความเข้ากันได้: ไม่เปลี่ยนโครงสร้างการตั้งค่า (schema 11) การตั้งค่าที่เก็บไว้คงอยู่ ขนาดไฟล์ 312,396 B",
-      "สถานะ: รุ่นทดลอง สร้างจากซอร์สที่ยังไม่ได้ commit ของสาขา gw-1.14-eventlog ยังไม่มีป้ายรุ่น ผ่านการทดสอบบนตู้ Std-11 เท่านั้น"] },
-    en: { date: "5 Nov 2026", head: "Release candidate: event log, time sync, console over the network, module depot and background module update", items: [
+      "ความเข้ากันได้: ไม่เปลี่ยนโครงสร้างการตั้งค่า (schema 11) การตั้งค่าที่เก็บไว้คงอยู่ ขนาดไฟล์ 312,796 B",
+      "ไฟสถานะสามดวงของตู้ติดค้างตลอดที่อัปเดตโมดูลเบื้องหลัง (ยกเว้นไฟเลี้ยงชั้นและ output ที่ตั้งเป็นไม่ใช้) คำสั่ง $LGS LAMP ยังบังคับไฟได้ชั่วคราว", "สถานะ: รุ่นจริง ป้ายรุ่น v1.14.0 ผ่านการรีวิวโค้ดก่อนปล่อย ทดสอบบนตู้ Std-11 อัปเดตโมดูลเบื้องหลังผ่าน 40/40 ใน 20.8 นาที"] },
+    en: { date: "5 Nov 2026", head: "Event log, time sync, console over the network, module depot and background module update", items: [
       "Event log inside the gateway ($LGS LOG and $LGS LOG SINCE): keeps the important events, such as a cabinet power loss (bus_quiet), scheduled resets and client connections, so the Tool can collect them later without a PC left running.",
       "Time sync from an NTP server (set the IP in net.ntp and the zone in time.tz_min): the clock corrects itself after a power cut.",
       "Console and firmware update over the network: unit 255 / FC 0x41 on port 502 carries the same $LGS commands as the USB port, and the gateway's firmware can be updated over the network (closed with net.console=0).",
       "Module firmware depot on the gateway: leave a module update file in the gateway, then update later from another PC that does not have the file.",
       "Background module update ($LGS OTA START/STATUS/RESULT/ABORT): the gateway does it itself, sends only while the bus is quiet, and tells a module to switch firmware only when no one is expected to read that module within 8 seconds (learned from the recent read rhythm). On the bench, module reboots never collided with polling in 32 tries.",
-      "Compatibility: the stored-settings layout is unchanged (schema 11), so saved settings survive. File size 312,396 B.",
-      "Status: release candidate, built from the uncommitted sources of the gw-1.14-eventlog branch, not tagged yet, tested on cabinet Std-11 only."] } },
+      "Compatibility: the stored-settings layout is unchanged (schema 11), so saved settings survive. File size 312,796 B.",
+      "The cabinet's three status lamps stay lit for the whole background module update (not the shelf power, not outputs set to unused); $LGS LAMP can still force a lamp for a moment.", "Status: release, tag v1.14.0. Passed the pre-release code review; on cabinet Std-11 the background update did 40 of 40 modules in 20.8 minutes."] } },
   "v1.13.0": {
     th: { date: "26 ต.ค. 2569", head: "ซ่อมการหลุดเฟสบนบัส: ส่งซิงก์ใหม่เมื่อไม่มีคำตอบ และรอคำตอบให้ถูกจังหวะ", items: [
       "ซิงก์ใหม่หลังไม่มีคำตอบ (rtu.heal): เมื่อโมดูลไม่ตอบ เกตเวย์ส่งคำสั่งอ่านแบบ broadcast (ยูนิต 0 ไม่มีใครตอบ) หนึ่งครั้งเพื่อให้โมดูลทุกตัวบนช่องนั้นกลับมาตรงเฟส แล้วลองคำขอเดิมอีกหนึ่งครั้ง ทำเฉพาะ ID ที่เคยตอบมาตั้งแต่เปิดเครื่อง และไม่ทำทันทีหลังข้ามช่องฮับ (เฟรมแรกหลังข้ามช่องหายตามธรรมชาติของฮับ) ไม่ส่งซิงก์นี้จากสะพาน USB เด็ดขาด เพราะ PC ที่คุมอยู่ต้องไม่ได้รับเฟรมเกิน",

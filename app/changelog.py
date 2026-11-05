@@ -25,7 +25,7 @@ RELEASES: tuple = (
         "Web password: the page was open to anyone on the network. Set one "
         "under Gateway > Web password, or from a console with "
         "--set-password. Until you set it nothing changes.",
-        "Firmware: gateway v1.14.0-rc1 is bundled (event log, NTP, console "
+        "Firmware: gateway v1.14.0 is bundled (event log, NTP, console "
         "and firmware update over the network, a module depot, and a module "
         "update the gateway runs by itself in the background, with the "
         "cabinet's three status lamps lit while it runs). The gateway's "
