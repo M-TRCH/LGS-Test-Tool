@@ -16,7 +16,7 @@ from ..fw_survey import ReportSurveyDone, SurveyProgress
 from ..i18n import t
 from ..lgs_map import BAUD_WHITELIST
 from ..version import APP_VERSION
-from . import Ctx, confirm, helps, ntp_card, tab_gateway_fw
+from . import Ctx, access_card, confirm, events_card, helps, ntp_card, tab_gateway_fw
 
 # Which settings each card shows, in display order.
 # sys.wdt_ms only exists on gateway >= 1.8.0; field_row skips what the
@@ -227,6 +227,8 @@ def build(ctx: Ctx) -> None:
                    gateway_ip=lambda: (state["snapshot"].info.get("net.ip", "")
                                        if state["snapshot"] else ""),
                    set_ntp=set_ntp_field)
+    access_card.build(ctx)
+    events_card.build(ctx)
 
     # ── event log (gateway fw >= 1.11.0) ───────────────────────────────────
     # What happened at the cabinet, months later: boots and their cause,
@@ -1189,24 +1191,38 @@ def build(ctx: Ctx) -> None:
         now = datetime.now().astimezone()
         return int(now.timestamp() + now.utcoffset().total_seconds())
 
-    async def sync_clock(snap) -> None:
-        """Set the gateway's clock when it has none.
+    async def offer_clock(snap) -> bool:
+        """Offer to set the gateway's clock when it has none. True = it was set.
 
         The Opta loses the time whenever it loses power — the very event a
-        scheduled reset exists to recover from — so the tool sets it on every
-        read rather than leaving a schedule that quietly never runs.
+        scheduled reset exists to recover from — so a schedule that quietly
+        never runs is a real risk. But until v2.0 the tool set the clock on
+        every READ, silently, and setting the clock is what arms the
+        gateway's 03:00 reset: looking at a cabinet changed when it would cut
+        the shelf's power. Now it asks. A "not now" is remembered per gateway
+        while this page stays open, so re-reading does not nag; the SET FROM
+        THIS PC button stays one click away.
         """
         if not snap or not snap.ok:
-            return
+            return False
         if snap.info.get("time.set") == "1":
-            return
+            return False
+        declined = state.setdefault("clock_declined", set())
+        if ctx.port() in declined:
+            return False
+        if not await confirm(t("sch.ask_title"), t("sch.ask_body"), t("sch.ask_ok"),
+                             color="primary"):
+            declined.add(ctx.port())
+            say("clock left unset (declined)")
+            return False
         res = await worker.gw_set_time(ctx.port(), wall_epoch())
         if res.ok:
             snap.info["time.set"] = "1"
             say(t("sch.synced"))
             ui.notify(t("sch.synced"), type="positive")
-        else:
-            say(f"clock not set: {res.note}")
+            return True
+        say(f"clock not set: {res.note}")
+        return False
 
     def adopt_hub_map(snap) -> None:
         """Take the cabinet's wiring from the gateway, which owns it.
@@ -1262,8 +1278,9 @@ def build(ctx: Ctx) -> None:
             status.props("color=red")
             say(f"read failed: {snap.note}")
         adopt_hub_map(snap)
-        await sync_clock(snap)
-        render(snap)
+        render(snap)                    # show the page first; the question follows
+        if await offer_clock(snap):
+            await do_reload()           # now time.set=1, so this does not ask again
 
     async def run_action(action: str) -> None:
         ok, message = usable()

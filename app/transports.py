@@ -59,12 +59,22 @@ DEFAULT_TCP_PORT = 502
 # it is framer_watch's count across a full-length run, not this comment.
 HUB_SAFE_TIMEOUT_S = 6.0
 
+# One number used to serve every job. Each use now names its own, so a change
+# made on evidence for one (the soak's framer_watch count) cannot silently
+# change another. ALL EQUAL TO THE ABOVE ON PURPOSE: v2.0 only gives the
+# values somewhere to live; nothing here has been measured to be safe lower.
+# The interactive default in particular is NOT shortened on a hunch -- a
+# client that gives up before a hub-held reply arrives is what desynchronises
+# the bus (see above), and the Control tab hits the same hub as a soak does.
+SOAK_TIMEOUT_S = HUB_SAFE_TIMEOUT_S           # fleet soak: nine threads, one process
+OTA_TIMEOUT_S = HUB_SAFE_TIMEOUT_S            # fleet firmware update
+INTERACTIVE_TIMEOUT_S = HUB_SAFE_TIMEOUT_S    # connection bar, Control, Gateway tab
 
 @dataclass
 class RtuSettings:
     port: str
     baud: int = 9600
-    timeout_s: float = HUB_SAFE_TIMEOUT_S     # framing fixed 8N1
+    timeout_s: float = INTERACTIVE_TIMEOUT_S  # framing fixed 8N1
 
     def describe(self) -> str:
         return f"RTU {self.port} @{self.baud} 8N1"
@@ -74,7 +84,7 @@ class RtuSettings:
 class TcpSettings:
     host: str = DEFAULT_TCP_HOST
     port: int = DEFAULT_TCP_PORT
-    timeout_s: float = HUB_SAFE_TIMEOUT_S
+    timeout_s: float = INTERACTIVE_TIMEOUT_S
 
     def describe(self) -> str:
         return f"TCP {self.host}:{self.port}"

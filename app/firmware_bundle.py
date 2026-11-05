@@ -50,6 +50,15 @@ class BundledImage:
 # Newest first: the UI offers the first entry of a kind as its default.
 IMAGES: tuple = (
     BundledImage(
+        key="gateway_v1.14.0",
+        kind=KIND_GATEWAY,
+        version="v1.14.0",
+        blob="gateway_opta_v1.14.0.bin",
+        sha256="c398b1cfaee7cf66a3eac0fc3e95d5be80f40ab813599c1ab6c8690b82a7a9fc",
+        source="LGS-Gateway-Arduino-Opta tag v1.14.0 (03792c0, 2026-11-05)",
+        note="event log, NTP, TCP console + network update, module depot, background module update, status lamps lit during a module update",
+    ),
+    BundledImage(
         key="gateway_v1.13.0",
         kind=KIND_GATEWAY,
         version="v1.13.0",

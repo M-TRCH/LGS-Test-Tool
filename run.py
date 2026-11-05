@@ -11,6 +11,8 @@ has been touched yet.
 Flags (parsed by hand — the point is to run before any import):
     --port N        listen on N (beats LGS_TT_PORT, which beats config)
     --no-browser    headless: do not open a browser window on start
+    --set-password  ask for a web password, store its hash, exit (v2.0)
+    --clear-password  remove the web password, exit
 
 The single instance is enforced with a named Windows mutex rather than a
 lockfile or a port probe: the OS releases a mutex the instant its process
@@ -48,12 +50,42 @@ def _parse_flags() -> None:
         elif args[i] == "--no-browser":
             os.environ["LGS_TT_NO_BROWSER"] = "1"
             i += 1
+        elif args[i] in ("--set-password", "--clear-password"):
+            _password_action(args[i])
+            raise SystemExit(0)
         elif args[i] == "--port":
             print("--port needs a value, e.g. --port 8090")
             raise SystemExit(2)
         else:
-            print(f"unknown option: {args[i]}  (known: --port N, --no-browser)")
+            print(f"unknown option: {args[i]}  (known: --port N, --no-browser, "
+                  f"--set-password, --clear-password)")
             raise SystemExit(2)
+
+
+def _password_action(flag: str) -> None:
+    """Set or remove the web password from a console, then exit.
+
+    Runs before the single-instance check on purpose: the server copy is
+    usually already up (scheduled task), and it picks the change up by itself
+    -- the auth file is re-read when it changes. Touches nothing but
+    data/auth.json.
+    """
+    from app import auth
+    if flag == "--clear-password":
+        auth.clear_password()
+        print("Web password removed: the page is open again.")
+        return
+    import getpass
+    pw = getpass.getpass("New web password: ")
+    if pw != getpass.getpass("Repeat: "):
+        print("Passwords differ; nothing changed.")
+        raise SystemExit(1)
+    try:
+        auth.set_password(pw)
+    except ValueError as exc:
+        print(f"Not set: {exc}")
+        raise SystemExit(1)
+    print("Web password set. Every browser must sign in again.")
 
 
 def _acquire_single_instance() -> bool:

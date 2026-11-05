@@ -16,6 +16,30 @@ class Release:
 
 
 RELEASES: tuple = (
+    Release("2.0.0", "2026-11-05", (
+        "The new pages (v2) are now the main interface: opening the tool "
+        "lands on them, and the old page is still available at /classic "
+        "(the Classic UI button in advanced mode). Cabinets, Sites, Gateway, Module, Soak, "
+        "Events, Firmware, Labels and Commission, in Thai or English, "
+        "with a phone layout; fonts are bundled so it works offline.",
+        "Web password: the page was open to anyone on the network. Set one "
+        "under Gateway > Web password, or from a console with "
+        "--set-password. Until you set it nothing changes.",
+        "Firmware: gateway v1.14.0 is bundled (event log, NTP, console "
+        "and firmware update over the network, a module depot, and a module "
+        "update the gateway runs by itself in the background, with the "
+        "cabinet's three status lamps lit while it runs). The gateway's "
+        "firmware can be updated over the network, modules can be stored "
+        "on a gateway and updated later from any PC, and the background "
+        "update shows its progress per cabinet.",
+        "Soak: a fleet run reads the gateway's own repair counters and "
+        "calls a cabinet not clean on a final timeout, a failed repair or a "
+        "bad CRC; it now ends on time; the summary can be saved as an "
+        "image. Events: a collector keeps each gateway's event log on this "
+        "PC with filters, charts and CSV export (Settings).",
+        "The tool no longer sets an unset gateway clock by itself, because "
+        "setting the clock arms the gateway's scheduled reset; it asks first.",
+    )),
     Release("1.9.5", "2026-10-26", (
         "Bundled module firmware v3.5.5 and gateway firmware v1.13.0 (and "
         "v3.5.4, which 1.9.4 brought). A module no longer loses its place "

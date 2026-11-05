@@ -42,7 +42,7 @@ from typing import Callable, Optional, Sequence
 from . import soak
 from .ntp_server import local_ip_toward
 from . import framer_watch
-from .transports import HUB_SAFE_TIMEOUT_S, TcpSettings, make_client
+from .transports import SOAK_TIMEOUT_S, TcpSettings, make_client
 
 
 @dataclass(frozen=True)
@@ -179,6 +179,33 @@ class _ClientOps:
         answers a silent slave with an error object, not by throwing."""
         self.close()
         return _Txn(False, None, f"{type(exc).__name__}: {exc}"[:60], True)
+
+    def gateway_counters(self) -> Optional[dict]:
+        """The gateway's RS485 repair counters from its console (INFO), or
+        None when it cannot be asked (no link, old firmware without `rtu.*`).
+
+        Rides the soak's own connection, from the soak's own thread, every
+        ten minutes: INFO is answered by the gateway itself and never touches
+        the RS485 bus, so it costs the run nothing it measures."""
+        if self._client is None:
+            return None
+        try:
+            from .gateway_tcp import GatewayTcpLink, register_pdu
+            register_pdu(self._client)
+            res = GatewayTcpLink(self._client).command("INFO")
+            if not res.ok:
+                return None
+            kv: dict = {}
+            for row in res.rows:
+                kv.update(row)
+            if "rtu.heal" not in kv:
+                return None                       # firmware older than 1.13
+            want = {"retry_ok": "rtu.retry_ok", "retry_fail": "rtu.retry_fail",
+                    "timeout": "cnt.rs485_timeout", "bad_crc": "rtu.bad_crc",
+                    "bad_other": "rtu.bad_other", "up": "sys.up"}
+            return {k: int(float(kv[v])) for k, v in want.items() if v in kv}
+        except Exception:                                        # noqa: BLE001
+            return None
 
     def sleep(self, seconds: float) -> None:
         end = time.monotonic() + seconds
@@ -366,6 +393,13 @@ def _other_master(client, gateway_host: str) -> Optional[str]:
                     dropped_self = True      # this is us; every other one is not
                     continue
                 others.append(peer)
+            if not dropped_self and len(others) == 1:
+                # Our own address is not in the list and exactly ONE client is:
+                # that client is this very connection seen through a router or
+                # a VPN (the tool reached over Tailscale shows up as the
+                # relay's address). A second master would make it two. Without
+                # this the guard refused every run started from behind NAT.
+                return None
             return ", ".join(others) if others else None
     except Exception:                                            # noqa: BLE001
         return None                      # never let the guard break the run
@@ -455,7 +489,7 @@ def _mind_the_clock(threads, cancel: threading.Event,
 def run_fleet(cabinets: Sequence[FleetCabinet], cfg: soak.SoakConfig,
               emit: Callable, cancel: threading.Event,
               log_dir: Path,
-              timeout_s: float = HUB_SAFE_TIMEOUT_S,
+              timeout_s: float = SOAK_TIMEOUT_S,
               our_host: Optional[str] = None,
               allow_shared: bool = False,
               hours: float = 0.0) -> Optional[FleetOutcome]:
@@ -528,7 +562,7 @@ def run_fleet(cabinets: Sequence[FleetCabinet], cfg: soak.SoakConfig,
 
     def one(cab: FleetCabinet) -> None:
         settings = TcpSettings(host=cab.host, port=cab.port,
-                               timeout_s=timeout_s)
+                               timeout_s=(cfg.timeout_s or timeout_s))
         ops = _ClientOps(settings, cancel)
         if not ops.connect():
             tell(FleetFailed(cabinet=cab.name,
@@ -586,6 +620,7 @@ def run_fleet(cabinets: Sequence[FleetCabinet], cfg: soak.SoakConfig,
                                 counter_every=cfg.counter_every,
                                 slow_ms=cfg.slow_ms,
                                 crossing_slow_ms=cfg.crossing_slow_ms,
+                                stop_at_mono=deadline,
                                 mode=cfg.mode, picks_per_day=cfg.picks_per_day,
                                 dwell_s=cfg.dwell_s, windows=cfg.windows,
                                 hub_map=hub_map),
@@ -628,7 +663,8 @@ def run_fleet(cabinets: Sequence[FleetCabinet], cfg: soak.SoakConfig,
     with tally_lock:
         text = summarise(list(tallies.values()), framer_watch.snapshot(),
                          started=started_h, duration_s=duration_s,
-                         stopped_early=bool(hours > 0 and not clock_fired))
+                         stopped_early=bool(hours > 0 and not clock_fired),
+                         timeout_s=(cfg.timeout_s or timeout_s))
     path = log_dir / f"fleet-{stamp}.txt"       # same stamp as the CSVs
     written = ""
     try:
@@ -663,14 +699,53 @@ class CabinetTally:
     silent: set = field(default_factory=set)
     kinds: Counter = field(default_factory=Counter)
     note: str = ""              # why it never ran, if it never ran
+    # The gateway's own counters over the run (soak.SoakTick.gw_*). gw_seen
+    # False = nobody could read them (old firmware, COM run), reported as
+    # "n/a", never as zero.
+    gw_seen: bool = False
+    gw_healed: int = 0
+    gw_heal_failed: int = 0
+    gw_timeouts: int = 0
+    gw_bad_crc: int = 0
+    gw_bad_other: int = 0
+    gw_rebooted: int = 0
+    # Pharmacy mode only (all zero in a poll run): coil writes made and refused, windows lit so far, picks that found
+    # no dark window, windows lit right now.
+    writes: int = 0
+    write_fails: int = 0
+    picks: int = 0
+    dropped: int = 0
+    lit: int = 0
+
+    # Healed first-try misses per hour above which a run is "warn": the
+    # gateway is quietly repairing a bus that is not healthy. Chosen against
+    # the 2026-10-28/30 runs (Ref-12 ~21/h after the wiring fix; the Std
+    # cabinets a handful in a day), so ordinary 03:00 stalls do not trip it.
+    HEAL_WARN_PER_H = 30.0
 
     @property
     def ran(self) -> bool:
         return self.passes > 0
 
     @property
+    def heal_per_h(self) -> float:
+        return self.gw_healed / (self.elapsed_s / 3600.0) if self.elapsed_s > 0 else 0.0
+
+    @property
+    def gw_bad(self) -> bool:
+        """The gateway saw something the soak's own reads could not show: a
+        final timeout, a repair that failed, or a frame with a bad CRC."""
+        return self.gw_seen and bool(self.gw_timeouts or self.gw_heal_failed
+                                     or self.gw_bad_crc)
+
+    @property
+    def gw_warn(self) -> bool:
+        return self.gw_seen and not self.gw_bad and self.heal_per_h > self.HEAL_WARN_PER_H
+
+    @property
     def clean(self) -> bool:
-        return self.ran and not self.fails and not self.silent
+        return (self.ran and not self.fails and not self.silent
+                and not self.gw_bad)
 
     def absorb(self, inner) -> None:
         if isinstance(inner, soak.SoakTick):
@@ -682,6 +757,18 @@ class CabinetTally:
             self.crossings = inner.crossings
             self.worst_ms = max(self.worst_ms, inner.worst_ms)
             self.elapsed_s = inner.elapsed_s
+            self.gw_seen = inner.gw_seen
+            self.gw_healed = inner.gw_healed
+            self.gw_heal_failed = inner.gw_heal_failed
+            self.gw_timeouts = inner.gw_timeouts
+            self.gw_bad_crc = inner.gw_bad_crc
+            self.gw_bad_other = inner.gw_bad_other
+            self.gw_rebooted = inner.gw_rebooted
+            self.writes = inner.writes
+            self.write_fails = inner.write_fails
+            self.picks = inner.picks
+            self.dropped = inner.dropped
+            self.lit = inner.lit
         elif isinstance(inner, soak.SoakAnomaly):
             item = inner.item
             self.kinds[item.kind] += 1
@@ -693,13 +780,14 @@ class CabinetTally:
 
 
 def summarise(tallies, framer=None, *, started: str = "",
-              duration_s: float = 0.0, stopped_early: bool = False) -> str:
+              duration_s: float = 0.0, stopped_early: bool = False,
+              timeout_s: float = SOAK_TIMEOUT_S) -> str:
     """The whole run as text: a table, then a sentence that judges it."""
     out = []
     out.append(f"fleet soak  {started}")
     out.append(f"  ran for {duration_s / 3600:.2f} h"
                + ("  (stopped early)" if stopped_early else "")
-               + f"   client timeout {HUB_SAFE_TIMEOUT_S} s")
+               + f"   client timeout {timeout_s} s")
     out.append("")
     head = (f"{'cabinet':<15}{'mod':>5}{'pass':>6}{'reads':>9}{'fail':>6}"
             f"{'rbt':>5}{'wdt':>5}{'cross':>7}{'worst':>8}{'drop':>6}  silent ids")
@@ -721,6 +809,29 @@ def summarise(tallies, framer=None, *, started: str = "",
                    f"{t.crossings:>7}{t.worst_ms:>8.0f}{drops:>6}  {silent}")
     out.append("")
     out.append(f"{clean} of {len(tallies)} cabinets completely clean")
+
+    # What the gateways saw. A cabinet can have zero failed reads here and
+    # still have had the gateway repair its bus all night; "clean" above
+    # already refuses a final timeout, a failed repair or a bad CRC, and this
+    # block shows the rest (the repairs that WORKED) so nobody has to find
+    # them in a console on Tuesday.
+    ran = [t for t in tallies if t.ran]
+    seen = [t for t in ran if t.gw_seen]
+    if seen:
+        out.append("")
+        out.append("gateway RS485 counters over the run (first-try misses it "
+                   "repaired, and what it could not):")
+        for t in seen:
+            flag = ("  <- NOT CLEAN" if t.gw_bad
+                    else f"  <- warn: over {t.HEAL_WARN_PER_H:.0f}/h" if t.gw_warn else "")
+            more = f", gateway restarted {t.gw_rebooted}x" if t.gw_rebooted else ""
+            out.append(f"  {t.name:<15} repaired {t.gw_healed:>5} ({t.heal_per_h:.1f}/h)"
+                       f"  repair failed {t.gw_heal_failed}  final timeouts {t.gw_timeouts}"
+                       f"  bad crc {t.gw_bad_crc}  other {t.gw_bad_other}{more}{flag}")
+    unseen = [t.name for t in ran if not t.gw_seen]
+    if unseen:
+        out.append("gateway counters not available (no console or firmware "
+                   "older than 1.13): " + ", ".join(unseen))
 
     # The number nothing measured before 2026-09-25. pymodbus discards a
     # reply that carries the wrong unit id, retries, and the retry usually

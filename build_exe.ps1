@@ -70,8 +70,10 @@ if (-not (Test-Path "app\docs\LGS-Control-Table.md")) {
 if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: bundled firmware images did not verify"; exit 1 }
 
 & ".venv\Scripts\nicegui-pack.exe" --onefile --name $name `
+    --icon "assets\thanes.ico" `
     --add-data "app\docs;app/docs" `
-    --add-data "app\blobs;app/blobs" run.py
+    --add-data "app\blobs;app/blobs" `
+    --add-data "app\v2\static;app/v2/static" run.py
 if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: nicegui-pack failed"; exit 1 }
 
 if (Test-Path "dist\$name.exe") {

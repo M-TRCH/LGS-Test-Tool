@@ -43,6 +43,11 @@ SUB_FW_DATA = 0x11
 SUB_FW_STATUS = 0x12
 SUB_FW_APPLY = 0x13
 SUB_FW_ABORT = 0x14
+SUB_DEPOT_BEGIN = 0x20
+SUB_DEPOT_DATA = 0x21
+SUB_DEPOT_LIST = 0x22
+SUB_DEPOT_READ = 0x23
+SUB_DEPOT_DELETE = 0x24
 
 FW_CHUNK = 240                  # request cap is 250 incl. sub + offset
 
@@ -52,6 +57,13 @@ FW_STATUS_TEXT = {
     6: "no upload in progress", 7: "CRC mismatch on the staged file",
     8: "upload incomplete", 9: "bootloader has no OTA support",
     10: "apply library error",
+}
+
+DEPOT_STATUS_TEXT = {
+    0: "ok", 1: "locked — HELLO first", 2: "gateway storage error", 3: "image size refused",
+    5: "sequence mismatch", 6: "no upload in progress", 7: "CRC mismatch on the stored file",
+    11: "all four depot slots are used", 12: "image name not allowed", 13: "busy with a firmware stage",
+    14: "not found",
 }
 
 FW_STATE_IDLE, FW_STATE_RECEIVING, FW_STATE_STAGED, FW_STATE_ERROR = 0, 1, 2, 3
@@ -151,3 +163,32 @@ class GatewayTcpLink(GwVerbsMixin):
     def fw_abort(self) -> int:
         rsp = self._execute(SUB_FW_ABORT)
         return rsp.payload[0]
+
+    # ── depot: module images kept on the gateway ───────────────────────────
+    def depot_begin(self, name: str, size: int, crc32: int) -> tuple:
+        """(status, slot)"""
+        rsp = self._execute(SUB_DEPOT_BEGIN, struct.pack(">II", size, crc32) + name.encode("ascii"))
+        return rsp.payload[0], rsp.payload[1]
+
+    def depot_data(self, offset: int, chunk: bytes) -> tuple:
+        """(status, received) — on 5, `received` is where to resume."""
+        rsp = self._execute(SUB_DEPOT_DATA, struct.pack(">I", offset) + chunk)
+        return rsp.payload[0], struct.unpack(">I", rsp.payload[1:5])[0]
+
+    def depot_list(self) -> list:
+        """The four slots: {slot, state 0 empty / 1 incomplete / 2 complete, size, crc, name}."""
+        out = []
+        for s in range(4):
+            r = self._execute(SUB_DEPOT_LIST, bytes([s])).payload
+            slot, state, size, crc, nl = struct.unpack(">BBIIB", r[:11])
+            out.append({"slot": slot, "state": state, "size": size, "crc": crc,
+                        "name": r[11:11 + nl].decode("ascii", "replace")})
+        return out
+
+    def depot_read(self, slot: int, offset: int) -> tuple:
+        """(status, bytes) — up to 200 bytes per call."""
+        r = self._execute(SUB_DEPOT_READ, struct.pack(">BI", slot, offset)).payload
+        return r[0], bytes(r[2:2 + r[1]])
+
+    def depot_delete(self, slot: int) -> int:
+        return self._execute(SUB_DEPOT_DELETE, bytes([slot])).payload[0]

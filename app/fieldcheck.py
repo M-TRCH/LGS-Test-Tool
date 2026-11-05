@@ -7,6 +7,7 @@ in testsuite.py.
 """
 from __future__ import annotations
 
+import random
 import threading
 import time
 from dataclasses import dataclass, field
@@ -286,6 +287,8 @@ class PickConfig:
     display: bool = True         # + the slot's number on the OLED
     unlock: bool = True          # + release the latch, as a real pick does
     require_locked: bool = True  # only finish once the drawer is closed again
+    drawer_only: bool = False    # no button on this cabinet: the drawer opening
+                                 # and closing again IS the confirmation
     timeout_s: float = 60.0      # per batch; 0 = wait until cancelled
     # A batch sits on one hub channel, so a sweep of it is cheap (~100 ms a
     # slot) and the pause between sweeps is a real part of how long the light
@@ -294,6 +297,8 @@ class PickConfig:
     poll_s: float = 0.25         # pause between sweeps of the waiting slots
     batch: int = 4               # slots lit together; 0 = every slot at once
     by_channel: bool = True      # keep a batch on one hub channel
+    shuffle: bool = False        # random slot order, batches cut anywhere (a day's
+                                 # prescriptions do not arrive in id order)
 
     @property
     def action_coil(self) -> int:
@@ -321,7 +326,8 @@ def _poll_order(ids: Sequence[int]) -> list:
     return sorted(ids, key=lambda i: (hub_channel(i), i))
 
 
-def pick_batches(ids: Sequence[int], size: int, by_channel: bool = True) -> list:
+def pick_batches(ids: Sequence[int], size: int, by_channel: bool = True,
+                 shuffle: bool = False) -> list:
     """The groups of slots that light together.
 
     Measured on the cabinet: what costs time is the number of hub CHANNELS
@@ -342,6 +348,15 @@ def pick_batches(ids: Sequence[int], size: int, by_channel: bool = True) -> list
     `size` slots regardless of channel, at the cost of a slower sweep. A
     `size` of 0 lights everything selected at once, spread and all.
     """
+    if shuffle:
+        # Random order, `size` to a batch wherever they fall: the rehearsal of
+        # a real shift, where nothing arrives in slot order. by_channel does
+        # not apply -- keeping a channel together would undo the shuffle.
+        ids = list(ids)
+        random.shuffle(ids)
+        if size is None or size <= 0:
+            return [tuple(ids)] if ids else []
+        return [tuple(ids[s:s + size]) for s in range(0, len(ids), size)]
     ids = sorted(ids)
     if not ids:
         return []
@@ -355,6 +370,13 @@ def pick_batches(ids: Sequence[int], size: int, by_channel: bool = True) -> list
         for start in range(0, len(same), size):
             out.append(tuple(same[start:start + size]))
     return out
+
+
+@dataclass
+class _Seen:
+    """A stand-in read result (ok, value) where no read is needed."""
+    ok: bool
+    value: int = 0
 
 
 def run_pick_sequence(ops: FieldOps, cfg: PickConfig, ids: Sequence[int],
@@ -389,7 +411,7 @@ def run_pick_sequence(ops: FieldOps, cfg: PickConfig, ids: Sequence[int],
         emit(DeviceDone(result))
 
     try:
-        for batch in pick_batches(ids, cfg.batch, cfg.by_channel):
+        for batch in pick_batches(ids, cfg.batch, cfg.by_channel, cfg.shuffle):
             waiting.clear()
             # ── prepare this batch, and light the slots that are ready ─────
             for device_id in batch:
@@ -408,15 +430,16 @@ def run_pick_sequence(ops: FieldOps, cfg: PickConfig, ids: Sequence[int],
                 result.steps.append(StepOutcome("answers on the bus", True,
                                                 result.type_name))
 
-                fw = ops.read_reg(device_id, MB_REG_FW)
-                if not fw.ok or fw.value < FW_MIN_CONFIRM:
+                fw = ops.read_reg(device_id, MB_REG_FW) if not cfg.drawer_only else None
+                if fw is not None and (not fw.ok or fw.value < FW_MIN_CONFIRM):
                     result.steps.append(StepOutcome(
                         "firmware counts presses (reg 18)", False,
                         f"needs v3.2.0+, module reports {fw.value if fw.ok else '?'}"))
                     finish(result)
                     continue
-                result.steps.append(StepOutcome(
-                    "firmware counts presses (reg 18)", True))
+                if fw is not None:
+                    result.steps.append(StepOutcome(
+                        "firmware counts presses (reg 18)", True))
 
                 # The firmware only pulses a latch that reads locked, so an
                 # open drawer is caught here rather than looking like a slot
@@ -424,7 +447,7 @@ def run_pick_sequence(ops: FieldOps, cfg: PickConfig, ids: Sequence[int],
                 # actually tracks the drawer: without that, an open one is a
                 # latch pulse that changes nothing, and the light, display
                 # and button are still worth testing.
-                if cfg.unlock and cfg.require_locked:
+                if (cfg.unlock and cfg.require_locked) or cfg.drawer_only:
                     sense = ops.read_reg(device_id, MB_REG_LATCH_LOCKED)
                     if not (sense.ok and sense.value):
                         result.steps.append(StepOutcome(
@@ -435,7 +458,9 @@ def run_pick_sequence(ops: FieldOps, cfg: PickConfig, ids: Sequence[int],
                         continue
                     result.steps.append(StepOutcome("latch ready", True))
 
-                base = ops.read_reg(device_id, MB_REG_BUTTON_PRESSES)
+                # A cabinet with no buttons has no press counter worth reading.
+                base = (_Seen(True, 0) if cfg.drawer_only
+                        else ops.read_reg(device_id, MB_REG_BUTTON_PRESSES))
                 if not base.ok:
                     result.steps.append(StepOutcome("read press counter", False,
                                                     base.note))
@@ -453,7 +478,7 @@ def run_pick_sequence(ops: FieldOps, cfg: PickConfig, ids: Sequence[int],
                     finish(result)
                     continue
                 lit.add(device_id)
-                waiting[device_id] = [result, base.value, "press"]
+                waiting[device_id] = [result, base.value, "open" if cfg.drawer_only else "press"]
 
             if not waiting:
                 continue                    # nothing in this batch could light
@@ -476,7 +501,17 @@ def run_pick_sequence(ops: FieldOps, cfg: PickConfig, ids: Sequence[int],
                             "picked and put back", True, note))
                         finish(result)
 
-                    if phase == "press":
+                    if phase == "open":
+                        # Drawer-only cabinets: the slot is picked once its
+                        # drawer has been seen open, and done when it is shut.
+                        sense = ops.read_reg(device_id, MB_REG_LATCH_LOCKED)
+                        if sense.ok and not sense.value:
+                            entry[2] = "close"
+                            result.steps.append(StepOutcome(
+                                "drawer opened", True,
+                                f"after {time.monotonic() - started:.1f}s"))
+                            emit(PickPressed(device_id))
+                    elif phase == "press":
                         now = ops.read_reg(device_id, MB_REG_BUTTON_PRESSES)
                         if now.ok and now.value != base_count:
                             pressed = f"pressed after {time.monotonic() - started:.1f}s"
@@ -511,6 +546,8 @@ def run_pick_sequence(ops: FieldOps, cfg: PickConfig, ids: Sequence[int],
                     "picked and put back", False,
                     f"drawer still open after {cfg.timeout_s:.0f}s"
                     if phase == "close" else
+                    f"drawer not opened within {cfg.timeout_s:.0f}s"
+                    if phase == "open" else
                     f"no press within {cfg.timeout_s:.0f}s"))
                 finish(result)
             waiting.clear()

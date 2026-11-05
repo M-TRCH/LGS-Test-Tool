@@ -6,9 +6,10 @@ import asyncio
 import os
 import socket
 
+from fastapi.responses import RedirectResponse
 from nicegui import app, ui
 
-from . import applog, config_store, i18n, keep_awake, lgs_map, ntp_server
+from . import applog, auth, config_store, event_collector, i18n, keep_awake, lgs_map, ntp_server
 from .modbus_worker import ModbusWorker
 from .txn_log import TxnLog
 
@@ -30,6 +31,7 @@ from .ui import (Ctx, connection_bar, helps, log_pane, page_guard,
                  tab_gateway, tab_install, tab_labels, tab_monitor, tab_ota,
                  tab_soak, theme)
 from .version import APP_VERSION
+from .v2 import api as v2_api
 
 # Shared across browsers: one Modbus worker, one log, one settings file — the
 # bus and the gateway's single TCP slot cannot be shared anyway.
@@ -49,7 +51,7 @@ if cfg.hub_map:
         pass
 
 
-@ui.page("/")
+@ui.page("/classic")
 def index() -> None:
     """Built per browser session, so switching language just reloads the page."""
     i18n.set_language(cfg.language)
@@ -60,6 +62,11 @@ def index() -> None:
     page_guard.install()
     theme.init(cfg.theme)
     connection_bar.build(ctx)
+    # The way back to the v2 pages: the classic UI had no link to them, and a
+    # browser opened here had no way to return except typing the address.
+    ui.link(i18n.t("hdr.v2"), "/v2").classes(
+        "fixed text-sm font-bold bg-primary text-white rounded px-3 py-1 z-50 no-underline"
+    ).style("right: 12px; bottom: 12px")
 
     with ui.row(align_items="center").classes("w-full no-wrap"):
         with ui.tabs().classes("grow") as tabs:
@@ -175,6 +182,7 @@ async def _on_startup() -> None:
     _wake_guard = asyncio.create_task(_hold_awake())
     if cfg.ntp_enabled:
         await ntp_server.server.start(cfg.ntp_port)
+    event_collector.apply(cfg)          # off unless events_enabled
 
 
 def _on_shutdown() -> None:
@@ -186,6 +194,15 @@ def _on_shutdown() -> None:
     applog.note("shutdown complete")
 
 
+# Web password gate (app/auth.py): open until a password is set.
+auth.install(app)
+# v2.0 API and front end at /v2 (same process, same login, same data folder).
+v2_api.install(app, cfg, worker)
+
+# The v2 pages are the main UI since 2.0; the old NiceGUI page stays at /classic.
+@ui.page("/")
+def _home():
+    return RedirectResponse("/v2")
 app.on_startup(_on_startup)
 app.on_shutdown(ntp_server.server.stop)
 app.on_shutdown(_on_shutdown)
