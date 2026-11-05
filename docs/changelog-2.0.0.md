@@ -54,7 +54,7 @@ across cabinets; one gateway's network update, name typed to confirm), Labels
 duplicate-address warning), Events.
 
 Since then v2 also has: Commission (ST-Link flash of a blank module, one or a
-whole lot), the module test sweep, the ID scan, installation check and pick
+whole lot), the ID scan, installation check and pick
 walkthrough, set slave id and software reset, the gateway site-report PDF, an
 NTP server on the PC, the web password in Settings, a themed login page that
 lands on `/v2`, and basic/advanced modes (basic = Cabinets, Module, Events).
@@ -63,7 +63,7 @@ Not in v2 yet: USB/COM cabinets.
 
 ### Module page (reviewed with the user, passed 2026-11-03)
 
-Top to bottom: module details, quick commands, full module test (advanced),
+Top to bottom: module details, quick commands,
 installation check, scan, module management (advanced, last).
 
 - **Module details** fold into one box, closed by default; its summary line has
@@ -185,7 +185,7 @@ system through a laptop plugged straight into an Opta. So the Opta holds the mod
   Keep-in-tool and deposit-from-a-kept-image tried against the same gateway. The Firmware page has not been reviewed with the user.
 - Not tested: the picture and raw-data buttons were exercised through their code and endpoints, not clicked as a download in a
   browser; a phone (only a 375 px emulation), the exe build, Docker, the
-  events CSV download in a browser, the full module test, the NTP server
+  events CSV download in a browser, the NTP server
   switched on, a web password set from the v2 page.
 
 ## Review status (page by page with the user)
