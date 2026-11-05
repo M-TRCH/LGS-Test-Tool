@@ -491,6 +491,10 @@ def install(app, cfg, worker) -> None:
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=502)
 
+    @app.get("/api/v2/fw/depot/progress")
+    async def fw_depot_progress(id: str):
+        return ota_api.depot_progress(id)
+
     @app.post("/api/v2/fw/depot/put")
     async def fw_depot_put(request: Request):
         """JSON {id, image} for a bundled image; or a raw .bin body with ?id=&name= for an uploaded one."""

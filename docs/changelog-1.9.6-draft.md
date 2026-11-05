@@ -191,4 +191,8 @@ system through a laptop plugged straight into an Opta. So the Opta holds the mod
 
 ## Review status (page by page with the user)
 
-Passed: Commission, Labels, Sites, Cabinets, Gateway, Module, Events, Soak. To do: Firmware.
+Passed: Commission, Labels, Sites, Cabinets, Gateway, Module, Events, Soak, and on the Firmware page the gateway firmware update card and the depot card. Still in review: the gateway-run background update card and the module OTA card.
+
+Firmware page, 2026-11-05: four collapsible cards (all collapsed at first) in the order gateway firmware update, depot, module update run by the gateway, module update over OTA; cabinet pick lists are multi-column; firmware dropdowns show the version only and the file's details sit behind an "i" button like the Commission page (full release notes for gateway v1.12.0-v1.13.0 added), defaulting to the latest. Commission page: module id and lot share the cell next to the cabinet type (single and batch).
+
+Firmware page, 2026-11-05 (later): both module-update cards use the same cabinet tile grid as Soak; card notes moved behind "?" buttons; the background-update table shows a percent bar and applied / modules, polling only the selected cabinets; the OTA card now holds its own result and log (they used to float below the page); the result is shown in the page's own type and table style; THANES logo button (about popup) and favicon; bundled gateway v1.14.0-rc1 (event log, NTP, TCP console and network update, depot, background module update, status lamps lit during a module update). Bench-checked on Chest-Std-11 only.

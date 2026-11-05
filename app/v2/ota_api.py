@@ -68,8 +68,13 @@ def _image_bytes(image_key: str, kind: str) -> tuple:
 # ── module images kept on a gateway ──────────────────────────────────────────
 def _depot_link(site: dict):
     """(client, link) to the gateway's tunnel; the caller holds the gateway's lock and closes the client."""
+    import socket
     from pymodbus.client import ModbusTcpClient
     from .. import gateway_tcp
+    try:      # pymodbus keeps re-trying a dead address for over half a minute; a plain connect tells us in 2 s
+        socket.create_connection((site["host"], int(site["port"])), timeout=2.0).close()
+    except OSError:
+        raise ValueError(f"cannot reach {site['host']}:{site['port']}")
     c = ModbusTcpClient(host=site["host"], port=int(site["port"]), timeout=5.0, retries=0)
     if not c.connect():
         raise ValueError(f"cannot reach {site['host']}:{site['port']}")
@@ -90,6 +95,13 @@ def depot_list(site: dict) -> dict:
             c.close()
 
 
+_depot_prog: dict = {}          # cabinet id -> what a deposit in progress is doing, for the page's progress bar
+
+
+def depot_progress(site_id: str) -> dict:
+    return dict(_depot_prog.get(site_id) or {"state": "idle"})
+
+
 def depot_put(site: dict, *, image_key: str = "", data: bytes = b"", filename: str = "") -> dict:
     from .. import gw_depot
     from ..gateway_config import GatewayError
@@ -101,11 +113,16 @@ def depot_put(site: dict, *, image_key: str = "", data: bytes = b"", filename: s
     with gateway_api._lock(site["host"], int(site["port"])):
         c, link = _depot_link(site)
         try:
-            slot = gw_depot.put(link, name, data)
+            _depot_prog[site["id"]] = {"state": "sending", "done": 0, "total": len(data)}
+
+            def note(done: int, total: int) -> None:
+                _depot_prog[site["id"]] = {"state": "verifying" if done >= total else "sending", "done": done, "total": total}
+            slot = gw_depot.put(link, name, data, progress=note)
             return {"ok": True, "name": name, "slot": slot, "size": len(data), "slots": gw_depot.slots(link)}
         except (OSError, GatewayError, gw_depot.DepotError) as exc:
             raise ValueError(str(exc))
         finally:
+            _depot_prog.pop(site["id"], None)
             c.close()
 
 
@@ -130,15 +147,18 @@ def depot_fetch(site: dict, slot: int) -> tuple:
     with gateway_api._lock(site["host"], int(site["port"])):
         c, link = _depot_link(site)
         try:
-            return gw_depot.fetch(link, slot)
+            def note(done: int, total: int) -> None:
+                _depot_prog[site["id"]] = {"state": "reading", "done": done, "total": total}
+            return gw_depot.fetch(link, slot, progress=note)
         except (OSError, GatewayError, gw_depot.DepotError) as exc:
             raise ValueError(str(exc))
         finally:
+            _depot_prog.pop(site["id"], None)
             c.close()
 
 
 # ── module OTA run by the gateway itself ────────────────────────────────────
-def _each_gateway(sites_list: list, fn) -> list:
+def _each_gateway(sites_list: list, fn, lock_wait: float = -1) -> list:
     """Run fn(link) against every gateway in parallel, one short connection each -> [{id, name, ...} | {id, name, error}]."""
     from concurrent.futures import ThreadPoolExecutor
     from .. import gw_ota
@@ -147,23 +167,29 @@ def _each_gateway(sites_list: list, fn) -> list:
     def one(site):
         row = {"id": site["id"], "name": site["name"], "host": site["host"]}
         try:
-            with gateway_api._lock(site["host"], int(site["port"])):
+            lock = gateway_api._lock(site["host"], int(site["port"]))
+            if not lock.acquire(timeout=lock_wait):      # a status poll must not queue behind a long job on that gateway
+                row["error"] = "busy"
+                return row
+            try:
                 c, link = _depot_link(site)
                 try:
                     row.update(fn(link))
                 finally:
                     c.close()
+            finally:
+                lock.release()
         except (ValueError, OSError, GatewayError, gw_ota.OtaError, Exception) as exc:      # noqa: BLE001
             row["error"] = str(exc)[:160]
         return row
 
-    with ThreadPoolExecutor(max_workers=min(6, max(1, len(sites_list)))) as pool:
+    with ThreadPoolExecutor(max_workers=min(16, max(1, len(sites_list)))) as pool:
         return list(pool.map(one, sites_list))
 
 
 def gwota_status(sites_list: list) -> dict:
     from .. import gw_ota
-    return {"rows": _each_gateway(sites_list, gw_ota.status_row)}
+    return {"rows": _each_gateway(sites_list, gw_ota.status_row, lock_wait=3.0)}
 
 
 def gwota_start(sites_list: list, image_name: str, opts: dict) -> dict:

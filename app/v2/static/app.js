@@ -42,10 +42,11 @@ const TXT = {
     lbPreview: "ดูตัวอย่างข้อมูล", lbDownload: "ดาวน์โหลด .lbx", expCfg: "ส่งออก config", impCfg: "นำเข้า config", impDone: "นำเข้า {n} ค่า (ยังไม่บันทึก ตรวจแล้วกดบันทึกลงเกตเวย์)", impNone: "ไม่มีค่าที่ต่างจากเกตเวย์",
     shapeBad: "ชนิดตู้ใน รายการตู้ ({l}) ไม่ตรงกับเกตเวย์: {w}", shapeFix: "ตั้งค่าที่ตรงให้ (ยังไม่บันทึก)", shapeNoFix: "เกตเวย์รุ่นนี้แก้เองไม่ได้ (ไม่มี panel.shape)",
     fwGoP_pick: "เลือกกลุ่ม", fwGoP_probe: "ตรวจโมดูล", fwGoP_metadata: "ส่งข้อมูลไฟล์", fwGoP_enter: "เข้าโหมดรับไฟล์", fwGoP_enter_wait: "รอโมดูลลบพื้นที่", fwGoP_enter_check: "ตรวจการเข้าโหมด", fwGoP_stream: "ส่งไฟล์", fwGoP_repair: "ตรวจก้อนที่ขาด", fwGoP_repair_send: "ส่งก้อนที่ขาดซ้ำ", fwGoP_finalize: "ให้โมดูลตรวจไฟล์", fwGoP_finalize_wait: "รอตรวจไฟล์", fwGoP_finalize_check: "อ่านผลตรวจ", fwGoP_apply: "สั่งใช้ไฟล์", fwGoP_apply_wait: "รอโมดูลรีบูต", fwGoP_apply_confirm: "ยืนยันเวอร์ชันใหม่", fwGoP_waiting_for_quiet: "รอจังหวะที่ไม่มีคนใช้", 
-    fwGo: "ให้เกตเวย์อัปเดตโมดูลเอง (เบื้องหลัง)", fwGoNote: "เกตเวย์อ่านไฟล์จากคลังของตัวเอง ส่งในช่วงที่บัสว่าง และหยุดพักเองเมื่อมีคำสั่งเข้ามา เริ่มแล้วปิด Tool ได้", fwGoImage: "ไฟล์ในคลัง", fwGoNoImage: "เลือกตู้ก่อน หรือคลังของตู้นั้นยังว่าง", fwGoStart: "เริ่มให้เกตเวย์อัปเดต", fwGoStartQ: "ให้เกตเวย์ {n} ตู้อัปเดตโมดูลด้วย {i}? โมดูลจะรีบูตทีละตัวตอนที่ไม่มีคนใช้", fwGoAbort: "หยุด", fwGoAbortQ: "สั่งหยุดการอัปเดตของ {n} ตู้?", fwGoResult: "ดูผล", fwGoAdv: "ตัวเลือกขั้นสูง", fwGoIdle: "บัสว่างก่อนส่ง (วินาที)", fwGoGroup: "โมดูลต่อรอบ", fwGoApplyIdle: "บัสว่างก่อนรีบูตโมดูล (วินาที)", fwGoApplyQuiet: "โมดูลไม่ถูกสั่งมานาน (วินาที)", fwGoCab: "ตู้", fwGoState: "สถานะ", fwGoPhase: "ขั้นตอน", fwGoProg: "ความคืบหน้า", fwGoWait: "รออัปเดต", fwGoDone: "อัปเดตแล้ว", fwGoFail: "ไม่สำเร็จ", fwGoPaused: "พักมา (วินาที)", fwGoS_running: "กำลังทำ", fwGoS_done_ok: "เสร็จ", fwGoS_done_with_failures: "เสร็จ มีที่ไม่สำเร็จ", fwGoS_aborted: "หยุดแล้ว", fwGoS_interrupted: "ถูกขัดจังหวะ", fwGoS_none: "ไม่เคยรัน", fwGoS_unreachable: "ต่อไม่ได้", fwGoS_unsupported: "เฟิร์มแวร์เก่า ไม่รองรับ", fwGoStarted: "เริ่มแล้ว {n} ตู้", fwGoSkipped: "{n} ตู้เริ่มไม่ได้: {why}", fwGoMod: "โมดูล", fwGoFw: "เฟิร์มแวร์", fwGoErr: "รหัสผิดพลาด", 
-    fwDepot: "คลังไฟล์โมดูลบนเกตเวย์", fwDepotNote: "ฝากไฟล์อัปเดตโมดูลไว้ในเกตเวย์ แล้วอัปเดตภายหลังจากเครื่องอื่นได้ โดยเครื่องที่สั่งไม่ต้องมีไฟล์", fwDpPut: "ฝากลงเกตเวย์นี้", fwDpBusy: "กำลังฝากไฟล์…", fwDpSlot: "ช่อง", fwDpName: "ชื่อไฟล์", fwDpSize: "ขนาด", fwDpState: "สถานะ", fwDpEmpty: "ว่าง", fwDpPartial: "ไม่สมบูรณ์", fwDpOk: "สมบูรณ์", fwDpDel: "ลบ", fwDpKeep: "เก็บไว้ใน Tool", fwDpKept: "เก็บไว้ใน Tool แล้ว: {n}", fwKeptTitle: "ไฟล์ที่ Tool เก็บไว้เอง", fwKeptDelQ: "ลบ {n} ออกจาก Tool? (ในเกตเวย์ไม่ถูกลบ)", fwKeptNone: "ยังไม่มี", fwDpDelQ: "ลบ {n} ออกจากคลังของ {g}?", fwDpDone: "ฝาก {n} ลง {g} แล้ว", fwSrc: "ที่มาของไฟล์", fwSrcBundle: "ไฟล์ในเครื่องมือ", fwSrcDepot: "อ่านจากคลังของเกตเวย์", fwSrcGw: "เกตเวย์ที่ถือไฟล์", fwSrcNone: "คลังนี้ยังไม่มีไฟล์ที่สมบูรณ์", fwOta: "อัปเดตโมดูลผ่าน OTA (หลายตู้)", fwImage: "อิมเมจ", fwStart: "เริ่มอัปเดต", fwCancel: "ยกเลิก", fwCancelQ: "ยกเลิกการอัปเดต? โมดูลที่ค้างอยู่ในเซสชันอาจต้องอัปเดตซ้ำ",
+    fwGo: "อัปเดตโมดูล – เกตเวย์ทำงานเบื้องหลัง", fwGoNote: "เกตเวย์อ่านไฟล์จากคลังของตัวเอง ส่งในช่วงที่บัสว่าง และหยุดพักเองเมื่อมีคำสั่งเข้ามา เริ่มแล้วปิด Tool ได้", fwGoImage: "ไฟล์ในคลัง", fwGoNoImage: "เลือกตู้ก่อน หรือคลังของตู้นั้นยังว่าง", fwGoStart: "เริ่มให้เกตเวย์อัปเดต", fwGoStartQ: "ให้เกตเวย์ {n} ตู้อัปเดตโมดูลด้วย {i}? โมดูลจะรีบูตทีละตัวตอนที่ไม่มีคนใช้", fwGoAbort: "หยุด", fwGoAbortQ: "สั่งหยุดการอัปเดตของ {n} ตู้?", fwGoResult: "ดูผล", fwGoAdv: "ตัวเลือกขั้นสูง", fwGoIdle: "บัสว่างก่อนส่ง (วินาที)", fwGoGroup: "โมดูลต่อรอบ", fwGoApplyIdle: "บัสว่างก่อนรีบูตโมดูล (วินาที)", fwGoApplyQuiet: "โมดูลไม่ถูกสั่งมานาน (วินาที)", fwGoCab: "ตู้", fwGoState: "สถานะ", fwGoPhase: "ขั้นตอน", fwGoProg: "ความคืบหน้า", fwGoWait: "รออัปเดต", fwGoDone: "อัปเดตแล้ว", fwGoFail: "ไม่สำเร็จ", fwGoPaused: "พักมา (วินาที)", fwGoS_running: "กำลังทำ", fwGoS_done_ok: "เสร็จ", fwGoS_done_with_failures: "เสร็จ มีที่ไม่สำเร็จ", fwGoS_aborted: "หยุดแล้ว", fwGoS_interrupted: "ถูกขัดจังหวะ", fwGoS_none: "ไม่เคยรัน", fwGoS_unreachable: "ต่อไม่ได้", fwGoS_unsupported: "เฟิร์มแวร์เก่า ไม่รองรับ", fwGoStarted: "เริ่มแล้ว {n} ตู้", fwGoSkipped: "{n} ตู้เริ่มไม่ได้: {why}", fwGoMod: "โมดูล", fwGoFw: "เฟิร์มแวร์", fwGoErr: "รหัสผิดพลาด", 
+    fwDpRefresh: "รีเฟรช", fwDpSend: "กำลังส่งไฟล์",fwOpKeep: "กำลังอ่านไฟล์จากเกตเวย์มาเก็บไว้ใน Tool...", fwOpDel: "กำลังลบไฟล์ออกจากเกตเวย์...", fwOpLoad: "กำลังอ่านรายการจากเกตเวย์...",fwDpStarting: "กำลังเริ่มส่ง...", fwDpSending: "กำลังส่งไฟล์ {p}% · {a} / {b} ไบต์", fwDpVerify: "ส่งครบแล้ว เกตเวย์กำลังตรวจ CRC และบันทึก",
+    fwDepot: "คลังเฟิร์มแวร์โมดูลบนเกตเวย์", fwDepotNote: "ฝากไฟล์อัปเดตโมดูลไว้ในเกตเวย์ แล้วอัปเดตภายหลังจากเครื่องอื่นได้ โดยเครื่องที่สั่งไม่ต้องมีไฟล์", fwDpPut: "อัปโหลดลงเกตเวย์", fwDpBusy: "กำลังอัปโหลดไฟล์…", fwDpSlot: "ช่อง", fwDpName: "ชื่อไฟล์", fwDpSize: "ขนาด", fwDpState: "สถานะ", fwDpEmpty: "ว่าง", fwDpPartial: "ไม่สมบูรณ์", fwDpOk: "สมบูรณ์", fwDpDel: "ลบ", fwDpKeep: "ดาวน์โหลด", fwDpKept: "เก็บไว้ใน Tool แล้ว: {n}", fwKeptTitle: "ไฟล์ที่ดาวน์โหลดไว้", fwKeptDelQ: "ลบ {n} ออกจาก Tool?", fwKeptNone: "ยังไม่มี", fwDpDelQ: "ลบ {n} ออกจากคลังของ {g}?", fwDpDone: "อัปโหลด {n} ลง {g} แล้ว", fwSrc: "ที่มาของไฟล์", fwSrcBundle: "ไฟล์ในเครื่องมือ", fwSrcDepot: "อ่านจากคลังของเกตเวย์", fwSrcGw: "เกตเวย์ที่ถือไฟล์", fwSrcNone: "คลังนี้ยังไม่มีไฟล์ที่สมบูรณ์", fwOta: "อัปเดตโมดูล – ผ่าน OTA", fwOtaNote: "Tool ส่งไฟล์ให้โมดูลเองผ่านเกตเวย์ ต้องเปิด Tool ค้างไว้จนจบ ตู้ที่เลือกจะใช้งานไม่ได้ระหว่างอัปเดต", fwImage: "ไฟล์เฟิร์มแวร์", fwStart: "เริ่มอัปเดต", fwCancel: "ยกเลิก", fwCancelQ: "ยกเลิกการอัปเดต? โมดูลที่ค้างอยู่ในเซสชันอาจต้องอัปเดตซ้ำ",
     fwStartQ: "อัปเดตเฟิร์มแวร์โมดูลทุกตัวใน {n} ตู้ด้วย {i}? ทำย้อนจากหน้านี้ไม่ได้ ตู้ที่ใช้งานอยู่จะใช้ไม่ได้ระหว่างอัปเดต", fwRun: "กำลังอัปเดต", fwNoOta: "ยังไม่มีอิมเมจ OTA ในโปรแกรมนี้",
-    fwGw: "อัปเดตเกตเวย์ผ่านเครือข่าย (ทีละตู้)", fwGwNote: "เกตเวย์รีบูตตอนจบ และตัดไฟเลี้ยงโมดูลชั่วครู่ (โมดูลทุกตัวรีบูตด้วย) พิมพ์ชื่อตู้เพื่อยืนยัน", fwUpload: "หรือเลือกไฟล์ .bin เอง", fwConfirm: "พิมพ์ชื่อตู้เพื่อยืนยัน",
+    fwGw: "อัปเดตเฟิร์มแวร์เกตเวย์", fwUpload: "หรืออัปโหลดไฟล์ .bin", fwConfirm: "พิมพ์ชื่อตู้เพื่อยืนยัน", fwConfirmHint: "ชื่อตู้",
     fwGwStart: "อัปเดตเกตเวย์", fwGwRun: "กำลังอัปเดตเกตเวย์", fwDone: "เสร็จ", fwFail: "ไม่สำเร็จ", fwLog: "บันทึกการทำงาน", fwNone: "—", fwCensus: "ผลตรวจ", fwLeft: "ยังไม่ใช่รุ่นใหม่", fwPhase: "ขั้น",
     explain: "อธิบาย",
     basic: "พื้นฐาน", advanced: "ขั้นสูง", modeLocked: "หน้านี้อยู่ในโหมดขั้นสูง", mode: "โหมด", settings: "ตั้งค่า", language: "ภาษา", noKeys: "ไม่มีค่าในกลุ่มนี้",
@@ -104,10 +105,11 @@ const TXT = {
     lbPreview: "Preview data", lbDownload: "Download .lbx", expCfg: "Export config", impCfg: "Import config", impDone: "Imported {n} values (not saved yet: review, then Save to gateway)", impNone: "Nothing differs from the gateway",
     shapeBad: "The cabinet type on the Sites page ({l}) does not match the gateway: {w}", shapeFix: "Stage the matching values (not saved yet)", shapeNoFix: "This firmware cannot be told (no panel.shape)",
     fwGoP_pick: "choosing a group", fwGoP_probe: "checking modules", fwGoP_metadata: "sending image info", fwGoP_enter: "entering update mode", fwGoP_enter_wait: "modules erasing", fwGoP_enter_check: "checking update mode", fwGoP_stream: "sending the image", fwGoP_repair: "checking for missing chunks", fwGoP_repair_send: "re-sending missing chunks", fwGoP_finalize: "modules checking the image", fwGoP_finalize_wait: "waiting for the check", fwGoP_finalize_check: "reading the check", fwGoP_apply: "applying", fwGoP_apply_wait: "module rebooting", fwGoP_apply_confirm: "confirming the new version", fwGoP_waiting_for_quiet: "waiting for a quiet moment", 
-    fwGo: "Gateway runs the module update itself (in the background)", fwGoNote: "The gateway reads the image from its own depot, sends it in the gaps of the bus and pauses by itself when a request arrives. Once started the tool can be closed.", fwGoImage: "Image in the depot", fwGoNoImage: "Choose a cabinet first, or its depot is empty", fwGoStart: "Start on the gateways", fwGoStartQ: "Have the gateways of {n} cabinets update their modules with {i}? Modules reboot one at a time while nobody is using them.", fwGoAbort: "Stop", fwGoAbortQ: "Stop the update on {n} cabinets?", fwGoResult: "Result", fwGoAdv: "Advanced options", fwGoIdle: "Bus quiet before sending (s)", fwGoGroup: "Modules per round", fwGoApplyIdle: "Bus quiet before a module reboots (s)", fwGoApplyQuiet: "Module not written for (s)", fwGoCab: "Cabinet", fwGoState: "State", fwGoPhase: "Step", fwGoProg: "Progress", fwGoWait: "Waiting to apply", fwGoDone: "Updated", fwGoFail: "Failed", fwGoPaused: "Paused for (s)", fwGoS_running: "running", fwGoS_done_ok: "done", fwGoS_done_with_failures: "done, some failed", fwGoS_aborted: "stopped", fwGoS_interrupted: "interrupted", fwGoS_none: "never run", fwGoS_unreachable: "unreachable", fwGoS_unsupported: "old firmware, not supported", fwGoStarted: "Started on {n} cabinets", fwGoSkipped: "{n} cabinets could not start: {why}", fwGoMod: "Module", fwGoFw: "Firmware", fwGoErr: "Error code", 
-    fwDepot: "Module images kept on a gateway", fwDepotNote: "Leave a module update file in the gateway, then update later from another PC that does not have the file", fwDpPut: "Put it on this gateway", fwDpBusy: "Putting the file…", fwDpSlot: "Slot", fwDpName: "File", fwDpSize: "Size", fwDpState: "State", fwDpEmpty: "empty", fwDpPartial: "incomplete", fwDpOk: "complete", fwDpDel: "Delete", fwDpKeep: "Keep in the tool", fwDpKept: "Kept in the tool: {n}", fwKeptTitle: "Images the tool keeps itself", fwKeptDelQ: "Remove {n} from the tool? (the gateway keeps its copy)", fwKeptNone: "None yet", fwDpDelQ: "Delete {n} from {g}?", fwDpDone: "{n} put on {g}", fwSrc: "Image source", fwSrcBundle: "Bundled with the tool", fwSrcDepot: "Read from a gateway", fwSrcGw: "Gateway holding the image", fwSrcNone: "This gateway holds no complete image", fwOta: "Module update over OTA (several cabinets)", fwImage: "Image", fwStart: "Start update", fwCancel: "Cancel", fwCancelQ: "Cancel the update? Modules left in a session may need updating again.",
+    fwGo: "Module update – gateway works in the background", fwGoNote: "The gateway reads the image from its own depot, sends it in the gaps of the bus and pauses by itself when a request arrives. Once started the tool can be closed.", fwGoImage: "Image in the depot", fwGoNoImage: "Choose a cabinet first, or its depot is empty", fwGoStart: "Start on the gateways", fwGoStartQ: "Have the gateways of {n} cabinets update their modules with {i}? Modules reboot one at a time while nobody is using them.", fwGoAbort: "Stop", fwGoAbortQ: "Stop the update on {n} cabinets?", fwGoResult: "Result", fwGoAdv: "Advanced options", fwGoIdle: "Bus quiet before sending (s)", fwGoGroup: "Modules per round", fwGoApplyIdle: "Bus quiet before a module reboots (s)", fwGoApplyQuiet: "Module not written for (s)", fwGoCab: "Cabinet", fwGoState: "State", fwGoPhase: "Step", fwGoProg: "Progress", fwGoWait: "Waiting to apply", fwGoDone: "Updated", fwGoFail: "Failed", fwGoPaused: "Paused for (s)", fwGoS_running: "running", fwGoS_done_ok: "done", fwGoS_done_with_failures: "done, some failed", fwGoS_aborted: "stopped", fwGoS_interrupted: "interrupted", fwGoS_none: "never run", fwGoS_unreachable: "unreachable", fwGoS_unsupported: "old firmware, not supported", fwGoStarted: "Started on {n} cabinets", fwGoSkipped: "{n} cabinets could not start: {why}", fwGoMod: "Module", fwGoFw: "Firmware", fwGoErr: "Error code", 
+    fwDpRefresh: "Refresh", fwDpSend: "Sending file",fwOpKeep: "Reading the file from the gateway to keep it in the Tool...", fwOpDel: "Deleting the file from the gateway...", fwOpLoad: "Reading the list from the gateway...",fwDpStarting: "Starting...", fwDpSending: "Sending {p}% · {a} / {b} bytes", fwDpVerify: "Sent. The gateway is checking the CRC and saving it",
+    fwDepot: "Module firmware stored on the gateway", fwDepotNote: "Leave a module update file in the gateway, then update later from another PC that does not have the file", fwDpPut: "Upload to gateway", fwDpBusy: "Uploading the file…", fwDpSlot: "Slot", fwDpName: "File", fwDpSize: "Size", fwDpState: "State", fwDpEmpty: "empty", fwDpPartial: "incomplete", fwDpOk: "complete", fwDpDel: "Delete", fwDpKeep: "Download", fwDpKept: "Kept in the tool: {n}", fwKeptTitle: "Downloaded images", fwKeptDelQ: "Remove {n} from the tool?", fwKeptNone: "None yet", fwDpDelQ: "Delete {n} from {g}?", fwDpDone: "{n} put on {g}", fwSrc: "Image source", fwSrcBundle: "Bundled with the tool", fwSrcDepot: "Read from a gateway", fwSrcGw: "Gateway holding the image", fwSrcNone: "This gateway holds no complete image", fwOta: "Module update – over OTA", fwOtaNote: "The tool sends the image to the modules through the gateway and must stay open until it finishes. The chosen cabinets are unusable while updating.", fwImage: "Firmware file", fwStart: "Start update", fwCancel: "Cancel", fwCancelQ: "Cancel the update? Modules left in a session may need updating again.",
     fwStartQ: "Update the firmware of every module in {n} cabinets with {i}? This cannot be undone from this page, and cabinets in use are unusable during the update.", fwRun: "Updating", fwNoOta: "No OTA image is bundled in this build",
-    fwGw: "Gateway update over the network (one at a time)", fwGwNote: "The gateway reboots at the end and cuts the shelf's power for a moment (every module reboots too). Type the cabinet's name to confirm.", fwUpload: "or choose a .bin file", fwConfirm: "Type the cabinet's name to confirm",
+    fwGw: "Gateway firmware update", fwUpload: "or upload a .bin file", fwConfirm: "Type the cabinet's name to confirm", fwConfirmHint: "Cabinet name",
     fwGwStart: "Update gateway", fwGwRun: "Updating gateway", fwDone: "Done", fwFail: "Failed", fwLog: "Log", fwNone: "—", fwCensus: "Result", fwLeft: "not on the new image", fwPhase: "Phase",
     explain: "info",
     basic: "Basic", advanced: "Advanced", modeLocked: "That page is in Advanced mode", mode: "Mode", settings: "Settings", language: "Language", noKeys: "No values in this group",
@@ -557,6 +559,12 @@ function modAutoSync() {
    into the state of that kind (S.ins / S.scan / S.sweep / S.rpt) and repaints only that kind's box. Everything shown lives
    in S, so a full render() (the module auto-read does one) loses nothing. */
 const INS_INFO = {
+  goNote: ["เกตเวย์อ่านไฟล์จากคลังของตัวเอง ส่งในช่วงที่บัสว่าง และหยุดพักเองเมื่อมีคำสั่งเข้ามา เริ่มแล้วปิด Tool ได้",
+    "The gateway reads the image from its own depot, sends it in the gaps of the bus and pauses by itself when a request arrives. Once started the tool can be closed."],
+  otaNote: ["Tool ส่งไฟล์ให้โมดูลเองผ่านเกตเวย์ ต้องเปิด Tool ค้างไว้จนจบ ตู้ที่เลือกจะใช้งานไม่ได้ระหว่างอัปเดต",
+    "The tool sends the image to the modules through the gateway and must stay open until it finishes. The chosen cabinets are unusable while updating."],
+  depotNote: ["ฝากไฟล์อัปเดตโมดูลไว้ในเกตเวย์ แล้วอัปเดตภายหลังจากเครื่องอื่นได้ โดยเครื่องที่สั่งไม่ต้องมีไฟล์",
+    "Leave a module update file in the gateway, then update later from another PC that does not have the file"],
   soakDwell: ["ไฟแต่ละช่องติดค้างกี่วินาทีก่อนดับเอง (เหมือนรอคนกดยืนยัน) ตั้งนานขึ้นถ้าอยากให้ไฟติดซ้อนกันหลายดวง",
     "How many seconds a light stays on before it goes off by itself (as if waiting for a confirm). Make it longer to get several lights on at once."],
   soakCols: ["ตารางบน (โมดูลของแต่ละตู้)\n• mod = จำนวนโมดูล\n• pass = รอบที่อ่านครบทุกตัว\n• reads = จำนวนครั้งที่อ่าน\n• fail = อ่านไม่ได้\n• rbt = โมดูลรีบูต\n• wdt = โมดูลถูกวอตช์ด็อกรีเซ็ต\n• cross = ครั้งที่สลับช่องฮับ\n• worst = ตอบช้าสุด (ms)\n• drop = เฟรมตอบผิดไอดีถูกทิ้ง\n• silent = ไอดีที่ไม่ตอบ\n\nตารางล่าง (ตัวนับของเกตเวย์)\n• ซ่อมได้ = พลาดครั้งแรก แต่เกตเวย์ลองใหม่แล้วอ่านได้\n• ซ่อมไม่ได้ = ลองใหม่แล้วยังไม่ได้\n• timeout สุดท้าย = ไม่มีคำตอบเลย\n• CRC เสีย = ตอบมาแต่ข้อมูลเพี้ยน\n• อื่น ๆ = เฟรมแปลกอื่น\n\nสี\n• เทา = ศูนย์\n• เหลือง = ควรดู\n• แดง = ผิดปกติ\n\nถ้าเฟรมตอบผิดไอดีมาก ให้เพิ่ม timeout ฝั่ง client",
@@ -1219,15 +1227,55 @@ function viewLabels() {
 }
 
 function fwRows(rows) {
-  return rows.length ? `<section class="card" style="overflow-x:auto"><table><tr><th>${t("sCab")}</th><th>${t("sState")}</th><th>${t("fwPhase")}</th><th>%</th><th>${t("fwLeft")}</th><th>${t("fwCensus")}</th></tr>
-    ${rows.map((r) => `<tr><td><b>${esc(r.name)}</b> <span class="tiny muted">${r.modules}</span></td><td>${esc(r.state)}${r.channels ? ` <span class="tiny muted">${r.channel}/${r.channels}</span>` : ""}</td><td>${esc(r.phase)}</td><td>${r.pct}</td><td>${r.left.length ? esc(r.left.join(",")) : t("fwNone")}</td><td class="small">${esc(r.census || r.note)}</td></tr>`).join("")}</table></section>` : "";
+  return rows.length ? `<div style="overflow-x:auto"><table class="evtab"><tr><th>${t("sCab")}</th><th>${t("sState")}</th><th>${t("fwPhase")}</th><th>%</th><th>${t("fwLeft")}</th><th>${t("fwCensus")}</th></tr>
+    ${rows.map((r) => `<tr><td><b>${esc(r.name)}</b> <span class="tiny muted">${r.modules}</span></td><td>${esc(r.state)}${r.channels ? ` <span class="tiny muted">${r.channel}/${r.channels}</span>` : ""}</td><td>${esc(r.phase)}</td><td>${r.pct}</td><td>${r.left.length ? esc(r.left.join(",")) : t("fwNone")}</td><td class="small">${esc(r.census || r.note)}</td></tr>`).join("")}</table></div>` : "";
+}
+function dpProgHtml() {
+  const d = S.fw.dp, p = d.prog;
+  if (!d.busy && d.op) {
+    if (d.op === "fwOpLoad") return "";
+    if (d.op === "fwOpKeep" && p && p.state === "reading" && p.total) {
+      const q = Math.min(100, Math.round((p.done / p.total) * 100));
+      return `<div class="pbar"><progress value="${p.done}" max="${p.total}"></progress><div class="ptxt"><span>${t(d.op)}</span><span><b>${q}%</b> · ${fmtN(p.done)} / ${fmtN(p.total)} B</span></div></div>`;
+    }
+    return `<div class="pbar"><progress></progress><div class="ptxt"><span>${t(d.op)}</span></div></div>`;
+  }
+  if (!d.busy) return "";
+  if (!p || p.state === "idle" || !p.total) return `<div class="pbar"><progress></progress><div class="ptxt"><span>${t("fwDpStarting")}</span></div></div>`;
+  const pct = Math.min(100, Math.round((p.done / p.total) * 100));
+  if (p.state === "verifying") return `<div class="pbar"><progress></progress><div class="ptxt"><span>${t("fwDpVerify")}</span></div></div>`;
+  return `<div class="pbar"><progress value="${p.done}" max="${p.total}"></progress><div class="ptxt"><span>${t("fwDpSend")}</span><span><b>${pct}%</b> · ${fmtN(p.done)} / ${fmtN(p.total)} B</span></div></div>`;
+}
+function fwCabTiles(set, sel) {
+  if (!S.sites.length) return `<p class="muted">${t("noSites")}</p>`;
+  return `<div><div class="flabel">${t("pick")}</div><div class="row" style="gap:8px;align-items:center;margin:4px 0 8px"><button class="btn" type="button" data-act="fw-tileall" data-set="${set}">${t("sAll")}</button><button class="btn" type="button" data-act="fw-tilenone" data-set="${set}">${t("insClear")}</button><span class="small muted">${t("insSel", { n: sel.size })}</span></div>
+    <div class="cabgrid">${S.sites.map((x) => { const on = sel.has(x.id); return `<button class="cabcell${on ? " on" : ""}" type="button" data-act="fw-tile" data-set="${set}" data-id="${esc(x.id)}" aria-pressed="${on}"><b>${esc(x.name)}</b><span>${esc(x.host)}</span></button>`; }).join("")}</div></div>`;
+}
+const fwOpen = (k) => ((S.fw.open || {})[k] ? " open" : "");
+// The fleet OTA report is plain text written for a file; show it in the page's own type and table style.
+function fwOutcomeHtml(text) {
+  const L = String(text || "").split("\n");
+  const head = (L.shift() || "").trim().split(/\s{2,}/);
+  const meta = [], rows = [], tail = [];
+  let cols = null, inTable = false;
+  for (const raw of L) {
+    const ln = raw.trimEnd();
+    if (!ln.trim()) { if (inTable && rows.length) inTable = false; continue; }
+    if (/^-{5,}$/.test(ln.trim())) { inTable = true; continue; }
+    if (/^cabinet\s/.test(ln)) { cols = ln.trim().split(/\s{2,}/); continue; }
+    if (inTable) { rows.push(ln.trim().split(/\s{2,}/)); continue; }
+    (cols ? tail : meta).push(ln.trim());
+  }
+  const bad = (c) => /^[^\d]*(\d+)\/(\d+)$/.exec(c) && RegExp.$1 !== RegExp.$2;
+  const tbl = cols && rows.length ? `<div style="overflow-x:auto"><table class="evtab"><tr>${cols.map((c, i) => `<th${i && i < 4 ? ' class="num"' : ""}>${esc(c)}</th>`).join("")}</tr>${rows.map((r) => `<tr>${r.map((c, i) => `<td${i && i < 4 ? ' class="num"' : ""}${bad(c) ? ' class="num bad"' : ""}>${i === 0 ? "<b>" + esc(c) + "</b>" : esc(c)}</td>`).join("")}</tr>`).join("")}</table></div>` : "";
+  return `<div class="vsub">${esc(head[0] || "")}${head[1] ? ` <span class="small muted">${esc(head[1])}</span>` : ""}</div>${meta.length ? `<div class="small muted">${meta.map(esc).join("<br>")}</div>` : ""}${tbl}${tail.length ? `<div class="small">${tail.map((x, i) => (i < tail.length - 1 ? esc(x) : `<span class="muted">${esc(x)}</span>`)).join("<br>")}</div>` : ""}`;
 }
 function viewFirmware() {
   const f = S.fw, im = f.images, ota = f.ota || {}, gw = f.gw || {};
-  const sitesRows = S.sites.map((x) => `<label class="row" style="min-height:40px"><input type="checkbox" data-fwpick="${esc(x.id)}"${f.sel.has(x.id) ? " checked" : ""}> <span>${esc(x.name)}</span> <span class="small muted mono">${esc(x.host)} · ${esc(x.cabinet || "?")}</span></label>`).join("");
-  const modImgs = im ? im.module.map((i) => `<option value="${esc(i.key)}"${i.key === f.image ? " selected" : ""}>${esc(i.label)}</option>`).join("") : "";
-  const dpImgs = im ? im.module.map((i) => `<option value="${esc(i.key)}"${i.key === (f.dp.image || (im.module[0] || {}).key) ? " selected" : ""}>${esc(i.label)}</option>`).join("") : "";
-  const gwImgs = im ? im.gateway.map((i) => `<option value="${esc(i.key)}"${i.key === f.gwImage ? " selected" : ""}>${esc(i.label)}</option>`).join("") : "";
+  const sitesRows = fwCabTiles("ota", f.sel);
+  const modImgs = im ? im.module.map((i) => `<option value="${esc(i.key)}"${i.key === f.image ? " selected" : ""}>${esc(i.version)}</option>`).join("") : "";
+  const dpImgs = im ? im.module.map((i) => `<option value="${esc(i.key)}"${i.key === (f.dp.image || (im.module[0] || {}).key) ? " selected" : ""}>${esc(i.version)}</option>`).join("") : "";
+  const gwImgs = im ? im.gateway.map((i) => `<option value="${esc(i.key)}"${i.key === f.gwImage ? " selected" : ""}>${esc(i.version)}</option>`).join("") : "";
   const gsite = S.sites.map((x) => `<option value="${esc(x.id)}"${x.id === f.gwId ? " selected" : ""}>${esc(x.name)} · ${esc(x.host)}</option>`).join("");
   const gwOpts = (cur) => S.sites.map((x) => `<option value="${esc(x.id)}"${x.id === cur ? " selected" : ""}>${esc(x.name)} · ${esc(x.host)}</option>`).join("");
   const doneSlots = (f.srcSlots || []).filter((x) => x.state === 2);
@@ -1235,53 +1283,52 @@ function viewFirmware() {
   const dp = f.dp;
   const keptList = im ? im.module.filter((i) => i.kept) : [];
   const stateTxt = (x) => (x.state === 2 ? `<span class="chip ok"><i class="dot"></i>${t("fwDpOk")}</span>` : x.state === 1 ? `<span class="chip warn"><i class="dot"></i>${t("fwDpPartial")}</span>` : `<span class="muted small">${t("fwDpEmpty")}</span>`);
-  const dpTable = dp.slots ? `<div style="overflow-x:auto"><table class="evtab"><tr><th>${t("fwDpSlot")}</th><th>${t("fwDpName")}</th><th class="num">${t("fwDpSize")}</th><th>CRC</th><th>${t("fwDpState")}</th><th></th></tr>${dp.slots.map((x) => `<tr><td>${x.slot + 1}</td><td>${x.state ? esc(x.name) : "—"}</td><td class="num">${x.state ? fmtN(x.size) + " B" : ""}</td><td class="mono small">${x.state === 2 ? x.crc.toString(16).toUpperCase().padStart(8, "0") : ""}</td><td>${stateTxt(x)}</td><td>${x.state === 2 ? `<button class="btn sm" type="button" data-act="fw-dpkeep" data-slot="${x.slot}">${t("fwDpKeep")}</button> ` : ""}${x.state ? `<button class="btn sm" type="button" data-act="fw-dpdel" data-slot="${x.slot}" data-name="${esc(x.name)}">${t("fwDpDel")}</button>` : ""}</td></tr>`).join("")}</table></div>` : "";
+  const dpTable = dp.slots ? `<div style="overflow-x:auto${dp.op === "fwOpLoad" ? ";opacity:.4;filter:grayscale(1);pointer-events:none;transition:opacity .15s" : ""}"><table class="evtab"><tr><th>${t("fwDpSlot")}</th><th>${t("fwDpName")}</th><th class="num">${t("fwDpSize")}</th><th>CRC</th><th>${t("fwDpState")}</th><th></th></tr>${dp.slots.map((x) => `<tr><td>${x.slot + 1}</td><td>${x.state ? esc(x.name) : "—"}</td><td class="num">${x.state ? fmtN(x.size) + " B" : ""}</td><td class="mono small">${x.state === 2 ? x.crc.toString(16).toUpperCase().padStart(8, "0") : ""}</td><td>${stateTxt(x)}</td><td>${x.state === 2 ? `<button class="btn sm" type="button" data-act="fw-dpkeep" data-slot="${x.slot}"${dp.busy || dp.op ? " disabled" : ""}>${t("fwDpKeep")}</button> ` : ""}${x.state ? `<button class="btn sm" type="button" data-act="fw-dpdel" data-slot="${x.slot}" data-name="${esc(x.name)}"${dp.busy || dp.op ? " disabled" : ""}>${t("fwDpDel")}</button>` : ""}</td></tr>`).join("")}</table></div>` : "";
   const go = f.go;
   const goRows = (go.rows || []).filter((r) => go.sel.has(r.id));
   const goTable = goRows.length ? `<div style="overflow-x:auto"><table class="evtab"><tr><th>${t("fwGoCab")}</th><th>${t("fwGoState")}</th><th>${t("fwGoPhase")}</th><th class="num">${t("fwGoProg")}</th><th class="num">${t("fwGoWait")}</th><th class="num">${t("fwGoDone")}</th><th class="num">${t("fwGoFail")}</th><th class="num">${t("fwGoPaused")}</th><th></th></tr>${goRows.map((r) => {
     const o = r.ota || {}, run = o.state === "running", bad = o.state === "done_with_failures" || o.state === "interrupted" || o.state === "unreachable" || o.state === "unsupported";
     const cls = o.state === "done_ok" ? "ok" : run ? "warn" : bad ? "bad" : "";
-    return `<tr><td><b>${esc(r.name)}</b></td><td><span class="chip ${cls}"><i class="dot"></i>${t("fwGoS_" + (o.state || "none"))}</span></td><td class="small">${run ? esc(TXT[lang]["fwGoP_" + o.phase] ? t("fwGoP_" + o.phase) : (o.phase || "")) : ""}</td><td class="num">${run && o.chunk ? esc(o.chunk) : ""}</td><td class="num">${run ? esc(o.verified || "0") : ""}</td><td class="num">${run ? esc(o.applied || "0") : ""}</td><td class="num${run && +o.failed ? " vbad" : ""}">${run ? esc(o.failed || "0") : ""}</td><td class="num">${run ? esc(o.paused_s || "0") : ""}</td><td>${run ? "" : `<button class="btn sm" type="button" data-act="fw-goresult" data-id="${esc(r.id)}">${t("fwGoResult")}</button>`}</td></tr>`;
+    return `<tr><td><b>${esc(r.name)}</b></td><td><span class="chip ${cls}"><i class="dot"></i>${t("fwGoS_" + (o.state || "none"))}</span></td><td class="small">${run ? esc(TXT[lang]["fwGoP_" + o.phase] ? t("fwGoP_" + o.phase) : (o.phase || "")) : ""}</td><td class="num" title="${run && o.chunk ? esc(o.chunk) : ""}">${(() => { const q = o.state === "done_ok" ? 100 : run && +o.modules ? Math.min(100, Math.round((+o.applied || 0) / +o.modules * 100)) : -1; return q < 0 ? "" : `<div class="tpbar"><b>${q}%</b><progress value="${q}" max="100"></progress></div>`; })()}</td><td class="num">${run ? esc(o.verified || "0") : ""}</td><td class="num">${run ? esc(o.applied || "0") + (o.modules ? " / " + esc(o.modules) : "") : ""}</td><td class="num${run && +o.failed ? " vbad" : ""}">${run ? esc(o.failed || "0") : ""}</td><td class="num">${run ? esc(o.paused_s || "0") : ""}</td><td>${run ? "" : `<button class="btn sm" type="button" data-act="fw-goresult" data-id="${esc(r.id)}">${t("fwGoResult")}</button>`}</td></tr>`;
   }).join("")}</table></div>` : "";
   const goAnyRun = goRows.some((r) => (r.ota || {}).state === "running");
-  const goBlock = `<section class="card stack"><b>${t("fwGo")}</b><p class="small muted">${t("fwGoNote")}</p>
-    ${S.sites.map((x) => `<label class="row" style="min-height:40px"><input type="checkbox" data-gopick="${esc(x.id)}"${go.sel.has(x.id) ? " checked" : ""}> <span>${esc(x.name)}</span> <span class="small muted mono">${esc(x.host)}</span></label>`).join("") || `<p class="muted">${t("noSites")}</p>`}
-    <div class="field"><label>${t("fwGoImage")}</label><select id="fwgoimage">${go.names.length ? go.names.map((n) => `<option value="${esc(n)}"${n === go.image ? " selected" : ""}>${esc(n)}</option>`).join("") : `<option value="">${t("fwGoNoImage")}</option>`}</select></div>
+  const goBlock = `<details class="card fwsec" data-fwsec="go"${fwOpen("go")}><summary>${t("fwGo")}</summary><div class="stack">
+    ${fwCabTiles("go", go.sel)}
+    <div class="field"><label>${t("fwImage")}${infoBtn("goNote")}</label><select id="fwgoimage">${go.names.length ? go.names.map((n) => `<option value="${esc(n)}"${n === go.image ? " selected" : ""}>${esc(n)}</option>`).join("") : `<option value="">${t("fwGoNoImage")}</option>`}</select></div>
     <details class="advbox" id="fwgoadv"${go.adv ? " open" : ""}><summary>${t("fwGoAdv")}</summary><div class="fgrid" style="margin-top:10px">
       <div class="field"><label>${t("fwGoIdle")}</label><input id="fwgoidle" type="number" min="1" max="600" value="${go.opts.idle}"></div>
       <div class="field"><label>${t("fwGoGroup")}</label><input id="fwgogroup" type="number" min="1" max="8" value="${go.opts.group}"></div>
       <div class="field"><label>${t("fwGoApplyIdle")}</label><input id="fwgoapplyidle" type="number" min="1" max="3600" value="${go.opts.apply_idle}"></div>
       <div class="field"><label>${t("fwGoApplyQuiet")}</label><input id="fwgoapplyquiet" type="number" min="0" max="86400" value="${go.opts.apply_quiet}"></div></div></details>
-    <div class="row" style="gap:8px"><button class="btn primary" data-act="fw-gostart"${go.sel.size && go.image && !go.busy ? "" : " disabled"}>${t("fwGoStart")}</button>${goAnyRun ? `<button class="btn" style="color:var(--bad)" data-act="fw-goabort">${t("fwGoAbort")}</button>` : ""}</div>${goTable}</section>`;
-  const depotBlock = `<section class="card stack"><b>${t("fwDepot")}</b><p class="small muted">${t("fwDepotNote")}</p><div class="fgrid">
-      <div class="field"><label>${t("pick")}</label><select id="fwdpsel"><option value="">—</option>${gwOpts(dp.id)}</select></div>
-      <div class="field"><label>${t("fwImage")}</label><select id="fwdpimage">${dpImgs || `<option value="">${t("fwNoOta")}</option>`}</select></div>
+    <div class="row" style="gap:8px"><button class="btn primary" data-act="fw-gostart"${go.sel.size && go.image && !go.busy && !goAnyRun ? "" : " disabled"}>${goAnyRun ? t("fwRun") : t("fwGoStart")}</button>${goAnyRun ? `<button class="btn" style="color:var(--bad)" data-act="fw-goabort">${t("fwGoAbort")}</button>` : ""}</div>${goTable}</div></details>`;
+  const depotBlock = `<details class="card fwsec" data-fwsec="depot"${fwOpen("depot")}><summary>${t("fwDepot")}</summary><div class="stack"><div class="fgrid">
+      <div class="field"><label>${t("pick")}${infoBtn("depotNote")}</label><select id="fwdpsel"><option value="">—</option>${gwOpts(dp.id)}</select></div>
+      <div class="field"><label>${t("fwImage")}<button class="why" type="button" data-act="fw-imginfo" data-kind="dp" aria-label="${t("cmWhat")}" title="${t("cmWhat")}">i</button></label><select id="fwdpimage">${dpImgs || `<option value="">${t("fwNoOta")}</option>`}</select></div>
       <div class="field"><label>${t("fwUpload")}</label>${fileBox("fwdpfile", dp.fileName)}</div></div>${dpTable}
-    <div class="row"><button class="btn primary" data-act="fw-dpput"${dp.id && !dp.busy ? "" : " disabled"}>${dp.busy ? t("fwDpBusy") : t("fwDpPut")}</button></div>
-    <div class="vsub">${t("fwKeptTitle")}</div>${keptList.length ? `<div class="stack tight">${keptList.map((k) => `<div class="row between"><span>${esc(k.version)} <span class="small muted">· ${fmtN(k.size)} B · ${esc(k.source)}</span></span><button class="btn sm" type="button" data-act="fw-keptdel" data-name="${esc(k.version)}">${t("fwDpDel")}</button></div>`).join("")}</div>` : `<span class="small muted">${t("fwKeptNone")}</span>`}</section>`;
-  const otaBlock = ota.running
-    ? `<section class="card stack"><div class="row between"><b>${t("fwRun")}</b><button class="btn" style="color:var(--bad)" data-act="fw-cancel">${t("fwCancel")}</button></div></section>`
-    : `<section class="card stack"><b>${t("fwOta")}</b>${sitesRows || `<p class="muted">${t("noSites")}</p>`}
-        <div class="fgrid"><div class="field"><label>${t("fwSrc")}</label><select id="fwsrc"><option value="bundle"${f.src === "bundle" ? " selected" : ""}>${t("fwSrcBundle")}</option><option value="depot"${f.src === "depot" ? " selected" : ""}>${t("fwSrcDepot")}</option></select></div>
+    <div id="fwdpprog">${dpProgHtml()}</div><div class="row" style="gap:8px"><button class="btn primary" data-act="fw-dpput"${dp.id && !dp.busy && !dp.op ? "" : " disabled"}>${dp.busy ? t("fwDpBusy") : t("fwDpPut")}</button><button class="btn" data-act="fw-dprefresh"${dp.id && !dp.busy && !dp.op ? "" : " disabled"}>${t("fwDpRefresh")}</button></div>
+    <div class="vsub">${t("fwKeptTitle")}</div>${keptList.length ? `<div class="stack tight">${keptList.map((k) => `<div class="row between"><span>${esc(k.version)} <span class="small muted">· ${fmtN(k.size)} B · ${esc(k.source)}</span></span><button class="btn sm" type="button" data-act="fw-keptdel" data-name="${esc(k.version)}">${t("fwDpDel")}</button></div>`).join("")}</div>` : `<span class="small muted">${t("fwKeptNone")}</span>`}</div></details>`;
+  const log = (ota.log || []).length ? `<div class="vsub">${t("fwLog")}</div><div style="max-height:260px;overflow:auto">${ota.log.slice(-60).map((l) => `<div class="evrow"><span class="when">${esc(l.at)}</span><span><b>${esc(l.cabinet)}</b> ${esc(l.text)}</span></div>`).join("")}</div>` : "";
+  const outcome = ota.outcome && !ota.running ? fwOutcomeHtml(ota.outcome.text) : "";
+  const otaBlock = `<details class="card fwsec" data-fwsec="ota"${fwOpen("ota") || (ota.running ? " open" : "")}><summary>${t("fwOta")}</summary><div class="stack">${sitesRows || `<p class="muted">${t("noSites")}</p>`}
+        <div class="fgrid"><div class="field"><label>${t("fwSrc")}${infoBtn("otaNote")}</label><select id="fwsrc"><option value="bundle"${f.src === "bundle" ? " selected" : ""}>${t("fwSrcBundle")}</option><option value="depot"${f.src === "depot" ? " selected" : ""}>${t("fwSrcDepot")}</option></select></div>
         ${f.src === "depot" ? `<div class="field"><label>${t("fwSrcGw")}</label><select id="fwsrcgw"><option value="">—</option>${gwOpts(f.srcId)}</select></div>
           <div class="field"><label>${t("fwImage")}</label><select id="fwsrcslot">${srcOpts}</select></div>`
-          : `<div class="field"><label>${t("fwImage")}</label><select id="fwimage">${modImgs || `<option value="">${t("fwNoOta")}</option>`}</select></div>`}</div>
-        <div class="row"><button class="btn primary" data-act="fw-start">${t("fwStart")}</button></div></section>`;
-  const log = (ota.log || []).length ? `<section class="card stack"><h3>${t("fwLog")}</h3><div style="max-height:260px;overflow:auto">${ota.log.slice(-60).map((l) => `<div class="evrow"><span class="when">${esc(l.at)}</span><span><b>${esc(l.cabinet)}</b> ${esc(l.text)}</span></div>`).join("")}</div></section>` : "";
-  const outcome = ota.outcome && !ota.running ? `<section class="card stack"><pre class="mono small" style="white-space:pre-wrap;overflow-x:auto;margin:0">${esc(ota.outcome.text)}</pre></section>` : "";
+          : `<div class="field"><label>${t("fwImage")}<button class="why" type="button" data-act="fw-imginfo" data-kind="ota" aria-label="${t("cmWhat")}" title="${t("cmWhat")}">i</button></label><select id="fwimage">${modImgs || `<option value="">${t("fwNoOta")}</option>`}</select></div>`}</div>
+        <div class="row" style="gap:8px"><button class="btn primary" data-act="fw-start"${ota.running ? " disabled" : ""}>${ota.running ? t("fwRun") : t("fwStart")}</button>${ota.running ? `<button class="btn" style="color:var(--bad)" data-act="fw-cancel">${t("fwGoAbort")}</button>` : ""}</div>${fwRows(ota.rows || [])}${outcome}${log}</div></details>`;
   const gwStat = gw.name ? `<div class="notice ${gw.done ? (gw.ok ? "info" : "bad") : ""}">${gw.running ? t("fwGwRun") + " " + gw.pct + "%" : gw.done ? (gw.ok ? t("fwDone") : t("fwFail")) + " · " + esc(gw.summary) : ""}
       <div class="mono tiny" style="white-space:pre-wrap;margin-top:6px">${esc((gw.lines || []).join("\n"))}</div></div>` : "";
-  return `<h1>${t("firmware_page")}</h1><div class="stack">${otaBlock}${fwRows(ota.rows || [])}${log}${outcome}${goBlock}${depotBlock}
-    <section class="card stack"><b>${t("fwGw")}</b><p class="small muted">${t("fwGwNote")}</p><div class="fgrid">
-      <div class="field"><label>${t("pick")}</label><select id="fwgwsel"><option value="">—</option>${gsite}</select></div>
-      <div class="field"><label>${t("fwImage")}</label><select id="fwgwimage"><option value="">—</option>${gwImgs}</select></div>
+  const gwBlock = `<details class="card fwsec" data-fwsec="gw"${fwOpen("gw")}><summary>${t("fwGw")}</summary><div class="stack"><div class="fgrid">
+      <div class="field"><label>${t("fwImage")}<button class="why" type="button" data-act="fw-imginfo" data-kind="gw" aria-label="${t("cmWhat")}" title="${t("cmWhat")}">i</button></label><select id="fwgwimage"><option value="">—</option>${gwImgs}</select></div>
       <div class="field"><label>${t("fwUpload")}</label>${fileBox("fwgwfile", f.gwFileName)}</div>
-      <div class="field"><label>${t("fwConfirm")}</label><input id="fwgwconfirm" value="${esc(f.gwConfirm)}" autocomplete="off"></div></div>
-      <div class="row"><button class="btn" style="color:var(--bad)" data-act="fw-gwstart"${gw.running ? " disabled" : ""}>${t("fwGwStart")}</button></div>${gwStat}</section></div>`;
+      <div class="field"><label>${t("pick")}</label><select id="fwgwsel"><option value="">—</option>${gsite}</select></div>
+      <div class="field"><label>${t("fwConfirm")}</label><input id="fwgwconfirm" value="${esc(f.gwConfirm)}" autocomplete="off" placeholder="${esc(((S.sites.find((x) => x.id === f.gwId)) || {}).name || t("fwConfirmHint"))}"></div></div>
+      <div class="row"><button class="btn" style="color:var(--bad)" data-act="fw-gwstart"${gw.running ? " disabled" : ""}>${t("fwGwStart")}</button></div>${gwStat}</div></details>`;
+  // order on the page: the gateway's own firmware, the depot, the gateway-run module update (reads from the depot), then the Tool-driven module OTA
+  return `<h1>${t("firmware_page")}</h1><div class="stack">${gwBlock}${depotBlock}${goBlock}${otaBlock}</div>`;
 }
 async function fwDepotLoad(which) {
   const f = S.fw, d = f.dp, id = which === "src" ? f.srcId : d.id;
-  if (which === "src") { f.srcSlots = null; f.srcSlot = -1; } else d.slots = null;
+  if (which === "src") { f.srcSlots = null; f.srcSlot = -1; } else if (!d.op) d.slots = null;
   if (id) {
     try {
       const r = await api("GET", "/api/v2/fw/depot?id=" + encodeURIComponent(id));
@@ -1304,16 +1351,19 @@ async function fwGoNames() {
 }
 async function fwGoPoll(force) {
   const go = S.fw.go;
-  if (!go.sel.size || (!force && Date.now() - go.at < 10000)) return;
-  go.at = Date.now();
-  try { go.rows = (await api("GET", "/api/v2/fw/gwota/status?ids=" + encodeURIComponent([...go.sel].join(",")))).rows; } catch (e) { /* next tick */ }
+  const ids = [...go.sel];
+  if (!ids.length || go.polling || (!force && Date.now() - go.at < 10000)) return;
+  go.at = Date.now(); go.polling = true;      // one request at a time: a slow cabinet must not pile requests up behind the browser's connection limit
+  try { go.rows = (await api("GET", "/api/v2/fw/gwota/status?ids=" + encodeURIComponent(ids.join(",")))).rows; } catch (e) { /* next tick */ } finally { go.polling = false; }
 }
 async function fwRefresh() {
   fwGoPoll(false);
   try {
     S.fw.ota = await api("GET", "/api/v2/fw/ota/status");
     S.fw.gw = await api("GET", "/api/v2/fw/gateway/status");
-    if (page === "firmware" && !document.activeElement.matches("input,select")) { const y = window.scrollY; render(); window.scrollTo(0, y); }
+    // redraw only when what the page shows has changed: a redraw every tick replaces the buttons between mouse-down and mouse-up, and the click is lost
+    const sig = JSON.stringify([S.fw.ota, S.fw.gw, S.fw.go.rows]);
+    if (page === "firmware" && sig !== S.fw.sig && !document.activeElement.matches("input,select")) { S.fw.sig = sig; const y = window.scrollY; render(); window.scrollTo(0, y); }
   } catch (e) { /* next tick */ }
 }
 function fwSync() {
@@ -1410,6 +1460,88 @@ const FW_NOTES = {
       "Front-panel dial: SET_ID goes up to 108, hold to scroll through numbers, saves itself when left for the set time, bigger digits fill the frame, and OTA has its own screen.",
       "Device type at commissioning (the cabinet type chosen when the file is flashed) and the LED-8 mask for type 10.",
       "RTU framing fix: wait for bus silence before handing the buffer to the library. Before, a hub cutting a frame at a channel change left a module hung until the watchdog reset it (about 0.6 resets per module per run with channel crossings)."] } },
+  "v1.14.0-rc1": {
+    th: { date: "5 พ.ย. 2569", head: "รุ่นทดลอง: บันทึกเหตุการณ์ ซิงก์เวลา คอนโซลผ่านเครือข่าย คลังไฟล์โมดูล และอัปเดตโมดูลเบื้องหลัง", items: [
+      "บันทึกเหตุการณ์ในตัวเกตเวย์ (ใช้ $LGS LOG และ $LGS LOG SINCE) เก็บเหตุสำคัญ เช่น ไฟตู้ดับ (bus_quiet) การรีเซ็ตตามเวลา และการเชื่อมต่อของไคลเอนต์ ให้ Tool ดึงไปดูย้อนหลังได้โดยไม่ต้องมี PC ค้างไว้",
+      "ซิงก์เวลาจากเซิร์ฟเวอร์ NTP (ตั้ง IP ที่ net.ntp และเขตเวลาที่ time.tz_min) ทำให้นาฬิกาถูกต้องเองหลังไฟดับ",
+      "คอนโซลและอัปเดตเฟิร์มแวร์ผ่านเครือข่าย: ใช้ unit 255 / FC 0x41 ที่พอร์ต 502 ส่งคำสั่ง $LGS ได้แบบเดียวกับพอร์ต USB และอัปเดตเฟิร์มแวร์เกตเวย์ผ่านเครือข่าย (ปิดได้ด้วย net.console=0)",
+      "คลังไฟล์เฟิร์มแวร์โมดูลบนเกตเวย์: อัปโหลดไฟล์ไว้ในเกตเวย์แล้วอัปเดตโมดูลภายหลังจากเครื่องอื่นได้ โดยเครื่องที่สั่งไม่ต้องมีไฟล์",
+      "อัปเดตโมดูลเบื้องหลัง ($LGS OTA START/STATUS/RESULT/ABORT): เกตเวย์ทำเอง ส่งเฉพาะตอนบัสว่าง และสั่งโมดูลเปลี่ยนเฟิร์มแวร์เฉพาะตอนที่คาดว่าจะไม่มีใครมาอ่านโมดูลนั้นในอีก 8 วินาที (รู้จากจังหวะการอ่านที่ผ่านมา) บนโต๊ะทดสอบการรีบูตของโมดูลไม่ชนกับการอ่านเลยใน 32 ครั้ง",
+      "ความเข้ากันได้: ไม่เปลี่ยนโครงสร้างการตั้งค่า (schema 11) การตั้งค่าที่เก็บไว้คงอยู่ ขนาดไฟล์ 312,396 B",
+      "สถานะ: รุ่นทดลอง สร้างจากซอร์สที่ยังไม่ได้ commit ของสาขา gw-1.14-eventlog ยังไม่มีป้ายรุ่น ผ่านการทดสอบบนตู้ Std-11 เท่านั้น"] },
+    en: { date: "5 Nov 2026", head: "Release candidate: event log, time sync, console over the network, module depot and background module update", items: [
+      "Event log inside the gateway ($LGS LOG and $LGS LOG SINCE): keeps the important events, such as a cabinet power loss (bus_quiet), scheduled resets and client connections, so the Tool can collect them later without a PC left running.",
+      "Time sync from an NTP server (set the IP in net.ntp and the zone in time.tz_min): the clock corrects itself after a power cut.",
+      "Console and firmware update over the network: unit 255 / FC 0x41 on port 502 carries the same $LGS commands as the USB port, and the gateway's firmware can be updated over the network (closed with net.console=0).",
+      "Module firmware depot on the gateway: leave a module update file in the gateway, then update later from another PC that does not have the file.",
+      "Background module update ($LGS OTA START/STATUS/RESULT/ABORT): the gateway does it itself, sends only while the bus is quiet, and tells a module to switch firmware only when no one is expected to read that module within 8 seconds (learned from the recent read rhythm). On the bench, module reboots never collided with polling in 32 tries.",
+      "Compatibility: the stored-settings layout is unchanged (schema 11), so saved settings survive. File size 312,396 B.",
+      "Status: release candidate, built from the uncommitted sources of the gw-1.14-eventlog branch, not tagged yet, tested on cabinet Std-11 only."] } },
+  "v1.13.0": {
+    th: { date: "26 ต.ค. 2569", head: "ซ่อมการหลุดเฟสบนบัส: ส่งซิงก์ใหม่เมื่อไม่มีคำตอบ และรอคำตอบให้ถูกจังหวะ", items: [
+      "ซิงก์ใหม่หลังไม่มีคำตอบ (rtu.heal): เมื่อโมดูลไม่ตอบ เกตเวย์ส่งคำสั่งอ่านแบบ broadcast (ยูนิต 0 ไม่มีใครตอบ) หนึ่งครั้งเพื่อให้โมดูลทุกตัวบนช่องนั้นกลับมาตรงเฟส แล้วลองคำขอเดิมอีกหนึ่งครั้ง ทำเฉพาะ ID ที่เคยตอบมาตั้งแต่เปิดเครื่อง และไม่ทำทันทีหลังข้ามช่องฮับ (เฟรมแรกหลังข้ามช่องหายตามธรรมชาติของฮับ) ไม่ส่งซิงก์นี้จากสะพาน USB เด็ดขาด เพราะ PC ที่คุมอยู่ต้องไม่ได้รับเฟรมเกิน",
+      "หน้าต่างรอคำตอบที่รู้เรื่องเสียงสะท้อน: ทรานซีฟเวอร์ของ Opta สะท้อนทุกไบต์ที่ส่งกลับมา เดิมเกตเวย์เอาเสียงสะท้อนไปนับเป็นต้นคำตอบ จึงให้เวลาโมดูลแค่ ~20 ms ตอนนี้ตัดเสียงสะท้อนทิ้งก่อนแล้วให้ไบต์แรกของคำตอบมีหน้าต่างของตัวเอง 150 ms รับมือกับโมดูลที่หน่วง 25-60 ms ตอนบันทึกสถิติรายชั่วโมงได้ (เดิมโดนนับเป็นเงียบราว 16% ของนาทีชั่วโมงเต็ม)",
+      "ตัวนับและคำสั่งใหม่: rtu.bad_crc (ID ถูกแต่ CRC เสีย) และ rtu.bad_other (เฟรมสั้นเกินหรือคนละ ID) แยกโมดูลที่ตอบเพี้ยนออกจากโมดูลที่เงียบ คำสั่ง $LGS RESYNC [0|1] เปิดปิดการซิงก์ใหม่ (ค่าเริ่มต้น 1 ทุกครั้งที่บูต) และ $LGS EXC [0|1] ให้ตอบ Modbus exception 0x0B ทันทีเมื่อ RS485 ไม่ตอบ (ค่าเริ่มต้น 0) ทั้งสองไม่ถูกเก็บถาวร",
+      "ผลบนโต๊ะทดสอบ: 12 ตู้ทดสอบต่อเนื่องข้ามคืน 17 ชั่วโมงไม่มีครั้งแรกพลาด ตู้ Ref-12 จาก 470 เหลือ 6 เหตุอ่านช้า",
+      "เป็นตัวบรรเทา ไม่ใช่แก้ที่ต้นเหตุ ต้นเหตุอยู่ที่ไลบรารี Modbus ในโมดูล เฟิร์มแวร์โมดูล v3.5.5 ขึ้นไปแก้ที่ต้นเหตุแล้ว",
+      "ความเข้ากันได้: ไม่เปลี่ยนโครงสร้างการตั้งค่า (schema 11) การตั้งค่าที่เก็บไว้คงอยู่ ขนาดไฟล์ 297,968 B"] },
+    en: { date: "26 Oct 2026", head: "Repairs bus phase loss: re-sync after a missing reply, and a reply window that knows about the echo", items: [
+      "Re-sync after a missing reply (rtu.heal): when a module does not answer, the gateway sends one broadcast read (unit 0, nobody replies) so every module on that channel gets back into phase, then retries the original request once. Only for an ID that has answered since boot, and not right after a hub crossing (the first frame after a crossing is lost by design). The re-sync is never sent from the USB bridge, because a PC master must not receive an extra frame.",
+      "Echo-aware reply window: the Opta's transceiver echoes every byte it sends. The gateway used to take the echo for the start of the reply, so a module only had ~20 ms to answer. It now discards the echo first and gives the first reply byte its own 150 ms window, which absorbs modules that stall 25-60 ms while writing their hourly stats (they used to be counted silent in about 16% of their hour marks).",
+      "New counters and commands: rtu.bad_crc (right ID, bad CRC) and rtu.bad_other (runts or other IDs) tell a garbled module from a silent one. $LGS RESYNC [0|1] switches the re-sync (default 1 at every boot) and $LGS EXC [0|1] answers an RS485 timeout at once with Modbus exception 0x0B (default 0). Neither is stored.",
+      "Bench results: 12 cabinets, a 17 h overnight soak with no first-try misses, Ref-12 from 470 down to 6 slow events.",
+      "A mitigation, not the root fix: the cause is the Modbus library in the module. Module firmware v3.5.5 and later removes it.",
+      "Compatibility: stored settings layout unchanged (schema 11), so settings survive. File size 297,968 B."] } },
+  "v1.12.4": {
+    th: { date: "23 ก.ย. 2569", head: "panel.cabinet ตั้งเป็น 0 ได้ (ไม่ใช้ชุดสำเร็จรูป ให้ยึดตาม panel.shape)", items: [
+      "ปัญหา: panel.cabinet ตั้งชื่อตามจำนวนช่อง แต่จำนวนช่องบอกรูปทรงตู้ไม่ได้ 40 คือสิบแถวแถวละสี่ ส่วนตู้เย็นก็มี 40 ช่องแต่เป็นห้าแถวแถวละแปด จึงไม่มีตัวเลขที่ถูก ตู้ที่ใช้ panel.shape อยู่แล้วต้องเก็บค่าที่โกหกไว้ (เช่น Chest-Nar-01 ขนาด 7x8 เก็บ 64 มาตลอด)",
+      "ตอนนี้ panel.cabinet=0 หมายถึงไม่มีชุดสำเร็จรูป ให้รูปทรงตาม panel.shape ทั้งหมด ตัวตรวจสอบปฏิเสธ 0 ถ้ายังไม่ได้ตั้ง shape และบันทึกสองคีย์เป็นชุดเดียวกัน ลำดับที่เขียนไม่สำคัญ",
+      "ตู้ที่ไม่รู้จักเดิมกวาด 80 ช่องโดยปริยาย (อาจเป็นช่องที่ไม่มีจริง ดูเหมือนแถวเสีย) ตอนนี้กวาด 0 ช่อง ให้เห็นว่าตั้งค่าผิด",
+      "ตรวจบนฮาร์ดแวร์แล้ว: Chest-Nar-01 กด SAVE ผ่าน และเมื่อกดปุ่มแดงที่ตู้ การกวาดเดินครบทั้งเจ็ดแถวจาก panel.shape อย่างเดียว",
+      "ความเข้ากันได้: ไม่เปลี่ยนโครงสร้างการตั้งค่า (schema 11) ตู้ที่ใช้ชุดสำเร็จรูปอยู่ทำงานเหมือนเดิมทุกอย่าง ไม่จำเป็นต้องอัปเดตทั้งฟลีต"] },
+    en: { date: "23 Sep 2026", head: "panel.cabinet can be 0 (no preset: follow panel.shape)", items: [
+      "Problem: panel.cabinet is named for a slot count, and a slot count does not determine a geometry. 40 means ten rows of four, but the refrigerated cabinet is also forty slots and is five rows of eight, so no number describes it. Cabinets that already used panel.shape had to store a value that lied (Chest-Nar-01, a 7x8, carried 64 for its whole life).",
+      "panel.cabinet=0 now means no preset, the shape is the whole description. The validator refuses 0 unless a shape is set, and both keys stage and validate as one set, so the order they are written in does not matter.",
+      "An unrecognised cabinet used to sweep 80 slots (some of which may not exist, which reads as a dead row). It now sweeps 0, so the misconfiguration shows.",
+      "Verified on hardware: Chest-Nar-01 saves it, and when the red button was pressed at the cabinet the sweep walked all seven rows off panel.shape alone.",
+      "Compatibility: stored settings layout unchanged (schema 11). A cabinet already on a catalogue preset behaves exactly as before, so no fleet-wide update is needed."] } },
+  "v1.12.3": {
+    th: { date: "9 ก.ย. 2569", head: "ปุ่มแผงหน้าตู้ใหม่ all_8: ไล่ไฟทุกช่องแสงของทุกช่อง", items: [
+      "all_on เดิมจุดไฟแค่หนึ่งพรีเซ็ตต่อช่อง (เลือกโดย panel.preset) บนตู้วงแหวนนั่นคือจอทั้งหมด แต่บนบอร์ดมาสก์ 8 สี (type 10) มันจุดแค่หนึ่งช่องแสงจากแปดและไม่บอกอะไรเกี่ยวกับอีกเจ็ดช่อง (type 80 คือแปดสิบช่องแบบนี้) ตอนนี้มีการกระทำที่หกที่ไล่ทุกช่องแสงของทุกช่อง ตรวจที่ตู้ได้โดยไม่ต้องมี PC",
+      "ไล่ทีละช่องแสงต่อหนึ่งจังหวะ ไม่ใช่ทีละช่อง เพราะแปดช่องแสงคือแปดคำสั่ง coil ถ้ายิงในจังหวะเดียวจะค้าง loop() และสะพาน USB สะพาน TCP กับวอตช์ด็อกต้องรอ ผลคือจำนวนจังหวะรวมเป็น 640 แทน 80",
+      "all_off ส่ง coil 511 (All Off ของโมดูล: กลับสู่สภาพพักจากทุกการตั้งค่า coil) แทนการล้างคอยล์ชุดเดียว จึงดับทั้งแปดช่องแสงที่ all_8 จุด และเคลียร์ coil ที่เครื่องมืออื่นทิ้งไว้ด้วย บนตู้วงแหวนผลที่เห็นเหมือนเดิม",
+      "ความเข้ากันได้: ไม่เปลี่ยนโครงสร้างการตั้งค่า (schema 11)"] },
+    en: { date: "9 Sep 2026", head: "New front-panel action all_8: lights every window of every slot", items: [
+      "all_on used to light ONE preset per slot (chosen by panel.preset). On a ring cabinet that is the whole display, but on a type-10 mask board it lights one window in eight and says nothing about the other seven (a type 80 is eighty of those). There is now a sixth action that walks every window of every slot, so a cabinet can be checked with no PC.",
+      "It advances one window per tick, not one slot: eight windows is eight coil writes, and firing them in one tick would hold loop(), so the USB bridge, the TCP bridge and the watchdog would wait. The sweep total becomes 640 steps instead of 80.",
+      "all_off now sends coil 511 (the module's own All Off: back to rest from any coil configuration) instead of clearing one combo coil, so it puts out the eight windows an all_8 sweep lit and clears any stray coil another tool left set. On a ring cabinet the visible result is the same.",
+      "Compatibility: stored settings layout unchanged (schema 11)."] } },
+  "v1.12.2": {
+    th: { date: "26 ส.ค. 2569", head: "รีเซ็ตเกตเวย์ไม่ทำให้นาฬิกาหาย (รวม v1.12.1)", items: [
+      "ปัญหา: ตัวตั้งเวลาไม่ยอมทำงานเมื่อนาฬิกายังไม่ถูกตั้ง ซึ่งถูกต้อง (เกตเวย์ที่เพิ่งบูตแล้วเชื่อว่าเป็นปี 1970 จะรีเซ็ตทันทีที่ถึงเวลานั้น) แต่ \"ยังไม่ตั้ง\" เก็บในแรมเฉย ๆ รีบูตจึงลืม ทั้งที่ RTC ข้างล่างนับต่อเนื่อง เห็นบนโต๊ะทดสอบ 25 ส.ค.: เกตเวย์รีบูต 15:36 แล้วสิบแปดชั่วโมงถัดไปปฏิเสธรีเซ็ตตี 3 ทั้งที่นาฬิกาถูกต้อง บนตู้โรงพยาบาลนั่นคือรีเซ็ตที่ไม่เกิดขึ้นโดยไม่มีใครรู้",
+      "ตอนนี้ตัวบอกอยู่ในโดเมนแบ็กอัป (RTC_BKP_DR3) ข้าง RTC จึงอยู่และหายตามเงื่อนไขเดียวกับนาฬิกา: รีบูตเก็บทั้งคู่ ไฟดับหายทั้งคู่ ตอนบูตจะคืนนาฬิกาจาก RTC เมื่อมีตัวบอกและค่าอยู่ระหว่างปี 2026-2100 และบันทึก clock_set aux=3 ในบันทึกเหตุการณ์",
+      "ไม่ช่วยตอนไฟดับจริง (ต้องมีแบตสำรอง VBAT) ทางแก้ยังเป็น net.ntp ที่ติดต่อได้",
+      "รวม v1.12.1: เอาต์พุตรีเลย์ถูกเขียนซ้ำทุก 5 วินาที (เดิมเขียนตอนบูตและเมื่อสถานะเปลี่ยนเท่านั้น) และอ่านกลับ ถ้าไม่ตรงบันทึกครั้งเดียวต่อเหตุ ไม่ใช่ทุกจังหวะ เห็นได้เฉพาะ latch ของ GPIO เสีย ไม่เห็นรีเลย์ที่ไฟคอยล์ตก",
+      "รวม v1.12.1: เหตุการณ์ bus_quiet ในบันทึก: RTU timeout ติดกันหกครั้ง (ทุกสเลฟเงียบพร้อมกัน ซึ่งเป็นสิ่งที่ตู้ที่ไฟดับดูเหมือนจากฝั่งนี้) บันทึกเวลาที่เงียบและเวลาที่กลับมาพร้อมจำนวนวินาที โมดูลตายตัวเดียวไม่ทำให้เกิด ไม่ต้องมี PC คอยดู",
+      "ความเข้ากันได้: ไม่เปลี่ยนโครงสร้างการตั้งค่า (schema 11)"] },
+    en: { date: "26 Aug 2026", head: "A gateway reset no longer loses the clock (includes v1.12.1)", items: [
+      "Problem: the scheduler refuses to fire while the clock is unset, which is right (a gateway that booted believing it was 1970 would fire the moment its target time came round in that fiction). But \"unset\" was a plain RAM flag, so a reboot forgot it while the RTC kept counting. Seen on the bench on 25 Aug: the gateway rebooted at 15:36 and for the next eighteen hours declined to run the 03:00 reset with a good clock. On a hospital cabinet that is a reset that silently never happens.",
+      "The marker now lives in the backup domain (RTC_BKP_DR3) next to the RTC, so it is kept and lost on exactly the terms the clock is: a reset keeps both, a power cut takes both. At boot the clock is restored from the RTC when the marker is present and the reading is between 2026 and 2100, and the recovery is logged as clock_set aux=3.",
+      "It does not help across a real power cut (that needs a battery on VBAT). The fix for that remains a reachable net.ntp.",
+      "Includes v1.12.1: the relay outputs are re-written every 5 seconds (they used to be written at boot and when the commanded state changed) and read back, with a disagreement logged once per episode, not once per tick. It sees a corrupted GPIO latch, not a relay whose coil supply sagged.",
+      "Includes v1.12.1: a bus_quiet event in the log: six consecutive RTU timeouts (every slave silent at once, which is what a cabinet losing power looks like from here) is stamped when the bus goes quiet and when it comes back, with the seconds it was gone. One dead module cannot trip it, and no PC has to be watching.",
+      "Compatibility: stored settings layout unchanged (schema 11)."] } },
+  "v1.12.0": {
+    th: { date: "14 ส.ค. 2569", head: "คอนโซลและการอัปเดตเฟิร์มแวร์ผ่านเครือข่าย (พอร์ต 502 เป็นยูนิต 255) รวม v1.11.0", items: [
+      "ทำทุกอย่างที่ USB ทำได้ผ่าน TCP: คอนโซล $LGS และการอัปเดตเฟิร์มแวร์เดินบนพอร์ต 502 เป็นยูนิต 255 / function code 0x41 ไม่ต้องเปิดพอร์ตใหม่ (lwIP ของบอร์ดนี้มีแค่ 4 ซ็อกเก็ตและถูกใช้ครบแล้ว) คำสั่งเดียวกัน เซสชัน HELLO เดียวกัน ชุดแก้ที่ค้างอยู่ชุดเดียวกับ USB และไม่มีอะไรที่ส่งถึงยูนิต 255 ลงบัส RS485 อีก (เดิมถูกส่งต่อและเสียเวลารอ timeout เต็ม)",
+      "อัปเดตเฟิร์มแวร์: ส่งไฟล์เข้าพาร์ติชัน OTA บน QSPI ทีละ 240 ไบต์ ตรวจ CRC จากไฟล์ที่อ่านกลับ แล้วให้ bootloader จากโรงงานเป็นผู้ติดตั้ง ผ่านบนโต๊ะทดสอบ: 297,748 ไบต์ใน 23.6 วินาที แล้วกลับมาบนเครือข่ายใน 8 วินาทีพร้อมรายงานเวอร์ชันใหม่",
+      "รวม v1.11.0: NTP กู้เวลา, บันทึกเหตุการณ์บน QSPI, ช่อง TCP ช่องที่สอง (สอง client พร้อมกัน), ปุ่มแผงหน้าตู้ lamp test, และอ่านสาเหตุการรีเซ็ตจาก RTC backup DR8 (bootloader ล้าง RSR ก่อน)",
+      "net.console=0 ปิดทางเข้าคอนโซลผ่าน TCP ได้ เปิดคืนได้ทาง USB เท่านั้น"] },
+    en: { date: "14 Aug 2026", head: "Console and firmware update over the network (port 502 as unit 255), includes v1.11.0", items: [
+      "Everything USB can do, over TCP: the $LGS console and the firmware update ride port 502 as unit 255 / function code 0x41, so no new port is needed (lwIP on this board is built for 4 sockets and all four are in use). Same verbs, same HELLO session, same staged-edit set as USB, and nothing addressed to unit 255 reaches the RS485 bus any more (it used to be forwarded and burn a full timeout).",
+      "Firmware update: the file is staged on the QSPI OTA partition in 240-byte chunks, CRC-checked on read-back, and then applied by the factory bootloader. Proven on the bench: 297,748 bytes in 23.6 s, back on the network 8 s later reporting the new version.",
+      "Includes v1.11.0: NTP time recovery, the event log on QSPI, a second TCP client slot (two clients at once), the front-panel lamp-test action, and the reset reason read from RTC backup DR8 (the bootloader clears RSR first).",
+      "net.console=0 closes the TCP console path; only USB can reopen it."] } },
 };
 function fwNoteHtml(im) {
   const n = FW_NOTES[im.version] && FW_NOTES[im.version][lang];
@@ -1427,10 +1559,12 @@ function viewCommission() {
   if (pr) probe = !pr.cli ? `<div class="notice bad">${t("cmNoCli")}</div>` : pr.probes.length ? `<div class="notice info">${t("cmProbeOk", { n: pr.probes.length })} · ${pr.probes.map((p) => esc(p.serial)).join(", ")} · ${t("cmCli")} ${esc(pr.version || "")}</div>` : `<div class="notice bad">${t("cmNoProbe")}</div>`;
   const same = o ? o.layouts.find((l) => l.ids.length === c.sel.size && l.ids.every((i) => c.sel.has(i))) : null;
   const presets = o ? o.layouts.map((l) => `<option value="${esc(l.key)}"${same && same.key === l.key ? " selected" : ""}>${esc(layoutName(l))}</option>`).join("") : "";
-  const idField = c.mode === "batch"
-    ? `<div class="field" style="grid-column:1/-1"><label>${t("cmGrid")}</label>
-        <div class="row"><select id="cmpreset"><option value="">${t("cmPreset")}</option>${presets}</select><button class="btn" data-act="cm-clear">${t("cmClear")}</button><span class="small muted">${t("cmSelected", { n: c.sel.size })}</span></div>${cmGridHtml()}</div>`
-    : `<div class="field" style="grid-column:1/-1"><label>${t("cmId")}</label><input id="cmid" value="${esc(c.id)}" inputmode="numeric" autocomplete="off" style="max-width:140px"></div>`;
+  const lotField = `<div class="field"><label>${t("cmLot")}</label><input id="cmlot" value="${esc(c.lot)}" autocomplete="off"></div>`;
+  // the cell next to the cabinet type is split in half: module id and lot (one module), or the module preset and lot (a batch, whose grid follows below)
+  const lotId = c.mode === "batch"
+    ? `<div class="halves"><div class="field"><label>${t("cmGrid")}</label><select id="cmpreset"><option value="">${t("cmPreset")}</option>${presets}</select></div>${lotField}</div>
+      <div class="field" style="grid-column:1/-1"><div class="row"><button class="btn" data-act="cm-clear">${t("cmClear")}</button><span class="small muted">${t("cmSelected", { n: c.sel.size })}</span></div>${cmGridHtml()}</div>`
+    : `<div class="halves"><div class="field"><label>${t("cmId")}</label><input id="cmid" value="${esc(c.id)}" inputmode="numeric" autocomplete="off"></div>${lotField}</div>`;
   const ow = c.mode === "batch" ? "" : `<label class="row" style="min-height:40px"><input type="checkbox" id="cmow"${c.overwrite ? " checked" : ""}> <span>${t("cmOverwrite")}</span></label>`;
   return `<h1>${t("commission_page")}</h1><div class="stack">${c.err ? `<div class="notice bad">${esc(c.err)}</div>` : ""}
     <section class="card stack"><div class="row"><button class="btn" data-act="cm-probe"${c.probing ? " disabled" : ""}>${c.probing ? t("cmProbing") : t("cmProbe")}</button></div>${probe}</section>
@@ -1438,7 +1572,7 @@ function viewCommission() {
       <div class="field"><label>${t("cmImage")}<button class="why" type="button" data-act="cm-info" aria-label="${t("cmWhat")}" title="${t("cmWhat")}">i</button></label><select id="cmimage"><option value="">—</option>${imgs}</select></div>
       <div class="field"><label>${t("cmUpload")}</label>${fileBox("cmfile", c.fileName)}</div>
       <div class="field"><label>${t("cmType")}</label><select id="cmtype">${types}</select></div>
-      <div class="field"><label>${t("cmLot")}</label><input id="cmlot" value="${esc(c.lot)}" autocomplete="off"></div>${idField}</div>${ow}
+      ${lotId}</div>${ow}
       <div class="row"><button class="btn primary" data-act="cm-start"${c.running ? " disabled" : ""}>${t("cmStart")}</button>${c.running ? `<button class="btn" style="color:var(--bad)" data-act="cm-cancel">${t("cmCancel")}</button>` : ""}</div></section>
     <section class="card stack"><h3>${t("cmLog")}</h3><div id="cmstat" class="row">${cmStatus()}</div>${c.prog && c.running ? `<progress value="${c.prog.done}" max="${c.prog.total || 1}" style="width:100%"></progress>` : ""}
       <div id="cmlog" class="mono small" style="max-height:320px;overflow:auto;white-space:pre-wrap">${cmLog()}</div></section></div>`;
@@ -1754,6 +1888,12 @@ document.addEventListener("click", async (ev) => {
       if (raw === "" || !Number.isInteger(v) || v < 0 || v > 9999) { await ask(t("numRange"), true); return; }
       const r = await api("POST", "/api/v2/mod/number", { id: S.mod.id, device_id: S.mod.dev, value: v }); if (!r.ok) throw new Error(r.error); toast(t("sent"));
     } else if (act.dataset.act === "soak-an-pg") { S.soak.anP = Math.max(0, S.soak.anP + (+act.dataset.d)); render();
+    } else if (act.dataset.act === "fw-tile" || act.dataset.act === "fw-tileall" || act.dataset.act === "fw-tilenone") {
+      const isGo = act.dataset.set === "go", st = isGo ? S.fw.go.sel : S.fw.sel;
+      if (act.dataset.act === "fw-tile") { const id = act.dataset.id; st.has(id) ? st.delete(id) : st.add(id); }
+      else if (act.dataset.act === "fw-tileall") S.sites.forEach((x) => st.add(x.id)); else st.clear();
+      render();
+      if (isGo) fwGoNames().then(() => fwGoPoll(true)).then(render);
     } else if (act.dataset.act === "soak-all") { S.sites.forEach((x) => { if (x.cabinet) S.soak.sel.add(x.id); }); render();
     } else if (act.dataset.act === "soak-none") { S.soak.sel.clear(); render();
     } else if (act.dataset.act === "soak-mode") { S.soak.mode = act.dataset.m; render();
@@ -1806,7 +1946,8 @@ document.addEventListener("click", async (ev) => {
       if (!await ask(t("fwStartQ", { n: cabs.length, i: label }) + "\n\n" + cabs.map((c) => c.name).join(", "))) return;
       await api("POST", "/api/v2/fw/ota/start", fromDepot ? { ids: [...f.sel], depot: { id: f.srcId, slot: f.srcSlot } } : { ids: [...f.sel], image: f.image }); await fwRefresh();
     } else if (act.dataset.act === "fw-gostart") {
-      const go = S.fw.go; if (!go.sel.size || !go.image) return;
+      const go = S.fw.go; if (!go.sel.size || !go.image || go.busy) return;
+      if ((go.rows || []).some((r) => go.sel.has(r.id) && (r.ota || {}).state === "running")) return;
       if (!await ask(t("fwGoStartQ", { n: go.sel.size, i: go.image }))) return;
       go.busy = true; render();
       try {
@@ -1829,17 +1970,30 @@ document.addEventListener("click", async (ev) => {
     } else if (act.dataset.act === "fw-dpput") {
       const d = S.fw.dp; if (!d.id || d.busy) return;
       const g = S.sites.find((x) => x.id === d.id) || {};
-      d.busy = true; render();
+      d.busy = true; d.prog = null; render();
+      const dpTimer = setInterval(async () => {
+        try { d.prog = await api("GET", "/api/v2/fw/depot/progress?id=" + encodeURIComponent(d.id)); } catch (e) { return; }
+        const box = $("#fwdpprog"); if (box && d.busy) box.innerHTML = dpProgHtml();
+      }, 500);
       try {
         const key = d.image || ((S.fw.images && S.fw.images.module[0]) || {}).key;
         const r = d.file ? await api("POST", `/api/v2/fw/depot/put?id=${encodeURIComponent(d.id)}&name=${encodeURIComponent(d.fileName)}`, d.file, true)
           : await api("POST", "/api/v2/fw/depot/put", { id: d.id, image: key });
         d.slots = r.slots; toast(t("fwDpDone", { n: r.name, g: g.name }));
-      } catch (e) { fail(e); } finally { d.busy = false; render(); }
+      } catch (e) { fail(e); } finally { clearInterval(dpTimer); d.busy = false; d.prog = null; render(); }
+    } else if (act.dataset.act === "fw-dprefresh") {
+      const d = S.fw.dp; if (!d.id || d.busy || d.op) return;
+      d.op = "fwOpLoad"; render();
+      try { await Promise.all([fwDepotLoad("dp"), new Promise((r) => setTimeout(r, 400))]); } finally { d.op = null; render(); }
     } else if (act.dataset.act === "fw-dpkeep") {
-      const d = S.fw.dp;
+      const d = S.fw.dp; if (d.busy || d.op) return;
+      d.op = "fwOpKeep"; d.prog = null; render();
+      const kpTimer = setInterval(async () => {
+        try { d.prog = await api("GET", "/api/v2/fw/depot/progress?id=" + encodeURIComponent(d.id)); } catch (e) { return; }
+        const box = $("#fwdpprog"); if (box && d.op === "fwOpKeep") box.innerHTML = dpProgHtml();
+      }, 400);
       try { const r = await api("POST", "/api/v2/fw/depot/keep", { id: d.id, slot: +act.dataset.slot }); S.fw.images = r.images; toast(t("fwDpKept", { n: r.kept.name })); } catch (e) { fail(e); }
-      render();
+      clearInterval(kpTimer); d.op = null; d.prog = null; render();
     } else if (act.dataset.act === "fw-keptdel") {
       if (!await ask(t("fwKeptDelQ", { n: act.dataset.name }))) return;
       try { const r = await api("POST", "/api/v2/fw/kept/delete", { name: act.dataset.name }); S.fw.images = r.images; if (S.fw.image === "kept:" + act.dataset.name) S.fw.image = ""; } catch (e) { fail(e); }
@@ -1847,8 +2001,10 @@ document.addEventListener("click", async (ev) => {
     } else if (act.dataset.act === "fw-dpdel") {
       const d = S.fw.dp, g = S.sites.find((x) => x.id === d.id) || {};
       if (!await ask(t("fwDpDelQ", { n: act.dataset.name, g: g.name }))) return;
+      if (d.busy || d.op) return;
+      d.op = "fwOpDel"; render();
       try { const r = await api("POST", "/api/v2/fw/depot/delete", { id: d.id, slot: +act.dataset.slot }); d.slots = r.slots; } catch (e) { fail(e); }
-      render();
+      d.op = null; render();
     } else if (act.dataset.act === "fw-cancel") {
       if (!await ask(t("fwCancelQ"))) return; await api("POST", "/api/v2/fw/ota/cancel", {}); await fwRefresh();
     } else if (act.dataset.act === "fw-gwstart") {
@@ -1865,6 +2021,13 @@ document.addEventListener("click", async (ev) => {
       S.csvMode = mode; $("#csvfile").click();
     } else if (act.dataset.act === "cm-info") {
       const im = S.cm.opts && S.cm.opts.images.find((x) => x.key === S.cm.image);
+      $("#infobody").innerHTML = im ? `${fwNoteHtml(im)}<dl class="kv"><dt>${t("cmVerLbl")}</dt><dd class="mono">${esc(im.version)}</dd><dt>${t("cmShaLbl")}</dt><dd class="mono">${esc(im.sha256)}</dd></dl>` : `<p>${t("cmNeedImage")}</p>`;
+      const d = $("#info"); if (d.showModal) d.showModal(); else d.setAttribute("open", "");
+    } else if (act.dataset.act === "fw-imginfo") {
+      const f = S.fw, kind = act.dataset.kind, im0 = f.images || {};
+      const list = kind === "gw" ? im0.gateway : im0.module;
+      const key = kind === "gw" ? f.gwImage : kind === "dp" ? (f.dp.image || ((im0.module || [])[0] || {}).key) : f.image;
+      const im = (list || []).find((x) => x.key === key);
       $("#infobody").innerHTML = im ? `${fwNoteHtml(im)}<dl class="kv"><dt>${t("cmVerLbl")}</dt><dd class="mono">${esc(im.version)}</dd><dt>${t("cmShaLbl")}</dt><dd class="mono">${esc(im.sha256)}</dd></dl>` : `<p>${t("cmNeedImage")}</p>`;
       const d = $("#info"); if (d.showModal) d.showModal(); else d.setAttribute("open", "");
     } else if (act.dataset.act === "cm-clear") { S.cm.sel.clear(); render();
@@ -1923,6 +2086,13 @@ document.addEventListener("click", async (ev) => {
       if (old.length) lines.push(t("colOld", { names: old.map((r) => r.name).join(", ") }));
       bad.forEach((r) => lines.push(t("colErr", { name: r.name, e: r.error })));
       $("#infobody").innerHTML = `<p style="margin:0;white-space:pre-line">${esc(lines.join("\n"))}</p>`; const d = $("#info"); if (d.showModal) d.showModal(); else d.setAttribute("open", "");
+    } else if (act.dataset.act === "about") {
+      const th = lang === "th";
+      $("#infobody").innerHTML = `<div class="stack"><b>Thanes Development Co., Ltd.</b>
+        <p style="margin:0">${th ? "บริษัทไทยที่จัดหาโซลูชันทางการแพทย์ วิทยาศาสตร์ และห้องปฏิบัติการให้โรงพยาบาล ห้องแล็บ และมหาวิทยาลัย ตั้งแต่ให้คำปรึกษาจนถึงดูแลระยะยาว มีประสบการณ์กว่า 35 ปี (ตั้งแต่ปี 1989)" : "A Thai company supplying medical, scientific and laboratory solutions to hospitals, labs and universities, from consultation to long-term support, with over 35 years of experience (since 1989)."}</p>
+        <p class="small muted" style="margin:0">${th ? "กลุ่มงาน: Smart Coldchain · Clean Room · Pathology · Pharmacy · ระบบท่อลำเลียง · AI และ Cloud" : "Areas: Smart Coldchain · Clean Room · Pathology · Pharmacy · Tube Systems · AI &amp; Cloud"}</p>
+        <a href="https://www.thanesgroup.com/about/" target="_blank" rel="noopener noreferrer">thanesgroup.com</a></div>`;
+      const d = $("#info"); if (d.showModal) d.showModal(); else d.setAttribute("open", "");
     } else if (act.dataset.act === "ins-info") { const x = INS_INFO[act.dataset.k]; $("#infobody").innerHTML = `<p style="margin:0;white-space:pre-line">${esc(x[lang === "th" ? 0 : 1])}</p>`; const d = $("#info"); if (d.showModal) d.showModal(); else d.setAttribute("open", "");
     } else if (act.dataset.act === "hint") { showInfo(act.dataset.key);
     }
@@ -1990,7 +2160,7 @@ function evCloseGroups(except) {
   for (const g of document.querySelectorAll(".fgrp[open]")) if (g !== except) g.open = false;
   for (const k of [...S.ev.open]) if (!except || k !== except.dataset.g) S.ev.open.delete(k);
 }
-document.addEventListener("toggle", (e) => { if (e.target.id === "soakadv") S.soak.adv = e.target.open; if (e.target.id === "fwgoadv") S.fw.go.adv = e.target.open; }, true);
+document.addEventListener("toggle", (e) => { if (e.target.dataset && e.target.dataset.fwsec) { const was = (S.fw.open || {})[e.target.dataset.fwsec]; (S.fw.open = S.fw.open || {})[e.target.dataset.fwsec] = e.target.open; if (e.target.dataset.fwsec === "go" && e.target.open && !was) fwGoPoll(true).then(render); } if (e.target.id === "soakadv") S.soak.adv = e.target.open; if (e.target.id === "fwgoadv") S.fw.go.adv = e.target.open; }, true);
 document.addEventListener("toggle", (e) => {
   const g = e.target.closest && e.target.closest(".fgrp"); if (!g) return;
   if (g.open) { if (evWide()) evCloseGroups(g); S.ev.open.add(g.dataset.g); } else S.ev.open.delete(g.dataset.g);
@@ -2049,7 +2219,7 @@ document.addEventListener("change", async (ev) => {
   if (ev.target.id === "fwdpsel") { S.fw.dp.id = ev.target.value; fwDepotLoad("dp"); }
   if (ev.target.id === "fwdpimage") { S.fw.dp.image = ev.target.value; S.fw.dp.file = null; S.fw.dp.fileName = ""; }
   if (ev.target.id === "fwdpfile" && ev.target.files[0]) { S.fw.dp.file = await ev.target.files[0].arrayBuffer(); S.fw.dp.fileName = ev.target.files[0].name; render(); }
-  if (ev.target.id === "fwgwsel") S.fw.gwId = ev.target.value;
+  if (ev.target.id === "fwgwsel") { S.fw.gwId = ev.target.value; render(); }
   if (ev.target.id === "fwgwimage") { S.fw.gwImage = ev.target.value; if (ev.target.value) { S.fw.gwFile = null; S.fw.gwFileName = ""; } }
   if (ev.target.id === "fwgwconfirm") S.fw.gwConfirm = ev.target.value;
   if (ev.target.id === "fwgwfile" && ev.target.files[0]) { S.fw.gwFile = await ev.target.files[0].arrayBuffer(); S.fw.gwFileName = ev.target.files[0].name; S.fw.gwImage = ""; render(); }
@@ -2116,7 +2286,7 @@ $("#themesel").onchange = (e) => { themeNow = e.target.value; setTheme(themeNow)
     S.mod.presets = (await api("GET", "/api/v2/mod/presets")).presets;
     S.soak.runs = (await api("GET", "/api/v2/soak/runs")).runs;
     S.lab.opts = await api("GET", "/api/v2/labels/options"); S.lab.layout = S.lab.opts.default_layout; S.lab.plate = S.lab.opts.default_plate;
-    S.fw.images = await api("GET", "/api/v2/fw/images"); S.fw.image = (S.fw.images.module[0] || {}).key || "";
+    S.fw.images = await api("GET", "/api/v2/fw/images"); S.fw.image = (S.fw.images.module[0] || {}).key || ""; S.fw.gwImage = (S.fw.images.gateway[0] || {}).key || "";
   } catch (e) { fail(e); }
   render();
 })();
