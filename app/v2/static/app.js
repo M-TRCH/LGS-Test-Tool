@@ -3,7 +3,7 @@
 
 const TXT = {
   th: {
-    stage: "v2 preview", classic: "แบบเดิม", cabinets: "ตู้", sites: "รายการตู้", events: "เหตุการณ์",
+    stage: "", classic: "แบบเดิม", cabinets: "ตู้", sites: "รายการตู้", events: "เหตุการณ์",
     checkAll: "ตรวจทุกตู้", checking: "กำลังตรวจ...", checkedAt: "ตรวจล่าสุด {at}", notChecked: "ยังไม่ได้ตรวจ",
     noSites: "ยังไม่มีตู้ในรายการ เพิ่มได้ที่หน้า รายการตู้", ok: "ปกติ", warn: "ควรดู", bad: "ผิดปกติ",
     fw: "เฟิร์มแวร์", uptime: "เปิดมาแล้ว", clients: "client", clock: "นาฬิกา", rtu: "ซ่อม RS485 (สะสม)",
@@ -66,7 +66,7 @@ const TXT = {
     matched: "พบ {n} รายการ", evExport: "ส่งออก CSV", loginAgain: "ต้องเข้าสู่ระบบอีกครั้ง", error: "ผิดพลาด: {e}", d: "วัน", h: "ชม.",
   },
   en: {
-    stage: "v2 preview", classic: "Classic UI", cabinets: "Cabinets", sites: "Sites", events: "Events",
+    stage: "", classic: "Classic UI", cabinets: "Cabinets", sites: "Sites", events: "Events",
     checkAll: "Check all", checking: "Checking...", checkedAt: "Last checked {at}", notChecked: "Not checked yet",
     noSites: "No cabinets saved yet. Add them on the Sites page.", ok: "OK", warn: "Look", bad: "Fault",
     fw: "Firmware", uptime: "Up for", clients: "Clients", clock: "Clock", rtu: "RS485 repairs (total)",
@@ -1615,7 +1615,7 @@ function render() {
     + (uiMode === "advanced" ? `<button data-nav="classic">${t("classic")}</button>` : "");
   $("#main").innerHTML = (VIEWS[page] || viewCabinets)();
   const cur = $("#nav [aria-current]"); if (cur && cur.scrollIntoView) cur.scrollIntoView({ inline: "center", block: "nearest" });
-  $("#stagechip").textContent = t("stage"); $("#infoclose").textContent = t("close");
+  $("#stagechip").textContent = TXT[lang].stage || ""; $("#infoclose").textContent = t("close");
   settingsText(); themeSelect(); modeSelect();
   document.documentElement.lang = lang;
   if (page === "events") { loadEvents(); loadSummary(); }
@@ -1807,7 +1807,7 @@ function readRows() {
 }
 document.addEventListener("click", async (ev) => {
   const nav = ev.target.closest("[data-nav]");
-  if (nav) { if (nav.dataset.nav === "classic") { location.href = "/"; return; } page = nav.dataset.nav; location.hash = "#/" + page; if (page !== "soak") { clearInterval(S.soak.timer); S.soak.timer = null; } if (page !== "firmware") { clearInterval(S.fw.timer); S.fw.timer = null; } if (page !== "commission") { clearInterval(S.cm.timer); S.cm.timer = null; } if (page === "events") S.evGw = (await api("GET", "/api/v2/events/gateways").catch(() => ({}))).gateways || []; render(); return; }
+  if (nav) { if (nav.dataset.nav === "classic") { location.href = "/classic"; return; } page = nav.dataset.nav; location.hash = "#/" + page; if (page !== "soak") { clearInterval(S.soak.timer); S.soak.timer = null; } if (page !== "firmware") { clearInterval(S.fw.timer); S.fw.timer = null; } if (page !== "commission") { clearInterval(S.cm.timer); S.cm.timer = null; } if (page === "events") S.evGw = (await api("GET", "/api/v2/events/gateways").catch(() => ({}))).gateways || []; render(); return; }
   const cell = ev.target.closest("[data-cmcell]");
   if (cell) { const id = +cell.dataset.cmcell, c = S.cm; if (c.mode === "batch") { c.sel.has(id) ? c.sel.delete(id) : c.sel.add(id); } else { c.id = String(id); c.gridOpen = false; } render(); return; }
   const crow = ev.target.closest("[data-cmrow]");

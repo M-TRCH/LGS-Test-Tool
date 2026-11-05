@@ -1,4 +1,4 @@
-"""Self-test for the v1.9.6 / v2.0 server pieces that need no gateway.
+"""Self-test for the v2.0 server pieces that need no gateway.
 
     .venv\\Scripts\\python tools\\v2_selftest.py
 

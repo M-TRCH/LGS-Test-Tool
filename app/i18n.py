@@ -81,7 +81,7 @@ TEXTS: dict[str, dict[str, str]] = {
     "hdr.about": {"en": "About", "th": "เกี่ยวกับ"},
     "hdr.language": {"en": "Language", "th": "ภาษา"},
     "hdr.advanced": {"en": "Advanced", "th": "ขั้นสูง"},
-    "hdr.v2": {"en": "New version (v2)", "th": "หน้าใหม่ (v2)"},
+    "hdr.v2": {"en": "Main UI (v2)", "th": "หน้าหลัก (v2)"},
     "hdr.advanced_tip": {
         "en": "Show the installation and maintenance pages — Firmware, "
               "New module, Gateway and Danger. Off, only the four everyday "

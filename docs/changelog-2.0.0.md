@@ -1,8 +1,7 @@
-# 1.9.6 release notes (DRAFT)
+# 2.0.0 release notes
 
-Not released. When it ships: bump `app/version.py`, move these notes into
-`app/changelog.py` as one `Release("1.9.6", ...)` entry, build the exe
-(`build_exe.ps1` already bundles `app/v2/static`), then publish.
+Version 2.0.0 (app/version.py and app/changelog.py are bumped). Not yet built into an exe or pushed.
+The v2 pages are the main UI: `/` redirects to `/v2`, the old NiceGUI page lives at `/classic`.
 
 Everything below is committed on branch `v1.9.6-wip`. Verification status is
 stated honestly per item.
@@ -41,7 +40,7 @@ stated honestly per item.
   default is 5 minutes and not 1.
 - A link back to the new pages (bottom right) on the classic page.
 
-## New: the v2 pages at `/v2` (preview; classic UI unchanged at `/`)
+## New: the v2 pages at `/v2` (the main UI since 2.0; classic UI at `/classic`)
 
 Same server, port, login and data folder. Plain HTML/JS, fonts bundled (works
 offline), Thai/English, phone layout. Pages: Cabinets (health check), Gateway

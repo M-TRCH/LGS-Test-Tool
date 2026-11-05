@@ -1196,7 +1196,7 @@ def build(ctx: Ctx) -> None:
 
         The Opta loses the time whenever it loses power — the very event a
         scheduled reset exists to recover from — so a schedule that quietly
-        never runs is a real risk. But until v1.9.6 the tool set the clock on
+        never runs is a real risk. But until v2.0 the tool set the clock on
         every READ, silently, and setting the clock is what arms the
         gateway's 03:00 reset: looking at a cabinet changed when it would cut
         the shelf's power. Now it asks. A "not now" is remembered per gateway

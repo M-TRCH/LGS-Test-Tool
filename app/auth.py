@@ -1,4 +1,4 @@
-"""Web UI password (v1.9.6).
+"""Web UI password (v2.0).
 
 Until now the server listened on 0.0.0.0 with no authentication at all: anyone
 on the LAN could open the page and press Danger, fire an OTA or change a

@@ -6,6 +6,7 @@ import asyncio
 import os
 import socket
 
+from fastapi.responses import RedirectResponse
 from nicegui import app, ui
 
 from . import applog, auth, config_store, event_collector, i18n, keep_awake, lgs_map, ntp_server
@@ -50,7 +51,7 @@ if cfg.hub_map:
         pass
 
 
-@ui.page("/")
+@ui.page("/classic")
 def index() -> None:
     """Built per browser session, so switching language just reloads the page."""
     i18n.set_language(cfg.language)
@@ -197,6 +198,11 @@ def _on_shutdown() -> None:
 auth.install(app)
 # v2.0 API and front end at /v2 (same process, same login, same data folder).
 v2_api.install(app, cfg, worker)
+
+# The v2 pages are the main UI since 2.0; the old NiceGUI page stays at /classic.
+@ui.page("/")
+def _home():
+    return RedirectResponse("/v2")
 app.on_startup(_on_startup)
 app.on_shutdown(ntp_server.server.stop)
 app.on_shutdown(_on_shutdown)

@@ -61,7 +61,7 @@ HUB_SAFE_TIMEOUT_S = 6.0
 
 # One number used to serve every job. Each use now names its own, so a change
 # made on evidence for one (the soak's framer_watch count) cannot silently
-# change another. ALL EQUAL TO THE ABOVE ON PURPOSE: v1.9.6 only gives the
+# change another. ALL EQUAL TO THE ABOVE ON PURPOSE: v2.0 only gives the
 # values somewhere to live; nothing here has been measured to be safe lower.
 # The interactive default in particular is NOT shortened on a hunch -- a
 # client that gives up before a hub-held reply arrives is what desynchronises

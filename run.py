@@ -11,7 +11,7 @@ has been touched yet.
 Flags (parsed by hand — the point is to run before any import):
     --port N        listen on N (beats LGS_TT_PORT, which beats config)
     --no-browser    headless: do not open a browser window on start
-    --set-password  ask for a web password, store its hash, exit (v1.9.6)
+    --set-password  ask for a web password, store its hash, exit (v2.0)
     --clear-password  remove the web password, exit
 
 The single instance is enforced with a named Windows mutex rather than a
