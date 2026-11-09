@@ -32,6 +32,18 @@ app.js) stops at 6, so the action cannot be chosen from the Tool; a button alrea
 - **Test:** choose action 7 for a button, Apply, press it at the cabinet: the AP comes up with the stored minutes; press
   again: off.
 
+## Still open, not code (as of 2026-11-10)
+
+- **Installs:** v2.1.0 is on GitHub only. The site server, the .87 notebook (it runs the fleet soak) and the copy
+  started on this PC at port 8199 still run older code; replace the exe beside the old one (`install-autorun.cmd` for the
+  server). The AP Service button, the AP sticker and the set-times update need gateway 1.15.0 on the cabinet.
+- **Checkpoint soak:** the conditions for the long soak at the Central Chest Institute checkpoint are not defined yet;
+  the site-simulation notes are in `docs/PLANNED-site-simulation-soak.md`.
+- **No button yet** for installing the gateway's Wi-Fi radio file over the network (the gateway supports it; the script
+  is the gateway repo's `test/wifi_fw_install.py`).
+- **Print and scan** one "Standard + AP Service" sticker on the P-touch before printing it for every cabinet (it was only
+  opened in P-touch Editor).
+
 ## Also found (lower priority)
 
 - The AP switch confirms the new state by calling `gwRead()` (INFO + GET + HELP) once a second for up to 14 s; `AP`

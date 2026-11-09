@@ -1,3 +1,5 @@
+**Gateway v1.15.0 bundled: service Wi-Fi at the cabinet, module update at set times.**
+
 Same install as before: drop the exe beside the old one and run `install-autorun.cmd` (or start it by hand with `--port 8090`). Your `data` folder is read as it is; nothing in it needs converting.
 
 ## Firmware

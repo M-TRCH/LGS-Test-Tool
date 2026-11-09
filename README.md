@@ -5,6 +5,17 @@ Modbus **TCP** (via the LGS gateway) commands from a browser UI. Built with
 [NiceGUI](https://nicegui.io) + [pymodbus](https://github.com/pymodbus-dev/pymodbus);
 runs natively on Windows or in Docker.
 
+Since 2.0 the main interface is the **v2 pages** (`/v2`, where the tool opens): Cabinets, Sites,
+Gateway, Module, Soak, Events, Firmware, Labels and Commission, in Thai or English, with a phone
+layout. 2.1.0 adds, with gateway 1.15.0: **Gateway › AP Service** (the cabinet's service Wi-Fi:
+name, password, how long it stays on, on/off), the AP settings in the config export/import, a
+**Standard + AP Service** sticker on the Labels page (a second QR that joins the Wi-Fi), a module
+update the gateway runs **at set times** (Firmware page), soak results that leave the 03:00 shelf
+reset out of the verdict, an English site report with an optional soak result, and module scans
+that show each module's firmware. Known limits and what comes next: `docs/PLANNED-after-2.1.0.md`.
+
+The tab list below describes the classic page, still available at `/classic`.
+
 Tabs:
 
 | Tab | What it does |
@@ -236,6 +247,11 @@ or manually: `git remote add origin https://github.com/M-TRCH/LGS-Test-Tool.git`
 ---
 
 ## สรุปภาษาไทย
+
+**ตั้งแต่ 2.0 หน้าหลักคือหน้า v2** (`/v2`) หน้าแบบเดิมยังอยู่ที่ `/classic` — **2.1.0** มากับเกตเวย์ 1.15.0:
+ปุ่ม **AP Service** ในหน้าเกตเวย์ (ตั้งชื่อ/รหัส Wi-Fi หน้างาน เวลาเปิดค้างไว้ และเปิด/ปิด) ส่งออก/นำเข้า config รวมค่า AP,
+ป้ายแบบ **Standard + AP Service** (QR ที่สองสำหรับต่อ Wi-Fi), อัปเดตโมดูลแบบตั้งเวลา, ผล soak ไม่นับช่วงรีเซต 03:00,
+รายงานไซต์ภาษาอังกฤษพร้อมผล soak และสแกนโมดูลแสดงเวอร์ชัน ข้อจำกัดที่ทราบและแผนถัดไปอยู่ใน `docs/PLANNED-after-2.1.0.md`
 
 เครื่องมือทดสอบโมดูล LGS R5.0 ผ่านเว็บเบราว์เซอร์ — ยิงคำสั่ง Modbus ได้ทั้งทาง **RTU
 (COM port** ผ่าน dongle หรือ Opta USB-RS485 bridge**)** และ **Modbus TCP** (ผ่าน Opta
