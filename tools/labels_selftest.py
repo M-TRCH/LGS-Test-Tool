@@ -220,6 +220,12 @@ check("standard_ap: a capital-letter caption under each", ">INFO<" in _two and "
 check("standard_ap: the cabinet code names the AP page", "\nap 192.168.27.1:502" in _two, True)
 _ids2 = [int(n) for n in re.findall(r'<pt:expanded objectName="[^"]*" ID="(\d+)"', _two)]
 check("standard_ap: object ids still run 0..N", sorted(_ids2), list(range(len(_ids2))))
+check("standard_ap: the Wi-Fi code is never EC-H (Editor draws it oversize)", "30%" in _two, False)
+_codes = re.findall(r'cellSize="([\d.]+)pt" mbcs="auto" joint="1" version="(\d+)"', _two)
+check("standard_ap: the Wi-Fi code is v4 at 1.2 pt for a name and password this long", _codes[-1], ("1.2", "4"))
+for _ssid, _pw in (("A", "12345678"), ("S" * 31, "P" * 31)):
+    _x = zipfile.ZipFile(io.BytesIO(labels.render("standard_ap", sample(ap_ssid=_ssid, ap_pass=_pw), created="x")[0])).read("label.xml").decode()
+    check(f"standard_ap: {len(_ssid)}-char name never uses EC-H", "30%" in _x.split("<barcode:barcode>")[-1], False)
 try:
     labels.render("standard_ap", sample(), created="x")
     check("standard_ap without a Wi-Fi is refused", "no exception", "ValueError")

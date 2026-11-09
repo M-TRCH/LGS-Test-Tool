@@ -867,7 +867,7 @@ def _detail_label(c: CabinetLabel, *, created: str, with_rows: bool, with_ap: bo
     CAP_H = 9.0
     slot = FRAME_H - 2 * FRAME_PAD - CAP_H - 1.0
     modules, side, ecc = fit_qr(qr_data, limit_pt=slot) if has_ap else fit_qr(qr_data)
-    ap = _fit_same(wifi_payload(c.ap_ssid, c.ap_pass), modules, QR_CELL_PT, slot) if has_ap else None
+    ap = _fit_ap(wifi_payload(c.ap_ssid, c.ap_pass), slot) if has_ap else None
 
     # Across the tape: the frame sits 3 pt inside each edge, which is inside
     # the 2 pt the printer can reach and a little further in than the 1 pt
@@ -1050,22 +1050,26 @@ def wifi_payload(ssid: str, password: str) -> str:
     return f"WIFI:T:WPA;S:{esc(ssid)};P:{esc(password)};;"
 
 
-def _fit_same(data: str, modules: int, cell_pt: float, limit_pt: float) -> tuple:
-    """(modules, box_side_pt, ecc, cell_pt) for a code that is exactly as big as another: the same version and the same
-    cell, so the same number of modules at the same size, in the file and on the tape.
+def _fit_ap(data: str, limit_pt: float) -> tuple:
+    """(modules, box_side_pt, ecc, cell_pt) for the Wi-Fi code beside the cabinet code: the largest cell at which the
+    smallest version that holds the message still fits `limit_pt`, with EC-Q if possible, else M, else L. Never EC-H.
 
-    Two codes of different versions or cell sizes can be made to look alike on paper, but not in P-touch Editor, which
-    draws each from its own cell size and version: sizes that differ by a fraction of a point there are the complaint.
-    A short message in a big symbol just means more error correction, so it takes the strongest level that the shared
-    version can hold. Only a message too long for that version (never the case for a Wi-Fi name and password next to the
-    cabinet code) falls back to the smallest version that holds it at this cell size."""
-    version = (modules - 17) // 4
+    P-touch Editor drew the 30% level (EC-H) far larger than the box the file declares -- a code that overflowed the
+    frame -- while the same code at 25% opens at the size the file says. The label has never been printed or opened with
+    EC-H before this, so it is simply not used here (the cabinet code can still pick it for a very short message; the
+    Wi-Fi string is never that short). The smallest version that holds the message is also what Editor would choose by
+    itself, so there is no unused capacity for it to re-decide."""
     n = len(data.encode("utf-8"))
-    for ecc in ("h", "q", "m", "l"):
-        if n <= _QR_BYTES[ecc][version]:
-            return modules, round((modules + 4) * cell_pt, 1), ecc, cell_pt
-    m2, side2, ecc2 = fit_qr(data, cell_pt=cell_pt, limit_pt=limit_pt)
-    return m2, side2, ecc2, cell_pt
+    for ecc in ("q", "m", "l"):
+        for cell in (1.6, 1.4, 1.2, 1.0, 0.8):
+            for version, cap in sorted(_QR_BYTES[ecc].items()):
+                if n <= cap:
+                    modules = 17 + 4 * version
+                    box = round((modules + 4) * cell, 1)
+                    if box <= limit_pt:
+                        return modules, box, ecc, cell
+                    break
+    raise LabelTooBig(f"{n} bytes will not fit the Wi-Fi code beside the cabinet code")
 
 
 @dataclass(frozen=True)
