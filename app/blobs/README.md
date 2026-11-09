@@ -13,6 +13,21 @@ To add a newer release: copy the asset in, add an entry to
 `app/firmware_bundle.py` (newest first — the first entry of a kind is the one
 its tab offers), and add the hash to `build_exe.ps1`.
 
+## gateway_opta_v1.15.0.bin
+
+`gateway_opta_v1.15.0.bin` from LGS-Gateway-Arduino-Opta release v1.15.0
+(sha256 `bfa0e64a…0570`). Service Wi-Fi access point and a service page at
+`http://192.168.27.1:502/` on the Opta WiFi, the module update can keep to a
+time window, the radio firmware file can be installed over the network.
+Schema unchanged from v1.14.0 (11): updating keeps the stored settings.
+Tested on Chest-Std-11; the image for the Central Chest Institute checkpoint.
+
+## gateway_opta_v1.14.0.bin
+
+`gateway_opta_v1.14.0.bin` from LGS-Gateway-Arduino-Opta release v1.14.0.
+Event log for a collector, module depot, background module update. Kept for
+rollback.
+
 ## module_g070_v3.5.5_factory.bin / module_g070_v3.5.5_ota.bin
 
 `firmware_stm32g070_v3.5.5_factory_2026-10-26.bin` and

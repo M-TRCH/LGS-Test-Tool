@@ -16,6 +16,29 @@ class Release:
 
 
 RELEASES: tuple = (
+    Release("2.1.0", "2026-11-10", (
+        "Gateway v1.15.0 is bundled. On an Opta WiFi the gateway can open "
+        "a service Wi-Fi at the cabinet: Gateway > AP Service sets its name, "
+        "password and how long it stays on, and switches it on and off; a "
+        "phone on it opens http://192.168.27.1:502/ to see the gateway, its "
+        "events and every module, light a module or give a new board its id. "
+        "The config export and import carry these settings, and the Labels "
+        "page has a 'Standard + AP Service' sticker with a second QR code "
+        "that joins the Wi-Fi.",
+        "Module update at set times: the gateway's background update can be "
+        "told to work only between two times of day (it keeps clear of the "
+        "scheduled shelf reset) and goes on every day until it is done; "
+        "start it in the daytime and close the tool.",
+        "Soak: the 03:00 shelf reset is no longer counted against a cabinet "
+        "(the gateway names its own resets), and a silent module no longer "
+        "makes the tool reconnect on every pass. Events: an 'All' range for "
+        "the page and the CSV export.",
+        "Site report: English, every fact in a clearer order, the Tool's "
+        "font, and an optional soak result chosen after the modules are "
+        "read. Module scan: each found module shows its firmware version, "
+        "and a slot that missed one answer is asked again before it is "
+        "called silent. Drop-downs and popups look the same everywhere.",
+    )),
     Release("2.0.0", "2026-11-05", (
         "The new pages (v2) are now the main interface: opening the tool "
         "lands on them, and the old page is still available at /classic "
