@@ -20,7 +20,7 @@ _locks_guard = threading.Lock()
 
 # Volatile console switches (not stored settings, reset at every boot).
 VOLATILE = ("RESYNC", "EXC")
-ACTIONS = ("reboot", "defaults", "discard", "time", "resync", "exc", "ap_on", "ap_off", "ap_ssid", "ap_pass", "ap_show")
+ACTIONS = ("reboot", "defaults", "discard", "time", "resync", "exc", "ap_on", "ap_off", "ap_ssid", "ap_pass", "ap_show", "ap_min")
 
 
 def _lock(host: str, port: int) -> threading.Lock:
@@ -175,11 +175,15 @@ def _ap_action(link, name: str, value) -> dict:
             return {"ok": False, "error": "minutes must be a number"}
         if not 1 <= mins <= 480:
             return {"ok": False, "error": "minutes must be 1-480"}
-        line = f"AP ON min={mins} bridge=0"
+        line = f"AP ON min={mins} bridge=0" if v else "AP ON bridge=0"     # no minutes = the one stored in the gateway
     elif name == "ap_off":
         line = "AP OFF"
     elif name == "ap_show":
         line = "AP SHOW"
+    elif name == "ap_min":
+        if not v.isdigit() or not 1 <= int(v) <= 480:
+            return {"ok": False, "error": "minutes must be 1-480"}
+        line = f"AP MIN {int(v)}"
     elif name in ("ap_ssid", "ap_pass"):
         lo, hi = (1, 31) if name == "ap_ssid" else (8, 31)
         if not lo <= len(v) <= hi or any(c <= " " or c > "~" for c in v):
@@ -199,7 +203,7 @@ def _ap_action(link, name: str, value) -> dict:
         row = res.rows[0] if res.ok and res.rows else {}
         pw = row.get("ap.pass", "-")
         return {"ok": res.ok, "error": "" if res.ok else res.error_text, "ssid": row.get("ap.ssid", ""),
-                "pass": "" if pw == "-" else pw, "url": row.get("ap.url", "")}
+                "pass": "" if pw == "-" else pw, "url": row.get("ap.url", ""), "min": row.get("ap.min", "")}
     return {"ok": res.ok, "error": "" if res.ok else res.error_text,
             "detail": "" if name == "ap_pass" else " ".join(res.lines[:1])}
 
