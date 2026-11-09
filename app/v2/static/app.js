@@ -11,7 +11,7 @@ const TXT = {
     add: "เพิ่มตู้", save: "บันทึก", saved: "บันทึกแล้ว", del: "ลบ", name: "ชื่อตู้", host: "ไอพี / โฮสต์", port: "พอร์ต",
     cabinet: "ชนิดตู้", site: "ไซต์", note: "หมายเหตุ", exportCsv: "ส่งออก CSV", importCsv: "นำเข้า CSV",
     importMerge: "เพิ่มเฉพาะที่ยังไม่มี", importReplace: "แทนที่ทั้งรายการ", imported: "นำเข้า {n} แถว",
-    dupWarn: "ไอพีซ้ำกับแถวอื่น", unsaved: "มีการแก้ที่ยังไม่บันทึก", gateway: "เกตเวย์", days: "ย้อนหลัง", evFilters: "ตัวกรอง", evClear: "ล้างทั้งหมด", evType: "ชนิดเหตุการณ์", evNone: "ไม่มีรายการ", evUnitAll: "0 · ทุกโมดูล", evT_panel_sweep: "กวาดไฟหน้าตู้", evT_fw_update: "อัปเดตเฟิร์มแวร์", evT_link_up: "สายแลนเชื่อมต่อ", evT_clock_set: "ตั้งนาฬิกา", evT_coil_dropped: "สั่งไฟที่ไม่ได้บันทึก", evT_collector_start: "เริ่มเก็บข้อมูล", evT_collector_gap: "ข้อมูลขาดช่วง", evRange: "ช่วงวันที่", evTime: "ช่วงเวลา", evTimeFrom: "ตั้งแต่", evTimeTo: "ถึง", evAllDay: "ทั้งวัน", evTimeWrap: "เริ่มหลังเวลาสิ้นสุด จึงนับข้ามเที่ยงคืน เช่น 22:00 – 02:00",  evSize: "ดูทีละ", rangeEnd: "แตะอีกวันเพื่อเลือกเป็นช่วง หรือกดปิดถ้าต้องการวันเดียว", prev: "ก่อนหน้า", next: "ถัดไป", day1: "วันนี้", day7: "7 วัน", day30: "30 วัน", day90: "90 วัน", all: "ทั้งหมด",
+    dupWarn: "ไอพีซ้ำกับแถวอื่น", unsaved: "มีการแก้ที่ยังไม่บันทึก", gateway: "เกตเวย์", days: "ย้อนหลัง", evFilters: "ตัวกรอง", evClear: "ล้างทั้งหมด", evType: "ชนิดเหตุการณ์", evNone: "ไม่มีรายการ", evUnitAll: "0 · ทุกโมดูล", evT_panel_sweep: "กวาดไฟหน้าตู้", evT_fw_update: "อัปเดตเฟิร์มแวร์", evT_link_up: "สายแลนเชื่อมต่อ", evT_clock_set: "ตั้งนาฬิกา", evT_coil_dropped: "สั่งไฟที่ไม่ได้บันทึก", evT_collector_start: "เริ่มเก็บข้อมูล", evT_collector_gap: "ข้อมูลขาดช่วง", evRange: "ช่วงวันที่", evTime: "ช่วงเวลา", evTimeFrom: "ตั้งแต่", evTimeTo: "ถึง", evAllDay: "ทั้งวัน", evTimeWrap: "เริ่มหลังเวลาสิ้นสุด จึงนับข้ามเที่ยงคืน เช่น 22:00 – 02:00",  evSize: "ดูทีละ", rangeEnd: "แตะอีกวันเพื่อเลือกเป็นช่วง หรือกดปิดถ้าต้องการวันเดียว", prev: "ก่อนหน้า", next: "ถัดไป", day1: "วันนี้", day7: "7 วัน", day30: "30 วัน", dayAll: "ทั้งหมด", day90: "90 วัน", all: "ทั้งหมด",
     search: "ค้นหา (ชื่อ, ไอพี)", evClient: "ผู้เชื่อมต่อ", evUnit: "โมดูล", noEvents: "ไม่มีเหตุการณ์ในช่วงนี้", noEventsOff: "ยังไม่มีข้อมูล ตัวเก็บเหตุการณ์ปิดอยู่", collect: "เก็บเหตุการณ์อัตโนมัติ",
     dashLights: "สั่งไฟ", dashConn: "เชื่อมต่อ", dashRefused: "ปฏิเสธการเชื่อมต่อ", dashQuiet: "บัสเงียบ", dashHeal: "ซ่อมบัส", dashBoot: "บูต", dashLast: "เหตุการณ์ล่าสุด", dashProblems: "ปัญหา", dashHour: "รายชั่วโมง", dashDay: "รายวัน", dashLightsBy: "จำนวนครั้งที่สั่งไฟ ({u})", dashProblemsBy: "ปัญหา: บัสเงียบ ซ่อมบัส ปฏิเสธการเชื่อมต่อ บูต ({u})", colOff: "ปิดอยู่", colOffNote: "ตัวเก็บเหตุการณ์ปิดอยู่ เปิดได้ที่ ⚙ ตั้งค่า (โหมดขั้นสูง)", colWait: "รออ่านรอบแรก", colChip: "ปกติ {n}/{total} ตู้", colKeep: "เก็บเหตุการณ์ไว้ในเครื่องนี้", colKeepQ: "เหตุการณ์ที่เก่ากว่า {n} วันจะถูกลบในรอบเก็บถัดไป ดำเนินการต่อไหม?", dayN: "{n} วัน", colLast: "อ่านล่าสุด {at} · ปกติ {n}/{total} ตู้ · ได้เพิ่ม {add} รายการ", colOld: "ยังอ่านไม่ได้ เฟิร์มแวร์ต่ำกว่า 1.14.0: {names}", colErr: "{name}: อ่านไม่สำเร็จ ({e})", evT_coil: "สั่งไฟ", evT_tcp_accept: "เชื่อมต่อ", evT_tcp_close: "ตัดการเชื่อมต่อ", evT_tcp_refused: "ปฏิเสธการเชื่อมต่อ", evT_bus_quiet: "บัสเงียบ", evT_rtu_heal: "ซ่อมบัส", evT_boot: "บูต", evT_link_down: "สายแลนหลุด", evT_cfg_saved: "บันทึกค่า", evT_sched_reset: "รีเซ็ตตามเวลา",
     gateway_page: "เกตเวย์", pick: "เลือกตู้", read: "อ่านค่า", reading: "กำลังอ่าน...",
@@ -74,7 +74,7 @@ const TXT = {
     add: "Add cabinet", save: "Save", saved: "Saved", del: "Delete", name: "Name", host: "IP / host", port: "Port",
     cabinet: "Cabinet type", site: "Site", note: "Note", exportCsv: "Export CSV", importCsv: "Import CSV",
     importMerge: "Add only new rows", importReplace: "Replace the list", imported: "Imported {n} rows",
-    dupWarn: "same address as another row", unsaved: "Unsaved changes", gateway: "Gateway", days: "Range", evFilters: "Filters", evClear: "Clear all", evType: "Event type", evNone: "Nothing here", evUnitAll: "0 · all modules", evT_panel_sweep: "Panel sweep", evT_fw_update: "Firmware update", evT_link_up: "Link up", evT_clock_set: "Clock set", evT_coil_dropped: "Light commands not logged", evT_collector_start: "Collection started", evT_collector_gap: "Data gap", evRange: "Date range", evTime: "Time of day", evTimeFrom: "From", evTimeTo: "To", evAllDay: "All day", evTimeWrap: "From is later than to, so this runs past midnight, e.g. 22:00 – 02:00",  evSize: "Show", rangeEnd: "Tap another day for a range, or close for a single day", prev: "Previous", next: "Next", day1: "Today", day7: "7 days", day30: "30 days", day90: "90 days", all: "All",
+    dupWarn: "same address as another row", unsaved: "Unsaved changes", gateway: "Gateway", days: "Range", evFilters: "Filters", evClear: "Clear all", evType: "Event type", evNone: "Nothing here", evUnitAll: "0 · all modules", evT_panel_sweep: "Panel sweep", evT_fw_update: "Firmware update", evT_link_up: "Link up", evT_clock_set: "Clock set", evT_coil_dropped: "Light commands not logged", evT_collector_start: "Collection started", evT_collector_gap: "Data gap", evRange: "Date range", evTime: "Time of day", evTimeFrom: "From", evTimeTo: "To", evAllDay: "All day", evTimeWrap: "From is later than to, so this runs past midnight, e.g. 22:00 – 02:00",  evSize: "Show", rangeEnd: "Tap another day for a range, or close for a single day", prev: "Previous", next: "Next", day1: "Today", day7: "7 days", day30: "30 days", dayAll: "All", day90: "90 days", all: "All",
     search: "Search (name, IP)", evClient: "Client", evUnit: "Module", noEvents: "No events in this range", noEventsOff: "No data yet: the event collector is off", collect: "Collect events automatically",
     dashLights: "Light commands", dashConn: "Connections", dashRefused: "Refused", dashQuiet: "Bus quiet", dashHeal: "Bus repairs", dashBoot: "Boots", dashLast: "Last event", dashProblems: "Problems", dashHour: "per hour", dashDay: "per day", dashLightsBy: "Light commands ({u})", dashProblemsBy: "Problems: bus quiet, repairs, refused, boots ({u})", colOff: "Off", colOffNote: "The event collector is off; switch it on in ⚙ Settings (advanced mode).", colWait: "waiting for the first read", colChip: "{n}/{total} OK", colKeep: "Keep on this PC", colKeepQ: "Events older than {n} days will be deleted at the next collection. Continue?", dayN: "{n} days", colLast: "Last read {at} · {n}/{total} OK · {add} new", colOld: "Not readable, firmware older than 1.14.0: {names}", colErr: "{name}: read failed ({e})", evT_coil: "Coil", evT_tcp_accept: "Connect", evT_tcp_close: "Disconnect", evT_tcp_refused: "Refused", evT_bus_quiet: "Bus quiet", evT_rtu_heal: "Bus repair", evT_boot: "Boot", evT_link_down: "Link down", evT_cfg_saved: "Settings saved", evT_sched_reset: "Scheduled reset",
     gateway_page: "Gateway", pick: "Choose cabinet", read: "Read", reading: "Reading...",
@@ -1711,7 +1711,7 @@ function openTime(from, to, apply) {
    while it is open and `apply({from, to})` runs once, on close, if the range changed. Tap a day for that single day,
    tap a second day to stretch it into a range, or use a shortcut.
    Only days the collector still keeps are selectable. */
-function openRange(from, to, min, max, apply) {
+function openRange(from, to, min, max, apply, allFrom) {
   const d = $("#rangepick"), g = $("#rpgrid"); let a = from, b = to, step = 0;
   let [vy, vm] = to.split("-").map(Number); vm -= 1;
   const [ny, nm] = min.split("-").map(Number), [xy, xm] = max.split("-").map(Number);
@@ -1726,11 +1726,12 @@ function openRange(from, to, min, max, apply) {
       h += `<button type="button" class="${cls}" data-d="${s}"${s < min || s > max ? " disabled" : ""}>${i}</button>`;
     }
     g.innerHTML = h;
-    $("#rpshort").innerHTML = [1, 7, 30].map((n) => `<button type="button" data-n="${n}" aria-pressed="${a === ymd(new Date(Date.now() - 86400000 * (n - 1))) && b === max}">${n === 1 ? t("day1") : t("dayN", { n })}</button>`).join("");
+    $("#rpshort").innerHTML = [1, 7, 30].map((n) => `<button type="button" data-n="${n}" aria-pressed="${a === ymd(new Date(Date.now() - 86400000 * (n - 1))) && b === max}">${n === 1 ? t("day1") : t("dayN", { n })}</button>`).join("")
+      + (allFrom ? `<button type="button" data-all="1" aria-pressed="${a === allFrom && b === max}">${t("dayAll")}</button>` : "");
     $("#rphint").textContent = step ? t("rangeEnd") : "";
   };
   const set = (x, y) => { a = x; b = y; };
-  $("#rpshort").onclick = (e) => { const x = e.target.closest("[data-n]"); if (!x) return; step = 0; set(ymd(new Date(Date.now() - 86400000 * (+x.dataset.n - 1))), max); [vy, vm] = max.split("-").map(Number).slice(0, 2); vm -= 1; paint(); };
+  $("#rpshort").onclick = (e) => { const all = e.target.closest("[data-all]"), x = all || e.target.closest("[data-n]"); if (!x) return; step = 0; set(all ? allFrom : ymd(new Date(Date.now() - 86400000 * (+x.dataset.n - 1))), max); [vy, vm] = max.split("-").map(Number).slice(0, 2); vm -= 1; paint(); };
   g.onclick = (e) => {
     const x = e.target.closest("[data-d]"); if (!x) return;
     const day = x.dataset.d;
@@ -1799,8 +1800,13 @@ document.addEventListener("click", async (ev) => {
   }
   if (ev.target.closest('[data-act="ev-pick"]')) {
     const keep = (S.me.collector || {}).retention_days || 90, now = new Date();
-    openRange(S.ev.from, S.ev.to, ymd(new Date(now.getTime() - 86400000 * Math.max(7, keep))), ymd(now),
-      (r) => { S.ev.from = r.from; S.ev.to = r.to; S.ev.page = 0; renderFilters(); evRefresh(); });
+    // "All" = from the oldest day any gateway has a file for (the collector keeps at most 365 days), so the export and the
+    // page both cover everything collected rather than a guess at it.
+    let allFrom = "";
+    try { allFrom = ((await api("GET", "/api/v2/events/gateways")).gateways || []).map((g) => g.first).filter(Boolean).sort()[0] || ""; } catch (e) { /* the picker still works without it */ }
+    const floor = ymd(new Date(now.getTime() - 86400000 * Math.max(7, keep)));
+    openRange(S.ev.from, S.ev.to, allFrom && allFrom < floor ? allFrom : floor, ymd(now),
+      (r) => { S.ev.from = r.from; S.ev.to = r.to; S.ev.page = 0; renderFilters(); evRefresh(); }, allFrom);
     return;
   }
   const pgb = ev.target.closest('[data-act="ev-page"]');
