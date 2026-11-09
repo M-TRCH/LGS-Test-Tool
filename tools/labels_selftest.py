@@ -196,7 +196,7 @@ print("\nobject IDs — a list that starts at 1 opens as a blank label")
 ids = [int(n) for n in re.findall(r'<pt:expanded objectName="[^"]*" ID="(\d+)"', xml)]
 check("ids run 0..N with no gaps", sorted(ids), list(range(len(ids))))
 for key in labels.LAYOUTS:
-    blob_k, _ = labels.render(key, sample(), created="x")
+    blob_k, _ = labels.render(key, sample(ap_ssid="LGS-X", ap_pass="12345678"), created="x")
     x_k = zipfile.ZipFile(io.BytesIO(blob_k)).read("label.xml").decode()
     i_k = [int(n) for n in re.findall(r'<pt:expanded objectName="[^"]*" ID="(\d+)"', x_k)]
     check(f"  {key} starts at 0", min(i_k), 0)
@@ -206,20 +206,27 @@ try:
 except labels.LabelTooBig:
     print("  ok   a list starting at 1 is refused")
 
-print("\nthe AP Service code beside the cabinet code (standard and row map)")
+print("\nthe 'Standard + AP Service' layout: the AP Service code beside the cabinet code")
+_AP = dict(ap_ssid="LGS-Std-02", ap_pass="lgs-bench-2026")
 for _key in ("standard", "rowmap"):
-    _one = zipfile.ZipFile(io.BytesIO(labels.render(_key, sample(), created="x")[0])).read("label.xml").decode()
-    check(f"{_key}: no Wi-Fi set up, one code as before", _one.count("<barcode:barcode>"), 1)
-    _bl, _mm2 = labels.render(_key, sample(ap_ssid="LGS-Std-02", ap_pass="lgs-bench-2026"), created="x")
-    _two = zipfile.ZipFile(io.BytesIO(_bl)).read("label.xml").decode()
-    check(f"{_key}: with a Wi-Fi, two codes", _two.count("<barcode:barcode>"), 2)
-    check(f"{_key}: the second joins the Wi-Fi", "WIFI:T:WPA;S:LGS-Std-02;P:lgs-bench-2026;;" in _two, True)
-    check(f"{_key}: a caption under each", ">Info<" in _two and ">AP Service<" in _two, True)
-    check(f"{_key}: the cabinet code names the AP page", "\nap 192.168.27.1:502" in _two, True)
-    _ids2 = [int(n) for n in re.findall(r'<pt:expanded objectName="[^"]*" ID="(\d+)"', _two)]
-    check(f"{_key}: object ids still run 0..N", sorted(_ids2), list(range(len(_ids2))))
+    _plain = zipfile.ZipFile(io.BytesIO(labels.render(_key, sample(**_AP), created="x")[0])).read("label.xml").decode()
+    check(f"{_key}: stays one code even when the gateway has a Wi-Fi", _plain.count("<barcode:barcode>"), 1)
+    check(f"{_key}: and does not name the AP page", "ap 192.168" in _plain, False)
+_bl, _mm2 = labels.render("standard_ap", sample(**_AP), created="x")
+_two = zipfile.ZipFile(io.BytesIO(_bl)).read("label.xml").decode()
+check("standard_ap: two codes", _two.count("<barcode:barcode>"), 2)
+check("standard_ap: the second joins the Wi-Fi", "WIFI:T:WPA;S:LGS-Std-02;P:lgs-bench-2026;;" in _two, True)
+check("standard_ap: a capital-letter caption under each", ">INFO<" in _two and ">AP SERVICE<" in _two, True)
+check("standard_ap: the cabinet code names the AP page", "\nap 192.168.27.1:502" in _two, True)
+_ids2 = [int(n) for n in re.findall(r'<pt:expanded objectName="[^"]*" ID="(\d+)"', _two)]
+check("standard_ap: object ids still run 0..N", sorted(_ids2), list(range(len(_ids2))))
+try:
+    labels.render("standard_ap", sample(), created="x")
+    check("standard_ap without a Wi-Fi is refused", "no exception", "ValueError")
+except ValueError:
+    print("  ok   standard_ap without a Wi-Fi is refused")
 check("the five reserved characters are escaped", labels.wifi_payload("a;b", 'p:w"x\\y'), 'WIFI:T:WPA;S:a\\;b;P:p\\:w\\"x\\\\y;;')
-_long = labels.render("standard", sample(ap_ssid="S" * 31, ap_pass="P" * 31), created="x")
+_long = labels.render("standard_ap", sample(ap_ssid="S" * 31, ap_pass="P" * 31), created="x")
 check("the longest name and password still fit the tape", _long[1] > 0, True)
 
 print("\nEVERY attribute, against the file that printed and scanned")

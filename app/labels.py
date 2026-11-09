@@ -684,6 +684,7 @@ class CabinetLabel:
     ap_ssid: str = ""                    # AP Service Wi-Fi name and password, from the gateway at print time. When both are
     ap_pass: str = ""                    # set, the standard and row-map stickers carry a second QR that joins that Wi-Fi,
     ap_url: str = ""                     # and the cabinet code gets one more line: the service page's address.
+    with_ap: bool = False                # set by the "standard_ap" layout only; every other layout ignores the AP fields
 
     def qr_payload(self) -> str:
         """Identity, and the whole shape of the cabinet.
@@ -747,7 +748,7 @@ class CabinetLabel:
         # a single number would hide.
         if self.mod:
             lines.append(f"mod {self.mod}")
-        if self.ap_ssid and self.ap_pass:
+        if self.with_ap:
             # where the AP Service page is, for whoever scans the cabinet code after joining that Wi-Fi
             addr = (self.ap_url or "http://192.168.27.1:502/").replace("http://", "").rstrip("/")
             lines.append(f"ap {addr}")
@@ -844,7 +845,7 @@ def _titled(c: CabinetLabel) -> str:
     return f"{c.name} · {kind}" if (c.name and kind) else c.name
 
 
-def _detail_label(c: CabinetLabel, *, created: str, with_rows: bool) -> tuple:
+def _detail_label(c: CabinetLabel, *, created: str, with_rows: bool, with_ap: bool = False) -> tuple:
     """QR + identity block in a frame, and optionally the row/id strip.
 
     With `with_rows`, it also carries the part nobody has written down on
@@ -860,11 +861,13 @@ def _detail_label(c: CabinetLabel, *, created: str, with_rows: bool) -> tuple:
     qr_data = c.qr_payload()
     # With the AP Service code beside it, each code gives up a caption line's height. The cabinet code is small enough
     # at the usual cell size (0.8 pt) that it still fits; the Wi-Fi code is short, so it can stay large.
-    has_ap = bool(c.ap_ssid and c.ap_pass)
+    has_ap = with_ap
+    if has_ap and not (c.ap_ssid and c.ap_pass):
+        raise ValueError("this gateway has no AP Service Wi-Fi name or password yet: set them in AP Service first")
     CAP_H = 9.0
     slot = FRAME_H - 2 * FRAME_PAD - CAP_H - 1.0
     modules, side, ecc = fit_qr(qr_data, limit_pt=slot) if has_ap else fit_qr(qr_data)
-    ap = _fit_big(wifi_payload(c.ap_ssid, c.ap_pass), limit_pt=slot) if has_ap else None
+    ap = _fit_match(wifi_payload(c.ap_ssid, c.ap_pass), side) if has_ap else None
 
     # Across the tape: the frame sits 3 pt inside each edge, which is inside
     # the 2 pt the printer can reach and a little further in than the 1 pt
@@ -941,7 +944,7 @@ def _detail_label(c: CabinetLabel, *, created: str, with_rows: bool) -> tuple:
             (ids, cx, yy + 11, CW, 10.0, "6.5", LATIN_FONT, 400),
         ]
     if has_ap:                                       # a short caption under each code, centred on it
-        for cx, label in ((qr_x + side / 2, "Info"), (ap_x + ap_side / 2, "AP Service")):
+        for cx, label in ((qr_x + side / 2, "INFO"), (ap_x + ap_side / 2, "AP SERVICE")):
             lines.append((label, round(cx - 21.0, 1), round(top + slot + 1.0, 1), 42.0, CAP_H, "7", LATIN_FONT, 400))
     lines = [ln for ln in lines if ln[0]]
 
@@ -1047,18 +1050,22 @@ def wifi_payload(ssid: str, password: str) -> str:
     return f"WIFI:T:WPA;S:{esc(ssid)};P:{esc(password)};;"
 
 
-def _fit_big(data: str, *, limit_pt: float | None = None) -> tuple:
-    """(modules, side_pt, ecc, cell_pt) for a code that should be as big as `limit_pt` allows without giving up error
-    correction: the largest cell at which EC-Q or better still fits, else the smallest cell at any level."""
-    for cell in (1.6, 1.4, 1.2):
+def _fit_match(data: str, target_pt: float) -> tuple:
+    """(modules, side_pt, ecc, cell_pt) for a code that should be as close to `target_pt` across as it can get without
+    going over, so two codes side by side read as the same size. Only cells that have been printed and scanned
+    (0.8 to 1.6 pt) and EC-Q or better; if nothing qualifies, the smallest cell at any level."""
+    best = None
+    for cell in (1.6, 1.4, 1.2, 1.0, 0.8):
         try:
-            modules, side, ecc = fit_qr(data, cell_pt=cell, limit_pt=limit_pt)
+            modules, side, ecc = fit_qr(data, cell_pt=cell, limit_pt=target_pt)
         except LabelTooBig:
             continue
-        if ecc in ("h", "q"):
-            return modules, side, ecc, cell
-    modules, side, ecc = fit_qr(data, cell_pt=1.0, limit_pt=limit_pt)
-    return modules, side, ecc, 1.0
+        if ecc in ("h", "q") and (best is None or side > best[1]):
+            best = (modules, side, ecc, cell)
+    if best:
+        return best
+    modules, side, ecc = fit_qr(data, cell_pt=0.8, limit_pt=target_pt)
+    return modules, side, ecc, 0.8
 
 
 @dataclass(frozen=True)
@@ -1073,6 +1080,11 @@ def _standard_label(c: CabinetLabel, *, created: str) -> tuple:
     return _detail_label(c, created=created, with_rows=False)
 
 
+def _standard_ap_label(c: CabinetLabel, *, created: str) -> tuple:
+    c.with_ap = True                    # the cabinet code names the AP page too (see qr_payload)
+    return _detail_label(c, created=created, with_rows=False, with_ap=True)
+
+
 def _rowmap_label(c: CabinetLabel, *, created: str) -> tuple:
     return _detail_label(c, created=created, with_rows=True)
 
@@ -1084,6 +1096,9 @@ LAYOUTS = {
                        _standard_label,
                        "The identity a person reads, printed. 78 mm for "
                        "every cabinet but the fridge, 2 mm shorter."),
+    "standard_ap": Layout("standard_ap", "Standard + AP Service — two QR codes: INFO and AP SERVICE", _standard_ap_label,
+                          "Standard, with a second QR that joins the gateway's AP Service Wi-Fi. The Wi-Fi name and "
+                          "password are read from the gateway when printing."),
     "rowmap": Layout("rowmap", "Row map — standard, plus every row and its ids",
                      _rowmap_label,
                      "For the door of a cabinet whose row widths nobody can "
