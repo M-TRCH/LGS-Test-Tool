@@ -681,9 +681,8 @@ class CabinetLabel:
     fw: str = ""                         # gateway firmware, as built
     built: str = ""                      # the date it was that, YYYY-MM-DD
     mod: str = ""                        # module firmware across the cabinet
-    ap_ssid: str = ""                    # AP Service Wi-Fi name, password and page address: only the "apservice" layout
-    ap_pass: str = ""                    # reads them (they come from the gateway at print time, like everything else)
-    ap_url: str = ""
+    ap_ssid: str = ""                    # AP Service Wi-Fi name and password, from the gateway at print time. When both are
+    ap_pass: str = ""                    # set, the standard and row-map stickers carry a second QR that joins that Wi-Fi.
 
     def qr_payload(self) -> str:
         """Identity, and the whole shape of the cabinet.
@@ -854,7 +853,13 @@ def _detail_label(c: CabinetLabel, *, created: str, with_rows: bool) -> tuple:
     down from 78 mm to 65 mm without losing a character.
     """
     qr_data = c.qr_payload()
-    modules, side, ecc = fit_qr(qr_data)
+    # With the AP Service code beside it, each code gives up a caption line's height. The cabinet code is small enough
+    # at the usual cell size (0.8 pt) that it still fits; the Wi-Fi code is short, so it can stay large.
+    has_ap = bool(c.ap_ssid and c.ap_pass)
+    CAP_H = 9.0
+    slot = FRAME_H - 2 * FRAME_PAD - CAP_H - 1.0
+    modules, side, ecc = fit_qr(qr_data, limit_pt=slot) if has_ap else fit_qr(qr_data)
+    ap = _fit_big(wifi_payload(c.ap_ssid, c.ap_pass), limit_pt=slot) if has_ap else None
 
     # Across the tape: the frame sits 3 pt inside each edge, which is inside
     # the 2 pt the printer can reach and a little further in than the 1 pt
@@ -874,7 +879,17 @@ def _detail_label(c: CabinetLabel, *, created: str, with_rows: bool) -> tuple:
     # sits in a square cell centred in the frame however big it comes out.
     qr_gap = round((TAPE_PT - side) / 2 - FRAME_Y, 1)
     qr_x = round(fr_x + qr_gap, 1)
-    rule1_x = qr_x + side + GAP
+    qr_y = round((TAPE_PT - side) / 2, 1)
+    if has_ap:
+        qr_gap = FRAME_PAD
+        qr_x = round(fr_x + FRAME_PAD, 1)
+        qr_y = round(top + (slot - side) / 2, 1)
+        ap_modules, ap_side, ap_ecc, ap_cell = ap
+        ap_x = round(qr_x + side + 6.0, 1)
+        ap_y = round(top + (slot - ap_side) / 2, 1)
+        rule1_x = ap_x + ap_side + GAP
+    else:
+        rule1_x = qr_x + side + GAP
     id_x = rule1_x + GAP
 
     idlines = [
@@ -920,11 +935,16 @@ def _detail_label(c: CabinetLabel, *, created: str, with_rows: bool) -> tuple:
             (f"R{row}", cx, yy, CW, 10.0, "7", LATIN_FONT, 700),
             (ids, cx, yy + 11, CW, 10.0, "6.5", LATIN_FONT, 400),
         ]
+    if has_ap:                                       # a short caption under each code, centred on it
+        for cx, label in ((qr_x + side / 2, "ข้อมูลตู้"), (ap_x + ap_side / 2, "เชื่อม Wi-Fi")):
+            lines.append((label, round(cx - 21.0, 1), round(top + slot + 1.0, 1), 42.0, CAP_H, "7", THAI_FONT, 400))
     lines = [ln for ln in lines if ln[0]]
 
     rules = [(rule1_x, "rule1")] + ([(rule2_x, "rule2")] if rows else [])
     boxes = [("frame", fr_x, FRAME_Y, fr_w, FRAME_H),
-             ("qr", qr_x, round((TAPE_PT - side) / 2, 1), side, side)]
+             ("qr", qr_x, qr_y, side, side)]
+    if has_ap:
+        boxes.append(("qr2", ap_x, ap_y, ap_side, ap_side))
     boxes += [(n, x, top, 0.6, inner_h) for x, n in rules]
     boxes += [(str(t)[:10], x, yy, w, h) for t, x, yy, w, h, _, _, _ in lines]
     bad = check_fits(boxes, paper)
@@ -935,10 +955,15 @@ def _detail_label(c: CabinetLabel, *, created: str, with_rows: bool) -> tuple:
     objs += [vline_object(x, top, inner_h, name=n, obj_id=len(objs) + i)
              for i, (x, n) in enumerate(rules)]
     n0 = len(objs)
-    qr_xml, _ = qr_object(qr_data, qr_x, round((TAPE_PT - side) / 2, 1),
+    qr_xml, _ = qr_object(qr_data, qr_x, qr_y,
                           modules=modules, cell_pt=QR_CELL_PT, ecc=ecc,
                           obj_id=n0)
     objs.append(qr_xml)
+    if has_ap:
+        ap_xml, _ = qr_object(wifi_payload(c.ap_ssid, c.ap_pass), ap_x, ap_y, modules=ap_modules, cell_pt=ap_cell,
+                              ecc=ap_ecc, name="barcode2", obj_id=n0 + 1)
+        objs.append(ap_xml)
+        n0 += 1
     objs += [
         text_object(txt, x, yy, w, h, name=f"o{i}", obj_id=n0 + 1 + i, font=fo,
                     weight=wt, size=sz, orgsize=str(round(float(sz) * 1.2, 1)))
@@ -1017,81 +1042,18 @@ def wifi_payload(ssid: str, password: str) -> str:
     return f"WIFI:T:WPA;S:{esc(ssid)};P:{esc(password)};;"
 
 
-def _fit_big(data: str) -> tuple:
-    """(modules, side_pt, ecc, cell_pt) for a code that should be as big as the tape allows without giving up error
+def _fit_big(data: str, *, limit_pt: float | None = None) -> tuple:
+    """(modules, side_pt, ecc, cell_pt) for a code that should be as big as `limit_pt` allows without giving up error
     correction: the largest cell at which EC-Q or better still fits, else the smallest cell at any level."""
     for cell in (1.6, 1.4, 1.2):
         try:
-            modules, side, ecc = fit_qr(data, cell_pt=cell)
+            modules, side, ecc = fit_qr(data, cell_pt=cell, limit_pt=limit_pt)
         except LabelTooBig:
             continue
         if ecc in ("h", "q"):
             return modules, side, ecc, cell
-    modules, side, ecc = fit_qr(data, cell_pt=1.0)
+    modules, side, ecc = fit_qr(data, cell_pt=1.0, limit_pt=limit_pt)
     return modules, side, ecc, 1.0
-
-
-def _apservice_label(c: CabinetLabel, *, created: str) -> tuple:
-    """Two codes and the words between them, to stick on the cabinet next to the AP Service switch:
-    left joins the Wi-Fi (name and password inside the code), right opens the service page. The name and the
-    password are printed too, for a phone that cannot read the code."""
-    if not (c.ap_ssid and c.ap_pass):
-        raise ValueError("this gateway has no AP Service Wi-Fi name or password yet: set them in AP Service first")
-    url = c.ap_url or "http://192.168.27.1:502/"
-    data = [wifi_payload(c.ap_ssid, c.ap_pass), url]
-    fits = [_fit_big(d) for d in data]
-
-    GAP = 5.0
-    top = FRAME_Y + FRAME_PAD
-    inner_h = FRAME_H - 2 * FRAME_PAD
-    fr_x = EDGE_PT + 1.0
-    pad = [round((TAPE_PT - f[1]) / 2 - FRAME_Y, 1) for f in fits]       # the clearance a code leaves above and below it
-    qr1_x = round(fr_x + pad[0], 1)
-    rule1_x = qr1_x + fits[0][1] + GAP
-    tx = rule1_x + GAP
-
-    # Five lines that add up to the frame's inner height. Latin labels (SSID / PASS) are understood everywhere, and
-    # keep the Thai to the two lines that need it.
-    txtlines = [("Wi-Fi หน้างาน", "11", THAI_FONT, 400, 13.0),
-                (c.name, "11", LATIN_FONT, 700, 12.0),
-                (f"SSID {c.ap_ssid}", "9", LATIN_FONT, 400, 10.0),
-                (f"PASS {c.ap_pass}", "9", LATIN_FONT, 700, 10.0),
-                ("ซ้าย: Wi-Fi · ขวา: หน้าตั้งค่า", "8", THAI_FONT, 400, 10.0)]
-    TW = column_width([(t, sz, fo, wt) for t, sz, fo, wt, _h in txtlines], pad=4.0, fallback=150.0)
-    rule2_x = tx + TW + GAP
-    qr2_x = round(rule2_x + GAP, 1)
-    right = qr2_x + fits[1][1] + pad[1]
-
-    import math
-    fr_w = right - fr_x
-    paper = round(math.ceil((fr_x + fr_w + EDGE_PT + 1) / MM) * MM, 1)
-
-    y, lines = top + (inner_h - sum(h for *_r, h in txtlines)) / 2, []
-    for txt, sz, fo, wt, h in txtlines:
-        lines.append((txt, tx, round(y, 1), TW, h, sz, fo, wt))
-        y += h
-    lines = [ln for ln in lines if ln[0]]
-
-    qy = [round((TAPE_PT - f[1]) / 2, 1) for f in fits]
-    boxes = [("frame", fr_x, FRAME_Y, fr_w, FRAME_H),
-             ("qr1", qr1_x, qy[0], fits[0][1], fits[0][1]), ("qr2", qr2_x, qy[1], fits[1][1], fits[1][1]),
-             ("rule1", rule1_x, top, 0.6, inner_h), ("rule2", rule2_x, top, 0.6, inner_h)]
-    boxes += [(str(t)[:10], x, yy, w, h) for t, x, yy, w, h, _, _, _ in lines]
-    bad = check_fits(boxes, paper)
-    if bad:
-        raise LabelTooBig("; ".join(bad))
-
-    objs = frame_objects(fr_x, fr_w)
-    objs.append(vline_object(rule1_x, top, inner_h, name="rule1", obj_id=len(objs)))
-    objs.append(vline_object(rule2_x, top, inner_h, name="rule2", obj_id=len(objs)))
-    for i, (d, (modules, _side, ecc, cell), x, yy) in enumerate(zip(data, fits, (qr1_x, qr2_x), qy)):
-        xml, _ = qr_object(d, x, yy, modules=modules, cell_pt=cell, ecc=ecc, name=f"barcode{i + 1}", obj_id=len(objs))
-        objs.append(xml)
-    n0 = len(objs)
-    objs += [text_object(txt, x, yy, w, h, name=f"o{i}", obj_id=n0 + i, font=fo,
-                         weight=wt, size=sz, orgsize=str(round(float(sz) * 1.2, 1)))
-             for i, (txt, x, yy, w, h, sz, fo, wt) in enumerate(lines)]
-    return label_xml(objs, paper_len_pt=paper), prop_xml(created=created), paper / MM
 
 
 @dataclass(frozen=True)
@@ -1117,9 +1079,6 @@ LAYOUTS = {
                        _standard_label,
                        "The identity a person reads, printed. 78 mm for "
                        "every cabinet but the fridge, 2 mm shorter."),
-    "apservice": Layout("apservice", "AP Service — two QR codes: join the Wi-Fi, open the page", _apservice_label,
-                        "For the cabinet front next to the service switch. The Wi-Fi name and password are read from "
-                        "the gateway when printing."),
     "rowmap": Layout("rowmap", "Row map — standard, plus every row and its ids",
                      _rowmap_label,
                      "For the door of a cabinet whose row widths nobody can "
