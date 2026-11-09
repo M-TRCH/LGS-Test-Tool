@@ -20,7 +20,7 @@ _locks_guard = threading.Lock()
 
 # Volatile console switches (not stored settings, reset at every boot).
 VOLATILE = ("RESYNC", "EXC")
-ACTIONS = ("reboot", "defaults", "discard", "time", "resync", "exc")
+ACTIONS = ("reboot", "defaults", "discard", "time", "resync", "exc", "ap_on", "ap_off", "ap_ssid", "ap_pass")
 
 
 def _lock(host: str, port: int) -> threading.Lock:
@@ -164,6 +164,39 @@ def apply(host: str, port: int, changes: dict) -> dict:
                 pass
 
 
+def _ap_action(link, name: str, value) -> dict:
+    """The service Wi-Fi AP verbs (gateway >= 1.15, Opta WiFi). The password is never read back, only written: the
+    value is checked here the way the gateway checks it, so a typo is told apart from a refusal."""
+    v = "" if value is None else str(value)
+    if name == "ap_on":
+        try:
+            mins = int(v or "30")
+        except ValueError:
+            return {"ok": False, "error": "minutes must be a number"}
+        if not 1 <= mins <= 480:
+            return {"ok": False, "error": "minutes must be 1-480"}
+        line = f"AP ON min={mins} bridge=0"
+    elif name == "ap_off":
+        line = "AP OFF"
+    elif name in ("ap_ssid", "ap_pass"):
+        lo, hi = (1, 31) if name == "ap_ssid" else (8, 31)
+        if not lo <= len(v) <= hi or any(c <= " " or c > "~" for c in v):
+            return {"ok": False, "error": f"{lo}-{hi} printable characters, no spaces"}
+        line = ("AP SSID " if name == "ap_ssid" else "AP PASS ") + v
+    else:
+        return {"ok": False, "error": "unknown action"}
+    h = link.hello("LGS-Test-Tool v2")
+    if not h.ok:
+        return {"ok": False, "error": h.error_text or "HELLO refused"}
+    res = link.command(line)
+    try:
+        link.bye()
+    except Exception:                                            # noqa: BLE001
+        pass
+    return {"ok": res.ok, "error": "" if res.ok else res.error_text,
+            "detail": "" if name == "ap_pass" else " ".join(res.lines[:1])}
+
+
 def action(host: str, port: int, name: str, value=None) -> dict:
     if name not in ACTIONS:
         return {"ok": False, "error": f"unknown action '{name}'"}
@@ -180,6 +213,8 @@ def action(host: str, port: int, name: str, value=None) -> dict:
             res = link.command(f"{name.upper()} {v}")
             link.bye()
             return {"ok": res.ok, "error": "" if res.ok else res.error_text, "detail": v}
+        if name.startswith("ap_"):
+            return _ap_action(link, name, value)
         h = link.hello("LGS-Test-Tool v2")
         if not h.ok:
             return {"ok": False, "error": h.error_text or "HELLO refused"}
