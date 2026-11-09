@@ -901,7 +901,7 @@ def build(ctx: Ctx) -> None:
             widths=lgs_map.layout_widths(layout), records=records,
             hub_channel=lgs_map.hub_channel,
             events=report_state.get("events", ()),
-            soak=report_state.get("soak"), detail=True)
+            soak=report_state.get("soak"))
         name = snap.settings.get("sys.name", "") or snap.info.get("id", "gw")
         fname = f"lgs-report-{name}-{datetime.now():%Y%m%d-%H%M}.pdf"
         # A copy stays in data/exports — a record someone can find later is

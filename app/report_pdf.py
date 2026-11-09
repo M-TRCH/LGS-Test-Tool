@@ -141,7 +141,7 @@ def _legend(pdf: _Report, text: str) -> None:
     pdf.font(6.5)
     pdf.set_text_color(*MUTED)
     pdf.multi_cell(0, 3.6, text, new_x="LMARGIN", new_y="NEXT")
-    pdf.set_text_color(0)
+    pdf.set_text_color(*INK)
 
 
 def _ensure_room(pdf: _Report, needed_mm: float) -> None:
@@ -454,7 +454,7 @@ def _soak_section(pdf: _Report, soak) -> None:
         if best and all(t.device_id != best[0] for t in shown):
             shown.append(next(t for t in soak.trouble if t.device_id == best[0]))
     _ensure_room(pdf, 52 + len(shown) * 4.4)
-    _section(pdf, "Soak test")
+    _section(pdf, "ผล soak (ทดสอบต่อเนื่อง)")
     pdf.font(8)
     dur_h = soak.duration_s / 3600.0
     span = "?"
@@ -467,7 +467,7 @@ def _soak_section(pdf: _Report, soak) -> None:
         if red:
             pdf.set_text_color(*FAIL_RED)
         pdf.multi_cell(0, 4.4, text, new_x="LMARGIN", new_y="NEXT")
-        pdf.set_text_color(0)
+        pdf.set_text_color(*INK)
         pdf.font(8)
 
     line(f"{soak.filename or 'soak CSV'} · {span} ({dur_h:.1f} h) · "
@@ -611,7 +611,7 @@ def _tile(pdf: _Report, x: float, y: float, w: float, value: str, label: str, to
 
 
 def _summary_page(pdf: _Report, *, app_version: str, generated: datetime, info: dict, settings: dict,
-                  cabinet_label: str, cabinet_count: int, widths: Sequence[int], records: Sequence) -> None:
+                  cabinet_label: str, cabinet_count: int, widths: Sequence[int], records: Sequence, soak=None) -> None:
     """One page that answers "what is in this cabinet and is anything wrong": the figures, the gateway in a few lines,
     a map of the modules coloured by firmware, and a short list of what deserves a look. The tables are the appendix."""
     left, right = pdf.l_margin, pdf.w - pdf.r_margin
@@ -656,6 +656,8 @@ def _summary_page(pdf: _Report, *, app_version: str, generated: datetime, info: 
           "warn" if mixed else ("ok" if versions else None))
     _tile(pdf, left + 2 * (w + gap), y, w, str(info.get("fw", "?")), "เกตเวย์")
     pdf.set_y(y + 19)
+    if soak is not None:
+        pdf.set_y(_soak_tiles(pdf, soak, y + 19 + 3.5))
 
     # gateway
     _section(pdf, "เกตเวย์")
@@ -738,6 +740,8 @@ def _summary_page(pdf: _Report, *, app_version: str, generated: datetime, info: 
         notes.append(("warn", f"watchdog เคยรีเซ็ตโมดูล: {_ranges(dogs)}"))
     if info.get("ntp.state", "ok") not in ("ok", "-"):
         notes.append(("warn", f"NTP: {info.get('ntp.state')}  (เวลาของเกตเวย์อาจเพี้ยน)"))
+    if soak is not None:
+        notes.append(("bad" if soak.problems or not soak.finished else "ok", "soak: " + soak.headline()))
     if not notes:
         notes.append(("ok", "ไม่พบสิ่งผิดปกติ"))
     for tone, text in notes:
@@ -755,109 +759,123 @@ def records_fw(rec) -> str:
     return rec.fw
 
 
+def _health_text(rec) -> tuple:
+    """(text, ok) for a module's health byte, in words. What counts as a fault is deliberately narrow, because the boards
+    in the field report 0x01 and are healthy: bit2 (room sensor) and bit3 (board sensor) are parts a board may simply not
+    carry, bit3 reads 0 on every R5.x, and a type 10 STANDARD module has the 8-LED mask instead of an OLED so bit1 is 0 by
+    design. A fault is bit0 (the AT24 EEPROM) clear, or bit1 clear on a module that has a display. The raw byte stays in
+    the text for anyone who wants it."""
+    raw = f"0x{rec.health:02X}"
+    if not rec.health & 1:
+        return f"AT24 EEPROM ผิดปกติ ({raw})", False
+    if not rec.health & 2 and rec.device_type != 10:
+        return f"จอ OLED ผิดปกติ ({raw})", False
+    return f"ปกติ ({raw})", True
+
+
+def _kv_block(pdf: _Report, facts, key_w: float = 38) -> None:
+    for k, v in facts:
+        pdf.set_x(pdf.l_margin + 3.6)
+        pdf.font(8.5)
+        pdf.set_text_color(*MUTED)
+        pdf.cell(key_w, 5.2, k)
+        pdf.set_text_color(*INK)
+        pdf.cell(0, 5.2, str(v), new_x="LMARGIN", new_y="NEXT")
+
+
+def _soak_tiles(pdf: _Report, soak, y: float) -> float:
+    """A second row of tiles for the summary page when a soak result is attached; returns the new y."""
+    left = pdf.l_margin
+    inner = pdf.w - pdf.l_margin - pdf.r_margin
+    gap = 4
+    w = (inner - 2 * gap) / 3
+    ok = not soak.problems and soak.finished
+    _tile(pdf, left, y, w, "ผ่าน" if ok else ("ไม่ครบรอบ" if not soak.finished and not soak.problems else "มีข้อผิดปกติ"),
+          f"ผล soak ล่าสุด ({soak.ended:%Y-%m-%d})" if soak.ended else "ผล soak ล่าสุด", "ok" if ok else "bad")
+    _tile(pdf, left + w + gap, y, w, f"{soak.duration_s / 3600.0:.1f} ชม.", "ระยะเวลาที่ทดสอบ")
+    _tile(pdf, left + 2 * (w + gap), y, w, f"{soak.reads:,}", f"อ่านทั้งหมด (พลาด {soak.fails:,})", "ok" if not soak.fails else "bad")
+    return y + 19
+
+
 def build_report_pdf(*, app_version: str, generated: datetime,
                      info: dict, settings: dict,
                      cabinet_label: str, cabinet_count: int,
                      widths: Sequence[int], records: Sequence,
                      hub_channel, events: Sequence[str] = (),
-                     soak=None, detail: bool = False) -> bytes:
-    """`records` are fw_survey.ModuleRecord; `hub_channel(id)` maps a slave
-    ID to its RS485 hub channel (0 = wired straight); `events` are the
-    gateway's newest event-log lines (may be empty — older firmware);
-    `soak` is a soak_csv.SoakSummary when the operator attached a soak CSV
-    to the report (None = no soak section). `detail` adds the appendix: every module's row, the statistics, the settings
-    and the recent events; without it the report is the one summary page (plus the soak section if one was attached)."""
+                     soak=None, soak_file: str = "") -> bytes:
+    """`records` are fw_survey.ModuleRecord; `hub_channel(id)` maps a slave ID to its RS485 hub channel (0 = wired
+    straight); `events` are the gateway's newest event-log lines (may be empty: older firmware); `soak` is a
+    soak_csv.SoakSummary, the cabinet's latest soak run, when there is one (`soak_file` names the file it came from).
+
+    Every fact the report has ever carried is still here. What changed is the order and the wording: page 1 answers
+    "what is in this cabinet and is anything wrong" (figures, the gateway in a few lines, a map of the modules
+    coloured by firmware, what deserves a look, and the soak result), and the sections after it hold the detail: the
+    soak run, every module's identity and statistics grouped by hub channel with the health byte in words, the
+    gateway's identity and settings, and its newest events."""
     pdf = _Report()
     pdf.alias_nb_pages()
     pdf.add_page()
     _summary_page(pdf, app_version=app_version, generated=generated, info=info, settings=settings,
-                  cabinet_label=cabinet_label, cabinet_count=cabinet_count, widths=widths, records=records)
+                  cabinet_label=cabinet_label, cabinet_count=cabinet_count, widths=widths, records=records, soak=soak)
+
+    # ── soak — the overnight evidence ─────────────────────────────────────
     if soak is not None:
         pdf.add_page()
         _soak_section(pdf, soak)
-    if not detail:
-        return bytes(pdf.output())
+        if soak_file:
+            _legend(pdf, f"จากไฟล์ {soak_file}")
+
+    # ── modules: identity, grouped by hub channel ─────────────────────────
     pdf.add_page()
-
-    # ── appendix title ────────────────────────────────────────────────────
-    pdf.font(15, bold=True)
-    pdf.set_text_color(*ACCENT)
-    pdf.cell(0, 8, "Details", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_text_color(*INK)
-
-    # ── gateway identity ──────────────────────────────────────────────────
-    _section(pdf, "Gateway")
-    pdf.font(8)
-    idline = (f"fw {info.get('fw', '?')} · build {info.get('build', '?')} · "
-              f"id {info.get('id', '?')} · mac {info.get('mac', '?')}")
-    netline = (f"net {info.get('net.state', '?')} · "
-               f"{info.get('net.ip', '?')}:{info.get('net.port', '?')} · "
-               f"watchdog {info.get('sys.wdt', '?')} ms · "
-               f"clock {info.get('time.now', 'unset').replace('T', ' ')} · "
-               f"NTP {info.get('ntp.state', '-')} · "
-               f"scheduled reset {info.get('sched.reset', '?')}")
-    pdf.cell(0, 4.6, idline, new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 4.6, netline, new_x="LMARGIN", new_y="NEXT")
-
-    # ── cabinet ───────────────────────────────────────────────────────────
-    _section(pdf, "Cabinet")
-    pdf.font(8)
-    rows_text = ",".join(str(w) for w in widths) if widths else "-"
-    pdf.cell(0, 4.6,
-             f"{cabinet_label} · {cabinet_count} modules · "
-             f"slots per row (top first): {rows_text} · "
-             f"hub map {settings.get('bus.hub_map', '-')}",
-             new_x="LMARGIN", new_y="NEXT")
-
-    # ── modules — the reason this report exists ───────────────────────────
     answered = sum(1 for r in records if r.responded)
-    _section(pdf, f"Modules ({answered}/{len(records)} answered)")
+    _section(pdf, f"โมดูลทั้งหมด (ตอบ {answered}/{len(records)})")
     pdf.font(7.5)
-    fail_style = FontFace(color=FAIL_RED)
-    with pdf.table(col_widths=(10, 8, 47, 26, 15, 14, 12, 13, 41),
-                   text_align=("CENTER", "CENTER", "LEFT", "LEFT", "CENTER",
-                               "CENTER", "CENTER", "CENTER", "LEFT"),
-                   **_table_kw()) as table:
-        _headings(table, ("ID", "CH", "UID", "Type", "FW", "HW",
-                          "Boots", "Health", "Note"))
+    fail_style = FontFace(color=FAIL_RED, emphasis="BOLD")
+    with pdf.table(col_widths=(9, 14, 20, 12, 11, 11, 44, 65),
+                   text_align=("CENTER", "CENTER", "LEFT", "CENTER", "CENTER", "RIGHT", "LEFT", "LEFT"),
+                   **_table_kw(line_height=4.0, padding=0.45)) as table:
+        _headings(table, ("ID", "ช่อง hub", "ชนิด", "FW", "HW", "บูต", "สุขภาพ", "UID / หมายเหตุ"))
+        last_ch = None
         for r in records:
+            ch = hub_channel(r.device_id)
+            if ch != last_ch:
+                band = table.row()
+                band.cell(f"ฮับช่อง {ch}" if ch else "ต่อตรง (ไม่ผ่านฮับ)", colspan=8,
+                          style=FontFace(emphasis="BOLD", color=ACCENT, fill_color=GROUP_FILL))
+                last_ch = ch
             row = table.row()
             row.cell(str(r.device_id))
-            ch = hub_channel(r.device_id)
             row.cell(str(ch) if ch else "-")
             if r.responded:
-                row.cell(r.uid)
                 row.cell(r.type_name)
                 row.cell(r.fw)
                 row.cell(_hw_name(r.hw_raw))
                 row.cell(str(r.boots))
-                row.cell(f"0x{r.health:02X}")
+                text, healthy = _health_text(r)
+                row.cell(text, style=None if healthy else fail_style)
                 mismatch = (r.reported_id != r.device_id)
-                row.cell(f"reports id {r.reported_id}!" if mismatch else "")
+                row.cell(f"รายงาน id {r.reported_id}! " + r.uid if mismatch else r.uid,
+                         style=fail_style if mismatch else None)
             else:
-                row.cell("no answer", style=fail_style)
-                for _ in range(6):
-                    row.cell("")
-    bits = ", ".join(f"bit{i}={n}" for i, n in enumerate(HEALTH_BITS))
-    _legend(pdf, f"health: {bits} (set = OK; bit3 reads 0 on every R5.1 — "
-                 f"known, harmless; bit1 reads 0 on every type 10 STANDARD "
-                 f"module, which has the 8-LED mask instead of an OLED — on a "
-                 f"ring type it means a failed display) · bit4 = latch locked "
-                 f"· bus runs "
+                row.cell("ไม่ตอบ", style=fail_style, colspan=6)
+    _legend(pdf, "สุขภาพ: บิตที่ตั้งไว้ = ปกติ  (bit0 = AT24 EEPROM, bit1 = OLED, bit2 = เซนเซอร์ห้อง, bit3 = เซนเซอร์บอร์ด, "
+                 "bit4 = สลักล็อกอยู่)  ·  แจ้งผิดปกติเฉพาะ EEPROM (bit0) หรือจอ OLED (bit1) เท่านั้น: เซนเซอร์ห้อง/บอร์ดเป็นชิ้นส่วนที่บอร์ด"
+                 "อาจไม่มี (bit3 บน R5.x อ่านเป็น 0 เสมอ) และโมดูลชนิด 10 STANDARD ไม่มี OLED (ใช้ไฟ LED 8 ดวงแทน) จึงไม่นับ bit1  ·  บัสวิ่งที่ "
                  f"{dec_baud(int(settings.get('rs485.baud', 9600) or 9600))}")
 
     # ── module statistics — how much this cabinet has actually worked ─────
     with_stats = sum(1 for r in records if getattr(r, "stats", None))
     if with_stats:
-        _section(pdf, f"Module statistics ({with_stats}/{len(records)})")
+        _ensure_room(pdf, 20 + (len(records) + 1) * 4.9)
+        _section(pdf, f"สถิติของโมดูล ({with_stats}/{len(records)})")
         pdf.font(7)
         muted_style = FontFace(color=MUTED)
-        with pdf.table(col_widths=(10, 24, 12, 12, 18, 18, 18, 28, 24, 22),
-                       text_align=("CENTER",) * 10,
-                       **_table_kw()) as table:
-            _headings(table, ("ID", "Op time", "Boots", "IWDG", "Presses",
-                              "Latch fires", "LED on", "LED time",
-                              "Room °C", "Supply mA"))
+        with pdf.table(col_widths=(10, 25, 12, 12, 17, 17, 18, 27, 24, 24),
+                       text_align=("CENTER",) + ("RIGHT",) * 9,
+                       **_table_kw(line_height=4.0, padding=0.45)) as table:
+            _headings(table, ("ID", "ทำงานมาแล้ว", "บูต", "IWDG", "กดปุ่ม",
+                              "สลักทำงาน", "ไฟติด (ครั้ง)", "ไฟติด (เวลารวม)",
+                              "อุณหภูมิห้อง °C", "กระแสไฟเลี้ยง mA"))
             for r in records:
                 row = table.row()
                 row.cell(str(r.device_id))
@@ -865,16 +883,16 @@ def build_report_pdf(*, app_version: str, generated: datetime,
                 if s is None:
                     # Seven columns belong to the statistics block; one short
                     # and the live readings slide left into them.
-                    row.cell("n/a", style=muted_style)
+                    row.cell("ไม่มีข้อมูล", style=muted_style)
                     for _ in range(6):
                         row.cell("")
                 else:
                     row.cell(fmt_dur(s.op_seconds))
                     row.cell(str(r.boots))
-                    row.cell(str(s.iwdg_resets))
+                    row.cell(str(s.iwdg_resets), style=FontFace(color=FAIL_RED, emphasis="BOLD") if s.iwdg_resets else None)
                     row.cell(str(s.button_presses))
                     row.cell(str(s.latch_fires))
-                    row.cell(str(s.total_on_count))
+                    row.cell(f"{s.total_on_count:,}")
                     row.cell(fmt_dur(s.total_on_time_s))
                 room = getattr(r, "room_raw", -1)
                 if r.responded and 0 <= room != SENSOR_FAULT:
@@ -883,25 +901,33 @@ def build_report_pdf(*, app_version: str, generated: datetime,
                     row.cell("—")
                 ma = getattr(r, "current_ma", -1)
                 row.cell(str(ma) if r.responded and ma >= 0 else "—")
-        _legend(pdf, "lifetime totals persisted on each module (fw >= v3.3.0; "
-                     "n/a = older firmware or no answer) · cleared by coil 510 "
-                     "/ factory reset — boot count survives · Room °C and "
-                     "Supply mA are live readings at survey time")
+        _legend(pdf, "ยอดสะสมที่เก็บไว้ในตัวโมดูล (เฟิร์มแวร์ v3.3.0 ขึ้นไป; \"ไม่มีข้อมูล\" = เฟิร์มแวร์เก่าหรือไม่ตอบ)  ·  "
+                     "ล้างได้ด้วย coil 510 / factory reset (จำนวนบูตไม่หาย)  ·  IWDG = watchdog รีเซ็ตโมดูล  ·  "
+                     "อุณหภูมิห้องและกระแสไฟเลี้ยงเป็นค่าสดตอนอ่าน")
 
-    # ── the full settings dump, for the record ────────────────────────────
+    # ── the gateway: identity, then every setting, for the record ─────────
+    pdf.add_page()
+    _section(pdf, "เกตเวย์")
+    rows_text = ",".join(str(w) for w in widths) if widths else "-"
+    _kv_block(pdf, (
+        ("เฟิร์มแวร์", f"{info.get('fw', '?')}  ·  build {info.get('build', '?')}"),
+        ("รหัสเกตเวย์ / MAC", f"{info.get('id', '?')}  ·  {info.get('mac', '?')}"),
+        ("เครือข่าย", f"{info.get('net.state', '?')}  ·  {info.get('net.ip', '?')}:{info.get('net.port', '?')}"),
+        ("watchdog", f"{info.get('sys.wdt', '?')} ms"),
+        ("เวลาของเกตเวย์", f"{info.get('time.now', 'unset').replace('T', ' ')}  ·  NTP {info.get('ntp.state', '-')}"),
+        ("reset ชั้นวางตามเวลา", str(info.get("sched.reset", "?"))),
+        ("ตู้", f"{cabinet_label}  ·  {cabinet_count} โมดูล  ·  แถวละ {rows_text}  ·  hub map {settings.get('bus.hub_map', '-')}"),
+    ))
     _ensure_room(pdf, _settings_height(settings))
-    _section(pdf, "Gateway settings")
+    _section(pdf, "การตั้งค่าเกตเวย์")
     _settings_table(pdf, settings)
-    _legend(pdf, "raw console keys and values travel in the config export "
-                 "file (Gateway page); labels here follow the tool's fields")
+    _legend(pdf, "ชื่อและค่าดิบของคำสั่งคอนโซลอยู่ในไฟล์ส่งออกค่าตั้ง (หน้าเกตเวย์)  ·  ชื่อที่เห็นตามช่องกรอกของ Tool")
 
     # ── recent gateway events — what happened here lately ─────────────────
     if events:
         _ensure_room(pdf, len(events) * _SETTINGS_ROW_MM + 20)
-        _section(pdf, f"Recent gateway events (newest first, {len(events)})")
+        _section(pdf, f"เหตุการณ์ล่าสุดของเกตเวย์ (ใหม่สุดก่อน, {len(events)} รายการ)")
         _events_table(pdf, events)
-        _legend(pdf, "Time — means the clock was not yet set when the event "
-                     "was written (right after a power cut); Uptime orders "
-                     "those events within their boot")
+        _legend(pdf, "เวลา — หมายถึงนาฬิกายังไม่ถูกตั้งตอนบันทึก (หลังไฟดับ)  ·  Uptime ใช้เรียงลำดับเหตุการณ์ในรอบบูตเดียวกัน")
 
     return bytes(pdf.output())

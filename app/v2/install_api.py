@@ -268,6 +268,23 @@ def _event(ev) -> dict:
     return {"t": "?"}
 
 
+def latest_soak(name: str) -> tuple:
+    """(SoakSummary, file name) of this cabinet's newest soak run in the exports folder, or (None, "") when there is none
+    or it cannot be read. A fleet run writes soak-<cabinet>-<stamp>.csv per cabinet; the combined "-all" exports and
+    other cabinets' files never match."""
+    from .. import soak_csv, soak_fleet
+    from . import soak_api
+    stem = soak_fleet.safe_stem(name)
+    try:
+        files = [f for f in soak_api.exports_dir().glob(f"soak-{stem}-*.csv") if "-all" not in f.name]
+        if not files:
+            return None, ""
+        newest = max(files, key=lambda f: f.stat().st_mtime)
+        return soak_csv.parse_soak_csv(newest.read_text(encoding="utf-8-sig"), newest.name), newest.name
+    except (OSError, ValueError):                                # SoakCsvError is a ValueError
+        return None, ""
+
+
 class Run:
     """The one long job on the server: its events, its cancel flag, its file."""
 
@@ -379,7 +396,7 @@ class Run:
         self._launch(site, work, timeout_s=PROBE_TIMEOUT_S)
         return {"ok": True}
 
-    def start_report(self, site: dict, site_id: str, detail: bool = False) -> dict:
+    def start_report(self, site: dict, site_id: str) -> dict:
         """The site report: gateway snapshot + newest events, then a read-only
         sweep of every slot, rendered to the same PDF the classic tool makes."""
         self._begin(site, "report", "")
@@ -410,10 +427,11 @@ class Run:
                 return None
             snap = ctx["snap"]
             settings = {k["key"]: k["value"] for k in snap["keys"]}
+            soak, soak_file = latest_soak(site.get("name", ""))
             pdf = report_pdf.build_report_pdf(
                 app_version=APP_VERSION, generated=datetime.now(), info=snap["info"], settings=settings,
                 cabinet_label=lay.label, cabinet_count=lay.count, widths=lgs_map.layout_widths(lay),
-                records=records, hub_channel=lgs_map.hub_channel, events=ctx["events"], soak=None, detail=detail)
+                records=records, hub_channel=lgs_map.hub_channel, events=ctx["events"], soak=soak, soak_file=soak_file)
             name = settings.get("sys.name", "") or snap["info"].get("id", "gw")
             return (f"lgs-report-{name}-{datetime.now():%Y%m%d-%H%M}.pdf", bytes(pdf), "application/pdf")
 
