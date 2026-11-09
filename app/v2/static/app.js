@@ -158,14 +158,17 @@ function pickImportMode() {
    the window then runs past midnight); there is no number of nights, it goes on every night until it is done. Resolves {at, until, nights} on OK, or null when dismissed. */
 function askSchedule(go) {
   return new Promise((resolve) => {
-    const d = $("#schedpick"), at = $("#scat"), until = $("#scuntil");
-    $("#sctitle").textContent = t("fwGoSchedTitle"); $("#sclabelat").textContent = t("fwGoAt"); $("#sclabeluntil").textContent = t("fwGoUntil");
+    const d = $("#schedpick"), pad = (n) => String(n).padStart(2, "0");
+    const sel = (p, n, v) => `<select data-p="${p}">${Array.from({ length: n }, (_, i) => `<option value="${i}"${i === v ? " selected" : ""}>${pad(i)}</option>`).join("")}</select>`;
+    const [ah, am] = (go.nightAt || "01:00").split(":").map(Number), [uh, um] = (go.nightUntil || "04:00").split(":").map(Number);
+    $("#sctitle").textContent = t("fwGoSchedTitle");
     $("#scinfo").setAttribute("aria-label", t("explain")); $("#scok").textContent = t("fwGoSchedOk"); $("#scno").textContent = t("askNo");
-    at.value = go.nightAt || "01:00"; until.value = go.nightUntil || "04:00";
-    const read = () => ({ at: at.value, until: until.value });
-    const valid = () => { const w = read(); return !!w.at && !!w.until && w.at !== w.until; };
+    $("#scbody").innerHTML = [["fwGoAt", "a", ah, am], ["fwGoUntil", "u", uh, um]].map(([k, p, h, m]) => `<div class="tmrow"><span class="small muted">${t(k)}</span>${sel(p + "h", 24, h)}<b>:</b>${sel(p + "m", 60, m)}</div>`).join("");
+    const v = (p) => pad(+$(`#scbody [data-p="${p}"]`).value);
+    const read = () => ({ at: `${v("ah")}:${v("am")}`, until: `${v("uh")}:${v("um")}` });
+    const valid = () => { const w = read(); return w.at !== w.until; };
     const sum = () => { $("#scok").disabled = !valid(); };
-    for (const el of [at, until]) el.oninput = sum;
+    $("#scbody").onchange = sum;
     sum();
     const done = (v) => { d.onclose = null; if (d.open) d.close(); resolve(v); };
     $("#scok").onclick = () => done(valid() ? read() : null); $("#scno").onclick = () => done(null); d.onclose = () => resolve(null);
