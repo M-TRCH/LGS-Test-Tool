@@ -123,10 +123,10 @@ class _TcpOps:
 
     def probe(self, device_id: int) -> _Res:
         """A scan probe: one short try, no hub-wake retries (an absent id
-        would otherwise cost six timeouts)."""
+        would otherwise cost six timeouts). Reads registers 0-1 in the one frame: the device type and the firmware."""
         return self._txn(device_id,
-                         lambda c: c.read_holding_registers(0, count=1, device_id=device_id),
-                         lambda r: r.registers[0], wake=False)
+                         lambda c: c.read_holding_registers(0, count=2, device_id=device_id),
+                         lambda r: (r.registers[0], r.registers[1] if len(r.registers) > 1 else 0), wake=False)
 
     def sleep(self, seconds: float) -> None:
         end = time.monotonic() + seconds
@@ -398,10 +398,14 @@ class Run:
                 if self._cancel.is_set():
                     break
                 r = ops.probe(uid)
+                dtype, fw = "", ""
                 if r.ok:
-                    found.append({"id": uid, "type": lgs_map.dec_device_type(r.value)})
-                self._emit({"t": "probe", "id": uid, "found": r.ok, "index": n, "total": len(ids),
-                            "type": lgs_map.dec_device_type(r.value) if r.ok else ""})
+                    dtype = lgs_map.dec_device_type(r.value[0])
+                    fw = lgs_map.fw_short(r.value[1])
+                    if fw.startswith("legacy"):
+                        fw = "old"                      # a date code, not a version: too long for a button
+                    found.append({"id": uid, "type": dtype, "fw": fw})
+                self._emit({"t": "probe", "id": uid, "found": r.ok, "index": n, "total": len(ids), "type": dtype, "fw": fw})
             self._emit({"t": "end", "cancelled": self._cancel.is_set(), "found": found, "total": len(ids)})
             return None
 
