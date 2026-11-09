@@ -326,7 +326,7 @@ const GWENUM = (() => {
   for (let n = 1; n <= 4; n++) m["panel.out" + n] = out;
   return m;
 })();
-function gwChanged() { return new Set(Object.keys(S.gw.edits).map(gwUnit)).size; }
+function gwChanged() { return new Set(Object.keys(S.gw.edits).map(gwUnit)).size + (S.gw.apPending ? 1 : 0); }
 /* Keys the gateway names but i18n has no label for (the Classic tool draws them with a custom widget). Same wording as the PDF report. */
 const GWNAMES = {
   "panel.btn1": ["ปุ่มสีแดงทำอะไร", "Red button does"], "panel.btn2": ["ปุ่มสีเขียวทำอะไร", "Green button does"], "panel.btn3": ["ปุ่มสีน้ำเงินทำอะไร", "Blue button does"],
@@ -1815,13 +1815,13 @@ function apPaint() {
   const dirty = !!cur && (a.ssid !== cur.ssid || a.pass !== cur.pass || a.min !== String(cur.min));
   const shown = a.pending ? a.pending === "on" : now;
   $("#aptitle").textContent = t("apTitle"); $("#apclose").textContent = t("close");
+  const sv0 = $("#apsave"); sv0.textContent = t("apSave"); sv0.disabled = !(dirty && nameOk && passOk && minOk) || a.busy;
   const state = now ? t("apOnL", { m: Math.ceil((+i["ap.left_s"] || 0) / 60) }) : i["ap.state"] === "failed" ? t("apFailL") : t("apOffL");
   const tag = $("#aptag"); tag.textContent = state; tag.style.color = now ? "var(--ok)" : "var(--muted)";
   $("#apbody").innerHTML = `<div class="field"><label>${t("apName")}</label><input id="apssid" class="mono" value="${esc(a.ssid)}" autocomplete="off" spellcheck="false"${cur ? "" : " disabled"}></div>
     <div class="field"><label>${t("apPassL")}</label><input id="appass" class="mono" value="${esc(a.pass)}" autocomplete="off" spellcheck="false"${cur ? "" : " disabled"}></div>
     <div class="field"><label>${t("apMin")}</label><input id="apmin" inputmode="numeric" value="${esc(a.min)}"${cur ? "" : " disabled"}></div>
     <div class="small" id="aphint" style="color:var(--bad)">${a.ssid && !nameOk ? t("apNameBad") : a.pass && !passOk ? t("apPassBad") : a.min && !minOk ? t("apMinBad") : ""}</div>
-    <div class="row"><button class="btn" id="apsave" data-act="ap-save"${dirty && nameOk && passOk && minOk && !a.busy ? "" : " disabled"}>${t("apSave")}</button></div>
     <div class="field"><label>${t("apUrlL")}</label><div class="mono">${cur ? esc(cur.url) : ""}</div></div>
     <hr style="border:0;border-top:1px solid var(--line);width:100%">
     <div class="switch"><div><b>${t("apSwitch")}</b></div><button class="sw${a.pending ? " pend" : ""}" role="switch" aria-checked="${shown}" data-act="ap-flip"${a.busy || a.pending || !cur ? " disabled" : ""}></button></div>
@@ -1938,13 +1938,19 @@ document.addEventListener("click", async (ev) => {
     } else if (act.dataset.act === "del") { readRows(); S.sites.splice(+act.dataset.i, 1); S.dirty = true; render();
     } else if (act.dataset.act === "save") { readRows(); const r = await api("PUT", "/api/v2/sites", { sites: S.sites }); S.sites = r.sites; S.warnings = r.warnings; S.dirty = false; render(); toast(t("saved"));
     } else if (act.dataset.act === "gw-read") { await gwRead();
-    } else if (act.dataset.act === "gw-clear") { S.gw.edits = {}; render();
+    } else if (act.dataset.act === "gw-clear") { S.gw.edits = {}; S.gw.apPending = null; render();
     } else if (act.dataset.act === "gw-apply") {
       const n = gwChanged(), g = S.sites.find((x) => x.id === S.gw.id);
       if (!await ask(t("applyQ", { n, g: g ? g.name : "" }))) return;
       const r = await api("POST", "/api/v2/gw/apply", { id: S.gw.id, changes: S.gw.edits });
       if (!r.ok) throw new Error(r.error || "failed");
-      S.gw.edits = {}; await gwRead(); toast(r.pending_reboot ? t("needReboot", { k: r.pending_reboot }) : t("applied"));
+      const ap = S.gw.apPending;                              // imported AP Service settings: name, password, minutes (each only when the file has it)
+      if (ap) {
+        for (const [action, v] of [["ap_ssid", ap.ssid], ["ap_pass", ap.pass], ["ap_min", ap.min]]) {
+          if (!v) continue; const q = await api("POST", "/api/v2/gw/action", { id: S.gw.id, action, value: v }); if (!q.ok) throw new Error(q.error || "AP Service");
+        }
+      }
+      S.gw.edits = {}; S.gw.apPending = null; await gwRead(); toast(r.pending_reboot ? t("needReboot", { k: r.pending_reboot }) : t("applied"));
     } else if (act.dataset.act === "gw-time") {
       const wasSet = S.gw.data && S.gw.data.info && S.gw.data.info["time.set"] === "1";
       if (!wasSet && !await ask(t("clockWarn"))) return;
@@ -2022,6 +2028,9 @@ document.addEventListener("click", async (ev) => {
     } else if (act.dataset.act === "gw-export") {
       const d = S.gw.data; const out = { format: "lgs-gateway-config", version: 2, gateway: d.info["sys.name"] || "", fw: d.info.fw, exported: new Date().toISOString(), settings: {} };
       d.keys.forEach((k) => { if (!k.ro) out.settings[k.key] = k.value; });
+      if (d.info["hw.wifi"] === "1") {                       // the AP Service settings live outside the key table: ask the gateway for them
+        try { const r = await api("POST", "/api/v2/gw/action", { id: S.gw.id, action: "ap_show" }); if (r.ok) out.ap = { ssid: r.ssid, pass: r.pass, min: String(r.min || "") }; } catch (e) { /* the file just has no ap block */ }
+      }
       const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: "application/json" })); a.download = (out.gateway || "gateway") + "-config.json"; a.click();
     } else if (act.dataset.act === "gw-shape") {
       Object.entries(S.gw.data.shape.fix).forEach(([k, v]) => { const cur = S.gw.data.keys.find((x) => x.key === k); if (cur && cur.value !== v) S.gw.edits[k] = v; }); render();
@@ -2340,6 +2349,7 @@ document.addEventListener("change", async (ev) => {
     try {
       const j = JSON.parse(await ev.target.files[0].text()); const src = j.settings || j; let n = 0;
       S.gw.data.keys.forEach((k) => { if (!k.ro && k.key in src && String(src[k.key]) !== k.value) { S.gw.edits[k.key] = String(src[k.key]); n++; } });
+      if (j.ap && S.gw.data.info["hw.wifi"] === "1") { S.gw.apPending = { ssid: String(j.ap.ssid || ""), pass: String(j.ap.pass || ""), min: String(j.ap.min || "") }; n++; }
       render(); toast(n ? t("impDone", { n }) : t("impNone"));
     } catch (e) { fail(e); }
   }
