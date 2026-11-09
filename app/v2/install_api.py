@@ -268,21 +268,31 @@ def _event(ev) -> dict:
     return {"t": "?"}
 
 
-def latest_soak(name: str) -> tuple:
-    """(SoakSummary, file name) of this cabinet's newest soak run in the exports folder, or (None, "") when there is none
-    or it cannot be read. A fleet run writes soak-<cabinet>-<stamp>.csv per cabinet; the combined "-all" exports and
-    other cabinets' files never match."""
-    from .. import soak_csv, soak_fleet
+def soak_choices(name: str) -> list:
+    """This cabinet's soak CSVs in the exports folder, newest first, for the report's "which run?" list. A fleet run
+    writes soak-<cabinet>-<stamp>.csv per cabinet; other cabinets' files and the combined "-all" exports never match. The
+    files are only listed here (name, when, size); one is read when the report is built."""
+    from .. import soak_fleet
     from . import soak_api
     stem = soak_fleet.safe_stem(name)
+    out = []
     try:
         files = [f for f in soak_api.exports_dir().glob(f"soak-{stem}-*.csv") if "-all" not in f.name]
-        if not files:
-            return None, ""
-        newest = max(files, key=lambda f: f.stat().st_mtime)
-        return soak_csv.parse_soak_csv(newest.read_text(encoding="utf-8-sig"), newest.name), newest.name
-    except (OSError, ValueError):                                # SoakCsvError is a ValueError
-        return None, ""
+        for f in sorted(files, key=lambda f: f.stat().st_mtime, reverse=True)[:30]:
+            st = f.stat()
+            out.append({"name": f.name, "when": datetime.fromtimestamp(st.st_mtime).strftime("%Y-%m-%d %H:%M"),
+                        "kb": max(1, st.st_size // 1024)})
+    except OSError:
+        pass
+    return out
+
+
+def _parse_soak(text: str, label: str):
+    from .. import soak_csv
+    try:
+        return soak_csv.parse_soak_csv(text, label)
+    except soak_csv.SoakCsvError as exc:
+        raise ValueError(f"that is not a usable soak CSV: {exc}")
 
 
 class Run:
@@ -299,6 +309,7 @@ class Run:
         self.file_name = ""
         self.file_bytes = b""
         self.file_type = ""
+        self.pending = None            # a report whose modules have been read and whose PDF is not built yet
         self._cancel = threading.Event()
 
     def _emit(self, ev) -> None:
@@ -315,6 +326,7 @@ class Run:
             self.kind, self.mode, self.cabinet = kind, mode, site["name"]
             self.events, self.error = [], ""
             self.file_name, self.file_bytes, self.file_type = "", b"", ""
+            self.pending = None
             self._cancel.clear()
 
     def _launch(self, site: dict, work, pre=None, timeout_s: float = 0.0) -> None:
@@ -420,26 +432,65 @@ class Run:
             return {"snap": snap, "events": tuple(events)}
 
         def work(client, ctx):
-            from .. import report_pdf
             ops = _TcpOps(client, host, port, self._cancel)
             records = fw_survey.run_report_survey(ops, list(lay.ids), self._emit, self._cancel)
             if self._cancel.is_set():
                 return None
             snap = ctx["snap"]
-            settings = {k["key"]: k["value"] for k in snap["keys"]}
-            soak, soak_file = latest_soak(site.get("name", ""))
-            pdf = report_pdf.build_report_pdf(
-                app_version=APP_VERSION, generated=datetime.now(), info=snap["info"], settings=settings,
-                cabinet_label=lay.label, cabinet_count=lay.count, widths=lgs_map.layout_widths(lay),
-                records=records, hub_channel=lgs_map.hub_channel, events=ctx["events"], soak=soak, soak_file=soak_file)
-            name = settings.get("sys.name", "") or snap["info"].get("id", "gw")
-            return (f"lgs-report-{name}-{datetime.now():%Y%m%d-%H%M}.pdf", bytes(pdf), "application/pdf")
+            with self._lock:
+                self.pending = {"records": records, "snap": snap, "events": ctx["events"], "lay": lay,
+                                "settings": {k["key"]: k["value"] for k in snap["keys"]}, "cabinet": site.get("name", "")}
+            self._emit({"t": "ready"})
+            return None
 
         self._launch(site, work, pre=pre)
         return {"ok": True}
 
     def cancel(self) -> None:
         self._cancel.set()
+
+    def pending_soaks(self) -> list:
+        with self._lock:
+            pend = self.pending
+        return soak_choices(pend["cabinet"]) if pend else []
+
+    def build_report(self, soak_name: str = "", soak_text: str = "", soak_label: str = "") -> dict:
+        """Step two of the site report: the modules are already read; render the PDF, with the soak run the operator
+        picked from the exports folder (`soak_name`) or uploaded (`soak_text`), or without one."""
+        from .. import report_pdf
+        with self._lock:
+            pend, busy = self.pending, self.running
+        if busy or not pend:
+            raise ValueError("read the modules first")
+        soak, soak_file = None, ""
+        if soak_text:
+            soak, soak_file = _parse_soak(soak_text, soak_label or "uploaded.csv"), soak_label or "uploaded.csv"
+        elif soak_name:
+            if "/" in soak_name or "\\" in soak_name or not soak_name.startswith("soak-") or not soak_name.endswith(".csv"):
+                raise ValueError("choose a soak file from the list")
+            from . import soak_api
+            path = soak_api.exports_dir() / soak_name
+            try:
+                soak, soak_file = _parse_soak(path.read_text(encoding="utf-8-sig"), soak_name), soak_name
+            except OSError:
+                raise ValueError("that soak file is no longer there")
+        snap, settings, lay = pend["snap"], pend["settings"], pend["lay"]
+        pdf = report_pdf.build_report_pdf(
+            app_version=APP_VERSION, generated=datetime.now(), info=snap["info"], settings=settings,
+            cabinet_label=lay.label, cabinet_count=lay.count, widths=lgs_map.layout_widths(lay),
+            records=pend["records"], hub_channel=lgs_map.hub_channel, events=pend["events"], soak=soak, soak_file=soak_file)
+        name = settings.get("sys.name", "") or snap["info"].get("id", "gw")
+        fname = f"lgs-report-{name}-{datetime.now():%Y%m%d-%H%M}.pdf"
+        data = bytes(pdf)
+        try:
+            d = config_store.data_dir() / "exports"
+            d.mkdir(exist_ok=True)
+            (d / fname).write_bytes(data)
+        except OSError:
+            pass
+        with self._lock:
+            self.file_name, self.file_bytes, self.file_type = fname, data, "application/pdf"
+        return {"ok": True, "file": fname, "soak": soak.headline() if soak else ""}
 
     def snapshot(self, since: int) -> dict:
         with self._lock:

@@ -49,18 +49,16 @@ def main() -> int:
         if not cond:
             bad.append(name)
 
-    check("ranges join consecutive ids", report_pdf._ranges([11, 12, 13, 21, 41, 42]) == "11–13, 21, 41–42")
-    check("ranges of nothing is empty", report_pdf._ranges([]) == "")
-
     clean = build(records())
     check("a clean cabinet is a PDF", clean[:4] == b"%PDF")
-    check("nothing is left out: summary, modules, gateway (3 pages for 40 modules without stats)", pages(clean) == 3)
+    check("there is no summary page: the document opens on the gateway and the module table (40 modules: 2-3 pages)", 2 <= pages(clean) <= 3)
     mixed = build(records(mixed=True, silent=(41, 42)), ntp="failed")
-    check("a silent module and mixed versions still render", mixed[:4] == b"%PDF" and pages(mixed) == 3)
+    check("a silent module and mixed versions still render", mixed[:4] == b"%PDF")
     stats = records()
     for r in stats:
         r.stats = fw_survey.ModuleStats(total_on_count=6000, total_on_time_s=170000, op_seconds=3300000)
-    check("the statistics table is added when modules report them", pages(build(stats)) == 4)
+    with_stats = build(stats)
+    check("the statistics table is added when modules report them", pages(with_stats) > pages(clean))
     from app import soak_csv
     csv = ("time,device_id,kind,detail\n"
            "2026-11-09 13:16:20,0,start,ids=40 gap_s=2.0 counter_every=5 slow_ms=400 crossing_slow_ms=4000 mode=poll\n"
@@ -70,8 +68,10 @@ def main() -> int:
            "worst_cross_ms=735 writes=0 write_fails=0 picks=0 dropped=0 lit=0 elapsed_s=960\n")
     soak = soak_csv.parse_soak_csv(csv, "soak-Chest-Std-11-x.csv")
     with_soak = build(records(), soak=soak)
-    check("an attached soak result adds its page", pages(with_soak) == 4)
+    check("a chosen soak result adds its section", pages(with_soak) > pages(clean))
     check("the report carries the Tool's own font", b"IBMPlexSansThai" in clean)
+    source = open(report_pdf.__file__, encoding="utf-8").read()
+    check("the report is English only (no Thai text in its builder)", not re.search("[฀-๿]", source))
     check("both weights are bundled", all(os.path.isfile(os.path.join(report_pdf._FONT_DIR, f"IBMPlexSansThai-{w}.ttf")) for w in ("Regular", "Bold")))
     print("ALL PASS" if not bad else "FAILED: " + ", ".join(bad))
     return 1 if bad else 0

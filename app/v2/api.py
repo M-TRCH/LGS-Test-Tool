@@ -276,6 +276,28 @@ def install(app, cfg, worker) -> None:
     async def ins_report(request: Request):
         return await _job(request, lambda site, b: install_api.run.start_report(site, str(b.get("id", ""))))
 
+    @app.get("/api/v2/ins/report/soaks")
+    async def ins_report_soaks():
+        return {"soaks": install_api.run.pending_soaks()}
+
+    @app.post("/api/v2/ins/report/build")
+    async def ins_report_build(request: Request):
+        """Step two of the site report. JSON {soak: "<file in the exports folder>"} (or {} for none), or, for an uploaded
+        CSV, the raw text as the body with ?name=<its file name>."""
+        if not _mutating(request):
+            return _forbidden()
+        try:
+            if "json" in request.headers.get("content-type", ""):
+                body = await request.json()
+                return await asyncio.to_thread(install_api.run.build_report, str(body.get("soak", "")))
+            data = await request.body()
+            if len(data) > 40_000_000:
+                raise ValueError("that file is larger than 40 MB")
+            return await asyncio.to_thread(install_api.run.build_report, "", data.decode("utf-8-sig", "replace"),
+                                           request.query_params.get("name", "uploaded.csv")[:80])
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=422)
+
     # -- module danger actions: the page must send back what was typed --------
     @app.post("/api/v2/mod/setid")
     async def mod_setid(request: Request):
