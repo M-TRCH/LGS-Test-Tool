@@ -20,7 +20,7 @@ _locks_guard = threading.Lock()
 
 # Volatile console switches (not stored settings, reset at every boot).
 VOLATILE = ("RESYNC", "EXC")
-ACTIONS = ("reboot", "defaults", "discard", "time", "resync", "exc", "ap_on", "ap_off", "ap_ssid", "ap_pass")
+ACTIONS = ("reboot", "defaults", "discard", "time", "resync", "exc", "ap_on", "ap_off", "ap_ssid", "ap_pass", "ap_show")
 
 
 def _lock(host: str, port: int) -> threading.Lock:
@@ -178,6 +178,8 @@ def _ap_action(link, name: str, value) -> dict:
         line = f"AP ON min={mins} bridge=0"
     elif name == "ap_off":
         line = "AP OFF"
+    elif name == "ap_show":
+        line = "AP SHOW"
     elif name in ("ap_ssid", "ap_pass"):
         lo, hi = (1, 31) if name == "ap_ssid" else (8, 31)
         if not lo <= len(v) <= hi or any(c <= " " or c > "~" for c in v):
@@ -193,6 +195,11 @@ def _ap_action(link, name: str, value) -> dict:
         link.bye()
     except Exception:                                            # noqa: BLE001
         pass
+    if name == "ap_show":
+        row = res.rows[0] if res.ok and res.rows else {}
+        pw = row.get("ap.pass", "-")
+        return {"ok": res.ok, "error": "" if res.ok else res.error_text, "ssid": row.get("ap.ssid", ""),
+                "pass": "" if pw == "-" else pw, "url": row.get("ap.url", "")}
     return {"ok": res.ok, "error": "" if res.ok else res.error_text,
             "detail": "" if name == "ap_pass" else " ".join(res.lines[:1])}
 
