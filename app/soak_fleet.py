@@ -109,6 +109,7 @@ class _ClientOps:
         self._client = None
         self._next_retry = 0.0
         self._silent_run = 0          # consecutive 'no response' (see _dead)
+        self._log_seq = None          # where the gateway's event log was last read (sched_resets)
 
     # ── lifecycle ──────────────────────────────────────────────────────────
     def connect(self) -> bool:
@@ -248,6 +249,48 @@ class _ClientOps:
                     "timeout": "cnt.rs485_timeout", "bad_crc": "rtu.bad_crc",
                     "bad_other": "rtu.bad_other", "up": "sys.up"}
             return {k: int(float(kv[v])) for k, v in want.items() if v in kv}
+        except Exception:                                        # noqa: BLE001
+            return None
+
+    def sched_resets(self):
+        """(gateway clock, [times of its scheduled resets since the last call]) from its event log, or None when it
+        cannot be asked (no console, firmware before 1.14.0, no clock). The first call only notes where the log is now:
+        resets from before the run are not this run's. Times are the gateway's own local ISO stamps; INFO's `time.now`
+        comes from the same clock, so the difference is exact whatever this PC's clock says."""
+        if self._client is None:
+            return None
+        try:
+            from .gateway_tcp import GatewayTcpLink, register_pdu
+            register_pdu(self._client)
+            link = GatewayTcpLink(self._client)
+            info = link.command("INFO")
+            if not info.ok:
+                return None
+            kv: dict = {}
+            for row in info.rows:
+                kv.update(row)
+            gnow = kv.get("time.now", "")
+            if not gnow or gnow.startswith("1970"):
+                return None
+            if self._log_seq is None:
+                last = link.command("LOG 1")
+                if not last.ok:
+                    return None
+                self._log_seq = max((int(r.get("i", 0)) for r in last.rows), default=0)
+                return gnow, []
+            found = []
+            for _ in range(20):
+                res = link.command(f"LOG SINCE {self._log_seq} 100")
+                if not res.ok:
+                    return None
+                rows = [r for r in res.rows if "i" in r]
+                for r in rows:
+                    self._log_seq = max(self._log_seq, int(r["i"]))
+                    if r.get("ev") == "sched_reset" and r.get("t"):
+                        found.append(r["t"])
+                if len(rows) < 100:
+                    break
+            return gnow, found
         except Exception:                                        # noqa: BLE001
             return None
 

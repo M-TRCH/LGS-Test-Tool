@@ -550,7 +550,7 @@ class _Res:
         self.ok, self.value, self.note, self.link_down = ok, value, note, False
 
 
-def _run_scripted(reboot_ids, reset_t, stall_t, counter_events, length=2400.0):
+def _run_scripted(reboot_ids, reset_t, stall_t, counter_events, length=2400.0, gw_events=None):
     """Run run_soak over four modules with a scripted 03:00. Returns the tick.
 
     reboot_ids: modules whose boot counter ticks at reset_t. stall_t: a 6 s read
@@ -577,6 +577,16 @@ def _run_scripted(reboot_ids, reset_t, stall_t, counter_events, length=2400.0):
                 vals[soak.REG_RESET_CAUSE] = 4
                 return _Res(True, vals)
             return _Res(True, [1, 1, 1][:count] if count > 1 else 1)
+
+        def sched_resets(self):
+            """The gateway's own clock and its sched_reset events (only when the case scripts any)."""
+            if gw_events is None:
+                return None
+            from datetime import datetime, timedelta
+            base = datetime(2026, 11, 9, 3, 0, 0) - timedelta(seconds=300)
+            stamp = lambda sec: (base + timedelta(seconds=sec)).strftime("%Y-%m-%dT%H:%M:%S")  # noqa: E731
+            t = clock.now - start
+            return stamp(t), [stamp(e) for e in gw_events if e <= t]
 
         def gateway_counters(self):
             t = clock.now - start
@@ -676,6 +686,33 @@ def case_silent_module_is_not_a_lost_link():
     return None
 
 
+
+def case_gateway_named_reset_is_exact():
+    """With the gateway's own sched_reset event the window is exact: a fault 100 s before it still counts."""
+    t = _run_scripted({11, 12, 13, 14}, reset_t=300.0, stall_t=299.0, gw_events=[300.0],
+                      counter_events=[(200.0, "timeout"), (302.0, "timeout"), (303.0, "retry_fail")])
+    if t.shelf_resets != 1:
+        return f"expected one window from the event, saw {t.shelf_resets}"
+    if t.gw_timeouts != 1 or t.gw_heal_failed != 0:
+        return f"the fault before the reset was lost or the reset leaked: {t.gw_timeouts}/{t.gw_heal_failed}"
+    if t.reset_timeouts != 1 or t.reset_heal_failed != 1:
+        return f"reset counters wrong: {t.reset_timeouts}/{t.reset_heal_failed}"
+    if t.worst_ms >= 1000 or t.reset_worst_ms < 5000:
+        return f"6 s read not attributed: worst={t.worst_ms:.0f} reset_worst={t.reset_worst_ms:.0f}"
+    return None
+
+
+def case_no_event_no_forgiveness_when_the_gateway_names_resets():
+    """A gateway that reports its resets and reported none: a reboot burst alone must not forgive anything."""
+    t = _run_scripted({11, 12, 13, 14}, reset_t=300.0, stall_t=-100.0, gw_events=[],
+                      counter_events=[(310.0, "timeout")])
+    if t.shelf_resets:
+        return "a window opened without a sched_reset event"
+    if t.gw_timeouts != 1:
+        return f"the timeout should count, got {t.gw_timeouts}"
+    return None
+
+
 CASES = (
     ("thai name survives", case_thai_survives),
     ("illegal chars removed", case_illegal_chars_go),
@@ -708,6 +745,8 @@ CASES = (
     ("later fault still counts", case_a_fault_after_the_reset_still_counts),
     ("one reboot is not a reset", case_one_module_rebooting_is_not_a_shelf_reset),
     ("silent module, link up", case_silent_module_is_not_a_lost_link),
+    ("gateway-named reset is exact", case_gateway_named_reset_is_exact),
+    ("no event, no forgiveness", case_no_event_no_forgiveness_when_the_gateway_names_resets),
 )
 
 

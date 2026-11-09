@@ -76,6 +76,13 @@ _GW_KEYS = ("retry_ok", "retry_fail", "timeout", "bad_crc", "bad_other")
 # only compared every few minutes, so the stall is noticed after it happened)
 # and closes RESET_HOLD_S after the last reboot is noticed.
 RESET_BURST_N = 3
+# When the gateway can name its own resets (`sched_reset` in its event log, read through ops.sched_resets()), the
+# window is exact: from just before the event to RESET_AFTER_S after it, and the gateway's counters are compared every
+# GW_SAMPLE_EXACT_S so that at most that much quiet time before the reset is booked with it. The reboot-burst guess
+# above is then not used.
+RESET_BEFORE_S = 5.0
+RESET_AFTER_S = 180.0
+GW_SAMPLE_EXACT_S = 60.0
 RESET_BURST_S = 60.0
 RESET_LOOKBACK_S = 600.0
 RESET_HOLD_S = 300.0
@@ -598,7 +605,8 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
     # repairs are measured too: first at the start, every GW_SAMPLE_S, and
     # once more at the end. Only DELTAS are kept -- the counters run from the
     # gateway's boot, long before this run.
-    gw = {"last": None, "t": 0.0, "reboot_at": -1e9}
+    gw = {"last": None, "t": 0.0, "reboot_at": -1e9, "prev_t": None, "exact": False}
+    seen_resets: set = set()
     wins: list = []                  # shelf-reset windows: [start, end, closed] monotonic
     burst: list = []                 # monotonic times of recent module reboots
     held: list = []                  # slow ordinary reads: (monotonic, ms)
@@ -606,8 +614,45 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
     def in_window(t: float) -> bool:
         return any(w[0] <= t <= w[1] for w in wins)
 
+    def overlaps(a: float, b: float) -> bool:
+        return any(w[0] <= b and a <= w[1] for w in wins)
+
+    def learn_resets() -> None:
+        """Ask the gateway for its own scheduled resets and turn each into an exact window."""
+        fn = getattr(ops, "sched_resets", None)
+        if fn is None:
+            return
+        try:
+            got = fn()
+        except Exception:                                        # noqa: BLE001
+            got = None
+        if not got:
+            return
+        gnow, stamps = got
+        try:
+            g_now = datetime.strptime(gnow, "%Y-%m-%dT%H:%M:%S")
+        except (TypeError, ValueError):
+            return                                   # no usable gateway clock: stay on the reboot-burst guess
+        gw["exact"] = True
+        mono = time.monotonic()
+        for stamp in stamps:
+            if stamp in seen_resets:
+                continue
+            try:
+                ago = (g_now - datetime.strptime(stamp, "%Y-%m-%dT%H:%M:%S")).total_seconds()
+            except ValueError:
+                continue
+            seen_resets.add(stamp)
+            at = mono - ago
+            wins.append([at - RESET_BEFORE_S, at + RESET_AFTER_S, True])
+            tick.shelf_resets += 1
+            csv("shelf_reset", f"gateway sched_reset at {stamp}: counters and slow reads from {RESET_BEFORE_S:.0f} s "
+                               f"before to {RESET_AFTER_S:.0f} s after are the reset")
+
     def shelf_reset_seen() -> None:
         """A module reboot was just noticed: open or extend the window."""
+        if gw["exact"]:
+            return                                   # the gateway names its resets; no guessing
         now = time.monotonic()
         burst.append(now)
         del burst[:-RESET_BURST_N * 4]
@@ -650,6 +695,8 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
         fn = getattr(ops, "gateway_counters", None)
         if fn is None:
             return
+        learn_resets()
+        prev_t, gw["prev_t"] = gw["prev_t"], time.monotonic()
         gw["t"] = time.monotonic()
         try:
             cur = fn()
@@ -669,7 +716,8 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
                 gw["reboot_at"] = time.monotonic()
             step = {k: (cur[k] if rebooted else max(0, cur[k] - last[k]))
                     for k in _GW_KEYS if k in cur and k in last}
-            if (as_reset or in_window(time.monotonic())) and not rebooted:
+            span_from = prev_t if prev_t is not None else time.monotonic()
+            if (as_reset or overlaps(span_from, time.monotonic())) and not rebooted:
                 tick.reset_healed += step.get("retry_ok", 0)
                 tick.reset_heal_failed += step.get("retry_fail", 0)
                 tick.reset_timeouts += step.get("timeout", 0)
@@ -687,6 +735,12 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
                   f"bad_other={tick.gw_bad_other} gw_reboots={tick.gw_rebooted}")
 
     gw_sample()
+
+    def maybe_sample() -> None:
+        """The counters are compared every GW_SAMPLE_S, or every GW_SAMPLE_EXACT_S when the gateway names its own
+        resets (INFO and LOG never touch the RS485 bus). Called between reads too: an 80-module pass takes minutes."""
+        if time.monotonic() - gw["t"] >= (GW_SAMPLE_EXACT_S if gw["exact"] else GW_SAMPLE_S):
+            gw_sample()
 
     # Baseline: what every module says before we start leaning on the bus.
     baseline: dict = {}
@@ -890,6 +944,7 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
                          f"{took_ms:.0f} ms" + (" (hub crossing)" if crossing else ""))
             ops.sleep(INTER_TXN_S)
             pharmacy_step()
+            maybe_sample()
 
         if check_counters and not stopped():
             for device_id in ids:
@@ -978,8 +1033,7 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
         # inference: the last heartbeat is the last moment the tool was
         # certainly alive and the cabinet certainly answering.
         csv("heartbeat", _totals(tick))
-        if time.monotonic() - gw["t"] >= GW_SAMPLE_S:
-            gw_sample()
+        maybe_sample()
         ops.sleep(cfg.pass_gap_s)
 
     gw_sample()                      # the closing reading, after the last pass

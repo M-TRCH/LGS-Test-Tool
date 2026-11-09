@@ -183,3 +183,15 @@ exceptions are still a dead socket at once. Selftests: `tools/soak_fleet_selftes
 (4 new cases, verified to fail on the old code).
 
 Not covered: `soak_csv.py` still judges a CSV written by an older run the old way.
+
+### Follow-up, 2026-11-09 (same branch)
+
+- **The shelf-reset window is now exact when the gateway can name its resets.** `soak_fleet._ClientOps.sched_resets()`
+  reads `sched_reset` from the gateway's event log (LOG SINCE) and its own clock (INFO `time.now`), so the window is
+  `[event - 5 s, event + 180 s]` in the gateway's time whatever this PC's clock says. The counters are then compared
+  every 60 s (INFO and LOG never touch RS485; they used to be every 10 min) and a sample interval that overlaps the
+  window is booked with the reset, so at most 60 s of ordinary time before the event is forgiven with it, not 10
+  minutes. The reboot-burst guess stays as the fallback for firmware before 1.14.0 or a gateway with no clock; it is
+  not used when the gateway names its resets (a reboot burst with no event forgives nothing).
+- **Export "All"** on the Events page: the range picker has a fourth shortcut, from the oldest day any gateway has a
+  file for to today; the page count and the CSV use the same range.
