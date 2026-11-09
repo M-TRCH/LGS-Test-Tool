@@ -867,7 +867,7 @@ def _detail_label(c: CabinetLabel, *, created: str, with_rows: bool, with_ap: bo
     CAP_H = 9.0
     slot = FRAME_H - 2 * FRAME_PAD - CAP_H - 1.0
     modules, side, ecc = fit_qr(qr_data, limit_pt=slot) if has_ap else fit_qr(qr_data)
-    ap = _fit_match(wifi_payload(c.ap_ssid, c.ap_pass), side) if has_ap else None
+    ap = _fit_match(wifi_payload(c.ap_ssid, c.ap_pass), modules * QR_CELL_PT, slot) if has_ap else None
 
     # Across the tape: the frame sits 3 pt inside each edge, which is inside
     # the 2 pt the printer can reach and a little further in than the 1 pt
@@ -1050,21 +1050,36 @@ def wifi_payload(ssid: str, password: str) -> str:
     return f"WIFI:T:WPA;S:{esc(ssid)};P:{esc(password)};;"
 
 
-def _fit_match(data: str, target_pt: float) -> tuple:
-    """(modules, side_pt, ecc, cell_pt) for a code that should be as close to `target_pt` across as it can get without
-    going over, so two codes side by side read as the same size. Only cells that have been printed and scanned
-    (0.8 to 1.6 pt) and EC-Q or better; if nothing qualifies, the smallest cell at any level."""
+def _fit_match(data: str, target_symbol_pt: float, limit_pt: float) -> tuple:
+    """(modules, box_side_pt, ecc, cell_pt) for a code whose SYMBOL (the dark-and-light square, without the quiet zone
+    around it) is as close to `target_symbol_pt` across as it can be, so two codes side by side read as the same size.
+
+    It is the symbol that the eye compares, not the box: the box adds the same two modules of margin on every side, which
+    is a different number of points at a different cell size. Matching boxes had made the second code look 5% smaller.
+    Only cells that have been printed and scanned (0.8 to 1.6 pt), EC-Q or better, and a box that fits `limit_pt`; if
+    nothing qualifies (a very long name and password), the smallest cell at any level."""
+    n = len(data.encode("utf-8"))
     best = None
-    for cell in (1.6, 1.4, 1.2, 1.0, 0.8):
-        try:
-            modules, side, ecc = fit_qr(data, cell_pt=cell, limit_pt=target_pt)
-        except LabelTooBig:
-            continue
-        if ecc in ("h", "q") and (best is None or side > best[1]):
-            best = (modules, side, ecc, cell)
+    for ecc in ("h", "q"):
+        for version, cap in sorted(_QR_BYTES[ecc].items()):
+            if n > cap:
+                continue
+            modules = 17 + 4 * version
+            for cell in (1.6, 1.4, 1.2, 1.0, 0.8):
+                box = round((modules + 4) * cell, 1)
+                if box > limit_pt:
+                    continue
+                diff = abs(modules * cell - target_symbol_pt)
+                # Within a point of the target counts as the same size to the eye; among those the biggest modules win
+                # (a bigger cell is the easier code to scan), then the stronger error correction. Beyond a point, the
+                # closest. Matching to the tenth of a point instead picked a 49-module code for 39 bytes: exact, and
+                # a far denser pattern than the message needs.
+                key = (0, -cell, 0 if ecc == "h" else 1, version) if diff <= 1.0 else (1, diff, -cell, 0 if ecc == "h" else 1)
+                if best is None or key < best[0]:
+                    best = (key, (modules, box, ecc, cell))
     if best:
-        return best
-    modules, side, ecc = fit_qr(data, cell_pt=0.8, limit_pt=target_pt)
+        return best[1]
+    modules, side, ecc = fit_qr(data, cell_pt=0.8, limit_pt=limit_pt)
     return modules, side, ecc, 0.8
 
 
