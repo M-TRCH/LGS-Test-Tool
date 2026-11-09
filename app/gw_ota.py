@@ -54,13 +54,16 @@ def options(raw: dict) -> dict:
         out["at"], out["until"] = _hhmm(at, "start"), _hhmm(until, "end")
         if out["at"] == out["until"]:
             raise OtaError("the start and end of the window must differ")
-        try:
-            nights = int((raw or {}).get("nights", 1))
-        except (TypeError, ValueError):
-            raise OtaError("nights must be a whole number")
-        if not 1 <= nights <= MAX_NIGHTS:
-            raise OtaError(f"nights must be 1-{MAX_NIGHTS}")
-        out["nights"] = nights
+        # `nights` is optional and the Tool's popup does not send it: without it the gateway goes on every night until the
+        # update is done (or it is aborted). A caller that does send one gets it checked.
+        if (raw or {}).get("nights") not in (None, ""):
+            try:
+                nights = int(raw["nights"])
+            except (TypeError, ValueError):
+                raise OtaError("nights must be a whole number")
+            if not 1 <= nights <= MAX_NIGHTS:
+                raise OtaError(f"nights must be 1-{MAX_NIGHTS}")
+            out["nights"] = nights
     return out
 
 
@@ -108,7 +111,7 @@ def start(link, image_name: str, raw_opts: dict, ids: str = "") -> dict:
         if ids:
             line += f" ids={ids}"
         if "at" in opts:
-            line += f" at={opts['at']} until={opts['until']} nights={opts['nights']}"
+            line += f" at={opts['at']} until={opts['until']}" + (f" nights={opts['nights']}" if "nights" in opts else "")
         r = link.command(line)
         if not r.ok:
             raise OtaError(_explain(r.error_text))
