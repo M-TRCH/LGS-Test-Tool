@@ -379,7 +379,7 @@ class Run:
         self._launch(site, work, timeout_s=PROBE_TIMEOUT_S)
         return {"ok": True}
 
-    def start_report(self, site: dict, site_id: str) -> dict:
+    def start_report(self, site: dict, site_id: str, detail: bool = False) -> dict:
         """The site report: gateway snapshot + newest events, then a read-only
         sweep of every slot, rendered to the same PDF the classic tool makes."""
         self._begin(site, "report", "")
@@ -413,7 +413,7 @@ class Run:
             pdf = report_pdf.build_report_pdf(
                 app_version=APP_VERSION, generated=datetime.now(), info=snap["info"], settings=settings,
                 cabinet_label=lay.label, cabinet_count=lay.count, widths=lgs_map.layout_widths(lay),
-                records=records, hub_channel=lgs_map.hub_channel, events=ctx["events"], soak=None)
+                records=records, hub_channel=lgs_map.hub_channel, events=ctx["events"], soak=None, detail=detail)
             name = settings.get("sys.name", "") or snap["info"].get("id", "gw")
             return (f"lgs-report-{name}-{datetime.now():%Y%m%d-%H%M}.pdf", bytes(pdf), "application/pdf")
 

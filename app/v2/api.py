@@ -274,7 +274,7 @@ def install(app, cfg, worker) -> None:
 
     @app.post("/api/v2/ins/report")
     async def ins_report(request: Request):
-        return await _job(request, lambda site, b: install_api.run.start_report(site, str(b.get("id", ""))))
+        return await _job(request, lambda site, b: install_api.run.start_report(site, str(b.get("id", "")), bool(b.get("detail"))))
 
     # -- module danger actions: the page must send back what was typed --------
     @app.post("/api/v2/mod/setid")

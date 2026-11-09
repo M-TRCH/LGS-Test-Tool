@@ -38,22 +38,35 @@ def _hw_name(raw: int) -> str:
     return f"R{raw // 100}.{(raw // 10) % 10}" if raw > 0 else "—"
 
 # ── palette ────────────────────────────────────────────────────────────────
-ACCENT = (38, 84, 124)          # deep blue: section marks + table headers
-GROUP_FILL = (222, 232, 241)    # settings group bands
-ZEBRA = (240, 244, 249)         # every-other-row fill
-FAIL_RED = (180, 40, 40)
-MUTED = (130, 130, 130)
+# The Tool's default "ocean" theme (app.css), so a report looks like the page it came from.
+ACCENT = (10, 126, 164)         # brand: section marks + table headers
+INK = (13, 43, 58)              # text
+GROUP_FILL = (217, 235, 243)    # settings group bands, tiles (the theme's surface 2)
+ZEBRA = (240, 247, 250)         # every-other-row fill
+LINE = (188, 214, 226)
+FAIL_RED = (198, 40, 40)
+MUTED = (70, 105, 122)
+OK_GREEN = (15, 138, 79)
+OK_BG = (223, 245, 232)
+WARN = (154, 103, 0)
+WARN_BG = (255, 241, 204)
+BAD_BG = (253, 224, 224)
 
 # Windows ships the first three; the Linux ones are what the Docker image
 # installs (fonts-thai-tlwg-ttf), for the hospital-server deployment. The
 # first that exists wins. Fallback to the built-in Helvetica loses Thai
 # glyphs but never loses the report.
-_FONT_REGULAR = (r"C:\Windows\Fonts\LeelawUI.ttf",
+_FONT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "v2", "static", "fonts")
+# The Tool's own face first (IBM Plex Sans Thai, merged to one TTF by tools/make_report_fonts.py and shipped with the pages),
+# the system fonts only if that file is missing.
+_FONT_REGULAR = (os.path.join(_FONT_DIR, "IBMPlexSansThai-Regular.ttf"),
+                 r"C:\Windows\Fonts\LeelawUI.ttf",
                  r"C:\Windows\Fonts\leelawad.ttf",
                  r"C:\Windows\Fonts\tahoma.ttf",
                  "/usr/share/fonts/truetype/tlwg/Loma.ttf",
                  "/usr/share/fonts/truetype/tlwg/Garuda.ttf")
-_FONT_BOLD = (r"C:\Windows\Fonts\LeelaUIb.ttf",
+_FONT_BOLD = (os.path.join(_FONT_DIR, "IBMPlexSansThai-Bold.ttf"),
+              r"C:\Windows\Fonts\LeelaUIb.ttf",
               r"C:\Windows\Fonts\leelawdb.ttf",
               r"C:\Windows\Fonts\tahomabd.ttf",
               "/usr/share/fonts/truetype/tlwg/Loma-Bold.ttf",
@@ -87,9 +100,9 @@ class _Report(FPDF):
     def footer(self) -> None:  # fpdf hook
         self.set_y(-10)
         self.font(7)
-        self.set_text_color(120)
-        self.cell(0, 5, f"page {self.page_no()}/{{nb}}", align="R")
-        self.set_text_color(0)
+        self.set_text_color(*MUTED)
+        self.cell(0, 5, f"LGS Test Tool  ·  {self.page_no()}/{{nb}}", align="R")
+        self.set_text_color(*INK)
 
 
 def _section(pdf: _Report, title: str) -> None:
@@ -107,7 +120,7 @@ def _section(pdf: _Report, title: str) -> None:
     pdf.font(11, bold=True)
     pdf.set_text_color(*ACCENT)
     pdf.cell(0, 6, title, new_x="LMARGIN", new_y="NEXT")
-    pdf.set_text_color(0)
+    pdf.set_text_color(*INK)
 
 
 def _table_kw(**extra) -> dict:
@@ -567,35 +580,210 @@ def soak_csv_reset_margin() -> float:
 
 
 
+def _ranges(ids) -> str:
+    """[11, 12, 13, 21] -> "11-13, 21" (an en dash, as a reader writes it)."""
+    out, ids = [], sorted(ids)
+    i = 0
+    while i < len(ids):
+        j = i
+        while j + 1 < len(ids) and ids[j + 1] == ids[j] + 1:
+            j += 1
+        out.append(str(ids[i]) if i == j else f"{ids[i]}–{ids[j]}")
+        i = j + 1
+    return ", ".join(out)
+
+
+def _tile(pdf: _Report, x: float, y: float, w: float, value: str, label: str, tone=None) -> None:
+    """A figure with its label, like the Tool's KPI tiles."""
+    fill = {"ok": OK_BG, "warn": WARN_BG, "bad": BAD_BG}.get(tone, GROUP_FILL)
+    ink = {"ok": OK_GREEN, "warn": WARN, "bad": FAIL_RED}.get(tone, INK)
+    pdf.set_fill_color(*fill)
+    pdf.rect(x, y, w, 19, style="F", round_corners=True, corner_radius=2.5)
+    pdf.set_xy(x + 3.5, y + 2.2)
+    pdf.font(13, bold=True)
+    pdf.set_text_color(*ink)
+    pdf.cell(w - 7, 8, value)
+    pdf.set_xy(x + 3.5, y + 11)
+    pdf.font(8)
+    pdf.set_text_color(*MUTED)
+    pdf.cell(w - 7, 5, label)
+    pdf.set_text_color(*INK)
+
+
+def _summary_page(pdf: _Report, *, app_version: str, generated: datetime, info: dict, settings: dict,
+                  cabinet_label: str, cabinet_count: int, widths: Sequence[int], records: Sequence) -> None:
+    """One page that answers "what is in this cabinet and is anything wrong": the figures, the gateway in a few lines,
+    a map of the modules coloured by firmware, and a short list of what deserves a look. The tables are the appendix."""
+    left, right = pdf.l_margin, pdf.w - pdf.r_margin
+    inner = right - left
+    name = settings.get("sys.name", "") or cabinet_label
+
+    # title
+    pdf.set_xy(left, pdf.get_y())
+    pdf.font(20, bold=True)
+    pdf.set_text_color(*INK)
+    pdf.cell(0, 10, name, new_x="LMARGIN", new_y="NEXT")
+    pdf.font(9)
+    pdf.set_text_color(*MUTED)
+    pdf.cell(0, 5, f"รายงานไซต์  ·  {generated:%Y-%m-%d %H:%M}  ·  LGS Test Tool v{app_version}",
+             new_x="LMARGIN", new_y="NEXT")
+    y = pdf.get_y() + 2
+    pdf.set_draw_color(*ACCENT)
+    pdf.set_line_width(0.6)
+    pdf.line(left, y, right, y)
+    pdf.set_line_width(0.2)
+    pdf.set_draw_color(*LINE)          # tables below take their rules from the document's draw colour
+
+    answered = [r for r in records if r.responded]
+    silent = [r for r in records if not r.responded]
+    versions: dict = {}
+    for r in answered:
+        versions.setdefault(r.fw_raw, []).append(r)
+    top = max(versions) if versions else 0
+    mixed = len(versions) > 1
+
+    # tiles
+    y = pdf.get_y() + 6
+    gap = 4
+    w = (inner - 2 * gap) / 3
+    _tile(pdf, left, y, w, f"{len(answered)}/{len(records)}", "โมดูลที่ตอบ",
+          "ok" if not silent else "bad")
+    if versions:
+        ver_text = "  ".join(f"{records_fw(v[0])} ×{len(v)}" for _, v in sorted(versions.items(), reverse=True))
+    else:
+        ver_text = "—"
+    _tile(pdf, left + w + gap, y, w, ver_text, "เฟิร์มแวร์โมดูล",
+          "warn" if mixed else ("ok" if versions else None))
+    _tile(pdf, left + 2 * (w + gap), y, w, str(info.get("fw", "?")), "เกตเวย์")
+    pdf.set_y(y + 19)
+
+    # gateway
+    _section(pdf, "เกตเวย์")
+    rows_text = ",".join(str(x) for x in widths) if widths else "-"
+    facts = (
+        ("เครือข่าย", f"{info.get('net.ip', '?')}:{info.get('net.port', '?')}  ({info.get('net.state', '?')})"),
+        ("เวลาของเกตเวย์", f"{info.get('time.now', 'unset').replace('T', ' ')}  ·  NTP {info.get('ntp.state', '-')}"),
+        ("reset ชั้นวาง", str(info.get("sched.reset", "?"))),
+        ("ตู้", f"{cabinet_label}  ·  {cabinet_count} โมดูล  ·  แถวละ {rows_text}"),
+    )
+    pdf.set_x(left)
+    for k, v in facts:
+        pdf.set_x(left + 3.6)
+        pdf.font(8.5)
+        pdf.set_text_color(*MUTED)
+        pdf.cell(36, 5.4, k)
+        pdf.set_text_color(*INK)
+        pdf.cell(0, 5.4, v, new_x="LMARGIN", new_y="NEXT")
+
+    # module map
+    _section(pdf, "แผนผังโมดูล")
+    by_id = {r.device_id: r for r in records}
+    cols = max(widths) if widths else 8
+    cell_w = min(24.0, (inner - 3.6) / max(cols, 1))
+    cell_h = 10.5
+    x0 = left + 3.6
+    y0 = pdf.get_y() + 1.5
+    for ri, cnt in enumerate(widths, start=1):
+        for ci in range(1, cnt + 1):
+            rec = by_id.get(ri * 10 + ci)
+            if rec is None:
+                continue
+            x = x0 + (ci - 1) * cell_w
+            yy = y0 + (ri - 1) * (cell_h + 1.2)
+            if not rec.responded:
+                fill, ink = BAD_BG, FAIL_RED
+            elif mixed and rec.fw_raw != top:
+                fill, ink = WARN_BG, WARN
+            else:
+                fill, ink = OK_BG, OK_GREEN
+            pdf.set_fill_color(*fill)
+            pdf.rect(x, yy, cell_w - 1.2, cell_h, style="F", round_corners=True, corner_radius=1.6)
+            pdf.set_xy(x, yy + 1.2)
+            pdf.font(9, bold=True)
+            pdf.set_text_color(*INK)
+            pdf.cell(cell_w - 1.2, 4.4, str(rec.device_id), align="C")
+            pdf.set_xy(x, yy + 5.6)
+            pdf.font(7)
+            pdf.set_text_color(*ink)
+            pdf.cell(cell_w - 1.2, 3.6, rec.fw if rec.responded else "ไม่ตอบ", align="C")
+    pdf.set_y(y0 + len(widths) * (cell_h + 1.2) + 1)
+    # key
+    pdf.set_x(x0)
+    for fill, ink, text in ((OK_BG, OK_GREEN, "เวอร์ชันสูงสุดในตู้" if mixed else "ตอบปกติ"),
+                            *(((WARN_BG, WARN, "เวอร์ชันเก่ากว่า"),) if mixed else ()),
+                            (BAD_BG, FAIL_RED, "ไม่ตอบ")):
+        pdf.set_fill_color(*fill)
+        yk = pdf.get_y()
+        pdf.rect(pdf.get_x(), yk + 1, 4.5, 3.4, style="F", round_corners=True, corner_radius=0.8)
+        pdf.set_x(pdf.get_x() + 6)
+        pdf.font(7.5)
+        pdf.set_text_color(*MUTED)
+        pdf.cell(pdf.get_string_width(text) + 6, 5.4, text)
+    pdf.ln(7)
+    pdf.set_text_color(*INK)
+
+    # what deserves a look
+    _section(pdf, "ข้อควรดู")
+    notes = []
+    if silent:
+        notes.append(("bad", f"ไม่ตอบ {len(silent)} ตัว: {_ranges([r.device_id for r in silent])}"))
+    wrong = [r.device_id for r in answered if r.reported_id != r.device_id]
+    if wrong:
+        notes.append(("bad", f"รายงาน ID ไม่ตรงกับตำแหน่ง: {_ranges(wrong)}"))
+    if mixed:
+        parts = [f"{records_fw(v[0])}: {_ranges([r.device_id for r in v])}" for _, v in sorted(versions.items(), reverse=True)]
+        notes.append(("warn", "เวอร์ชันไม่เท่ากัน  ·  " + "  ·  ".join(parts)))
+    dogs = [r.device_id for r in answered if getattr(r, "stats", None) and r.stats.iwdg_resets > 0]
+    if dogs:
+        notes.append(("warn", f"watchdog เคยรีเซ็ตโมดูล: {_ranges(dogs)}"))
+    if info.get("ntp.state", "ok") not in ("ok", "-"):
+        notes.append(("warn", f"NTP: {info.get('ntp.state')}  (เวลาของเกตเวย์อาจเพี้ยน)"))
+    if not notes:
+        notes.append(("ok", "ไม่พบสิ่งผิดปกติ"))
+    for tone, text in notes:
+        ink = {"ok": OK_GREEN, "warn": WARN, "bad": FAIL_RED}[tone]
+        pdf.set_x(left + 3.6)
+        pdf.set_fill_color(*ink)
+        pdf.ellipse(pdf.get_x(), pdf.get_y() + 1.9, 2, 2, style="F")
+        pdf.set_x(pdf.get_x() + 4.5)
+        pdf.font(9)
+        pdf.set_text_color(*INK)
+        pdf.multi_cell(0, 5.4, text, new_x="LMARGIN", new_y="NEXT")
+
+
+def records_fw(rec) -> str:
+    return rec.fw
+
+
 def build_report_pdf(*, app_version: str, generated: datetime,
                      info: dict, settings: dict,
                      cabinet_label: str, cabinet_count: int,
                      widths: Sequence[int], records: Sequence,
                      hub_channel, events: Sequence[str] = (),
-                     soak=None) -> bytes:
+                     soak=None, detail: bool = False) -> bytes:
     """`records` are fw_survey.ModuleRecord; `hub_channel(id)` maps a slave
     ID to its RS485 hub channel (0 = wired straight); `events` are the
     gateway's newest event-log lines (may be empty — older firmware);
     `soak` is a soak_csv.SoakSummary when the operator attached a soak CSV
-    to the report (None = no soak section)."""
+    to the report (None = no soak section). `detail` adds the appendix: every module's row, the statistics, the settings
+    and the recent events; without it the report is the one summary page (plus the soak section if one was attached)."""
     pdf = _Report()
     pdf.alias_nb_pages()
     pdf.add_page()
+    _summary_page(pdf, app_version=app_version, generated=generated, info=info, settings=settings,
+                  cabinet_label=cabinet_label, cabinet_count=cabinet_count, widths=widths, records=records)
+    if soak is not None:
+        pdf.add_page()
+        _soak_section(pdf, soak)
+    if not detail:
+        return bytes(pdf.output())
+    pdf.add_page()
 
-    # ── title ─────────────────────────────────────────────────────────────
+    # ── appendix title ────────────────────────────────────────────────────
     pdf.font(15, bold=True)
     pdf.set_text_color(*ACCENT)
-    pdf.cell(0, 8, "LGS Site Report", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_text_color(0)
-    pdf.font(8)
-    pdf.set_text_color(90)
-    name = settings.get("sys.name", "")
-    headline = f"{name} · " if name else ""
-    pdf.cell(0, 5,
-             f"{headline}generated {generated:%Y-%m-%d %H:%M} · "
-             f"LGS Test Tool v{app_version}",
-             new_x="LMARGIN", new_y="NEXT")
-    pdf.set_text_color(0)
+    pdf.cell(0, 8, "Details", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_text_color(*INK)
 
     # ── gateway identity ──────────────────────────────────────────────────
     _section(pdf, "Gateway")
@@ -699,10 +887,6 @@ def build_report_pdf(*, app_version: str, generated: datetime,
                      "n/a = older firmware or no answer) · cleared by coil 510 "
                      "/ factory reset — boot count survives · Room °C and "
                      "Supply mA are live readings at survey time")
-
-    # ── soak — the overnight evidence, when the operator attached it ──────
-    if soak is not None:
-        _soak_section(pdf, soak)
 
     # ── the full settings dump, for the record ────────────────────────────
     _ensure_room(pdf, _settings_height(settings))
