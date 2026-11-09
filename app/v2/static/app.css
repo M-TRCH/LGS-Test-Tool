@@ -154,7 +154,7 @@ input.ro,input.ro:disabled{background:color-mix(in srgb,var(--ink) 10%,var(--sur
 select.ddhide{display:none!important}
 .ddbtn{box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-width:0;max-width:100%;min-height:var(--tap);padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:15px;text-align:left;cursor:pointer}
 .ddbtn>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-.ddc::after{content:"\25BE";color:var(--muted);transition:transform .15s;display:inline-block}
+.ddc::after{content:"\25BE";font-size:16px;line-height:1;color:var(--muted);transition:transform .15s;display:inline-block}
 .ddbtn.open{border-color:var(--brand)}.ddbtn.open .ddc::after{transform:rotate(180deg)}
 .ddbtn:hover:not(:disabled){border-color:var(--brand)}.ddbtn:disabled{opacity:.55;cursor:not-allowed}
 .ddbtn:focus-visible{outline:2px solid var(--brand);outline-offset:1px}
