@@ -861,7 +861,7 @@ function rptPaint() {
   const d = $("#rptdlg"); if (!d || !d.open) return;
   const r = S.rpt;
   const read = r.ready && !r.running, chosen = r.soak !== "";
-  const mark = (ok) => `<span class="${ok ? "ok" : "muted"}" style="font-weight:700">${ok ? "\u2713" : "\u25CB"}</span>`;
+  const mark = (ok) => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${ok ? "var(--ok)" : "var(--muted)"}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><circle cx="12" cy="12" r="9"/>${ok ? '<path d="M8 12.5l3 3 5-6"/>' : ""}</svg>`;
   const soakOpts = `<option value=""${chosen ? "" : " selected"} disabled>${t("rptSoakPick")}</option><option value="__none"${r.soak === "__none" ? " selected" : ""}>${t("rptSoakNone")}</option>`
     + (r.soak === "__upload" ? `<option value="__upload" selected>${esc(r.upName)}</option>` : "")
     + (r.soaks || []).map((x) => `<option value="${esc(x.name)}"${x.name === r.soak ? " selected" : ""}>${esc(x.when)} \u00b7 ${esc(x.name)}</option>`).join("");
