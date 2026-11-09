@@ -533,6 +533,149 @@ def case_health_digest_tells_the_morning():
     return None
 
 
+
+# ── the scheduled shelf reset, and a silent module ─────────────────────────
+class _Clock:
+    """A virtual monotonic clock: reads cost what the script says, sleeps are free."""
+    def __init__(self):
+        self.now = 1000.0
+    def monotonic(self):
+        return self.now
+    def sleep(self, s):
+        self.now += s
+
+
+class _Res:
+    def __init__(self, ok=True, value=None, note=""):
+        self.ok, self.value, self.note, self.link_down = ok, value, note, False
+
+
+def _run_scripted(reboot_ids, reset_t, stall_t, counter_events, length=2400.0):
+    """Run run_soak over four modules with a scripted 03:00. Returns the tick.
+
+    reboot_ids: modules whose boot counter ticks at reset_t. stall_t: a 6 s read
+    in flight there. counter_events: [(t, key)] the gateway counts at those times.
+    """
+    clock = _Clock()
+    real = soak.time
+    soak.time = clock
+    ids = (11, 12, 13, 14)
+    start = clock.now
+
+    class Ops:
+        def sleep(self, secs):
+            clock.sleep(secs)
+
+        def read_regs(self, dev, addr, count):
+            t = clock.now - start
+            clock.sleep(6.0 if (abs(t - stall_t) < 3 and dev == 11 and count == 3) else 0.05)
+            if addr == soak.REG_IDENTITY and count == 12:
+                boots = 5 + (1 if (dev in reboot_ids and clock.now - start >= reset_t) else 0)
+                vals = [0] * 12
+                vals[1] = 1
+                vals[soak.REG_BOOTS] = boots
+                vals[soak.REG_RESET_CAUSE] = 4
+                return _Res(True, vals)
+            return _Res(True, [1, 1, 1][:count] if count > 1 else 1)
+
+        def gateway_counters(self):
+            t = clock.now - start
+            out = {"retry_ok": 0, "retry_fail": 0, "timeout": 0, "bad_crc": 0, "bad_other": 0, "up": 99999}
+            for et, key in counter_events:
+                if t >= et:
+                    out[key] += 1
+            return out
+
+    cfg = soak.SoakConfig(ids=ids, counter_every=1, stop_at_mono=start + length)
+    events = []
+    try:
+        soak.run_soak(Ops(), cfg, events.append, threading.Event(), None)
+    finally:
+        soak.time = real
+    return [e for e in events if isinstance(e, soak.SoakTick)][-1]
+
+
+def case_shelf_reset_does_not_fail_a_cabinet():
+    t = _run_scripted({11, 12, 13, 14}, reset_t=300.0, stall_t=299.0,
+                      counter_events=[(300.0, "timeout"), (302.0, "retry_fail")])
+    if t.shelf_resets != 1:
+        return f"expected one shelf-reset window, saw {t.shelf_resets}"
+    if t.gw_timeouts or t.gw_heal_failed:
+        return f"the reset leaked into the verdict: timeouts={t.gw_timeouts} heal_failed={t.gw_heal_failed}"
+    if t.reset_timeouts != 1 or t.reset_heal_failed != 1:
+        return f"reset counters not kept: {t.reset_timeouts}/{t.reset_heal_failed}"
+    if t.worst_ms >= 1000 or t.reset_worst_ms < 5000:
+        return f"6 s read not attributed to the reset: worst={t.worst_ms:.0f} reset_worst={t.reset_worst_ms:.0f}"
+    return None
+
+
+def case_a_fault_after_the_reset_still_counts():
+    t = _run_scripted({11, 12, 13, 14}, reset_t=300.0, stall_t=299.0,
+                      counter_events=[(300.0, "timeout"), (1700.0, "timeout"), (1701.0, "retry_fail")])
+    if t.gw_timeouts != 1 or t.gw_heal_failed != 1:
+        return f"a fault 23 minutes after the reset was forgiven: {t.gw_timeouts}/{t.gw_heal_failed}"
+    return None
+
+
+def case_one_module_rebooting_is_not_a_shelf_reset():
+    t = _run_scripted({12}, reset_t=300.0, stall_t=-100.0,
+                      counter_events=[(310.0, "timeout")])
+    if t.shelf_resets:
+        return "a single module reboot opened a shelf-reset window"
+    if t.gw_timeouts != 1:
+        return f"its timeout should count normally, got {t.gw_timeouts}"
+    return None
+
+
+def case_silent_module_is_not_a_lost_link():
+    """pymodbus raises ModbusIOException for a silent slave; that is a failed read,
+    not a dead socket, while the gateway still answers its console."""
+    import app.soak_fleet as F
+    import app.gateway_tcp as G
+    from pymodbus.exceptions import ConnectionException, ModbusIOException
+
+    real_link, real_reg = G.GatewayTcpLink, G.register_pdu
+    state = {"gateway_up": True}
+
+    class Link:
+        def __init__(self, _c): pass
+        def command(self, _v, **_k):
+            if not state["gateway_up"]:
+                raise ModbusIOException("No response received")
+            return object()
+
+    class Client:
+        closed = False
+        def close(self):
+            self.closed = True
+
+    G.GatewayTcpLink = Link
+    G.register_pdu = lambda _c: None
+    try:
+        ops = F._ClientOps.__new__(F._ClientOps)
+        ops._client, ops._silent_run, ops._next_retry = Client(), 0, 0.0
+        silent = ModbusIOException("No response received after 3 retries")
+        for i in range(30):
+            r = ops._dead(silent)
+            if r.link_down:
+                return f"a silent module read as a lost link at failure {i + 1}"
+        if ops._client is None or ops._client.closed:
+            return "the socket was closed over a silent module"
+        r = ops._dead(ConnectionException("Connection unexpectedly closed"))
+        if not r.link_down:
+            return "a real socket error must still be a lost link"
+        ops._client, ops._silent_run = Client(), 0
+        state["gateway_up"] = False
+        last = None
+        for _ in range(F._ClientOps.SILENT_PROBE_AFTER):
+            last = ops._dead(silent)
+        if not last.link_down:
+            return "silence with the gateway gone was never called a lost link"
+    finally:
+        G.GatewayTcpLink, G.register_pdu = real_link, real_reg
+    return None
+
+
 CASES = (
     ("thai name survives", case_thai_survives),
     ("illegal chars removed", case_illegal_chars_go),
@@ -561,6 +704,10 @@ CASES = (
     ("health line tells the day", case_health_digest_tells_the_morning),
     ("start-at reads like a human", case_start_at_reads_like_a_human),
     ("armed wait obeys cancel", case_armed_wait_obeys_cancel),
+    ("shelf reset is not a fault", case_shelf_reset_does_not_fail_a_cabinet),
+    ("later fault still counts", case_a_fault_after_the_reset_still_counts),
+    ("one reboot is not a reset", case_one_module_rebooting_is_not_a_shelf_reset),
+    ("silent module, link up", case_silent_module_is_not_a_lost_link),
 )
 
 

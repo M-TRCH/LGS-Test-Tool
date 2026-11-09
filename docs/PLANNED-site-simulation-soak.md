@@ -1,7 +1,8 @@
 # Planned: site-simulation soak mode
 
-Proposed by Teerachot, 2026-09-04. **Not built yet** — this is the design
-record so the idea survives until someone picks it up.
+Proposed by Teerachot, 2026-09-04. Built since as the fleet soak's
+`mode=pharmacy` (v2.0). The first full run, and the fixes it calls for, are in
+the last section.
 
 ## Why this is the right next test
 
@@ -109,3 +110,76 @@ add a `kind` for activations rather than inventing a second file format.
   poll while it runs, except the console-only `gw_bus_watch.py`.
 - **The 03:00 scheduled reset will interrupt it.** Expect 64 clean `Power-on`
   reboots a night in the CSV, exactly as the endurance soak sees them.
+
+## First full run: 2026-11-06 21:06 to 11-08 22:13 (49.1 h, 12 cabinets)
+
+File: `soak-20261106-210620-all.csv`. Pharmacy mode, 2,000 picks/day, dwell 20 s,
+client timeout 6 s, stopped by hand. Chest-Std-11 ran gateway 1.15.0-dev (service
+AP, AP off), the other eleven 1.14.0.
+
+**Eleven cabinets were healthy, and the tool still called every one "not clean".**
+Together they made 16.6 M reads and 45,023 picks with 0 failed reads and 0 failed
+writes. Everything that was not zero came from the scheduled 03:00 shelf reset,
+on both nights:
+
+- `reboots` 80 / 112 / 160 = every module twice, all `cause=Power-on` between
+  03:00 and 03:09.
+- One `slow` read of ~6.06 s per cabinet per night at 03:00:06, the read in
+  flight when the shelf lost power. That is also every cabinet's `worst_ms`.
+- The gateway counters went up by one final timeout and (mostly) one failed
+  repair per night, read at the first counter sample after 03:00. Std-10 also
+  had one `bad_other` per night (noise at power-up).
+
+`clean` in `soak_fleet.py` refuses any `gw_timeouts` or `gw_heal_failed`, so the
+expected reset alone fails the cabinet. Also seen, not a fault: three reads of
+1.2-1.5 s at 04:03 on 11-07 (Std-02 id 88, Std-07 ids 24 and 104), about an hour
+after the modules booted; and Ref-12's gateway repaired 55 first-try misses
+(1.1/h, under the 30/h warn line).
+
+**Chest-Std-09 has a real fault: row 4 (ids 41-44) never answered.** It was
+`missing at the baseline` on the first pass and silent to the end, and still
+silent when read again after the run, while row 3 (same hub channel 2) and row 5 answer in
+~130 ms. So the break is in row 4 itself or the cable from row 3 to row 4; it
+followed the power-cable tidy-up. The other 36 modules had no failure. The
+408 failed writes are the picks the simulator placed on row 4.
+
+The run also showed how a dead row distorts the tool: the gateway sends no
+reply for a silent module (`EXC 0`), pymodbus reports `No response`, and the
+soak calls that `link_lost`, reconnects and comes back 36-37 s later with
+"4 reads lost", on every pass (2,658 times). Std-09 therefore made 2,658 passes
+against ~25,000 on the other 40-slot cabinets: its healthy modules were tested
+about ten times less, and the pick rate fell to 77 % (`sim_behind`).
+
+### Fixes (1 and 2 done 2026-11-09 on branch soak-reset-and-silent-module, not released)
+
+1. **Done: the scheduled shelf reset no longer fails a cabinet.** Treat a whole-cabinet
+   burst of `Power-on` reboots (or the gateway's own `sched_reset` event / its
+   `sched.reset_*` times) as the reset, and attribute to it the gateway counter
+   increments and the slow read in that window. Report them on their own line
+   ("03:00 reset x2, expected") instead of in the verdict. A timeout or failed
+   repair outside that window still fails the cabinet.
+2. **Done: a silent module is not a lost link.** After `No response`, check whether the
+   gateway still answers (unit 255 `PING`, or the next module) before declaring
+   `link_lost` and reconnecting; keep `no_reply` for the module. Consider taking
+   ids that are missing at the baseline out of the pick deck, still listed as
+   silent, so one dead row does not slow the whole cabinet's run.
+3. **Chest-Std-09 row 4:** check its power and RS485 harness, then re-run.
+
+How they were done. (1) `soak.run_soak` opens a shelf-reset window when 3 module
+reboots are noticed within 60 s and the gateway itself did not restart; the window
+reaches back 10 minutes (counters are compared every few minutes, so the stall is
+noticed late) and closes 5 minutes after the last reboot. Gateway timeouts, failed
+and successful repairs and `bad_other` inside it, and ordinary reads slower than
+`slow_ms` inside it, go to `reset_*` fields and a "scheduled shelf reset" block in
+the verdict, not to "clean". A bad CRC and anything outside the window still fail
+the cabinet. The CSV gets a `shelf_reset` row and `resets=`, `reset_to=`,
+`reset_hf=`, `reset_worst_ms=` on the heartbeat. A fault in the ten minutes before a
+reset is forgiven with it (the counters cannot say when inside the interval it
+happened). (2) `soak_fleet._ClientOps._dead`: pymodbus 3.x raises
+`ModbusIOException("No response")` for a silent slave, and the old code treated
+every exception as a dead socket. Now silence is a failed read; after 8 in a row the
+gateway is asked (unit 255 PING) and only an unanswered PING is a lost link. Other
+exceptions are still a dead socket at once. Selftests: `tools/soak_fleet_selftest.py`
+(4 new cases, verified to fail on the old code).
+
+Not covered: `soak_csv.py` still judges a CSV written by an older run the old way.

@@ -68,6 +68,18 @@ def pick_bus_duty(picks_per_day: float) -> float:
 GW_SAMPLE_S = 600.0
 _GW_KEYS = ("retry_ok", "retry_fail", "timeout", "bad_crc", "bad_other")
 
+# The shelf's scheduled reset (03:00) power-cycles every module at once. Whatever
+# the soak sees in that window is the reset, not a fault: a final timeout and a
+# failed repair on the read in flight, a 6 s read, a dozen reboots. A burst of
+# RESET_BURST_N module reboots inside RESET_BURST_S, with the gateway itself not
+# restarted, opens a window; it reaches back RESET_LOOKBACK_S (the counters are
+# only compared every few minutes, so the stall is noticed after it happened)
+# and closes RESET_HOLD_S after the last reboot is noticed.
+RESET_BURST_N = 3
+RESET_BURST_S = 60.0
+RESET_LOOKBACK_S = 600.0
+RESET_HOLD_S = 300.0
+
 
 class SoakOps(Protocol):
     def read_regs(self, device_id: int, addr: int, count: int): ...
@@ -177,6 +189,14 @@ class SoakTick:
     gw_bad_crc: int = 0
     gw_bad_other: int = 0
     gw_rebooted: int = 0         # times the gateway restarted during the run
+    # What fell inside shelf-reset windows (see RESET_BURST_N). Kept out of the
+    # gw_* fields above on purpose: those decide "clean", these are expected.
+    shelf_resets: int = 0        # windows seen
+    reset_timeouts: int = 0
+    reset_heal_failed: int = 0
+    reset_healed: int = 0
+    reset_bad_other: int = 0
+    reset_worst_ms: float = 0.0  # slowest ordinary read that fell inside one
 
 
 @dataclass
@@ -209,7 +229,9 @@ def _totals(tick: SoakTick) -> str:
             f"worst_cross_ms={tick.worst_crossing_ms:.0f} "
             f"writes={tick.writes} write_fails={tick.write_fails} "
             f"picks={tick.picks} dropped={tick.dropped} lit={tick.lit} "
-            f"elapsed_s={tick.elapsed_s:.0f}")
+            f"elapsed_s={tick.elapsed_s:.0f} resets={tick.shelf_resets} "
+            f"reset_to={tick.reset_timeouts} reset_hf={tick.reset_heal_failed} "
+            f"reset_worst_ms={tick.reset_worst_ms:.0f}")
 
 
 def _counters(ops: SoakOps, device_id: int, want_iwdg: bool,
@@ -576,9 +598,55 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
     # repairs are measured too: first at the start, every GW_SAMPLE_S, and
     # once more at the end. Only DELTAS are kept -- the counters run from the
     # gateway's boot, long before this run.
-    gw = {"last": None, "t": 0.0}
+    gw = {"last": None, "t": 0.0, "reboot_at": -1e9}
+    wins: list = []                  # shelf-reset windows: [start, end, closed] monotonic
+    burst: list = []                 # monotonic times of recent module reboots
+    held: list = []                  # slow ordinary reads: (monotonic, ms)
 
-    def gw_sample() -> None:
+    def in_window(t: float) -> bool:
+        return any(w[0] <= t <= w[1] for w in wins)
+
+    def shelf_reset_seen() -> None:
+        """A module reboot was just noticed: open or extend the window."""
+        now = time.monotonic()
+        burst.append(now)
+        del burst[:-RESET_BURST_N * 4]
+        recent = [b for b in burst if now - b <= RESET_BURST_S]
+        if wins and now <= wins[-1][1]:
+            wins[-1][1] = now + RESET_HOLD_S           # the same reset, still being noticed
+            return
+        if len(recent) >= RESET_BURST_N and now - gw["reboot_at"] > RESET_LOOKBACK_S:
+            wins.append([recent[0] - RESET_LOOKBACK_S, now + RESET_HOLD_S, False])
+            tick.shelf_resets += 1
+            csv("shelf_reset", f"{len(recent)} modules rebooted within {RESET_BURST_S:.0f} s, "
+                               "gateway still up: counters and slow reads in this window are the reset")
+            gw_sample()                                # settle the stall that came before it
+
+    def note_worst(took_ms: float, limit: float) -> None:
+        """Ordinary reads at or above the slow limit are held until we know
+        whether a shelf reset explains them."""
+        if took_ms >= limit:
+            held.append((time.monotonic(), took_ms))
+        else:
+            tick.worst_ms = max(tick.worst_ms, took_ms)
+
+    def settle_held(force: bool = False) -> None:
+        now = time.monotonic()
+        for w in wins:
+            if not w[2] and (now > w[1] or force):
+                w[2] = True
+                gw_sample(as_reset=True)               # everything the gateway counted during the window
+        keep = []
+        for t, ms in held:
+            if in_window(t):
+                tick.reset_worst_ms = max(tick.reset_worst_ms, ms)
+            elif force or now - t > RESET_LOOKBACK_S:
+                tick.worst_ms = max(tick.worst_ms, ms)
+            else:
+                keep.append((t, ms))
+        held[:] = keep
+
+    def gw_sample(as_reset: bool = False) -> None:
         fn = getattr(ops, "gateway_counters", None)
         if fn is None:
             return
@@ -598,13 +666,21 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
             rebooted = cur.get("up", 0) < last.get("up", 0)
             if rebooted:
                 tick.gw_rebooted += 1
+                gw["reboot_at"] = time.monotonic()
             step = {k: (cur[k] if rebooted else max(0, cur[k] - last[k]))
                     for k in _GW_KEYS if k in cur and k in last}
-            tick.gw_healed += step.get("retry_ok", 0)
-            tick.gw_heal_failed += step.get("retry_fail", 0)
-            tick.gw_timeouts += step.get("timeout", 0)
-            tick.gw_bad_crc += step.get("bad_crc", 0)
-            tick.gw_bad_other += step.get("bad_other", 0)
+            if (as_reset or in_window(time.monotonic())) and not rebooted:
+                tick.reset_healed += step.get("retry_ok", 0)
+                tick.reset_heal_failed += step.get("retry_fail", 0)
+                tick.reset_timeouts += step.get("timeout", 0)
+                tick.reset_bad_other += step.get("bad_other", 0)
+                tick.gw_bad_crc += step.get("bad_crc", 0)     # a bad CRC is never expected
+            else:
+                tick.gw_healed += step.get("retry_ok", 0)
+                tick.gw_heal_failed += step.get("retry_fail", 0)
+                tick.gw_timeouts += step.get("timeout", 0)
+                tick.gw_bad_crc += step.get("bad_crc", 0)
+                tick.gw_bad_other += step.get("bad_other", 0)
         gw["last"] = cur
         csv("gw", f"healed={tick.gw_healed} heal_failed={tick.gw_heal_failed} "
                   f"timeouts={tick.gw_timeouts} bad_crc={tick.gw_bad_crc} "
@@ -744,7 +820,7 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
             tick.crossings += 1
             tick.worst_crossing_ms = max(tick.worst_crossing_ms, took_ms)
         else:
-            tick.worst_ms = max(tick.worst_ms, took_ms)
+            note_worst(took_ms, cfg.slow_ms)
         what = "pick" if on else "clear"
         if not ok:
             tick.write_fails += 1
@@ -779,7 +855,7 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
                 tick.crossings += 1
                 tick.worst_crossing_ms = max(tick.worst_crossing_ms, took_ms)
             else:
-                tick.worst_ms = max(tick.worst_ms, took_ms)
+                note_worst(took_ms, cfg.slow_ms)
 
             limit = cfg.crossing_slow_ms if crossing else cfg.slow_ms
             if getattr(res, "link_down", False):
@@ -863,6 +939,7 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
                     continue
                 if now[0] != was[0]:
                     tick.reboots += 1
+                    shelf_reset_seen()
                     # Say on the reboot row itself what kind of reboot it was.
                     # The absence of a watchdog row below means either "the
                     # counter held still" or "reg 410 could not be read this
@@ -894,6 +971,7 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
         # lighting them correctly — the same silent-zero shape that once had
         # a night of 308 watchdog resets reporting wdt=0. A new field on
         # SoakTick must not depend on someone remembering this line.
+        settle_held()
         check_rate()
         emit(replace(tick))
         # One line per pass, so the end of the file is a fact rather than an
@@ -905,6 +983,7 @@ def _poll(ops: SoakOps, cfg: SoakConfig, emit: Callable, cancel: threading.Event
         ops.sleep(cfg.pass_gap_s)
 
     gw_sample()                      # the closing reading, after the last pass
+    settle_held(force=True)
     tick.elapsed_s = time.monotonic() - t0
     emit(replace(tick))
     return True

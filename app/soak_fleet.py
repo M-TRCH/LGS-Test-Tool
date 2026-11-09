@@ -39,7 +39,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Callable, Optional, Sequence
 
+from pymodbus.exceptions import ModbusIOException
+
 from . import soak
+from .gateway_config import GatewayError
 from .ntp_server import local_ip_toward
 from . import framer_watch
 from .transports import SOAK_TIMEOUT_S, TcpSettings, make_client
@@ -105,6 +108,7 @@ class _ClientOps:
         self._cancel = cancel
         self._client = None
         self._next_retry = 0.0
+        self._silent_run = 0          # consecutive 'no response' (see _dead)
 
     # ── lifecycle ──────────────────────────────────────────────────────────
     def connect(self) -> bool:
@@ -156,6 +160,7 @@ class _ClientOps:
             # A malformed answer is a failed transaction, not a crash:
             # regs[0] raised IndexError straight out of the thread.
             return _Txn(False, None, "empty register list")
+        self._silent_run = 0
         return _Txn(True, regs if count > 1 else regs[0])
 
     def write_coil(self, device_id: int, addr: int, value: bool):
@@ -172,13 +177,52 @@ class _ClientOps:
             return self._dead(exc)
         if r.isError():
             return _Txn(False, None, str(r)[:60])
+        self._silent_run = 0
         return _Txn(True, value)
 
+    # A run of this many "no response" in a row, across the ids of a run, is the
+    # moment to ask the gateway itself whether it is still there.
+    SILENT_PROBE_AFTER = 8
+
     def _dead(self, exc: BaseException):
-        """A raised exception is the transport, not the module — pymodbus
-        answers a silent slave with an error object, not by throwing."""
+        """Is this exception the transport, or just a module that did not answer?
+
+        pymodbus 3.x RAISES ModbusIOException("No response") for a silent slave
+        instead of returning an error object, so treating every exception as a
+        dead link (what this did until 2026-11-09) made one dead row of four
+        modules cost a reconnect on every pass: Chest-Std-09 spent 49 h at ~36 s
+        per pass and tested its healthy modules ten times less than its
+        neighbours. A silent module is a failed read; only the gateway
+        not answering is a lost link, so after a run of silence ask the gateway
+        (unit 255 PING) before deciding. Any other exception is the socket and
+        is dead at once, as before."""
+        note = f"{type(exc).__name__}: {exc}"[:60]
+        if isinstance(exc, ModbusIOException) and "no response" in str(exc).lower():
+            self._silent_run += 1
+            if self._silent_run < self.SILENT_PROBE_AFTER:
+                return _Txn(False, None, note)
+            if self._gateway_answers():
+                self._silent_run = 0
+                return _Txn(False, None, note)
+        self._silent_run = 0
         self.close()
-        return _Txn(False, None, f"{type(exc).__name__}: {exc}"[:60], True)
+        return _Txn(False, None, note, True)
+
+    def _gateway_answers(self) -> bool:
+        """True when the gateway answers its own console. Raising = transport
+        gone (False); a refusal (old firmware, net.console=0) still means the
+        gateway answered, so the link is up."""
+        if self._client is None:
+            return False
+        try:
+            from .gateway_tcp import GatewayTcpLink, register_pdu
+            register_pdu(self._client)
+            GatewayTcpLink(self._client).command("PING", timeout_s=3.0)
+            return True
+        except GatewayError:
+            return True
+        except Exception:                                        # noqa: BLE001
+            return False
 
     def gateway_counters(self) -> Optional[dict]:
         """The gateway's RS485 repair counters from its console (INFO), or
@@ -709,6 +753,14 @@ class CabinetTally:
     gw_bad_crc: int = 0
     gw_bad_other: int = 0
     gw_rebooted: int = 0
+    # What fell inside the shelf's scheduled reset (soak.SoakTick.reset_*):
+    # expected, so never part of "clean", but shown so nobody has to wonder.
+    shelf_resets: int = 0
+    reset_timeouts: int = 0
+    reset_heal_failed: int = 0
+    reset_healed: int = 0
+    reset_bad_other: int = 0
+    reset_worst_ms: float = 0.0
     # Pharmacy mode only (all zero in a poll run): coil writes made and refused, windows lit so far, picks that found
     # no dark window, windows lit right now.
     writes: int = 0
@@ -764,6 +816,12 @@ class CabinetTally:
             self.gw_bad_crc = inner.gw_bad_crc
             self.gw_bad_other = inner.gw_bad_other
             self.gw_rebooted = inner.gw_rebooted
+            self.shelf_resets = inner.shelf_resets
+            self.reset_timeouts = inner.reset_timeouts
+            self.reset_heal_failed = inner.reset_heal_failed
+            self.reset_healed = inner.reset_healed
+            self.reset_bad_other = inner.reset_bad_other
+            self.reset_worst_ms = inner.reset_worst_ms
             self.writes = inner.writes
             self.write_fails = inner.write_fails
             self.picks = inner.picks
@@ -828,6 +886,16 @@ def summarise(tallies, framer=None, *, started: str = "",
             out.append(f"  {t.name:<15} repaired {t.gw_healed:>5} ({t.heal_per_h:.1f}/h)"
                        f"  repair failed {t.gw_heal_failed}  final timeouts {t.gw_timeouts}"
                        f"  bad crc {t.gw_bad_crc}  other {t.gw_bad_other}{more}{flag}")
+    # The scheduled shelf reset, apart from the verdict: what it cost, so a
+    # cabinet is not called unclean for the 03:00 power-cycle it was told to do.
+    resets = [t for t in ran if t.shelf_resets]
+    if resets:
+        out.append("")
+        out.append("scheduled shelf reset (expected; kept out of the verdict above):")
+        for t in resets:
+            out.append(f"  {t.name:<15} {t.shelf_resets}x  slowest read {t.reset_worst_ms:.0f} ms"
+                       f"  gateway timeouts {t.reset_timeouts}  repair failed {t.reset_heal_failed}"
+                       f"  repaired {t.reset_healed}  other {t.reset_bad_other}")
     unseen = [t.name for t in ran if not t.gw_seen]
     if unseen:
         out.append("gateway counters not available (no console or firmware "
