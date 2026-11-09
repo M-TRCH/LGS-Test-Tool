@@ -51,7 +51,7 @@ def build(host: str, port: int, ward: str, serial: str, layout: str, plate: str)
         try:
             r = gateway_api.action(host, port, "ap_show")
             if r.get("ok") and r.get("ssid") and r.get("pass"):
-                cab.ap_ssid, cab.ap_pass = r["ssid"], r["pass"]
+                cab.ap_ssid, cab.ap_pass, cab.ap_url = r["ssid"], r["pass"], r.get("url", "")
         except Exception:                                        # noqa: BLE001
             pass
     cab.ward = (ward or "").strip()[:60]

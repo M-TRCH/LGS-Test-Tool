@@ -214,7 +214,8 @@ for _key in ("standard", "rowmap"):
     _two = zipfile.ZipFile(io.BytesIO(_bl)).read("label.xml").decode()
     check(f"{_key}: with a Wi-Fi, two codes", _two.count("<barcode:barcode>"), 2)
     check(f"{_key}: the second joins the Wi-Fi", "WIFI:T:WPA;S:LGS-Std-02;P:lgs-bench-2026;;" in _two, True)
-    check(f"{_key}: a caption under each", "ข้อมูลตู้" in _two and "เชื่อม Wi-Fi" in _two, True)
+    check(f"{_key}: a caption under each", ">Info<" in _two and ">AP Service<" in _two, True)
+    check(f"{_key}: the cabinet code names the AP page", "\nap 192.168.27.1:502" in _two, True)
     _ids2 = [int(n) for n in re.findall(r'<pt:expanded objectName="[^"]*" ID="(\d+)"', _two)]
     check(f"{_key}: object ids still run 0..N", sorted(_ids2), list(range(len(_ids2))))
 check("the five reserved characters are escaped", labels.wifi_payload("a;b", 'p:w"x\\y'), 'WIFI:T:WPA;S:a\\;b;P:p\\:w\\"x\\\\y;;')

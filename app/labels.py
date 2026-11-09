@@ -682,7 +682,8 @@ class CabinetLabel:
     built: str = ""                      # the date it was that, YYYY-MM-DD
     mod: str = ""                        # module firmware across the cabinet
     ap_ssid: str = ""                    # AP Service Wi-Fi name and password, from the gateway at print time. When both are
-    ap_pass: str = ""                    # set, the standard and row-map stickers carry a second QR that joins that Wi-Fi.
+    ap_pass: str = ""                    # set, the standard and row-map stickers carry a second QR that joins that Wi-Fi,
+    ap_url: str = ""                     # and the cabinet code gets one more line: the service page's address.
 
     def qr_payload(self) -> str:
         """Identity, and the whole shape of the cabinet.
@@ -746,6 +747,10 @@ class CabinetLabel:
         # a single number would hide.
         if self.mod:
             lines.append(f"mod {self.mod}")
+        if self.ap_ssid and self.ap_pass:
+            # where the AP Service page is, for whoever scans the cabinet code after joining that Wi-Fi
+            addr = (self.ap_url or "http://192.168.27.1:502/").replace("http://", "").rstrip("/")
+            lines.append(f"ap {addr}")
         return "\n".join(lines)
 
 
@@ -936,8 +941,8 @@ def _detail_label(c: CabinetLabel, *, created: str, with_rows: bool) -> tuple:
             (ids, cx, yy + 11, CW, 10.0, "6.5", LATIN_FONT, 400),
         ]
     if has_ap:                                       # a short caption under each code, centred on it
-        for cx, label in ((qr_x + side / 2, "ข้อมูลตู้"), (ap_x + ap_side / 2, "เชื่อม Wi-Fi")):
-            lines.append((label, round(cx - 21.0, 1), round(top + slot + 1.0, 1), 42.0, CAP_H, "7", THAI_FONT, 400))
+        for cx, label in ((qr_x + side / 2, "Info"), (ap_x + ap_side / 2, "AP Service")):
+            lines.append((label, round(cx - 21.0, 1), round(top + slot + 1.0, 1), 42.0, CAP_H, "7", LATIN_FONT, 400))
     lines = [ln for ln in lines if ln[0]]
 
     rules = [(rule1_x, "rule1")] + ([(rule2_x, "rule2")] if rows else [])
