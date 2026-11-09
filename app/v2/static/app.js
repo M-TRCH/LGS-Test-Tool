@@ -1815,16 +1815,15 @@ function apPaint() {
   const dirty = !!cur && (a.ssid !== cur.ssid || a.pass !== cur.pass), minOk = /^\d+$/.test(a.min) && +a.min >= 1 && +a.min <= 480;
   $("#aptitle").textContent = t("apTitle"); $("#apclose").textContent = t("close");
   const state = now ? t("apOnL", { m: Math.ceil((+i["ap.left_s"] || 0) / 60) }) : i["ap.state"] === "failed" ? t("apFailL") : t("apOffL");
-  $("#apbody").innerHTML = `<div class="small muted">${t("apSub")} · ${esc(state)}${cur ? "" : " · " + t("apLoading")}</div>
-    <div class="field"><label>${t("apName")}</label><input id="apssid" class="mono" value="${esc(a.ssid)}" autocomplete="off" spellcheck="false"${cur ? "" : " disabled"}></div>
+  const tag = $("#aptag"); tag.textContent = state; tag.style.color = now ? "var(--ok)" : "var(--muted)";
+  $("#apbody").innerHTML = `<div class="field"><label>${t("apName")}</label><input id="apssid" class="mono" value="${esc(a.ssid)}" autocomplete="off" spellcheck="false"${cur ? "" : " disabled"}></div>
     <div class="field"><label>${t("apPassL")}</label><input id="appass" class="mono" value="${esc(a.pass)}" autocomplete="off" spellcheck="false"${cur ? "" : " disabled"}></div>
-    <div class="small muted" id="aphint">${a.ssid && !nameOk ? t("apNameBad") : a.pass && !passOk ? t("apPassBad") : t("apNote")}</div>
+    <div class="small" id="aphint" style="color:var(--bad)">${a.ssid && !nameOk ? t("apNameBad") : a.pass && !passOk ? t("apPassBad") : ""}</div>
     <div class="row"><button class="btn" id="apsave" data-act="ap-save"${dirty && nameOk && passOk && !a.busy ? "" : " disabled"}>${t("apSave")}</button></div>
     <div class="field"><label>${t("apUrlL")}</label><div class="mono">${cur ? esc(cur.url) : ""}</div></div>
     <hr style="border:0;border-top:1px solid var(--line);width:100%">
-    <div class="switch"><div><b>${t("apSwitch")}</b></div><button class="sw" role="switch" aria-checked="${want}" data-act="ap-flip"></button></div>
-    ${want && !now ? `<div class="field"><label>${t("apMin")}</label><input id="apmin" inputmode="numeric" value="${esc(a.min)}"></div>` : ""}
-    <div class="row"><button class="btn primary" id="apconfirm" data-act="ap-confirm"${want === now || a.busy || (want && !minOk) ? " disabled" : ""}>${t("apConfirm")}</button></div>
+    ${now ? "" : `<div class="field"><label>${t("apMin")}</label><input id="apmin" inputmode="numeric" value="${esc(a.min)}"></div>`}
+    <div class="switch"><div><b>${t("apSwitch")}</b></div><button class="sw" role="switch" aria-checked="${now}" data-act="ap-flip"${a.busy ? " disabled" : ""}></button></div>
     ${a.err ? `<div class="notice bad">${esc(a.err)}</div>` : ""}`;
   const bind = (id, key) => { const el = $("#" + id); if (el) el.oninput = () => { a[key] = el.value; apPaintButtons(); }; };
   bind("apssid", "ssid"); bind("appass", "pass"); bind("apmin", "min");
@@ -1834,8 +1833,7 @@ function apPaintButtons() {
   const a = S.ap, cur = a.ap, i = apInfo(), now = i["ap.state"] === "on", want = a.want === undefined ? now : a.want;
   const nameOk = /^[\x21-\x7e]{1,31}$/.test(a.ssid), passOk = /^[\x21-\x7e]{8,31}$/.test(a.pass), minOk = /^\d+$/.test(a.min) && +a.min >= 1 && +a.min <= 480;
   const sv = $("#apsave"); if (sv) sv.disabled = !(cur && (a.ssid !== cur.ssid || a.pass !== cur.pass) && nameOk && passOk) || a.busy;
-  const cf = $("#apconfirm"); if (cf) cf.disabled = want === now || a.busy || (want && !minOk);
-  const h = $("#aphint"); if (h) h.textContent = a.ssid && !nameOk ? t("apNameBad") : a.pass && !passOk ? t("apPassBad") : t("apNote");
+  const h = $("#aphint"); if (h) h.textContent = a.ssid && !nameOk ? t("apNameBad") : a.pass && !passOk ? t("apPassBad") : "";
 }
 async function apLoad() {
   try { const r = await apGw("ap_show"); if (!r.ok) throw new Error(r.error || "failed"); S.ap.ap = r; S.ap.ssid = r.ssid; S.ap.pass = r.pass; S.ap.err = ""; }
@@ -1861,13 +1859,14 @@ async function apSave() {
     toast(t("apDone"));
   });
 }
-async function apConfirm() {
-  const a = S.ap, now = apInfo()["ap.state"] === "on", want = a.want === undefined ? now : a.want;
-  if (want === now) return;
+/* the switch acts at once: off needs nothing, on needs a valid number of minutes */
+async function apFlip() {
+  const a = S.ap, now = apInfo()["ap.state"] === "on", want = !now;
+  if (want && !(/^\d+$/.test(a.min) && +a.min >= 1 && +a.min <= 480)) { a.err = t("apMin"); apPaint(); return; }
   await apRun(async () => {
     const r = await apGw(want ? "ap_on" : "ap_off", want ? a.min : ""); if (!r.ok) throw new Error(r.error);
     if (want) await new Promise((ok) => setTimeout(ok, 3500));
-    a.want = undefined; toast(t("apDone"));
+    toast(t("apDone"));
   });
 }
 
@@ -1942,8 +1941,7 @@ document.addEventListener("click", async (ev) => {
       const r = await api("POST", "/api/v2/gw/action", { id: S.gw.id, action: "time" }); if (!r.ok) throw new Error(r.error); await gwRead(); toast(t("clockSet"));
     } else if (act.dataset.act === "ap-open") { await apOpen();
     } else if (act.dataset.act === "ap-close") { const d = $("#apdlg"); if (d.open) d.close();
-    } else if (act.dataset.act === "ap-flip") { const now = apInfo()["ap.state"] === "on"; S.ap.want = !(S.ap.want === undefined ? now : S.ap.want); apPaint();
-    } else if (act.dataset.act === "ap-confirm") { await apConfirm();
+    } else if (act.dataset.act === "ap-flip") { await apFlip();
     } else if (act.dataset.act === "ap-save") { await apSave();
     } else if (act.dataset.act === "sw-info") { await ask(t(act.dataset.info), true);
     } else if (act.dataset.act === "gw-vol") {
