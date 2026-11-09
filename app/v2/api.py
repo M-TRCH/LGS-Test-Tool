@@ -270,7 +270,8 @@ def install(app, cfg, worker) -> None:
     @app.post("/api/v2/ins/scan")
     async def ins_scan(request: Request):
         return await _job(request, lambda site, b: install_api.run.start_scan(
-            site, install_api.scan_ids(str(b.get("id", "")), bool(b.get("full")))))
+            site, install_api.scan_ids(str(b.get("id", "")), bool(b.get("full"))),
+            install_api.layout(str(b.get("id", "")))["ids"]))
 
     @app.post("/api/v2/ins/report")
     async def ins_report(request: Request):

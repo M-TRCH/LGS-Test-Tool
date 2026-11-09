@@ -219,6 +219,9 @@ def layout(site_id: str) -> dict:
             "rows": [{"r": r, "ids": v} for r, v in sorted(rows.items())]}
 
 
+SCAN_RETRIES = 2        # extra tries for a slot of the cabinet that did not answer the first time (see Run.start_scan)
+
+
 def scan_ids(site_id: str, full: bool) -> list:
     """Quick: the cabinet's slots plus the factory and SET_ID addresses, where
     an unconfigured or half-configured module answers. Full: every id."""
@@ -387,7 +390,12 @@ class Run:
         self._launch(site, work)
         return {"ok": True}
 
-    def start_scan(self, site: dict, ids: list) -> dict:
+    def start_scan(self, site: dict, ids: list, expected=()) -> dict:
+        """`expected` are the ids this cabinet should have (its layout): a miss there is asked again, up to SCAN_RETRIES more
+        times, because a module that is there but lost one frame (the first after a hub-channel change, or a slow moment)
+        must not be reported as silent. Every other id (the factory and SET_ID addresses, the rest of a full scan) is asked
+        once: most of those are absent and each retry would cost a timeout."""
+        expected = set(expected)
         self._begin(site, "scan", "")
         host, port = site["host"], site["port"]
 
@@ -398,6 +406,11 @@ class Run:
                 if self._cancel.is_set():
                     break
                 r = ops.probe(uid)
+                for _ in range(SCAN_RETRIES if uid in expected else 0):
+                    if r.ok or self._cancel.is_set():
+                        break
+                    ops.sleep(0.15)
+                    r = ops.probe(uid)
                 dtype, fw = "", ""
                 if r.ok:
                     dtype = lgs_map.dec_device_type(r.value[0])
