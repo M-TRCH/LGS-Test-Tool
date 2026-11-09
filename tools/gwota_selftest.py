@@ -79,6 +79,26 @@ def main() -> int:
         except gw_ota.OtaError as exc:
             check(f"{err} is explained", word in str(exc))
 
+    # night window (gateway firmware >= 1.15.0)
+    link = FakeLink(ok_console)
+    gw_ota.start(link, "module_v3.5.5", {"at": "1:00", "until": "04:00", "nights": 2})
+    start_line = next(x for x in link.asked if x.startswith("OTA START"))
+    check("a window is sent as HHMM with nights", "at=0100 until=0400 nights=2" in start_line)
+    link = FakeLink(ok_console)
+    gw_ota.start(link, "module_v3.5.5", {})
+    check("no window, nothing about one is sent", "at=" not in next(x for x in link.asked if x.startswith("OTA START")))
+    for bad_win in ({"at": "01:00"}, {"until": "04:00"}, {"at": "25:00", "until": "01:00"}, {"at": "01:00", "until": "01:00"},
+                    {"at": "01:00", "until": "04:00", "nights": 0}, {"at": "01:00", "until": "04:00", "nights": 15}, {"at": "abc", "until": "04:00"}):
+        try:
+            gw_ota.options(bad_win)
+            check(f"window {bad_win} refused", False)
+        except gw_ota.OtaError:
+            check(f"window {bad_win} refused", True)
+    sched = FakeLink({"OTA STATUS": "#DATA state=scheduled run=36 phase=pick ch=0 group=0 chunk=0/0\n#DATA window=1335-1435 nights=0/1 gate=reset_hold\n#OK OTA STATUS"})
+    st = gw_ota.status(sched)
+    check("a waiting window run reads as scheduled with its gate", st["state"] == "scheduled" and st["gate"] == "reset_hold" and st["window"] == "1335-1435")
+    check("scheduled is a known state", "scheduled" in gw_ota.STATE_TEXT)
+
     old = FakeLink({"OTA STATUS": "#ERR OTA STATUS err=unknown_verb"})
     check("an old firmware is 'unsupported', not an error", gw_ota.status(old) == {"state": "unsupported"})
     run = FakeLink({"OTA STATUS": "#DATA state=running run=2 phase=stream ch=1 group=8 chunk=80/479\n#DATA paused_s=4 failed=0\n#OK OTA STATUS"})

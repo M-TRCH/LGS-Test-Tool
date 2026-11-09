@@ -10,13 +10,27 @@ from __future__ import annotations
 from . import gw_depot
 from .gateway_config import GatewayError
 
-STATE_TEXT = {"running", "done_ok", "done_with_failures", "aborted", "interrupted", "none"}
+STATE_TEXT = {"running", "scheduled", "done_ok", "done_with_failures", "aborted", "interrupted", "none"}
 DEFAULTS = {"idle": 5, "group": 8, "apply_idle": 5, "apply_quiet": 300}   # = the gateway's own defaults (ota_runner.cpp)
 LIMITS = {"idle": (1, 600), "group": (1, 8), "apply_idle": (1, 3600), "apply_quiet": (0, 86400)}
 
 
 class OtaError(Exception):
     pass
+
+
+MAX_NIGHTS = 14
+
+
+def _hhmm(v, name: str) -> str:
+    """"01:00", "1:00" or "0100" -> "0100"; anything else is refused."""
+    text = str(v).strip().replace(":", "")
+    if not text.isdigit() or len(text) not in (3, 4):
+        raise OtaError(f"{name} must be a time like 01:00")
+    text = text.zfill(4)
+    if int(text[:2]) > 23 or int(text[2:]) > 59:
+        raise OtaError(f"{name} must be a time like 01:00")
+    return text
 
 
 def options(raw: dict) -> dict:
@@ -31,6 +45,22 @@ def options(raw: dict) -> dict:
         if not lo <= v <= hi:
             raise OtaError(f"{k} must be {lo}-{hi}")
         out[k] = v
+    # Optional night window (gateway firmware >= 1.15.0): both times or neither. The gateway keeps to it by itself, on its
+    # own clock, so the run can be started in the daytime and the Tool switched off.
+    at, until = (raw or {}).get("at"), (raw or {}).get("until")
+    if at or until:
+        if not (at and until):
+            raise OtaError("a night window needs both a start and an end time")
+        out["at"], out["until"] = _hhmm(at, "start"), _hhmm(until, "end")
+        if out["at"] == out["until"]:
+            raise OtaError("the start and end of the window must differ")
+        try:
+            nights = int((raw or {}).get("nights", 1))
+        except (TypeError, ValueError):
+            raise OtaError("nights must be a whole number")
+        if not 1 <= nights <= MAX_NIGHTS:
+            raise OtaError(f"nights must be 1-{MAX_NIGHTS}")
+        out["nights"] = nights
     return out
 
 
@@ -77,6 +107,8 @@ def start(link, image_name: str, raw_opts: dict, ids: str = "") -> dict:
                f"apply_idle={opts['apply_idle']} apply_quiet={opts['apply_quiet']}"
         if ids:
             line += f" ids={ids}"
+        if "at" in opts:
+            line += f" at={opts['at']} until={opts['until']} nights={opts['nights']}"
         r = link.command(line)
         if not r.ok:
             raise OtaError(_explain(r.error_text))
@@ -94,7 +126,8 @@ def _explain(text: str) -> str:
                      ("err=clock_unset", "the gateway's clock is not set (set it on the Gateway page)"),
                      ("err=usb_busy", "a PC used this gateway's USB port in the last minute"),
                      ("err=unknown_verb", "this gateway's firmware has no OTA runner"),
-                     ("err=no_ids", "the gateway does not know its cabinet layout (set panel.cabinet or panel.shape)")):
+                     ("err=no_ids", "the gateway does not know its cabinet layout (set panel.cabinet or panel.shape)"),
+                     ("want=at=HHMM", "this gateway's firmware has no night window (needs 1.15.0)")):
         if key in text:
             return msg
     return text
