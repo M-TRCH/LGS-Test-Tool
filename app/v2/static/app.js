@@ -284,7 +284,7 @@ function viewEvents() {
         <div class="fchips" id="evchips" hidden></div>
         <div id="evdash" class="stack"></div>
         <section class="card stack">
-          <div class="row between"><div class="small muted" id="evcount"></div><div class="row" style="gap:10px"><label class="small muted" for="evsize">${t("evSize")}</label><select id="evsize">${[10, 20, 50, 100].map((n) => `<option value="${n}"${n === S.ev.size ? " selected" : ""}>${n}</option>`).join("")}</select><a class="btn" id="evcsv" href="#" download>${t("evExport")}</a></div></div>
+          <div class="row between"><div class="small muted" id="evcount"></div><div class="row" style="gap:10px;flex-wrap:nowrap;align-items:center"><label class="small muted" for="evsize" style="white-space:nowrap">${t("evSize")}</label><select id="evsize" style="width:88px;flex:none">${[10, 20, 50, 100].map((n) => `<option value="${n}"${n === S.ev.size ? " selected" : ""}>${n}</option>`).join("")}</select><a class="btn" id="evcsv" href="#" download style="white-space:nowrap;flex:none">${t("evExport")}</a></div></div>
           <div id="evlist"></div><div class="row between" id="evpager"></div>
         </section>
       </div>
