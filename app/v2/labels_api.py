@@ -45,6 +45,11 @@ def build(host: str, port: int, ward: str, serial: str, layout: str, plate: str)
                               ip=info.get("net.ip", ""), mac=info.get("mac", ""),
                               rows=labels.rows_from_gateway(s), fw=info.get("fw", ""),
                               built=_now()[:10])
+    if layout == "apservice":                      # this sticker is about the AP Service settings, which the key table does not hold
+        r = gateway_api.action(host, port, "ap_show")
+        if not r.get("ok"):
+            raise ValueError("could not read the AP Service settings: " + (r.get("error") or "no answer"))
+        cab.ap_ssid, cab.ap_pass, cab.ap_url = r.get("ssid", ""), r.get("pass", ""), r.get("url", "")
     cab.ward = (ward or "").strip()[:60]
     cab.serial = (serial or "").strip()[:40]
     with _render_lock:
@@ -53,8 +58,8 @@ def build(host: str, port: int, ward: str, serial: str, layout: str, plate: str)
             blob, mm = labels.render(layout, cab, created=_now())
         except labels.LabelTooBig as exc:
             raise ValueError("does not fit the tape: " + str(exc))
-        payload = cab.qr_payload()
-        modules, _side, ecc = labels.fit_qr(payload)
+        payload = labels.wifi_payload(cab.ap_ssid, cab.ap_pass) if layout == "apservice" else cab.qr_payload()
+        modules, _side, ecc = labels.fit_qr(payload, cell_pt=labels.QR_CELL_PT)
     n = len(payload.encode("utf-8"))
     version = (modules - 17) // 4
     stem = "".join(ch if ch.isalnum() or ch in "-_" else "-" for ch in (cab.name or "cabinet")).strip("-") or "cabinet"

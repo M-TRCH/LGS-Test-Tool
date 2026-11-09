@@ -46,7 +46,8 @@ def rows_for(cab, shape, hub):
 def sample(**kw):
     base = dict(name="Chest-Std-02", ward=WARD, serial="LGS-2026-0042",
                 ip="192.168.0.229", mac="A8:61:0A:51:5D:9C",
-                rows=rows_for("80", "0", "1,2,3,4,5,6,7,8,7,8"))
+                rows=rows_for("80", "0", "1,2,3,4,5,6,7,8,7,8"),
+                ap_ssid="LGS-Std-02", ap_pass="lgs-bench-2026")        # only the apservice layout reads these
     base.update(kw)
     return labels.CabinetLabel(**base)
 
@@ -205,6 +206,23 @@ try:
     check("a list starting at 1 is refused", "no exception", "LabelTooBig")
 except labels.LabelTooBig:
     print("  ok   a list starting at 1 is refused")
+
+print("\nthe AP Service layout: two codes, the Wi-Fi one and the page one")
+_blob, _mm = labels.render("apservice", sample(), created="x")
+_ax = zipfile.ZipFile(io.BytesIO(_blob)).read("label.xml").decode()
+check("two barcodes", _ax.count("<barcode:barcode>"), 2)
+check("the Wi-Fi code carries the WIFI: string", "WIFI:T:WPA;S:LGS-Std-02;P:lgs-bench-2026;;" in _ax, True)
+check("the page code carries the service address", "http://192.168.27.1:502/" in _ax, True)
+check("the two barcodes have different names", "barcode1" in _ax and "barcode2" in _ax, True)
+check("the name and password are printed too", "PASS lgs-bench-2026" in _ax and "SSID LGS-Std-02" in _ax, True)
+check("the five reserved characters are escaped", labels.wifi_payload("a;b", 'p:w"x\\y'), 'WIFI:T:WPA;S:a\\;b;P:p\\:w\\"x\\\\y;;')
+try:
+    labels.render("apservice", sample(ap_ssid="", ap_pass=""), created="x")
+    check("no AP settings is refused", "no exception", "ValueError")
+except ValueError:
+    print("  ok   no AP settings is refused")
+_long = labels.render("apservice", sample(ap_ssid="S" * 31, ap_pass="P" * 31), created="x")
+check("the longest name and password still fit the tape", _long[1] > 0, True)
 
 print("\nEVERY attribute, against the file that printed and scanned")
 # Five attributes were retyped differently when this left the scratchpad --
