@@ -32,6 +32,30 @@ app.js) stops at 6, so the action cannot be chosen from the Tool; a button alrea
 - **Test:** choose action 7 for a button, Apply, press it at the cabinet: the AP comes up with the stored minutes; press
   again: off.
 
+## 3. A shelf reset from the front-panel button is booked as unexplained reboots
+
+Found in the 72 h fleet soak of 2026-11-18 18:27 (12 cabinets, `soak-20261118-182701-all.zip`). Chest-Ref-12 came out
+"not clean": 274 reboots where 120 were expected, `heal_failed=2 timeouts=4`, worst 6078 ms. All of the excess came from
+four presses of its reset button (button 5 = action 4, `PANEL_RESET`) on 2026-11-19 at 16:12:30, 16:15:42, 16:16:21 and
+16:17:05; the gateway's own log has each one as `panel_sweep a=4 p=5`, and the 40 modules rebooted 7-11 s after every
+press (154 reboots). The gateway counters moved only inside 16:13-16:17. Every other hour of the run, and the other 11
+cabinets, were clean.
+
+The soak only asks the gateway for `sched_reset` (`SoakFleet.sched_resets()`, `app/soak_fleet.py`), and once the gateway
+has answered, `gw["exact"]` turns off the reboot-burst guess in `app/soak.py`, so a reset nobody scheduled is a fault by
+definition. It is not one: the gateway cut the shelf's power because it was told to.
+
+- **Until fixed:** when a cabinet is "not clean" with whole-cabinet reboot bursts, read its log (`LOG SINCE`) for
+  `panel_sweep a=4` at those times before calling it a fault.
+- **Fix:** in `sched_resets()` also collect `ev == "panel_sweep"` with `a == "4"` (return them tagged, or as a second
+  list), and in `learn_resets()` open the same `RESET_BEFORE_S`/`RESET_AFTER_S` window for each. Write a CSV row that
+  says what it was (`shelf_reset gateway panel reset (button p) at <stamp>`), so the report still shows that somebody
+  pressed it; count it apart from the scheduled resets (`resets=` stays the schedule), since at a site a hand reset is
+  worth knowing about even though it is not a fault. `parse_soak_csv()` then books those reboots as explained, and the
+  LGS Soak Monitor dashboard follows automatically because the uploader sends that summary.
+- **Test:** during a fleet soak press the reset button once: one `shelf_reset ... panel reset` row, the 40 reboots
+  explained, the cabinet stays clean; a reboot burst with no press is still a fault.
+
 ## Still open, not code (as of 2026-11-10)
 
 - **Installs:** v2.1.0 is on GitHub only. The site server, the .87 notebook (it runs the fleet soak) and the copy
