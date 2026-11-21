@@ -189,5 +189,5 @@ Write-Host "==============================================================" -For
 Write-Host " Done. Soak runs from this PC now appear on https://lgs.teerachot.cc" -ForegroundColor Green
 Write-Host "   log       : $dataDir\soak_uploader.log"
 Write-Host "   update    : put the new exe here and run this again"
-Write-Host "   uninstall : install-soak-uploader.cmd -Remove"
+Write-Host "   uninstall : double-click uninstall-soak-uploader.cmd"
 Write-Host "==============================================================" -ForegroundColor White

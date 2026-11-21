@@ -35,7 +35,7 @@ foreach ($dir in @("build-uploader", "dist-uploader")) {
     tools\soak_uploader.py
 if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: PyInstaller failed"; exit 1 }
 
-Copy-Item install-soak-uploader.cmd, install-soak-uploader.ps1 dist-uploader\
+Copy-Item install-soak-uploader.cmd, install-soak-uploader.ps1, uninstall-soak-uploader.cmd dist-uploader\
 Write-Host ""
 Write-Host "built: dist-uploader\$name.exe"
 Write-Host "copy dist-uploader\* next to LGS-Test-Tool-v*.exe on the test server, then"
