@@ -122,7 +122,7 @@ on 2026-11-04).
    done remotely.
 4. **Duration of C8:** 7 days as above, or 72 h if the date is close. Recommendation: do not shorten C1 (3 nights) or C6.
 
-## 6. Results so far (as of 2026-11-21)
+## 6. Results so far (as of 2026-11-25)
 
 The plan was run in a different order from section 4 (the cabinets were rearranged and re-cabled for shipping on
 2026-11-13), but the conditions map as below. Builds unchanged throughout: gateway 1.15.0, modules 3.5.5, Tool 2.1.0.
@@ -135,11 +135,13 @@ The plan was run in a different order from section 4 (the cabinets were rearrang
 | C6 power | Std-09, 2026-11-16: whole cabinet ~5 min (run 1); hub channels 1+2 only, whole cabinet, hub 1+2 + Opta (run 2) | **pass**: back by itself every time; with the Opta cut every module rebooted once (the shelf relay follows the Opta, so modules can never power up before it); the clock came back from the RTC at boot (`clock_set aux=3`, ~6 min off) and NTP agreed; the **03:00 reset fired that night** on both cabinets |
 | C7 dead module | Std-10, 2026-11-16 17:17-18:25: hub channel 8 pulled (ids 101-104, 4 modules, not 1) | **pass with two gateway findings**: only 101-104 failed, the other 36 had 0 fails, no `link_lost` loop, all back after reinsertion. But the gateway logged ~50 false `bus_quiet` (4 dead ids in a row = 6 timeouts in a row), and the cabinet's pass rate fell ~10x (252 -> 27 passes per 30 min). Both go to the gateway's `docs/PLANNED-after-1.15.0.md` item 4 |
 | C1 again (all 12) | **72 h, pharmacy 2,000/day, 2026-11-18 18:27 - 11-21 18:27** | **11 of 12 clean; Ref-12 explained**: reboots = modules x 3 nights on every cabinet (Std-02..06 80 x 3 = 240, Nar-01 56 x 3 = 168, the 40-slot ones 120), 0 failed reads, 0 watchdog, 0 gateway reboots, gateway counters 0. Ref-12's 154 extra reboots and 4 timeouts were four presses of its front-panel reset button on 11-19 16:12-16:17 (gateway log `panel_sweep a=4 p=5`), which the Tool books as faults: Tool `PLANNED-after-2.1.0.md` item 3 |
+| C2 extended to 72 h (all 12) | **72 h, pharmacy asked 40,000/day, 2026-11-21 20:30 - 11-24 20:30** (`soak-20261121-203052-all.zip`) | **all 12 clean**: ~25.0 M reads, ~1.08 M picks (~2.15 M writes), 0 failed reads or writes, 0 dropped, 0 watchdog, 0 gateway reboots, every gateway counter 0 (healed, heal_failed, timeouts, bad_crc, bad_other); module reboots = modules x 3 nights, at 03:00 only; every ~6 s hub crossing inside a reset window. The bus delivered ~30,000 picks/day (`sim_behind` 77-78 %, expected: about 15x the site rate), and passes per 24 h were the same on all three days (Std-09: 11,542 / 11,550 / 11,550), so nothing degrades over time |
 
-Seen in the 72 h run and not explained by a cabinet: one slow ordinary read (1.1-1.5 s) on several cabinets **in the same
-second**, 2026-11-21 16:29:47 (Std-02, Std-06, Std-11) and 16:40:39 (Nar-01, Std-10), with every gateway's counters at 0.
-Different gateways at the same instant means the soak PC or the LAN, as with the 12 s read on 2026-11-16 11:45. Over the
-400 ms line but not a cabinet fault; worth watching on the hospital's own network.
+Seen in both 72 h runs and not explained by a cabinet: single slow ordinary reads on several cabinets **in the same
+second**, with every gateway's counters at 0. In the 2,000/day run: 1.1-1.5 s at 2026-11-21 16:29:47 (Std-02, Std-06,
+Std-11) and 16:40:39 (Nar-01, Std-10). In the 40,000/day run: 422-453 ms at 2026-11-22 12:46:08 (Std-05, Std-10) and
+2026-11-23 18:35:29 (Std-02, Std-11). Different gateways at the same instant means the soak PC or the LAN, as with the 12 s
+read on 2026-11-16 11:45. Over the 400 ms line but not a cabinet fault; worth watching on the hospital's own network.
 
 Not run yet: **C3** (AP overnight with phones), **C4** (module update during traffic), **C8** (7-day final), C5.3 (switch
 reboot), C6 with the gateway alone (modules on) and with no NTP, and **a client that vanishes silently while the link stays
